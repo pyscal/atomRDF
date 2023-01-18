@@ -19,15 +19,15 @@ Ontology side:
 - [ ] requirement document / competency questions
 
 Pyscal side:
-- [ ] possibility to write JSON-LD
-- [ ] possibility for reading in CIF files in pyscal
+- [x] possibility to write JSON-LD
+- [x] possibility for reading in CIF files in pyscal
 
 ## :footprints: Steps
 
 - [x] POSCAR to JSON
-- [ ] annotate using CSO
+- [x] annotate using CSO
 - [ ] write JSON-LD
-- [ ] include other file formats, cif, xyz
+- [x] include other file formats, cif, xyz
 - [ ] create functions to complete information
 - [ ] try big structures, lammps
           
@@ -37,10 +37,10 @@ Pyscal side:
 
 ## Meeting Agendas
 ### 2023-01-18
-Participants: 
+Participants: Sarath Menon, Abril Guzman, Tilmann Hickel
 Items:
-
-* Update on CIF format in pyscal (Sarath)
+* Completed and reviewed fact sheet
+* work done on the notebooks
 
 ### 2022-12-21
 Participants: Sarath Menon, Abril Guzman, Tilmann Hickel
