@@ -1,4 +1,5 @@
 import numpy as np
+from pyscal.operations.symmetry import Symmetry
 
 def get_angle(vec1, vec2):
     """
@@ -28,4 +29,11 @@ def get_coordination(sys):
     sys.find_neighbors(method="cutoff")
     coordination = [len(x) for x in sys.atoms.neighbors.index]
     return coordination
+
+
+def get_space_group(sys):
+    sym = Symmetry(sys)
+    sym.calculate()
+    return sym.output.international_space_group_number, sym.output.international_symbol
+    
 
