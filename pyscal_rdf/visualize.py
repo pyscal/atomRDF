@@ -1,5 +1,6 @@
 import graphviz
 import os
+from rdflib import BNode, URIRef
 
 def get_title_from_BNode(x):
     return x.title()
