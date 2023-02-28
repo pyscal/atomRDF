@@ -1,9 +1,8 @@
 name: rdf
 channels:
   - conda-forge
-  - conda-forge/label/pyscal_dev
 dependencies:
-  - pyscal =*dev*
+  - conda-forge/label/pyscal_dev::pyscal
   - rdflib
   - pyyaml
   - jupyterlab
