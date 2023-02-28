@@ -4,6 +4,11 @@
 
 The package is currently under activate development and could be unstable.
 
+You can try `pyscal_rdf` here:
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pyscal/pyscal_rdf/HEAD)
+
+
 ## Installation
 
 ### Supported operating systems
