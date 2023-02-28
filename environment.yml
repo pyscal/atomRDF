@@ -2,7 +2,6 @@ name: rdf
 channels:
   - conda-forge
   - conda-forge/label/pyscal_dev
-  - defaults
 dependencies:
   - pyscal =*dev*
   - rdflib
