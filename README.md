@@ -42,3 +42,8 @@ pip install .
 ## Using `pyscal_rdf`
 
 Coming soon..
+
+
+## Acknowledgements
+
+This work is supported by [NFDI-Matwerk](https://nfdi-matwerk.de/) consortia.
