@@ -2,6 +2,7 @@ name: rdf
 channels:
   - conda-forge
 dependencies:
+  - python >3.8
   - conda-forge/label/pyscal_dev::pyscal
   - rdflib
   - pyyaml
