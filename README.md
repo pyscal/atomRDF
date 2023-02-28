@@ -1,6 +1,6 @@
 # pyscal_rdf
 
-`pyscal_rdf` is a python tool for ontology-based creation, manipulation, and quering of structures. `pyscal_rdf` uses the [Computational Material Sample Ontology (CMSO)](https://purls.helmholtz-metadaten.de/cmso/). 
+`pyscal_rdf` is a python tool for ontology-based creation, manipulation, and quering of structures. `pyscal_rdf` uses the [Computational Material Sample Ontology (CMSO)](https://github.com/Materials-Data-Science-and-Informatics/cmso-ontology). 
 
 The package is currently under activate development and could be unstable.
 
@@ -46,4 +46,4 @@ Coming soon..
 
 ## Acknowledgements
 
-This work is supported by [NFDI-Matwerk](https://nfdi-matwerk.de/) consortia.
+This work is supported by the [NFDI-Matwerk](https://nfdi-matwerk.de/) consortia.
