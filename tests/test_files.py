@@ -10,20 +10,20 @@ def test_poscar():
     sys = System("tests/al_data/Al.poscar", format="poscar")
     convert_to_dict(sys)
     write_file("dump", convert_to_dict(sys))
-    assert os.path.exists("tests/dump.json")
+    assert os.path.exists("dump.json")
     
 def test_lammps():
     sys = System("tests/al_data/Al.dump")
     convert_to_dict(sys)
     write_file("dump2", convert_to_dict(sys))
-    assert os.path.exists("tests/dump2.json")
+    assert os.path.exists("dump2.json")
 
 def test_cif():
     aseobj = read("tests/al_data/Al.cif", format="cif")
     sys = System(aseobj, format="ase")
     convert_to_dict(sys)
     write_file("dump3", convert_to_dict(sys))
-    assert os.path.exists("tests/dump3.json")
+    assert os.path.exists("dump3.json")
     
     
     
