@@ -8,6 +8,6 @@ dependencies:
   - pyyaml
   - jupyterlab
   - graphviz
-  - pygraphviz
+  - python-graphviz
   - pyyaml
   - ase 
