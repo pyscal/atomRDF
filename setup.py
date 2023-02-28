@@ -12,10 +12,9 @@ setup(
     description='Ontology based structural manipulation and quering',
     long_description=readme,
     # tell setuptools to look for any packages under 'src'
-    packages=find_packages('pyscal_rdf'),
+    packages=find_packages(include=['pyscal_rdf', 'pyscal_rdf.*']),
     # tell setuptools that all packages will be under the 'src' directory
     # and nowhere else
-    package_dir={'':'pyscal_rdf'},
     zip_safe=False,
     download_url = 'https://github.com/pyscal/pyscal_rdf',
     url = 'https://pyscal.org',
