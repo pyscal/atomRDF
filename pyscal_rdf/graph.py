@@ -3,6 +3,10 @@ from rdflib.store import NO_STORE, VALID_STORE
 
 import os
 from pyscal_rdf.visualize import visualize_graph
+from pyscal_rdf.rdfutils import convert_to_dict
+from pyscal.core import System
+from pyscal.atoms import Atoms
+from pyscal.core import System
 
 CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
 
@@ -22,11 +26,22 @@ styledict = {
 }
 
 class StructureGraph:
-    def __init__(self, structure_dict, database=False, database_file=None):
-        self.sysdict = structure_dict
+    def __init__(self, graph_file=None):
+        self.graph = Graph()
+        if graph_file is not None:
+            if os.path.exists(graph_file):
+                self.graph.parse(input_info)
         self.sample = None
         self.material = None
-        self.graph = Graph()
+        
+    def add_structure_to_graph(self, structure, names=False, name_index="01", format=None):
+        if isinstance(structure, System):
+            self.sysdict = convert_to_dict(structure)
+        elif os.path.exists(structure):
+            sys = System(structure, format=format)
+            self.sysdict = convert_to_dict(sys)
+        #now add to graph
+        self.create_graph(names=names, name_index=name_index)
         
     
     def create_graph(self, names=False, name_index="01"):
@@ -35,7 +50,7 @@ class StructureGraph:
                         f'{name_index}_ChemicalComposition', f'{name_index}_SimulationCell',
                         f'{name_index}_SimulationCell', f'{name_index}_CrystalStructure',
                         f'{name_index}_SpaceGroup', f'{name_index}_UnitCell',
-                        f'{name_index}_UnitCell',]
+                        f'{name_index}_UnitCell']
         else:
             name_list = [None, None,
                         None, None,
@@ -51,6 +66,7 @@ class StructureGraph:
         self.add_space_group(name=name_list[6])
         self.add_unit_cell(name=name_list[7])
         self.add_lattice_properties(name=name_list[8])
+        self.add_atoms()
         
     def add_sample(self, name=None):
         sample_01 = BNode(name)
@@ -68,8 +84,8 @@ class StructureGraph:
         chemical_composition_01 = BNode(name)
         self.graph.add((self.material, CMSO.hasComposition, chemical_composition_01))
         self.graph.add((chemical_composition_01, RDF.type, CMSO.ChemicalComposition))
-        self.graph.add((chemical_composition_01, CMSO.hasElementRatio, Literal(chem_comp[0], datatype=XSD.string)))
-        self.graph.add((chemical_composition_01, CMSO.hasElementRatio, Literal(chem_comp[1], datatype=XSD.string)))
+        for x in range(len(chem_comp)):
+            self.graph.add((chemical_composition_01, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
     
     def add_simulation_cell(self, name=None):
         simulation_cell_01 = BNode(name)
@@ -173,12 +189,79 @@ class StructureGraph:
         self.graph.add((lattice_angle_01, CMSO.hasAngle_beta, Literal(90, datatype=XSD.float)))
         self.graph.add((lattice_angle_01, CMSO.hasAngle_gamma, Literal(90, datatype=XSD.float)))        
         
+    def add_atoms(self, name=None):
+        for x in range(len(self.sysdict["Positions"])):
+            #create atom
+            atom = BNode()
+            self.graph.add((self.sample, CMSO.hasAtom, atom))
+            self.graph.add((atom, RDF.type, CMSO.Atom))
+            position = BNode()
+            self.graph.add((atom, CMSO.hasPositionVector, position))
+            self.graph.add((position, RDF.type, CMSO.PositionVector))
+            self.graph.add((position, CMSO.hasComponent_x, Literal(self.sysdict["Positions"][x][0],
+                                                                  datatype=XSD.float)))
+            self.graph.add((position, CMSO.hasComponent_y, Literal(self.sysdict["Positions"][x][1],
+                                                                  datatype=XSD.float)))
+            self.graph.add((position, CMSO.hasComponent_z, Literal(self.sysdict["Positions"][x][2],
+                                                                  datatype=XSD.float)))
+            #now add coordination
+            element = BNode()
+            self.graph.add((atom, CMSO.hasElement, element))
+            self.graph.add((element, RDF.type, CMSO.Element))
+            self.graph.add((element, CMSO.hasSymbol, Literal(str(self.sysdict["Element"][x]),
+                                                            datatype=XSD.string)))
+            #finally occupancy
+            self.graph.add((atom, CMSO.hasCoordinationNumber, Literal(self.sysdict["Coordination"][x],
+                                                                     datatype=XSD.integer)))
         
     def visualise(self, edge_color="#37474F",
             styledict=styledict, rankdir='BT'):
         return visualize_graph(self.graph, edge_color=edge_color,
             styledict=styledict, rankdir=rankdir)
     
-    def write(filename):
+    def write(self, filename, format="json-ld"):
         with open(filename, "w") as fout:
-            fout.write(self.graph.serialize(format="json-ld"))        
+            fout.write(self.graph.serialize(format=format))
+            
+    
+    def get_system_from_sample(self, sample):
+        simcell = self.graph.value(sample, CMSO.hasSimulationCell)
+        cell_vectors = [[], [], []]
+
+        for s in self.graph.triples((simcell, CMSO.hasVector, None)):
+            cell_vectors[0].append(self.graph.value(s[2], CMSO.hasComponent_x).toPython())
+            cell_vectors[1].append(self.graph.value(s[2], CMSO.hasComponent_y).toPython())
+            cell_vectors[2].append(self.graph.value(s[2], CMSO.hasComponent_z).toPython())
+        #cell_vectors
+
+        positions = []
+        species = []
+
+        for atom in self.graph.triples((sample, CMSO.hasAtom, None)):
+            vector = self.graph.value(atom[2], CMSO.hasPositionVector)
+            pt = []
+            pt.append(self.graph.value(vector, CMSO.hasComponent_x).toPython())
+            pt.append(self.graph.value(vector, CMSO.hasComponent_y).toPython())
+            pt.append(self.graph.value(vector, CMSO.hasComponent_z).toPython())
+            element = self.graph.value(atom[2], CMSO.hasElement)
+            species.append(self.graph.value(element, CMSO.hasSymbol).toPython())
+            positions.append(pt)
+        
+        atoms = {"positions": positions, "species": species}
+        at = Atoms()
+        at.from_dict(atoms)
+        sys = System()
+        sys.box = cell_vectors
+        sys.atoms = at
+        
+        return sys
+    
+    def to_file(self, sample, filename=None, format="lammps-dump"):
+        if filename is None:
+            filename = os.path.join(os.getcwd(), "out")
+        sys = self.get_system_from_sample(sample)
+        if format=="ase":
+            return sys.to_ase()
+        else:
+            sys.to_file(filename, format=format)
+            
