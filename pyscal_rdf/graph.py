@@ -2,6 +2,8 @@ from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOA
 from rdflib.store import NO_STORE, VALID_STORE
 
 import os
+import numpy as np
+
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.rdfutils import convert_to_dict
 from pyscal.core import System
@@ -28,18 +30,22 @@ styledict = {
 class StructureGraph:
     def __init__(self, graph_file=None):
         self.graph = Graph()
+        self.graph.bind("cmso", CMSO)
         if graph_file is not None:
             if os.path.exists(graph_file):
                 self.graph.parse(input_info)
         self.sample = None
         self.material = None
-        
-    def add_structure_to_graph(self, structure, names=False, name_index="01", format=None):
+    
+    def process_structure(self, structure):
         if isinstance(structure, System):
             self.sysdict = convert_to_dict(structure)
         elif os.path.exists(structure):
             sys = System(structure, format=format)
             self.sysdict = convert_to_dict(sys)
+        
+    def add_structure_to_graph(self, structure, names=False, name_index="01", format=None):
+        self.process_structure(structure)
         #now add to graph
         self.create_graph(names=names, name_index=name_index)
         
@@ -91,7 +97,7 @@ class StructureGraph:
         simulation_cell_01 = BNode(name)
         self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell_01))
         self.graph.add((simulation_cell_01, RDF.type, CMSO.SimulationCell))
-        self.graph.add((simulation_cell_01, CMSO.hasVolume, Literal(self.sysdict["CellVolume"], datatype=XSD.float)))
+        self.graph.add((simulation_cell_01, CMSO.hasVolume, Literal(np.round(self.sysdict["CellVolume"], decimals=2), datatype=XSD.float)))
         self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.sysdict["NumberOfAtoms"], datatype=XSD.integer)))
         self.simulation_cell = simulation_cell_01
         
@@ -157,16 +163,26 @@ class StructureGraph:
         
     def add_space_group(self, name=None):
         space_group_01 = BNode(name)
-        self.graph.add((self.material, CMSO.hasSpaceGroup, space_group_01))
+        self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group_01))
         self.graph.add((space_group_01, RDF.type, CMSO.SpaceGroup))
         self.graph.add((space_group_01, CMSO.hasSpaceGroupSymbol, Literal(self.sysdict["SpaceGroupSymbol"], datatype=XSD.string)))
         self.graph.add((space_group_01, CMSO.hasSpaceGroupNumber, Literal(self.sysdict["SpaceGroupNumber"], datatype=XSD.integer)))
     
+            
     def add_unit_cell(self, name=None):
         unit_cell_01 = BNode(name)
         self.graph.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell_01))
         self.graph.add((unit_cell_01, RDF.type, CMSO.UnitCell))
         self.unit_cell = unit_cell_01
+        
+        #add bravais lattice
+        uname = None
+        if name is not None:
+            uname = f'Bravais{name}'
+        bravaislattice = BNode(uname)
+        self.graph.add((self.unit_cell, CMSO.hasLattice, bravaislattice))
+        self.graph.add((bravaislattice, RDF.type, CMSO.BravaisLattice))
+        self.graph.add((bravaislattice, CMSO.hasLatticeSystem, Literal(self.sysdict["BravaisLattice"], datatype=XSD.string)))
         
     def add_lattice_properties(self, name=None):
         uname = None
