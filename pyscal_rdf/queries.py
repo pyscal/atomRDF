@@ -12,21 +12,22 @@ class Sparql:
     def __init__(self):
         pass
     
-    def sample_by_altname(self, g, altname):
+    def sample_by_latticesystem(self, g, latticesystem):
         query = """
         PREFIX cmso: <https://purls.helmholtz-metadaten.de/cmso/>
         SELECT DISTINCT ?sample
         WHERE {
-            ?crystalstructure cmso:hasAltName ?altname .
-            ?material cmso:hasStructure ?crystalstructure .
+            ?bravaislattice cmso:hasLatticeSystem ?latticesystem .
+            ?unitcell cmso:hasLattice ?bravaislattice .
+            ?structure cmso:hasUnitCell ?unitcell .
+            ?material cmso:hasStructure ?structure .
             ?sample cmso:hasMaterial ?material .
-
-        FILTER (?altname="%s"^^xsd:string)
-        }"""%(altname)
+        FILTER (?latticesystem="%s"^^xsd:string)
+        }"""%(latticesystem)
         qres = g.graph.query(query)
         samples = [j[0] for j in qres]
         return samples
-
+    
 class Python:
     def __init__(self):
         pass
