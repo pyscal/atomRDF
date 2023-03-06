@@ -23,5 +23,5 @@ setup(
         'Programming Language :: Python :: 3'
     ],
     include_package_data=True,
-    #package_data={'': ['*.yaml']},
+    package_data={'': ['*.owl']},
 )

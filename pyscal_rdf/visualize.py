@@ -30,10 +30,12 @@ styledict = {
 def visualize_graph(g,  
             edge_color="#37474F",
             styledict=styledict,
+            graph_attr ={'rankdir': 'LR'},
             rankdir='LR'):
     
     dot = graphviz.Digraph()
-    dot.graph_attr['rankdir'] = rankdir
+    for key, val in graph_attr.items():
+        dot.graph_attr[key] = val
     for k in g:
         string1, istype1 = parse_object(k[0])
         if istype1 == 'Literal':

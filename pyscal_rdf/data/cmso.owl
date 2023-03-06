@@ -1,0 +1,806 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://purls.helmholtz-metadaten.de/cmso/"
+     xml:base="http://purls.helmholtz-metadaten.de/cmso/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://purls.helmholtz-metadaten.de/cmso/">
+        <rdfs:comment>Computational Material Sample Ontology (CMSO) 
+
+CMSO is an ontology that aims to describe computational materials science samples (or structures). Initially focusing on the description at the atomic scale.</rdfs:comment>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAngle -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAngle">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
+        <rdfs:label>has angle</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAtom -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAtom">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Atom"/>
+        <rdfs:label>has atom</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasBasis -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasBasis">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Basis"/>
+        <rdfs:label>has basis</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasComposition -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasComposition">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalComposition"/>
+        <rdfs:label>has composition</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasDefect -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasDefect">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CrystallineMaterial"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CrystalDefect"/>
+        <rdfs:label>has defect</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasElement -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasElement">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalSpecies"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalElement"/>
+        <rdfs:label>has element</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLattice -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLattice">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Lattice"/>
+        <rdfs:label>has lattice</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLatticeParameter -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLatticeParameter">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter"/>
+        <rdfs:label>has lattice parameter</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Length"/>
+        <rdfs:label>has length</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasMaterial -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasMaterial">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+        <rdfs:label>has material</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasOccupancy -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasOccupancy">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Basis"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Occupancy"/>
+        <rdfs:label>has occupancy</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasPositionVector -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasPositionVector">
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasVector"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Atom"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Basis"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/PositionVector"/>
+        <rdfs:label>has position vector</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSimulationCell -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSimulationCell">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:label>has simulation cell</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroup -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroup">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CrystalStructure"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SpaceGroup"/>
+        <rdfs:label>has space group</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSpecies -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSpecies">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalSpecies"/>
+        <rdfs:label>has species</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasStructure -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasStructure">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Structure"/>
+        <rdfs:label>has structure</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasUnitCell -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasUnitCell">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CrystalStructure"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
+        <rdfs:label>has unit cell</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasVector -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasVector">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <rdfs:label>has vector</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAltName -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAltName">
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasName"/>
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has alternative name</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAngle_alpha -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAngle_alpha">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has angle alpha</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAngle_beta -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAngle_beta">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has angle beta</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAngle_gamma -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAngle_gamma">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has angle gamma</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasChemicalSymbol -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasChemicalSymbol">
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasSymbol"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalElement"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has chemical symbol</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasComponent_x -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasComponent_x">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has component x</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasComponent_y -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasComponent_y">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has component y</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasComponent_z -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasComponent_z">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has component z</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasCoordinationNumber -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasCoordinationNumber">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Atom"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+        <rdfs:label>has coordination number</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasElementRatio -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasElementRatio">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalComposition"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has element ratio</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLatticeSystem -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLatticeSystem">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/BravaisLattice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has lattice system</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength_x -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_x">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has length x</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength_y -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_y">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has length y</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength_z -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_z">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has length z</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasName -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasName">
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has name</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasNumberOfAtoms -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasNumberOfAtoms">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+        <rdfs:label>has number of atoms</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasRepetition_x -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasRepetition_x">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has repetition x</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasRepetition_y -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasRepetition_y">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has repetition y</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasRepetition_z -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasRepetition_z">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has repetition z</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroupNumber -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroupNumber">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SpaceGroup"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+        <rdfs:label>has space group number</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroupSymbol -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroupSymbol">
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasSymbol"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SpaceGroup"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has space group symbol</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSymbol -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSymbol">
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has symbol</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasVolume -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasVolume">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>has volume</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/AmorphousMaterial -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/AmorphousMaterial">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+        <rdfs:label>Amorphous Material</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Angle -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Angle">
+        <rdfs:label>Angle</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Atom -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Atom">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalSpecies"/>
+        <rdfs:label>Atom</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
+        <rdfs:label>Atomic Scale Sample</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Basis -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Basis">
+        <rdfs:label>Basis</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/BravaisLattice -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/BravaisLattice">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Lattice"/>
+        <rdfs:label>Bravais Lattice</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/ChemicalComposition -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/ChemicalComposition">
+        <rdfs:label>Chemical Composition</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/ChemicalElement -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/ChemicalElement">
+        <rdfs:label>Chemical Element</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/ChemicalSpecies -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/ChemicalSpecies">
+        <rdfs:label>Chemical Species</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/ComputationalSample -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample">
+        <rdfs:label>Computational Sample</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/CrystalDefect -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/CrystalDefect">
+        <rdfs:label>Crystal Defect</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/CrystalStructure -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/CrystalStructure">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Structure"/>
+        <rdfs:label>Crystal Structure</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/CrystallineMaterial -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/CrystallineMaterial">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+        <rdfs:label>Crystalline Material</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Lattice -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Lattice">
+        <rdfs:label>Lattice</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/LatticeAngle -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeAngle">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
+        <rdfs:label>Lattice Angle</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/LatticeParameter -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter">
+        <rdfs:label>Lattice Parameter</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/LatticeVector -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeVector">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <rdfs:label>Lattice Vector</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Length -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length">
+        <rdfs:label>Length</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/MacroscaleSample -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/MacroscaleSample">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
+        <rdfs:label>Macroscale Sample</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Material -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Material">
+        <rdfs:label>Material</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/MesoscaleSample -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/MesoscaleSample">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
+        <rdfs:label>Mesoscale Sample</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/MicroscaleSample -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/MicroscaleSample">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
+        <rdfs:label>Microscale Sample</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Microstructure -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Microstructure">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Structure"/>
+        <rdfs:label>Microstructure</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Molecule -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Molecule">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalSpecies"/>
+        <rdfs:label>Molecule</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/NanoscaleSample -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/NanoscaleSample">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
+        <rdfs:label>Nanoscale Sample</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Occupancy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Occupancy">
+        <rdfs:label>Occupancy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/PositionVector -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/PositionVector">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <rdfs:label>Position Vector</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/SimulationCell -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCell">
+        <rdfs:label>Simulation Cell</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/SimulationCellAngle -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCellAngle">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
+        <rdfs:label>Simulation Cell Angle</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Length"/>
+        <rdfs:label>Simulation Cell Length</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/SimulationCellVector -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCellVector">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <rdfs:label>Simulation Cell Vector</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/SpaceGroup -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SpaceGroup">
+        <rdfs:label>Space Group</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Structure -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Structure">
+        <rdfs:label>Structure</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/UnitCell -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/UnitCell">
+        <rdfs:label>Unit Cell</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Vector -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Vector">
+        <rdfs:label>Vector</rdfs:label>
+    </owl:Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+

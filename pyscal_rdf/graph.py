@@ -12,11 +12,12 @@ from pyscal.core import System
 
 CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
 
-styledict = {
+defstyledict = {
     "BNode": {"color": "#ffe6ff", 
               "shape": "box", 
               "style": "filled",
-              "fontsize": "8"},
+              "fontsize": "8",
+              "fontname": "Courier"},
     "URIRef": {"color": "#ffffcc", 
                "shape": "box", 
                "style": "filled",
@@ -26,6 +27,15 @@ styledict = {
                 "style": "filled",
                 "fontsize": "8"},
 }
+
+def _replace_keys(refdict, indict):
+    for key, val in indict.items():
+        if key in refdict.keys():
+            if isinstance(val, dict):
+                _replace_keys(refdict[key], indict[key])
+            else:
+                refdict[key] = val
+    return refdict
 
 class StructureGraph:
     def __init__(self, graph_file=None):
@@ -229,11 +239,16 @@ class StructureGraph:
             #finally occupancy
             self.graph.add((atom, CMSO.hasCoordinationNumber, Literal(self.sysdict["Coordination"][x],
                                                                      datatype=XSD.integer)))
-        
+
+    
+
     def visualise(self, edge_color="#37474F",
-            styledict=styledict, rankdir='BT'):
+            styledict=None, graph_attr ={'rankdir': 'BT'},):
+        sdict = defstyledict.copy()
+        if styledict is not None:
+            sdict = _replace_keys(sdict, styledict)
         return visualize_graph(self.graph, edge_color=edge_color,
-            styledict=styledict, rankdir=rankdir)
+            styledict=sdict, graph_attr=graph_attr)
     
     def write(self, filename, format="json-ld"):
         with open(filename, "w") as fout:
