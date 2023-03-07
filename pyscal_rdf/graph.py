@@ -242,13 +242,21 @@ class StructureGraph:
 
     
 
-    def visualise(self, edge_color="#37474F",
-            styledict=None, graph_attr ={'rankdir': 'BT'},):
+    def visualise(self, backend='ipycytoscape',
+                  edge_color="#37474F",
+                  styledict=None, 
+                  graph_attr ={'rankdir': 'BT'},
+                  layoutname='cola'):
+        
         sdict = defstyledict.copy()
         if styledict is not None:
             sdict = _replace_keys(sdict, styledict)
-        return visualize_graph(self.graph, edge_color=edge_color,
-            styledict=sdict, graph_attr=graph_attr)
+        return visualize_graph(self.graph, 
+                               backend=backend,
+                               edge_color=edge_color,
+                               styledict=sdict, 
+                               graph_attr=graph_attr,
+                               layoutname=layoutname)
     
     def write(self, filename, format="json-ld"):
         with open(filename, "w") as fout:
