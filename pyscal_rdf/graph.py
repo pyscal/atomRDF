@@ -40,6 +40,9 @@ def _replace_keys(refdict, indict):
 class StructureGraph:
     def __init__(self, graph_file=None):
         self.graph = Graph()
+        #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+        #self.graph.parse(owlfile, format='xml')
+
         self.graph.bind("cmso", CMSO)
         if graph_file is not None:
             if os.path.exists(graph_file):
@@ -242,13 +245,21 @@ class StructureGraph:
 
     
 
-    def visualise(self, edge_color="#37474F",
-            styledict=None, graph_attr ={'rankdir': 'BT'},):
+    def visualise(self, backend='ipycytoscape',
+                  edge_color="#37474F",
+                  styledict=None, 
+                  graph_attr ={'rankdir': 'BT'},
+                  layoutname='cola'):
+        
         sdict = defstyledict.copy()
         if styledict is not None:
             sdict = _replace_keys(sdict, styledict)
-        return visualize_graph(self.graph, edge_color=edge_color,
-            styledict=sdict, graph_attr=graph_attr)
+        return visualize_graph(self.graph, 
+                               backend=backend,
+                               edge_color=edge_color,
+                               styledict=sdict, 
+                               graph_attr=graph_attr,
+                               layoutname=layoutname)
     
     def write(self, filename, format="json-ld"):
         with open(filename, "w") as fout:
@@ -295,4 +306,9 @@ class StructureGraph:
             return sys.to_ase()
         else:
             sys.to_file(filename, format=format)
+    
+    def serialize(self, filename, format='turtle'):
+        owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+        self.graph.parse(owlfile, format='xml')
+        
             
