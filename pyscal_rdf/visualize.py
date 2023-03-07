@@ -58,6 +58,6 @@ def visualize_graph(g,
                  fontsize=styledict[istype2]["fontsize"])
         
         string3, istype = parse_object(k[1])
-        dot.edge(id2, id1, color=edge_color, label=string3, fontsize=styledict[istype2]["fontsize"])
+        dot.edge(id1, id2, color=edge_color, label=string3, fontsize=styledict[istype2]["fontsize"])
     
     return dot
