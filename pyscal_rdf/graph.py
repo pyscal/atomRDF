@@ -40,6 +40,9 @@ def _replace_keys(refdict, indict):
 class StructureGraph:
     def __init__(self, graph_file=None):
         self.graph = Graph()
+        #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+        #self.graph.parse(owlfile, format='xml')
+
         self.graph.bind("cmso", CMSO)
         if graph_file is not None:
             if os.path.exists(graph_file):
@@ -303,4 +306,9 @@ class StructureGraph:
             return sys.to_ase()
         else:
             sys.to_file(filename, format=format)
+    
+    def serialize(self, filename, format='turtle'):
+        owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+        self.graph.parse(owlfile, format='xml')
+        
             

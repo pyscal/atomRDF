@@ -92,8 +92,8 @@ def _visualize_graph_ipycytoscape_backend(g,
         id3 = str(uuid.uuid4())
         d = {"data": {"id": str(id3), 
                       "label": str(string3), 
-                      "source": str(id1), 
-                      "target": str(id2),
+                      "source": id1, 
+                      "target": id2,
                       "fontsize": styledict[istype1]['fontsize']}}
         gdict["edges"].append(d)
     
@@ -115,9 +115,11 @@ def _visualize_graph_ipycytoscape_backend(g,
             'edge',
             'style': {
                 'font-family': 'arial',
-                'font-size': '10px',
                 'label': 'data(label)',
                 "font-size": 'data(fontsize)',
+                "target-arrow-shape": "triangle",
+                "target-arrow-color": edge_color,
+                "curve-style": "bezier",
             }},
          {'selector': 
             'node[classes="BNode"]',
@@ -140,7 +142,7 @@ def _visualize_graph_ipycytoscape_backend(g,
     ipycyobj.set_layout(
         name=layoutname,
         avoidOverlap=True,
-        animate: True,)
+        animate=True,)
     ipycyobj.graph.add_graph_from_json(gdict, directed=True)
     ipycyobj.set_style(my_style)
     return ipycyobj   
