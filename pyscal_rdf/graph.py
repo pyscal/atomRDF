@@ -37,7 +37,7 @@ def _replace_keys(refdict, indict):
                 refdict[key] = val
     return refdict
 
-class StructureGraph:
+class RDFGraph:
     def __init__(self, graph_file=None):
         self.graph = Graph()
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
