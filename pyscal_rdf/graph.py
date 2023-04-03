@@ -11,6 +11,7 @@ from pyscal.atoms import Atoms
 from pyscal.core import System
 
 CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
+PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
 
 defstyledict = {
     "BNode": {"color": "#ffe6ff", 
@@ -44,6 +45,7 @@ class RDFGraph:
         #self.graph.parse(owlfile, format='xml')
 
         self.graph.bind("cmso", CMSO)
+        self.graph.bind("pldo", PLDO)
         if graph_file is not None:
             if os.path.exists(graph_file):
                 self.graph.parse(input_info)
@@ -255,7 +257,52 @@ class RDFGraph:
                                                                      datatype=XSD.integer)))
 
     
+    
+    def add_gb(self, gb_dict, name=None):
+        #mark that the structure has a defect
+        plane_defect_01 = BNode(name)
+        self.add((self.material, CMSO.hasDefect, plane_defect_01))
+        
+        if gb_dict["GBType"] is None:
+            self.add((defect_01, RDF.type, PLDO.GrainBoundary))
+        elif gb_dict["GBType"] == "Twist":
+            self.add((defect_01, RDF.type, PLDO.TwistBoundary))
+        elif gb_dict["GBType"] == "Tilt":
+            self.add((defect_01, RDF.type, PLDO.TiltBoundary))
+        elif gb_dict["GBType"] == "Symmetric Tilt":
+            self.add((defect_01, RDF.type, PLDO.SymmetricTiltBoundary))
+        elif gb_dict["GBType"] == "Mixed":
+            self.add((defect_01, RDF.type, PLDO.MixedBoundary))
+        
+        #now mark that the defect is GB
+        uname = None
+        if name is not None:
+            uname = f'{name}GrainBoundaryPlane'
+        gb_plane_01 = BNode()
+        self.add((defect_01, PLDO.hasGBPlane, gb_plane_01))
+        self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
+        self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
+                                                             datatype=XSD.string)))
+        
+        uname = None
+        if name is not None:
+            uname = f'{name}RotationAxis'
+        rotation_axis_01 = BNode()
+        self.add((defect_01, PLDO.hasRotationAxis, rotation_axis_01))
+        self.add((rotation_axis_01, RDF.type, PLDO.RotationAxis))
+        self.add((rotation_axis_01, PLDO.hasComponentX, Literal(gb_dict["RotationAxis"][0], datatype=XSD.float)))
+        self.add((rotation_axis_01, PLDO.hasComponentY, Literal(gb_dict["RotationAxis"][1], datatype=XSD.float)))
+        self.add((rotation_axis_01, PLDO.hasComponentZ, Literal(gb_dict["RotationAxis"][2], datatype=XSD.float)))
 
+        uname = None
+        if name is not None:
+            uname = f'{name}MisorientationAngle'
+        misorientation_angle_01 = BNode()
+        self.add((defect_01, PLDO.hasMisorientationAngle, misorientation_angle_01))
+        self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
+        self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
+        
+        
     def visualise(self, backend='ipycytoscape',
                   edge_color="#37474F",
                   styledict=None, 

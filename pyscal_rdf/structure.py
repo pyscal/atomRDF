@@ -74,6 +74,12 @@ class StructureGraph(RDFGraph):
                 raise ValueError("Either structure or element should be provided")
                 
             #mapping of the system can be done
-            
+            self.add_structure_to_graph(sys)
+            gb_dict = {"GBPlane": gb_plane,
+                      "RotationAxis": " ".join(axis.astype(str)),
+                      "MisorientationAngle": gb.theta,
+                      "GBType": gb.find_gb_character(),
+                      }
+            self.add_gb(gb_dict)
             
 
