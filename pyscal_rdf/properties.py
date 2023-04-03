@@ -1,5 +1,4 @@
 import numpy as np
-from pyscal.operations.symmetry import Symmetry
 import spglib
 
 def get_angle(vec1, vec2):
