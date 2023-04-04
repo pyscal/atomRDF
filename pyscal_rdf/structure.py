@@ -1,6 +1,8 @@
+import numpy as np
 from pyscal.core import System
 from pyscal.crystal_structures import structure_creator, elements, structures
 from pyscal_rdf.graph import RDFGraph
+from pyscal.grain_boundary import GrainBoundary
 
 class StructureGraph(RDFGraph):
     def __init__(self, graph_file=None):
@@ -45,4 +47,41 @@ class StructureGraph(RDFGraph):
         if add_to_graph:
             self.add_structure_to_graph(sys)
         return sys
+    
+    def create_grain_boundary(self, axis, 
+                              sigma, gb_plane,
+                              structure=None,
+                              element=None, 
+                              lattice_constant=1,
+                              repetitions=(1,1,1),
+                              overlap=0.0,
+                              
+                              add_to_graph=True):
+        gb = GrainBoundary()
+        gb.create_grain_boundary(axis=axis, sigma=sigma, 
+                                 gb_plane=gb_plane)
+        if lattice_constant is not None:
+            #use standard creation routine
+            if structure is not None:
+                sys = gb.populate_grain_boundary(structure, 
+                                                 repetitions=repetitions,
+                                                 lattice_parameter = lattice_constant,
+                                                 overlap=overlap)
+            elif element is not None:
+                sys = gb.populate_grain_boundary(element, 
+                                                 repetitions=repetitions,
+                                                 overlap=overlap)
+            else:
+                raise ValueError("Either structure or element should be provided")
+                
+            #mapping of the system can be done
+            self.add_structure_to_graph(sys)
+            gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
+                      "RotationAxis": axis,
+                      "MisorientationAngle": gb.theta,
+                      "GBType": gb.find_gb_character(),
+                      "sigma": gb.sigma,
+                      }
+            self.add_gb(gb_dict)
+            
 
