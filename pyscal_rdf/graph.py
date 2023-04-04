@@ -3,6 +3,7 @@ from rdflib.store import NO_STORE, VALID_STORE
 
 import os
 import numpy as np
+from ase.io import write
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.rdfutils import convert_to_dict
@@ -264,22 +265,22 @@ class RDFGraph:
         self.add((self.material, CMSO.hasDefect, plane_defect_01))
         
         if gb_dict["GBType"] is None:
-            self.add((defect_01, RDF.type, PLDO.GrainBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.GrainBoundary))
         elif gb_dict["GBType"] == "Twist":
-            self.add((defect_01, RDF.type, PLDO.TwistBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.TwistBoundary))
         elif gb_dict["GBType"] == "Tilt":
-            self.add((defect_01, RDF.type, PLDO.TiltBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.TiltBoundary))
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            self.add((defect_01, RDF.type, PLDO.SymmetricTiltBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.SymmetricTiltBoundary))
         elif gb_dict["GBType"] == "Mixed":
-            self.add((defect_01, RDF.type, PLDO.MixedBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.MixedBoundary))
         
         #now mark that the defect is GB
         uname = None
         if name is not None:
             uname = f'{name}GrainBoundaryPlane'
         gb_plane_01 = BNode()
-        self.add((defect_01, PLDO.hasGBPlane, gb_plane_01))
+        self.add((plane_defect_01, PLDO.hasGBPlane, gb_plane_01))
         self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
         self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
                                                              datatype=XSD.string)))
@@ -288,7 +289,7 @@ class RDFGraph:
         if name is not None:
             uname = f'{name}RotationAxis'
         rotation_axis_01 = BNode()
-        self.add((defect_01, PLDO.hasRotationAxis, rotation_axis_01))
+        self.add((plane_defect_01, PLDO.hasRotationAxis, rotation_axis_01))
         self.add((rotation_axis_01, RDF.type, PLDO.RotationAxis))
         self.add((rotation_axis_01, PLDO.hasComponentX, Literal(gb_dict["RotationAxis"][0], datatype=XSD.float)))
         self.add((rotation_axis_01, PLDO.hasComponentY, Literal(gb_dict["RotationAxis"][1], datatype=XSD.float)))
@@ -298,7 +299,7 @@ class RDFGraph:
         if name is not None:
             uname = f'{name}MisorientationAngle'
         misorientation_angle_01 = BNode()
-        self.add((defect_01, PLDO.hasMisorientationAngle, misorientation_angle_01))
+        self.add((plane_defect_01, PLDO.hasMisorientationAngle, misorientation_angle_01))
         self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
         self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
         
@@ -362,6 +363,9 @@ class RDFGraph:
         sys = self.get_system_from_sample(sample)
         if format=="ase":
             return sys.to_ase()
+        elif format=='poscar':
+            asesys = sys.to_ase()
+            write(filename, asesys, format="vasp")
         else:
             sys.to_file(filename, format=format)
     

@@ -28,6 +28,43 @@ class Sparql:
         samples = [j[0] for j in qres]
         return samples
     
+    def sample_by_defect(self, g, defect):
+        defect = defect.lower()
+        defectdict = {"tilt": "TiltBoundary", 
+                      "twist": "TwistBoundary", 
+                      "symmetric tilt": "SymmetricTiltBoundary", 
+                      "mixed": "MixedBoundary", 
+                      "grain boundary": None}
+        
+        if defect not in defectdict.keys():
+            raise ValueError(f'Please choose defect from {defectlist.keys()}')
+        if defect != "grain boundary":
+            query = """
+            PREFIX cmso: <https://purls.helmholtz-metadaten.de/cmso/>
+            PREFIX pldo: <https://purls.helmholtz-metadaten.de/pldo/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            SELECT DISTINCT ?sample
+            WHERE {
+                ?sample cmso:hasMaterial ?material .
+                ?material cmso:hasDefect ?defect .
+                ?defect rdf:type pldo:%s .
+            }"""%(defectdict[defect])
+        else:
+            querycomm = ['{?defect rdf:type pldo:%s}'%val for key, val in defectdict.items()]
+            querycomm = " UNION ".join(querycomm)
+            query = """
+            PREFIX cmso: <https://purls.helmholtz-metadaten.de/cmso/>
+            PREFIX pldo: <https://purls.helmholtz-metadaten.de/pldo/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            SELECT DISTINCT ?sample
+            WHERE {
+                ?sample cmso:hasMaterial ?material .
+                ?material cmso:hasDefect ?defect .
+                %s .
+            }"""%(querycomm)
+        qres = g.graph.query(query)
+        samples = [j[0] for j in qres]
+        return samples        
 class Python:
     def __init__(self):
         pass

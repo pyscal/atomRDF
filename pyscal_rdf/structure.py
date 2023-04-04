@@ -1,3 +1,4 @@
+import numpy as np
 from pyscal.core import System
 from pyscal.crystal_structures import structure_creator, elements, structures
 from pyscal_rdf.graph import RDFGraph
@@ -75,8 +76,8 @@ class StructureGraph(RDFGraph):
                 
             #mapping of the system can be done
             self.add_structure_to_graph(sys)
-            gb_dict = {"GBPlane": gb_plane,
-                      "RotationAxis": " ".join(axis.astype(str)),
+            gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
+                      "RotationAxis": axis,
                       "MisorientationAngle": gb.theta,
                       "GBType": gb.find_gb_character(),
                       }
