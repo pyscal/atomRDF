@@ -80,6 +80,7 @@ class StructureGraph(RDFGraph):
                       "RotationAxis": axis,
                       "MisorientationAngle": gb.theta,
                       "GBType": gb.find_gb_character(),
+                      "sigma": gb.sigma,
                       }
             self.add_gb(gb_dict)
             

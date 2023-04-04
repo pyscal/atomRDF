@@ -274,6 +274,7 @@ class RDFGraph:
             self.add((plane_defect_01, RDF.type, PLDO.SymmetricTiltBoundary))
         elif gb_dict["GBType"] == "Mixed":
             self.add((plane_defect_01, RDF.type, PLDO.MixedBoundary))
+        self.add((plane_defect_01, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
         
         #now mark that the defect is GB
         uname = None
