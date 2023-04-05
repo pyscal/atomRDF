@@ -13,5 +13,5 @@ dependencies:
   - ase 
   - ipycytoscape
   - voila
-  - pyvista
-  - trame
+  - plotly
+  - jupyterlab-dash
