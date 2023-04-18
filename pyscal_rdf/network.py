@@ -20,7 +20,6 @@ class Network:
         nx.draw(self.g, with_labels=True, font_weight='bold')
         
     def get_shortest_path(self, source, target):
-        if not source
         path = nx.shortest_path(self.g, source=source, target=target)
         return path
     
