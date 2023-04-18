@@ -6,7 +6,9 @@ The package is currently under activate development and could be unstable.
 
 You can try `pyscal_rdf` here:
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pyscal/pyscal_rdf/HEAD?labpath=example.ipynb)
+| Jupyter notebook  | GUI |
+|-------------------|-----|
+| [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pyscal/pyscal_rdf/HEAD?labpath=example.ipynb)  | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/pyscal/pyscal_rdf/voila?urlpath=voila%2Frender%2Fexample_gui.ipynb)  |
 
 ## Installation
 
