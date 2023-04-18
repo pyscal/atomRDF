@@ -86,4 +86,96 @@ class OntologyNetwork(Network):
             triplets.append(path[2*x:2*x+3])
         return triplets
         
+    def formulate_query(self, target, value):
+        #first get triplets
+        triplets = self.get_path_from_sample(target)
+        #start building query
+        query = self._formulate_query_path(triplets)
+        query.append(self._formulate_filter_expression(triplets, value))
+        return query
+        
+    
+    def _formulate_query_path(self, triplets):
+        query = []
+        query.append("PREFIX cmso: <https://purls.helmholtz-metadaten.de/cmso/>")
+        query.append("SELECT DISTINCT ?sample")
+        query.append("WHERE {")
+        for triple in triplets:
+            query.append("    ?%s cmso:%s ?%s ."%(triple[0].lower(), 
+                                                  triple[1], 
+                                                  triple[2].lower()))
+        return query
+    
+    def _formulate_filter_expression(self, triplets, value):                        
+        value, datatype = self._check_value(value)        
+        last_val = self.g.nodes[triplets[-1][-1]]
+        last_val_name = triplets[-1][-1].lower()
+        
+        #if it is nodetype data
+        if last_val['node_type'] == "data":
+            if datatype == "multi_string":
+                qstr = self._formulate_or_string_query(last_val, 
+                                                   last_val_name, 
+                                                   value)
+            elif datatype == "multi_number":
+                qstr = self._formulate_range_number_query(last_val, 
+                                                   last_val_name, 
+                                                   value)
+            else:
+                qstr = self._formulate_equal_query(last_val, 
+                                                   last_val_name, 
+                                                   value)
+        else:
+            raise NotImplementedError("Non-data queries are not implemented")
+    
+    def _check_value(self, value):
+        if isinstance(value, list):
+            if not len(value) == 2:
+                raise ValueError("value can be maximum length 2")
+        else:
+            value = [value]
+        if all(isinstance(x, str) for x in value):
+            datatype = "string"
+        elif all(isinstance(x, (int, float)) for x in value):
+            datatype = "number"
+        else:
+            raise TypeError("Values have to be of same type")
+        if len(value) == 1:
+            datatype = f'single_{datatype}'
+        else:
+            datatype = f'multi_{datatype}'
+        return value, datatype
+    
+    
+    def _formulate_equal_query(self, last_val, last_val_name, value):
+        qstr = "FILTER (?%s=\"%s\"^^xsd:%s)"%(last_val_name, 
+                                              str(value[0]), 
+                                              last_val['dtype'])
+        return qstr
+    
+    def _formulate_or_string_query(self, last_val, last_val_name, value):
+        qstr = "FILTER (?%s=\"%s\"^^xsd:%s || ?%s=\"%s\"^^xsd:%s)"%(last_val_name, 
+                                                                    str(value[0]), 
+                                                                    last_val['dtype'],
+                                                                    last_val_name, 
+                                                                    str(value[1]), 
+                                                                    last_val['dtype'],)
+        return qstr
+    
+    def _formulate_range_number_query(self, last_val, last_val_name, value):
+        value = np.sort(value)
+        qstr = "FILTER (?%s >= \"%s\"^^xsd:%s && ?%s <= \"%s\"^^xsd:%s)"%(last_val_name, 
+                                                                    str(value[0]), 
+                                                                    last_val['dtype'],
+                                                                    last_val_name, 
+                                                                    str(value[1]), 
+                                                                    last_val['dtype'],)
+        return qstr
+
+        
+            
+            
+            
+
+        
         
