@@ -10,9 +10,13 @@ class Network:
         self.g = nx.DiGraph()
     
     def add(self, sub, pred, obj, dtype=None):
-        self.g.add_node(sub)
-        self.g.add_node(pred)
-        self.g.add_node(obj, dtype=dtype)            
+        self.g.add_node(sub, node_type="object")
+        self.g.add_node(pred, node_type="property")
+        if dtype is not None:
+            nd = "data"
+        else:
+            nd = "object"
+        self.g.add_node(obj, dtype=dtype, node_type=nd)            
         self.g.add_edge(sub, pred)
         self.g.add_edge(pred, obj)
     
