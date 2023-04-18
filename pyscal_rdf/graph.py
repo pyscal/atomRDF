@@ -7,6 +7,7 @@ from ase.io import write
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.rdfutils import convert_to_dict
+from pyscal_rdf.network import OntologyNetwork
 from pyscal.core import System
 from pyscal.atoms import Atoms
 from pyscal.core import System
@@ -53,6 +54,7 @@ class RDFGraph:
         self.sample = None
         self.material = None
         self.sysdict = None
+        self._query_graph = OntologyNetwork()
     
     def process_structure(self, structure):
         if isinstance(structure, System):
@@ -373,5 +375,13 @@ class RDFGraph:
     def serialize(self, filename, format='turtle'):
         owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
         self.graph.parse(owlfile, format='xml')
+        
+    def query_sample(self, target_property, value, return_query=False):
+        query = self._query_graph.formulate_query(target_property, value)
+        res = self.graph.query(query)
+        res = [r for r in res]
+        if return_query:
+            return res, query
+        return res
         
             
