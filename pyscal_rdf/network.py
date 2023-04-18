@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 class Network:
     """
@@ -92,6 +92,8 @@ class OntologyNetwork(Network):
         #start building query
         query = self._formulate_query_path(triplets)
         query.append(self._formulate_filter_expression(triplets, value))
+        query.append("}")
+        query = " ".join(query)
         return query
         
     
@@ -125,6 +127,7 @@ class OntologyNetwork(Network):
                 qstr = self._formulate_equal_query(last_val, 
                                                    last_val_name, 
                                                    value)
+            return qstr
         else:
             raise NotImplementedError("Non-data queries are not implemented")
     
