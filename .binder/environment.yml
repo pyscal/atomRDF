@@ -15,3 +15,4 @@ dependencies:
   - voila
   - plotly
   - jupyterlab-dash
+  - networkx

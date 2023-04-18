@@ -12,4 +12,4 @@ dependencies:
   - pyyaml
   - ase 
   - ipycytoscape
-  - voila
+  - networkx
