@@ -19,8 +19,9 @@ class Network:
     def draw(self):
         nx.draw(self.g, with_labels=True, font_weight='bold')
         
-    def get_shortest_path(self, source, destination):
-        path = nx.shortest_path(self.g, source=source, target=destination)
+    def get_shortest_path(self, source, target):
+        if not source
+        path = nx.shortest_path(self.g, source=source, target=target)
         return path
     
 class OntologyNetwork(Network):
@@ -73,5 +74,13 @@ class OntologyNetwork(Network):
         self.add("UnitCell", "hasAngle", "LatticeAngle")
         self.add("LatticeAngle", "hasAngle_alpha", "LatticeAngle_alpha", dtype="float")
         self.add("LatticeAngle", "hasAngle_beta", "LatticeAngle_beta", dtype="float")
-        self.add("LatticeAngle", "hasAngle_gamma", "LatticeAngle_gamma", dtype="float")        
+        self.add("LatticeAngle", "hasAngle_gamma", "LatticeAngle_gamma", dtype="float")
+        
+    def get_path_from_sample(self, target):
+        path = self.get_shortest_path(source="Sample", target=target)
+        triplets = []
+        for x in range(len(path)//2):
+            triplets.append(path[2*x:2*x+3])
+        return triplets
+        
         
