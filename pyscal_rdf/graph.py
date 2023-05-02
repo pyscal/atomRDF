@@ -395,5 +395,10 @@ class RDFGraph:
         if return_query:
             return res, query
         return res
+    
+    
+    @property
+    def n_samples(self):
+        return len([x for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))])
         
             
