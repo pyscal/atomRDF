@@ -5,7 +5,7 @@ import os
 import numpy as np
 from ase.io import write
 
-from pyscal_rdf.visualize import visualize_graph
+from pyscal_rdf.visualize import visualize_graph, visualize_sample
 from pyscal_rdf.rdfutils import convert_to_dict
 from pyscal_rdf.network import OntologyNetwork
 from pyscal.core import System
@@ -306,8 +306,12 @@ class RDFGraph:
         self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
         self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
         
+    def visualize(self, *args, **kwargs):
+        raise ValueError("did you mean to call visualise with an s?")
         
-    def visualise(self, backend='ipycytoscape',
+    def visualise(self,
+                  sample=None,
+                  backend='ipycytoscape',
                   edge_color="#37474F",
                   styledict=None, 
                   graph_attr ={'rankdir': 'BT'},
@@ -316,12 +320,20 @@ class RDFGraph:
         sdict = defstyledict.copy()
         if styledict is not None:
             sdict = _replace_keys(sdict, styledict)
-        return visualize_graph(self.graph, 
-                               backend=backend,
-                               edge_color=edge_color,
-                               styledict=sdict, 
-                               graph_attr=graph_attr,
-                               layoutname=layoutname)
+        if sample is None:
+            return visualize_graph(self.graph, 
+                                   backend=backend,
+                                   edge_color=edge_color,
+                                   styledict=sdict, 
+                                   graph_attr=graph_attr,
+                                   layoutname=layoutname)
+        else:
+            return visualize_sample(self.graph,
+                                   sample,
+                                   edge_color=edge_color,
+                                   styledict=sdict, 
+                                   layoutname=layoutname)
+    
     
     def write(self, filename, format="json-ld"):
         with open(filename, "w") as fout:
