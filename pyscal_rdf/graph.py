@@ -400,5 +400,9 @@ class RDFGraph:
     @property
     def n_samples(self):
         return len([x for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))])
+    
+    @property
+    def samples(self):
+        return [x[0] for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))]
         
             
