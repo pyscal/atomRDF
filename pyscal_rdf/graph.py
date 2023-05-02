@@ -328,6 +328,7 @@ class RDFGraph:
                                    graph_attr=graph_attr,
                                    layoutname=layoutname)
         else:
+            raise NotImplementedError("Visualising samples is not yet implemented")
             return visualize_sample(self.graph,
                                    sample,
                                    edge_color=edge_color,
