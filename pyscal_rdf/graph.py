@@ -311,7 +311,6 @@ class RDFGraph:
         raise ValueError("did you mean to call visualise with an s?")
         
     def visualise(self,
-                  sample=None,
                   backend='ipycytoscape',
                   edge_color="#37474F",
                   styledict=None, 
@@ -321,20 +320,12 @@ class RDFGraph:
         sdict = defstyledict.copy()
         if styledict is not None:
             sdict = _replace_keys(sdict, styledict)
-        if sample is None:
-            return visualize_graph(self.graph, 
-                                   backend=backend,
-                                   edge_color=edge_color,
-                                   styledict=sdict, 
-                                   graph_attr=graph_attr,
-                                   layoutname=layoutname)
-        else:
-            raise NotImplementedError("Visualising samples is not yet implemented")
-            return visualize_sample(self.graph,
-                                   sample,
-                                   edge_color=edge_color,
-                                   styledict=sdict, 
-                                   layoutname=layoutname)
+        return visualize_graph(self.graph, 
+                               backend=backend,
+                               edge_color=edge_color,
+                               styledict=sdict, 
+                               graph_attr=graph_attr,
+                               layoutname=layoutname)
     
     
     def write(self, filename, format="json-ld"):
