@@ -54,6 +54,7 @@ class RDFGraph:
         self.sample = None
         self.material = None
         self.sysdict = None
+        self.sgraph = None
         self._query_graph = OntologyNetwork()
     
     def process_structure(self, structure):
@@ -340,7 +341,57 @@ class RDFGraph:
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
             
+        
+    def to_file(self, sample, filename=None, format="lammps-dump"):
+        if filename is None:
+            filename = os.path.join(os.getcwd(), "out")
+        sys = self.get_system_from_sample(sample)
+        if format=="ase":
+            return sys.to_ase()
+        elif format=='poscar':
+            asesys = sys.to_ase()
+            write(filename, asesys, format="vasp")
+        else:
+            sys.to_file(filename, format=format)
     
+    def serialize(self, filename, format='turtle'):
+        owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+        self.graph.parse(owlfile, format='xml')
+        
+    def query_sample(self, target_property, value, return_query=False):
+        query = self._query_graph.formulate_query(target_property, value)
+        res = self.graph.query(query)
+        res = [r for r in res]
+        if return_query:
+            return res, query
+        return res
+    
+    #################################
+    # Methods to interact with sample
+    #################################
+    @property
+    def n_samples(self):
+        return len([x for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))])
+    
+    @property
+    def samples(self):
+        return [x[0] for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+        
+    def iterate_graph(self, item, create_new_graph=False):
+        if create_new_graph:
+            self.sgraph = StructureGraph()
+        triples = list(self.graph.triples((item, None, None)))
+        for triple in triples:
+            self.sgraph.graph.add(triple)
+            self.iterate_graph(triple[2])
+    
+    def get_sample(self, sample):
+        """
+        Get the given sample as a StructureGraph for further processing
+        """
+        self.iterate_graph(sample, create_new_graph=True)
+        return self.sgraph
+        
     def get_system_from_sample(self, sample):
         simcell = self.graph.value(sample, CMSO.hasSimulationCell)
         cell_vectors = [[], [], []]
@@ -372,38 +423,3 @@ class RDFGraph:
         sys.atoms = at
         
         return sys
-    
-    def to_file(self, sample, filename=None, format="lammps-dump"):
-        if filename is None:
-            filename = os.path.join(os.getcwd(), "out")
-        sys = self.get_system_from_sample(sample)
-        if format=="ase":
-            return sys.to_ase()
-        elif format=='poscar':
-            asesys = sys.to_ase()
-            write(filename, asesys, format="vasp")
-        else:
-            sys.to_file(filename, format=format)
-    
-    def serialize(self, filename, format='turtle'):
-        owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
-        self.graph.parse(owlfile, format='xml')
-        
-    def query_sample(self, target_property, value, return_query=False):
-        query = self._query_graph.formulate_query(target_property, value)
-        res = self.graph.query(query)
-        res = [r for r in res]
-        if return_query:
-            return res, query
-        return res
-    
-    
-    @property
-    def n_samples(self):
-        return len([x for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))])
-    
-    @property
-    def samples(self):
-        return [x[0] for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))]
-        
-            
