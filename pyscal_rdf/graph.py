@@ -376,11 +376,14 @@ class RDFGraph:
             self.sgraph.graph.add(triple)
             self.iterate_graph(triple[2])
     
-    def get_sample(self, sample):
+    def get_sample(self, sample, no_atoms=False):
         """
         Get the given sample as a StructureGraph for further processing
         """
         self.iterate_graph(sample, create_new_graph=True)
+        if no_atoms:
+            na = self.sgraph.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
+            return self.sgraph, na
         return self.sgraph
         
     def get_system_from_sample(self, sample):
