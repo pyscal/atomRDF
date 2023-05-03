@@ -370,7 +370,7 @@ class RDFGraph:
         
     def iterate_graph(self, item, create_new_graph=False):
         if create_new_graph:
-            self.sgraph = StructureGraph()
+            self.sgraph = RDFGraph()
         triples = list(self.graph.triples((item, None, None)))
         for triple in triples:
             self.sgraph.graph.add(triple)
