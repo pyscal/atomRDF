@@ -1,5 +1,5 @@
 from ipywidgets import HBox, VBox, Layout
-from .create import output, dropdown, button, checkbox, textbox, header, upload
+from pyscal_rdf.gui.create import output, dropdown, button, checkbox, textbox, header, upload
 
 class SparqlQuery:
     def __init__(self, theme="teal"):

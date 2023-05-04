@@ -1,5 +1,5 @@
 from ipywidgets import HBox, VBox, Layout
-from .create import dropdown, button, checkbox, textbox, header, upload
+from pyscal_rdf.gui.create import dropdown, button, checkbox, textbox, header, upload
 
 class ReadStructure:
     def __init__(self, theme="teal"):

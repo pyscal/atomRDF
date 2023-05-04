@@ -1,6 +1,6 @@
 from ipywidgets import HBox, VBox, Layout
-from .create import output, dropdown, button, checkbox, textbox, header, upload, text
-from .properties import dataprops, options
+from pyscal_rdf.gui.create import output, dropdown, button, checkbox, textbox, header, upload, text
+from pyscal_rdf.gui.properties import dataprops, options
 
 class AutoQuery:
     def __init__(self, theme="teal"):

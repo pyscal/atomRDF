@@ -1,6 +1,6 @@
 import ipywidgets as widgets
 from ipywidgets import Layout
-from .themes import themes
+from pyscal_rdf.gui.themes import themes
 import panel as pn
 pn.extension()
 

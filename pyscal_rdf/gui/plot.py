@@ -3,7 +3,7 @@ import numpy as np
 from plotly import graph_objs as go
 
 #color themes
-from .themes import themes
+from pyscal_rdf.gui.themes import themes
 
 def create_box_plot(box, origin=[0,0,0]):
     """
