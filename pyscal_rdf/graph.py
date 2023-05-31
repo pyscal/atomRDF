@@ -50,7 +50,7 @@ class RDFGraph:
         self.graph.bind("pldo", PLDO)
         if graph_file is not None:
             if os.path.exists(graph_file):
-                self.graph.parse(input_info)
+                self.graph.parse(graph_file)
         self.sample = None
         self.material = None
         self.sysdict = None
