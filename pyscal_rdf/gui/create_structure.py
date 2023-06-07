@@ -1,5 +1,5 @@
 from ipywidgets import HBox, VBox, Layout
-from pyscal_rdf.gui.create import dropdown, button, checkbox, textbox, header
+from pyscal_rdf.gui.create import output, dropdown, button, checkbox, textbox, header
 from pyscal.crystal_structures import elements, structures
 st_list = list(structures.keys())
 
@@ -26,6 +26,11 @@ class CreateStructure:
                                       value="Fe", 
                                       theme=theme,
                                       dtype="text")
+        self.element_box_2 = textbox('Element', 
+                                      value="Al", 
+                                      theme=theme,
+                                      dtype="text",
+                                      disabled=True)
         self.text = "Create a lattice"
         self.header = header(self.text, theme=theme)
         self.panel = VBox(children=[self.header,
@@ -33,6 +38,7 @@ class CreateStructure:
                                    self.checkbox,
                                    self.repetition_box,
                                    self.lattice_parameter_box,
-                                   self.element_box, 
+                                   self.element_box,
+                                   self.element_box_2, 
                                    self.run_button])
     

@@ -41,33 +41,33 @@ def checkbox(description, value=True, theme="teal"):
     )
     return checkbox 
 
-def textbox(description, value, dtype, theme="teal"):
+def textbox(description, value, dtype, theme="teal", disabled=False):
     if dtype == "int":
         inttext = widgets.IntText(
             value=value,
             description=description,
-            disabled=False
+            disabled=disabled,
         )
         return inttext
     elif dtype == "float":
         inttext = widgets.FloatText(
             value=value,
             description=description,
-            disabled=False
+            disabled=disabled,
         )
         return inttext
     elif dtype == "text":
         inttext = widgets.Text(
             value=value,
             description=description,
-            disabled=False
+            disabled=disabled,
         )
         return inttext 
     elif dtype == "textarea":
         inttext = widgets.Textarea(
             value=value,
             description=description,
-            disabled=False,
+            disabled=disabled,
             layout=Layout(width="auto", height="100%")
         )
         return inttext 

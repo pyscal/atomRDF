@@ -38,7 +38,16 @@ def plot_3d(sys, theme="teal"):
     """
     Plot 3D of simulation box
     """
+    colors = [themes[theme]["atom"], '#cddc39', '#e57373',
+             '#f06292', '#ba68c8', '#2196f3',
+             '#009688', '#43a047', '#f9a825',
+             '#f57c00', '#e64a19', '#8d6e63']
     pos = np.array(sys.atoms.positions)
+    types = np.array(sys.atoms.types)
+    unique_types = np.unique(types)
+    color_dict = dict([(unique_types[count], colors[count]) for count, x in enumerate(unique_types)])
+    color_list = [color_dict[t] for t in types]
+    
     traces = create_box_plot(sys.box)
     radius = 10
     opacity = 1.0
@@ -53,7 +62,7 @@ def plot_3d(sys, theme="teal"):
             sizemode='diameter',
             sizeref=750,
             size=radius,
-            color = color,
+            color = color_list,
             opacity = opacity,
             line=dict(width=0.5, color='#455A64')
         ),
