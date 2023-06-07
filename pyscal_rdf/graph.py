@@ -14,6 +14,7 @@ from pyscal.core import System
 
 CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
+PODO = Namespace("https://purls.helmholtz-metadaten.de/podo/")
 
 defstyledict = {
     "BNode": {"color": "#ffe6ff", 
@@ -50,7 +51,7 @@ class RDFGraph:
         self.graph.bind("pldo", PLDO)
         if graph_file is not None:
             if os.path.exists(graph_file):
-                self.graph.parse(input_info)
+                self.graph.parse(graph_file)
         self.sample = None
         self.material = None
         self.sysdict = None
@@ -306,7 +307,15 @@ class RDFGraph:
         self.add((plane_defect_01, PLDO.hasMisorientationAngle, misorientation_angle_01))
         self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
         self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
-        
+    
+    def add_vacancy(self, concentration, number=None, name=None):
+        vacancy_01 = BNode(name)
+        self.add((self.sample, CMSO.hasDefect, vacancy_01))
+        self.add((vacancy_01, RDF.type, PODO.Vacancy))
+        self.add((vacancy_01, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
+        if number is not None:
+            self.add((vacancy_01, PODO.hasNumberOfVacancy, Literal(number, datatype=XSD.integer)))
+
     def visualize(self, *args, **kwargs):
         raise ValueError("did you mean to call visualise with an s?")
         
