@@ -6,7 +6,11 @@ class WriteStructure:
     def __init__(self, theme="teal"):
         #create widgets
         self.write_formats = ['lammps-data', 
-                             'lammps-dump']
+                             'lammps-dump',
+                             'turtle',
+                             'json-ld',
+                             'xml',
+                             'n3']
         self.dropdown = dropdown('File format',
                                 self.write_formats,
                                 value="lammps-data")
