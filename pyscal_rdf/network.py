@@ -9,7 +9,8 @@ class Network:
     def __init__(self):
         self.g = nx.DiGraph()
     
-    def add(self, sub, pred, obj, dtype=None):
+    def add(self, sub, pred, obj, dtype=None, pred_prefix="cmso"):
+        pred = f'{pred_prefix}:{pred}'
         self.g.add_node(sub, node_type="object")
         self.g.add_node(pred, node_type="property")
         if dtype is not None:
@@ -78,7 +79,30 @@ class OntologyNetwork(Network):
         self.add("LatticeAngle", "hasAngle_alpha", "LatticeAngle_alpha", dtype="float")
         self.add("LatticeAngle", "hasAngle_beta", "LatticeAngle_beta", dtype="float")
         self.add("LatticeAngle", "hasAngle_gamma", "LatticeAngle_gamma", dtype="float")
-        
+
+        #add GB properties
+        self.add("Material", "hasDefect", "Defect", pred_prefix="pldo")
+        self.add("Defect", "type", "GrainBoundary", pred_prefix="rdf")
+        self.add("Defect", "type", "TwistBoundary", pred_prefix="rdf")
+        self.add("Defect", "type", "TiltBoundary", pred_prefix="rdf")
+        self.add("Defect", "type", "SymmetricTiltBoundary", pred_prefix="rdf")
+        self.add("Defect", "type", "MixedBoundary", pred_prefix="rdf")
+        self.add("Defect", "hasSigmaValue", "Sigma", dtype="integer", pred_prefix="pldo")
+        self.add("Defect", "hasGBPlane", "GBPlane", pred_prefix="pldo")
+        self.add("GBPlane", "hasMillerIndices", "MillerIndices", dtype="string", pred_prefix="pldo")
+        self.add("Defect", "hasRotationAxis", "RotationAxis", pred_prefix="pldo")
+        self.add("RotationAxis", "hasComponentX", "RotationAxis_x", dtype="float", pred_prefix="pldo")
+        self.add("RotationAxis", "hasComponentY", "RotationAxis_y", dtype="float", pred_prefix="pldo")
+        self.add("RotationAxis", "hasComponentZ", "RotationAxis_z", dtype="float", pred_prefix="pldo")
+        self.add("Defect", "hasMisorientationAngle", "MisorientationAngle", pred_prefix="pldo")
+        self.add("MisorientationAngle", "hasAngle", "Angle", pred_prefix="pldo")
+
+        #add vacancy
+        self.add("Defect", "type", "Vacancy", pred_prefix="rdf")
+        self.add("Vacancy", "hasVacancyConcentration", "VacancyConcentration", pred_prefix="podo", dtype="float")
+        self.add("Vacancy", "hasNumberOfVacancy", "NumberOfVacancy", pred_prefix="podo", dtype="integer")
+         
+
     def get_path_from_sample(self, target):
         path = self.get_shortest_path(source="Sample", target=target)
         triplets = []
@@ -100,16 +124,19 @@ class OntologyNetwork(Network):
     def _formulate_query_path(self, triplets):
         query = []
         query.append("PREFIX cmso: <https://purls.helmholtz-metadaten.de/cmso/>")
+        query.append("PREFIX pldo: <https://purls.helmholtz-metadaten.de/pldo/>")
+        query.append("PREFIX podo: <https://purls.helmholtz-metadaten.de/podo/>")
+        query.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>")
         query.append("SELECT DISTINCT ?sample")
         query.append("WHERE {")
         for triple in triplets:
-            query.append("    ?%s cmso:%s ?%s ."%(triple[0].lower(), 
+            query.append("    ?%s %s ?%s ."%(triple[0].lower(), 
                                                   triple[1], 
                                                   triple[2].lower()))
         return query
     
-    def _formulate_filter_expression(self, triplets, value):                        
-        value, datatype = self._check_value(value)        
+    def _formulate_filter_expression(self, triplets, value):                       
+        value, datatype = self._check_value(value)      
         last_val = self.g.nodes[triplets[-1][-1]]
         last_val_name = triplets[-1][-1].lower()
         

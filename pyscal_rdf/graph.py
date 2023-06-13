@@ -310,7 +310,7 @@ class RDFGraph:
     
     def add_vacancy(self, concentration, number=None, name=None):
         vacancy_01 = BNode(name)
-        self.add((self.sample, CMSO.hasDefect, vacancy_01))
+        self.add((self.material, CMSO.hasDefect, vacancy_01))
         self.add((vacancy_01, RDF.type, PODO.Vacancy))
         self.add((vacancy_01, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
