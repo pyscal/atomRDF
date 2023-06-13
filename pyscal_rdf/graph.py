@@ -75,9 +75,11 @@ class RDFGraph:
         if str(triple[2].toPython()) != 'None':
             self.graph.add(triple)
         
-    def add_structure_to_graph(self, structure, names=False, name_index="01", format=None):
+    def add_structure_to_graph(self, structure, names=False, name_index=None, format=None):
         self.process_structure(structure)
         #now add to graph
+        if name_index is None:
+            name_index = self.n_samples + 1
         self.create_graph(names=names, name_index=name_index)
         
     
@@ -87,13 +89,13 @@ class RDFGraph:
                         f'{name_index}_ChemicalComposition', f'{name_index}_SimulationCell',
                         f'{name_index}_SimulationCell', f'{name_index}_CrystalStructure',
                         f'{name_index}_SpaceGroup', f'{name_index}_UnitCell',
-                        f'{name_index}_UnitCell']
+                        f'{name_index}_UnitCell', f'{name_index}_Atom']
         else:
             name_list = [None, None,
                         None, None,
                         None, None,
                         None, None,
-                        None]
+                        None, None]
         self.add_sample(name=name_list[0])
         self.add_material(name=name_list[1])
         self.add_chemical_composition(name=name_list[2])
@@ -103,7 +105,7 @@ class RDFGraph:
         self.add_space_group(name=name_list[6])
         self.add_unit_cell(name=name_list[7])
         self.add_lattice_properties(name=name_list[8])
-        self.add_atoms()
+        self.add_atoms(name=name_list[9])
         
     def add_sample(self, name=None):
         sample_01 = BNode(name)
@@ -238,11 +240,18 @@ class RDFGraph:
         
     def add_atoms(self, name=None):
         for x in range(len(self.data("Positions"))):
+            uname = None
+            if name is not None:
+                uname = f'{name}_{x}'            
             #create atom
-            atom = BNode()
+            atom = BNode(uname)
             self.add((self.sample, CMSO.hasAtom, atom))
             self.add((atom, RDF.type, CMSO.Atom))
-            position = BNode()
+
+            uname = None
+            if name is not None:
+                uname = f'{name}_{x}_Position'            
+            position = BNode(uname)
             self.add((atom, CMSO.hasPositionVector, position))
             self.add((position, RDF.type, CMSO.PositionVector))
             self.add((position, CMSO.hasComponent_x, Literal(self.data("Positions")[x][0],
@@ -252,7 +261,10 @@ class RDFGraph:
             self.add((position, CMSO.hasComponent_z, Literal(self.data("Positions")[x][2],
                                                                   datatype=XSD.float)))
             #now add coordination
-            element = BNode()
+            uname = None
+            if name is not None:
+                uname = f'{name}_{x}_Element'            
+            element = BNode(uname)
             self.add((atom, CMSO.hasElement, element))
             self.add((element, RDF.type, CMSO.Element))
             self.add((element, CMSO.hasSymbol, Literal(str(self.data("Element")[x]),
@@ -265,6 +277,7 @@ class RDFGraph:
     
     def add_gb(self, gb_dict, name=None):
         #mark that the structure has a defect
+
         plane_defect_01 = BNode(name)
         self.add((self.material, CMSO.hasDefect, plane_defect_01))
         
@@ -284,7 +297,7 @@ class RDFGraph:
         uname = None
         if name is not None:
             uname = f'{name}GrainBoundaryPlane'
-        gb_plane_01 = BNode()
+        gb_plane_01 = BNode(uname)
         self.add((plane_defect_01, PLDO.hasGBPlane, gb_plane_01))
         self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
         self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
@@ -293,7 +306,7 @@ class RDFGraph:
         uname = None
         if name is not None:
             uname = f'{name}RotationAxis'
-        rotation_axis_01 = BNode()
+        rotation_axis_01 = BNode(uname)
         self.add((plane_defect_01, PLDO.hasRotationAxis, rotation_axis_01))
         self.add((rotation_axis_01, RDF.type, PLDO.RotationAxis))
         self.add((rotation_axis_01, PLDO.hasComponentX, Literal(gb_dict["RotationAxis"][0], datatype=XSD.float)))
@@ -303,7 +316,7 @@ class RDFGraph:
         uname = None
         if name is not None:
             uname = f'{name}MisorientationAngle'
-        misorientation_angle_01 = BNode()
+        misorientation_angle_01 = BNode(uname)
         self.add((plane_defect_01, PLDO.hasMisorientationAngle, misorientation_angle_01))
         self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
         self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
