@@ -60,28 +60,29 @@ class StructureGraph(RDFGraph):
         gb = GrainBoundary()
         gb.create_grain_boundary(axis=axis, sigma=sigma, 
                                  gb_plane=gb_plane)
-        if lattice_constant is not None:
-            #use standard creation routine
-            if structure is not None:
-                sys = gb.populate_grain_boundary(structure, 
-                                                 repetitions=repetitions,
-                                                 lattice_parameter = lattice_constant,
-                                                 overlap=overlap)
-            elif element is not None:
-                sys = gb.populate_grain_boundary(element, 
-                                                 repetitions=repetitions,
-                                                 overlap=overlap)
-            else:
-                raise ValueError("Either structure or element should be provided")
-                
-            #mapping of the system can be done
-            self.add_structure_to_graph(sys)
-            gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
-                      "RotationAxis": axis,
-                      "MisorientationAngle": gb.theta,
-                      "GBType": gb.find_gb_character(),
-                      "sigma": gb.sigma,
-                      }
-            self.add_gb(gb_dict)
+
+        #use standard creation routine
+        if structure is not None:
+            sys = gb.populate_grain_boundary(structure, 
+                                             repetitions = repetitions,
+                                             lattice_parameter = lattice_constant,
+                                             overlap=overlap)
+        elif element is not None:
+            sys = gb.populate_grain_boundary(element, 
+                                             repetitions=repetitions,
+                                             overlap=overlap)
+        else:
+            raise ValueError("Either structure or element should be provided")
+            
+        #mapping of the system can be done
+        self.add_structure_to_graph(sys)
+        gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
+                  "RotationAxis": axis,
+                  "MisorientationAngle": gb.theta,
+                  "GBType": gb.find_gb_character(),
+                  "sigma": gb.sigma,
+                  }
+        self.add_gb(gb_dict)
+        return sys
             
 

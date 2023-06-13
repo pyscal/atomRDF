@@ -11,7 +11,7 @@ def output(theme="teal"):
     output = widgets.Output(layout={'border': '1px solid %s'%themes[theme]["border"]})
     return output
 
-def dropdown(description, options, value=None, theme="teal"):
+def dropdown(description, options, value=None, disabled=False, tooltip="Select value", theme="teal"):
     if value is None:
         value = options[0]
         
@@ -19,14 +19,16 @@ def dropdown(description, options, value=None, theme="teal"):
         options = options,
         value = value,
         description = description,
-        disabled=False,
+        description_long = description,
+        disabled=disabled,
+        tooltip=tooltip,
     )    
     return dropdown
 
-def button(description, tooltip="Click me", theme="teal"):
+def button(description, disabled=False, tooltip="Click me", theme="teal"):
     button = widgets.Button(
         description=description,
-        disabled=False,
+        disabled=disabled,
         button_style='',
         tooltip=tooltip,
     )
@@ -41,12 +43,13 @@ def checkbox(description, value=True, theme="teal"):
     )
     return checkbox 
 
-def textbox(description, value, dtype, theme="teal", disabled=False):
+def textbox(description, value, dtype, theme="teal", disabled=False, tooltip="Enter value"):
     if dtype == "int":
         inttext = widgets.IntText(
             value=value,
             description=description,
             disabled=disabled,
+            tooltip=tooltip,
         )
         return inttext
     elif dtype == "float":
@@ -54,6 +57,7 @@ def textbox(description, value, dtype, theme="teal", disabled=False):
             value=value,
             description=description,
             disabled=disabled,
+            tooltip=tooltip,
         )
         return inttext
     elif dtype == "text":
@@ -61,6 +65,7 @@ def textbox(description, value, dtype, theme="teal", disabled=False):
             value=value,
             description=description,
             disabled=disabled,
+            tooltip=tooltip,
         )
         return inttext 
     elif dtype == "textarea":
@@ -68,24 +73,26 @@ def textbox(description, value, dtype, theme="teal", disabled=False):
             value=value,
             description=description,
             disabled=disabled,
+            tooltip=tooltip,
             layout=Layout(width="auto", height="100%")
         )
         return inttext 
 
-def header(text, theme="teal"):
+def header(text, tooltip="", theme="teal"):
     color = themes[theme]["header"]
-    header = widgets.HTML(value = f"<b><font color='{color}'>{text}</b>")
+    header = widgets.HTML(value = f"<b><font color='{color}'>{text}</b>",tooltip=tooltip)
     return header
 
-def text(text, theme="teal"):
+def text(text, tooltip="", theme="teal"):
     color = themes[theme]["text"]
-    header = widgets.HTML(value = f"<font color='{color}'>{text}")
+    header = widgets.HTML(value = f"<font color='{color}'>{text}", tooltip=tooltip)
     return header
 
-def upload(theme="teal"):
+def upload(theme="teal", tooltip="Select file to upload"):
     upload = widgets.FileUpload(
         accept='',
         multiple=False,
+        tooltip=tooltip,
     )
     return upload
 

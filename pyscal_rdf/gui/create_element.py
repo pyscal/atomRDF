@@ -20,7 +20,7 @@ class CreateElement:
                                       dtype="int")
         self.text = "Create using element symbol"
         self.header = header(self.text, 
-                             theme=theme)
+                             theme=theme, tooltip="create an element")
         self.panel = VBox(children=[self.header,
                                    self.dropdown,
                                    self.checkbox,
