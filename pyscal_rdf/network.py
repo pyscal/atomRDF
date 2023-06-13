@@ -81,7 +81,7 @@ class OntologyNetwork(Network):
         self.add("LatticeAngle", "hasAngle_gamma", "LatticeAngle_gamma", dtype="float")
 
         #add GB properties
-        self.add("Material", "hasDefect", "Defect", pred_prefix="pldo")
+        self.add("Material", "hasDefect", "Defect", pred_prefix="cmso")
         self.add("Defect", "type", "GrainBoundary", pred_prefix="rdf")
         self.add("Defect", "type", "TwistBoundary", pred_prefix="rdf")
         self.add("Defect", "type", "TiltBoundary", pred_prefix="rdf")
@@ -95,7 +95,7 @@ class OntologyNetwork(Network):
         self.add("RotationAxis", "hasComponentY", "RotationAxis_y", dtype="float", pred_prefix="pldo")
         self.add("RotationAxis", "hasComponentZ", "RotationAxis_z", dtype="float", pred_prefix="pldo")
         self.add("Defect", "hasMisorientationAngle", "MisorientationAngle", pred_prefix="pldo")
-        self.add("MisorientationAngle", "hasAngle", "Angle", pred_prefix="pldo")
+        self.add("MisorientationAngle", "hasAngle", "Angle", pred_prefix="pldo", dtype="float")
 
         #add vacancy
         self.add("Defect", "type", "Vacancy", pred_prefix="rdf")

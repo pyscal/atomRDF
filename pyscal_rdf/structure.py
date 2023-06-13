@@ -11,7 +11,7 @@ class StructureGraph(RDFGraph):
         self._structure_dict = structures
         
     def create_element(self, element, repetitions=(1,1,1), 
-                       noise=0, add_to_graph=True):
+                       noise=0, add_to_graph=True, names=False):
         """
         Create elements
         """
@@ -23,29 +23,30 @@ class StructureGraph(RDFGraph):
                         lattice_constant=self._element_dict[element]['lattice_constant'],
                         element = element)
             if add_to_graph:
-                self.add_structure_to_graph(sys)
+                self.add_structure_to_graph(sys, names=names)
             return sys
     
     def create_structure(self, structure, 
                          lattice_constant = 1.00, 
                          repetitions = None, ca_ratio = 1.633, 
                          noise = 0, element=None,
-                         add_to_graph=True):
+                         add_to_graph=True, names=False):
         if structure in self._structure_dict.keys():
             sys = structure_creator(structure,
                         repetitions=repetitions,
                         noise=noise,
                         lattice_constant=lattice_constant,
-                        element = element)
+                        element = element,
+                        )
             if add_to_graph:
-                self.add_structure_to_graph(sys)
+                self.add_structure_to_graph(sys, names = names)
             return sys
     
     def read_structure(self, filename, format="lammps-dump",
-                      add_to_graph=True):
+                      add_to_graph=True, names=False):
         sys = System(filename, format=format)
         if add_to_graph:
-            self.add_structure_to_graph(sys)
+            self.add_structure_to_graph(sys, names=names)
         return sys
     
     def create_grain_boundary(self, axis, 
@@ -55,8 +56,8 @@ class StructureGraph(RDFGraph):
                               lattice_constant=1,
                               repetitions=(1,1,1),
                               overlap=0.0,
-                              
-                              add_to_graph=True):
+                              add_to_graph=True,
+                              names=False):
         gb = GrainBoundary()
         gb.create_grain_boundary(axis=axis, sigma=sigma, 
                                  gb_plane=gb_plane)
@@ -75,7 +76,7 @@ class StructureGraph(RDFGraph):
             raise ValueError("Either structure or element should be provided")
             
         #mapping of the system can be done
-        self.add_structure_to_graph(sys)
+        self.add_structure_to_graph(sys, names=names)
         gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
                   "RotationAxis": axis,
                   "MisorientationAngle": gb.theta,

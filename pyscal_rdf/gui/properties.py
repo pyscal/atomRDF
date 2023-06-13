@@ -11,6 +11,14 @@ dataprops = {
     "lattice parameter in x ": {"onto": "LatticeParameter_x", "dtype": "float"},
     "lattice parameter in y ": {"onto": "LatticeParameter_y", "dtype": "float"},
     "lattice parameter in z ": {"onto": "LatticeParameter_z", "dtype": "float"},
+    "GB sigma value ": {"onto": "Sigma", "dtype": "integer"},
+    "GB Miller indices ": {"onto": "MillerIndices", "dtype": "string"},
+    "GB rotation axis x ": {"onto": "RotationAxis_x", "dtype": "float"},
+    "GB rotation axis y ": {"onto": "RotationAxis_y", "dtype": "float"},
+    "GB rotation axis z ": {"onto": "RotationAxis_z", "dtype": "float"},
+    "GB misorientation angle ": {"onto": "Angle", "dtype": "float"},
+    "vacancy concentration ": {"onto": "VacancyConcentration", "dtype": "float"},
+    "number of vacancy ": {"onto": "NumberOfVacancy", "dtype": "integer"},
 }
 
 classes = {

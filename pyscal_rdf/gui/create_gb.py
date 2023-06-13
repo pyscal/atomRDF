@@ -14,6 +14,10 @@ class CreateGB:
                                 value="3 -1 0", 
                                 theme=theme,
                                 dtype="text")
+        self.rep_box = textbox('Repetitions', 
+                                value="1 1 1", 
+                                theme=theme,
+                                dtype="text")
         #self.sigma_dropdown = dropdown('Sigma', 
         #                              value=5, 
         #                              theme=theme,

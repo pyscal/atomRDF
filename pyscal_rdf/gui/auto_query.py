@@ -16,6 +16,7 @@ class AutoQuery:
         self.input_field_1 = textbox("", value="bcc", dtype="text")
         self.input_field_2 = textbox("", value="", dtype="text")
         self.run_button = button("Run query", theme=theme)
+        self.show_button = button("Show query", theme=theme)
         self.result_output = output(theme=theme)
         self.plot_structure_button = button("Plot structure", theme=theme)
         self.visualise_graph_button = button("Visualise graph", theme=theme)
@@ -25,6 +26,6 @@ class AutoQuery:
                        self.input_output])
         self.panel = VBox(children=[self.first_line, 
                self.w1,
-               self.run_button,
+               HBox(children=[self.run_button, self.show_button]),
                self.result_output,
                self.result_plotter])
