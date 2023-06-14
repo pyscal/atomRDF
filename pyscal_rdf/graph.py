@@ -365,6 +365,8 @@ class RDFGraph:
             asesys = sys.to_ase()
             write(filename, asesys, format="vasp")
         else:
+            #asesys = sys.to_ase()
+            #write(filename, asesys, format=format)
             sys.to_file(filename, format=format)
     
     def serialize(self, filename, format='turtle'):

@@ -7,6 +7,7 @@ class WriteStructure:
         #create widgets
         self.write_formats = ['lammps-data', 
                              'lammps-dump',
+                              'poscar',
                              'turtle',
                              'json-ld',
                              'xml',
@@ -23,3 +24,4 @@ class WriteStructure:
                                    HBox(children=[self.dropdown,
                                                  self.run_button]),
                                    self.output])
+
