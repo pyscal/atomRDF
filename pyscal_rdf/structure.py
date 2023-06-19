@@ -1,3 +1,7 @@
+"""
+StructureGraph is the central object in pyscal_rdf which combines all the functionality
+of :py:class:`pyscal_rdf.graph.RDFGraph` along with easy structural creation routines.
+"""
 import numpy as np
 from pyscal.core import System
 from pyscal.crystal_structures import structure_creator, elements, structures
@@ -13,7 +17,35 @@ class StructureGraph(RDFGraph):
     def create_element(self, element, repetitions=(1,1,1), 
                        noise=0, add_to_graph=True, names=False):
         """
-        Create elements
+        Create a crystal structure of the given element
+
+        Parameters
+        ----------
+        element : string
+            chemical symbol of the element
+
+        repetitions : list of ints of len 3, optional
+            of type `[nx, ny, nz]`, repetions of the unit cell in x, y and z directions.
+            default `[1, 1, 1]`.
+
+        noise : float, optional
+            If provided add normally distributed noise with standard deviation `noise` to the atomic positions.
+        
+        add_to_graph: bool, optinal
+            If False, the created structure will not be added to the graph
+
+        names: bool, optional
+            If True, names will be used as IDs
+
+        Returns
+        -------
+        System: :py:class:`pyscal.core.System`
+
+        Notes
+        -----
+        Python module Mendelev is used to get the lattice constant with which the system will be constructed.
+        If it is an hexagonal lattice, the ideal c/a ration will be used.
+
         """
         if element in self._element_dict.keys():
             structure = self._element_dict[element]['structure']
@@ -31,6 +63,41 @@ class StructureGraph(RDFGraph):
                          repetitions = None, ca_ratio = 1.633, 
                          noise = 0, element=None,
                          add_to_graph=True, names=False):
+        """
+        Create a crystal structure and return it as a System object.
+
+        Parameters
+        ----------
+        structure : {'sc', 'bcc', 'fcc', 'hcp', 'diamond', 'a15' or 'l12'}
+            type of the crystal structure
+
+        lattice_constant : float, optional
+            lattice constant of the crystal structure, default 1
+
+        repetitions : list of ints of len 3, optional
+            of type `[nx, ny, nz]`, repetions of the unit cell in x, y and z directions.
+            default `[1, 1, 1]`.
+
+        ca_ratio : float, optional
+            ratio of c/a for hcp structures, default 1.633
+
+        noise : float, optional
+            If provided add normally distributed noise with standard deviation `noise` to the atomic positions.
+
+        add_to_graph: bool, optinal
+            If False, the created structure will not be added to the graph
+
+        names: bool, optional
+            If True, names will be used as IDs
+        
+        element : string, optional
+            The chemical element
+
+        Returns
+        -------
+        System: pyscal System
+
+        """
         if structure in self._structure_dict.keys():
             sys = structure_creator(structure,
                         repetitions=repetitions,
@@ -44,6 +111,29 @@ class StructureGraph(RDFGraph):
     
     def read_structure(self, filename, format="lammps-dump",
                       add_to_graph=True, names=False):
+        """
+        Read an input file and return it as a System object.
+
+        Parameters
+        ----------
+        filename: string
+            name of the input file
+
+        format: string
+            format of the input file
+
+        add_to_graph: bool, optinal
+            If False, the created structure will not be added to the graph
+
+        names: bool, optional
+            If True, names will be used as IDs
+
+        Returns
+        -------
+        System: pyscal System
+        system will be populated with given atoms and simulation box
+
+        """
         sys = System(filename, format=format)
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
@@ -58,6 +148,47 @@ class StructureGraph(RDFGraph):
                               overlap=0.0,
                               add_to_graph=True,
                               names=False):
+        """
+        Create a grain boundary structure and return it as a System object.
+
+        Parameters
+        ----------
+        axis: list of ints of length 3
+            The grain boundary axis
+
+        sigma: int
+            sigma value of the grain boundary
+        
+        gb_plane: list of ints of length 3
+            The grain boundary plane
+
+        structure : {'sc', 'bcc', 'fcc', 'hcp', 'diamond', 'a15' or 'l12'}
+            type of the crystal structure
+
+        element : string, optional
+            The chemical element
+
+        lattice_constant : float, optional
+            lattice constant of the crystal structure, default 1
+
+        repetitions : list of ints of len 3, optional
+            of type `[nx, ny, nz]`, repetions of the unit cell in x, y and z directions.
+            default `[1, 1, 1]`.
+
+        overlap: float, optional
+            overlap between the two grains
+
+        add_to_graph: bool, optinal
+            If False, the created structure will not be added to the graph
+
+        names: bool, optional
+            If True, names will be used as IDs            
+
+        Returns
+        -------
+        System: pyscal System
+
+        """
         gb = GrainBoundary()
         gb.create_grain_boundary(axis=axis, sigma=sigma, 
                                  gb_plane=gb_plane)
