@@ -96,12 +96,19 @@ class RDFGraph:
         
     def add_structure_to_graph(self, structure, names=False, name_index=None, format=None):
         """
+        Add a given :py:class:`pyscal.core.System` to the Graph object
 
         Parameters
         ----------
+        structure: :py:class:`pyscal.core.System`
+            input structure
+
+        names: bool
+            if True, alphanumeric names will be used instead of random BNodes
 
         Returns
         -------
+        None
         """
         self.process_structure(structure)
         #now add to graph
@@ -112,12 +119,19 @@ class RDFGraph:
     
     def create_graph(self, names=False, name_index="01"):
         """
+        Create the RDF Graph from the data stored
 
         Parameters
         ----------
+        names: bool
+            if True, alphanumeric names will be used instead of random BNodes
 
+        name_index: string
+            Prefix to be added to identifiers, default 01        
+        
         Returns
         -------
+        None
         """
 
         if names:
@@ -145,9 +159,12 @@ class RDFGraph:
         
     def add_sample(self, name=None):
         """
+        Add a CMSO Sample object
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -159,9 +176,12 @@ class RDFGraph:
     
     def add_material(self, name=None):
         """
+        Add a CMSO Material object
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -174,9 +194,12 @@ class RDFGraph:
     
     def add_chemical_composition(self, name=None):
         """
+        Add chemical composition
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -191,9 +214,12 @@ class RDFGraph:
     
     def add_simulation_cell(self, name=None):
         """
+        Add a CMSO SimulationCell
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -209,9 +235,13 @@ class RDFGraph:
     
     def add_simulation_cell_properties(self, name=None):
         """
+        Add a CMSO SimulationCell properties such as SimulationCellLength,
+        and Vectors.
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -270,9 +300,12 @@ class RDFGraph:
     
     def add_crystal_structure(self, name=None):
         """
+        Add a CMSO Crystal Structure
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -286,9 +319,12 @@ class RDFGraph:
         
     def add_space_group(self, name=None):
         """
+        Add a CMSO Space Group
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -303,9 +339,12 @@ class RDFGraph:
             
     def add_unit_cell(self, name=None):
         """
+        Add a CMSO Unit Cell
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -327,9 +366,13 @@ class RDFGraph:
         
     def add_lattice_properties(self, name=None):
         """
+        Add CMSO lattice properties such as Lattice Parameter,
+        and its lengths and angles. 
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -357,9 +400,12 @@ class RDFGraph:
         
     def add_atoms(self, name=None):
         """
+        Add Atoms including their species and positions
 
         Parameters
         ----------
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -403,9 +449,15 @@ class RDFGraph:
     
     def add_gb(self, gb_dict, name=None):
         """
+        Add GB details which will be annotated using PLDO
 
         Parameters
         ----------
+        gb_dict: dict
+            dict containing details about the grain boundary
+
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -458,9 +510,15 @@ class RDFGraph:
     
     def add_vacancy(self, concentration, number=None, name=None):
         """
+        Add Vacancy details which will be annotated by PODO
 
         Parameters
         ----------
+        concentration: float
+            vacancy concentration, value should be between 0-1
+
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
@@ -475,15 +533,47 @@ class RDFGraph:
 
     def visualize(self, *args, **kwargs):
         """
+        Vosualise the RDF tree of the Graph
 
         Parameters
         ----------
+        backend: string, {'ipycytoscape', 'graphviz'}
+            Chooses the backend with which the graph will be plotted. ipycytoscape provides an interactive, 
+            but slow visualisation, whereas graphviz provides a non-interactive fast visualisation.
+
+        edge_color: string
+            Edge color of the boxes
+
+        styledict: dict
+            If provided, allows customisation of color and other properties.
+
+        graph_attr: dict
+            further attributes that allow customisation of graphs
+
+        layoutname: string
+            name of the layout for graph
 
         Returns
         -------
-        """
 
-        raise ValueError("did you mean to call visualise with an s?")
+        Notes
+        -----
+        styledict has the following options. Refer to graphviz and ipycytoscape
+        documentation for more details
+        BNode:  
+          color:  
+          shape:  
+          style:  
+        URIRef:  
+          color:  
+          shape:  
+          style:  
+        Literal:  
+          color:  
+          shape:  
+          style:         
+        """
+        self.visualise(*args, **kwargs)
         
     def visualise(self,
                   backend='ipycytoscape',
@@ -492,12 +582,45 @@ class RDFGraph:
                   graph_attr ={'rankdir': 'BT'},
                   layoutname='cola'):
         """
+        Vosualise the RDF tree of the Graph
 
         Parameters
         ----------
+        backend: string, {'ipycytoscape', 'graphviz'}
+            Chooses the backend with which the graph will be plotted. ipycytoscape provides an interactive, 
+            but slow visualisation, whereas graphviz provides a non-interactive fast visualisation.
+
+        edge_color: string
+            Edge color of the boxes
+
+        styledict: dict
+            If provided, allows customisation of color and other properties.
+
+        graph_attr: dict
+            further attributes that allow customisation of graphs
+
+        layoutname: string
+            name of the layout for graph
 
         Returns
         -------
+
+        Notes
+        -----
+        styledict has the following options. Refer to graphviz and ipycytoscape
+        documentation for more details
+        BNode:  
+          color:  
+          shape:  
+          style:  
+        URIRef:  
+          color:  
+          shape:  
+          style:  
+        Literal:  
+          color:  
+          shape:  
+          style:         
         """
         
         sdict = defstyledict.copy()
@@ -513,12 +636,19 @@ class RDFGraph:
     
     def write(self, filename, format="json-ld"):
         """
+        Write the serialised version of the graph to a file
 
         Parameters
         ----------
+        filename: string
+            name of output file
+
+        format: string, {'turtle', 'xml', 'json-ld', 'ntriples', 'n3'}
+            output format to be written to 
 
         Returns
         -------
+        None
         """
 
         with open(filename, "w") as fout:
@@ -527,12 +657,21 @@ class RDFGraph:
         
     def to_file(self, sample, filename=None, format="lammps-dump"):
         """
+        Save a given sample to a file
 
         Parameters
         ----------
+        sample
+            ID of the sample
+
+        filename: string
+            name of output file
+
+        format: string, {"lammps-dump","lammps-data", "poscar"}
 
         Returns
         -------
+        None
         """
 
         if filename is None:
@@ -548,27 +687,32 @@ class RDFGraph:
             #write(filename, asesys, format=format)
             sys.to_file(filename, format=format)
     
-    def serialize(self, filename, format='turtle'):
-        """
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        """
-
-        owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
-        self.graph.parse(owlfile, format='xml')
         
     def query_sample(self, target_property, value, return_query=False):
         """
+        Query the Graph for a sample that has the given `value` for the given `target_property`
 
         Parameters
         ----------
+        target_property: string
+            The target property can be any Ontology data property
+
+        value: number, string, or list of either
+            The value of the target property to be queried
+
+        return_query: bool, optional
+            If True, return the SPARQL query 
 
         Returns
         -------
+        res: list
+            list of queried samples
+
+        query: string
+            only returned if `return_query` is True
+
+        Notes
+        -----
         """
 
         query = self._query_graph.formulate_query(target_property, value)
@@ -584,12 +728,7 @@ class RDFGraph:
     @property
     def n_samples(self):
         """
-
-        Parameters
-        ----------
-
-        Returns
-        -------
+        Number of samples in the Graph
         """
 
         return len([x for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))])
@@ -597,26 +736,12 @@ class RDFGraph:
     @property
     def samples(self):
         """
-
-        Parameters
-        ----------
-
-        Returns
-        -------
+        Returns a list of all Samples in the graph
         """
 
         return [x[0] for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))]
         
     def iterate_graph(self, item, create_new_graph=False):
-        """
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        """
-
         if create_new_graph:
             self.sgraph = RDFGraph()
         triples = list(self.graph.triples((item, None, None)))
@@ -626,12 +751,21 @@ class RDFGraph:
     
     def get_sample(self, sample, no_atoms=False):
         """
+        Get the Sample as an RDFGraph
 
         Parameters
         ----------
+        sample: string
+            sample id
+
+        no_atoms: bool, optional
+            if True, returns the number of atoms in the sample
 
         Returns
         -------
+        sgraph: :py:class:`RDFGraph`
+            the RDFGraph of the queried sample
+
         """
 
         self.iterate_graph(sample, create_new_graph=True)
@@ -642,12 +776,17 @@ class RDFGraph:
         
     def get_system_from_sample(self, sample):
         """
+        Get a pyscal :py:class:`pyscal.core.System` from the selected sample
 
         Parameters
         ----------
+        sample: string
+            sample id
 
         Returns
         -------
+        system: :py:class:`pyscal.core.System`
+            corresponding system
         """
 
         simcell = self.graph.value(sample, CMSO.hasSimulationCell)
