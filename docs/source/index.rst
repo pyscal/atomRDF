@@ -22,3 +22,4 @@ The package is currently under activate development and could be unstable.
 
    Installation <gettingstarted> 
    examples
+   API documentation <pyscal_rdf>
