@@ -1,3 +1,9 @@
+"""
+Graph module contains the basic RDFGraph object in pyscal_rdf. This object gets a structure
+as an input and annotates it with the CMSO ontology (PLDO and PODO too as needed). The annotated
+object is stored in triplets.
+"""
+
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 from rdflib.store import NO_STORE, VALID_STORE
 
@@ -59,6 +65,19 @@ class RDFGraph:
         self._query_graph = OntologyNetwork()
     
     def process_structure(self, structure):
+        """
+        Convert a given :py:class:`pyscal.core.System` to a data dictionary which can be used for annotation
+        and storing the data in the RDF Graph.
+
+        Parameters
+        ----------
+        structure: :py:class:`pyscal.core.System`
+            input structure
+
+        Returns
+        -------
+        None
+        """
         if isinstance(structure, System):
             self.sysdict = convert_to_dict(structure)
         elif os.path.exists(structure):
@@ -76,6 +95,14 @@ class RDFGraph:
             self.graph.add(triple)
         
     def add_structure_to_graph(self, structure, names=False, name_index=None, format=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
         self.process_structure(structure)
         #now add to graph
         if name_index is None:
@@ -84,6 +111,15 @@ class RDFGraph:
         
     
     def create_graph(self, names=False, name_index="01"):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         if names:
             name_list = [f'{name_index}_Sample', f'{name_index}_Material',
                         f'{name_index}_ChemicalComposition', f'{name_index}_SimulationCell',
@@ -108,17 +144,44 @@ class RDFGraph:
         self.add_atoms(name=name_list[9])
         
     def add_sample(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         sample_01 = BNode(name)
         self.add((sample_01, RDF.type, CMSO.AtomicScaleSample))
         self.sample = sample_01
     
     def add_material(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         material_01 = BNode(name)
         self.add((self.sample, CMSO.hasMaterial, material_01))
         self.add((material_01, RDF.type, CMSO.CrystallineMaterial))        
         self.material = material_01
     
     def add_chemical_composition(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         chem_comp = ["=".join([x, str(y)]) for x,y in zip(self.data("ChemicalCompositionElement"), self.data("ChemicalCompositionRatio"))]
         chemical_composition_01 = BNode(name)
         self.add((self.material, CMSO.hasComposition, chemical_composition_01))
@@ -127,6 +190,15 @@ class RDFGraph:
             self.add((chemical_composition_01, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
     
     def add_simulation_cell(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         simulation_cell_01 = BNode(name)
         self.add((self.sample, CMSO.hasSimulationCell, simulation_cell_01))
         self.add((simulation_cell_01, RDF.type, CMSO.SimulationCell))
@@ -136,6 +208,15 @@ class RDFGraph:
         
     
     def add_simulation_cell_properties(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         uname = None
         if name is not None:
             uname = f'{name}Length'
@@ -188,6 +269,15 @@ class RDFGraph:
         
     
     def add_crystal_structure(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         crystal_structure_01 = BNode(name)
         self.add((self.material, CMSO.hasStructure, crystal_structure_01))
         self.add((crystal_structure_01, RDF.type, CMSO.CrystalStructure))    
@@ -195,6 +285,15 @@ class RDFGraph:
         self.crystal_structure = crystal_structure_01
         
     def add_space_group(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         space_group_01 = BNode(name)
         self.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group_01))
         self.add((space_group_01, RDF.type, CMSO.SpaceGroup))
@@ -203,6 +302,15 @@ class RDFGraph:
     
             
     def add_unit_cell(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         unit_cell_01 = BNode(name)
         self.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell_01))
         self.add((unit_cell_01, RDF.type, CMSO.UnitCell))
@@ -218,6 +326,15 @@ class RDFGraph:
         self.add((bravaislattice, CMSO.hasLatticeSystem, Literal(self.data("BravaisLattice"), datatype=XSD.string)))
         
     def add_lattice_properties(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         uname = None
         if name is not None:
             uname = f'{name}LatticeParameter'
@@ -239,6 +356,15 @@ class RDFGraph:
         self.add((lattice_angle_01, CMSO.hasAngle_gamma, Literal(90, datatype=XSD.float)))        
         
     def add_atoms(self, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         for x in range(len(self.data("Positions"))):
             uname = None
             if name is not None:
@@ -276,6 +402,15 @@ class RDFGraph:
     
     
     def add_gb(self, gb_dict, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         #mark that the structure has a defect
 
         plane_defect_01 = BNode(name)
@@ -322,6 +457,15 @@ class RDFGraph:
         self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
     
     def add_vacancy(self, concentration, number=None, name=None):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         vacancy_01 = BNode(name)
         self.add((self.material, CMSO.hasDefect, vacancy_01))
         self.add((vacancy_01, RDF.type, PODO.Vacancy))
@@ -330,6 +474,15 @@ class RDFGraph:
             self.add((vacancy_01, PODO.hasNumberOfVacancy, Literal(number, datatype=XSD.integer)))
 
     def visualize(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         raise ValueError("did you mean to call visualise with an s?")
         
     def visualise(self,
@@ -338,6 +491,14 @@ class RDFGraph:
                   styledict=None, 
                   graph_attr ={'rankdir': 'BT'},
                   layoutname='cola'):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
         
         sdict = defstyledict.copy()
         if styledict is not None:
@@ -351,11 +512,29 @@ class RDFGraph:
     
     
     def write(self, filename, format="json-ld"):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
             
         
     def to_file(self, sample, filename=None, format="lammps-dump"):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         if filename is None:
             filename = os.path.join(os.getcwd(), "out")
         sys = self.get_system_from_sample(sample)
@@ -370,10 +549,28 @@ class RDFGraph:
             sys.to_file(filename, format=format)
     
     def serialize(self, filename, format='turtle'):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
         self.graph.parse(owlfile, format='xml')
         
     def query_sample(self, target_property, value, return_query=False):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         query = self._query_graph.formulate_query(target_property, value)
         res = self.graph.query(query)
         res = [r for r in res]
@@ -386,13 +583,40 @@ class RDFGraph:
     #################################
     @property
     def n_samples(self):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         return len([x for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))])
     
     @property
     def samples(self):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         return [x[0] for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))]
         
     def iterate_graph(self, item, create_new_graph=False):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         if create_new_graph:
             self.sgraph = RDFGraph()
         triples = list(self.graph.triples((item, None, None)))
@@ -402,8 +626,14 @@ class RDFGraph:
     
     def get_sample(self, sample, no_atoms=False):
         """
-        Get the given sample as a StructureGraph for further processing
+
+        Parameters
+        ----------
+
+        Returns
+        -------
         """
+
         self.iterate_graph(sample, create_new_graph=True)
         if no_atoms:
             na = self.sgraph.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
@@ -411,6 +641,15 @@ class RDFGraph:
         return self.sgraph
         
     def get_system_from_sample(self, sample):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+
         simcell = self.graph.value(sample, CMSO.hasSimulationCell)
         cell_vectors = [[], [], []]
 

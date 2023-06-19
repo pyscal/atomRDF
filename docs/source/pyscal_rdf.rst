@@ -4,26 +4,18 @@ pyscal\_rdf package
 Submodules
 ----------
 
-pyscal\_rdf.encoder module
---------------------------
+pyscal\_rdf.structure module
+----------------------------
 
-.. automodule:: pyscal_rdf.encoder
+.. automodule:: pyscal_rdf.structure
    :members:
    :undoc-members:
    :show-inheritance:
-
+   
 pyscal\_rdf.graph module
 ------------------------
 
 .. automodule:: pyscal_rdf.graph
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyscal\_rdf.json\_io module
----------------------------
-
-.. automodule:: pyscal_rdf.json_io
    :members:
    :undoc-members:
    :show-inheritance:
@@ -56,14 +48,6 @@ pyscal\_rdf.rdfutils module
 ---------------------------
 
 .. automodule:: pyscal_rdf.rdfutils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyscal\_rdf.structure module
-----------------------------
-
-.. automodule:: pyscal_rdf.structure
    :members:
    :undoc-members:
    :show-inheritance:
