@@ -1,0 +1,9 @@
+numpy
+ase
+rdflib
+pyyaml
+graphviz
+networkx
+ipycytoscape
+pyscal3
+spglib
