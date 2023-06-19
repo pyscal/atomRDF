@@ -1,0 +1,10 @@
+sphinx==5.3.0
+sphinx_rtd_theme
+myst_parser
+furo
+nbsphinx
+sphinx_inline_tabs
+sphinx_copybutton
+sphinx_design
+docutils==0.19
+
