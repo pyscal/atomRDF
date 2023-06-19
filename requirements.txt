@@ -6,3 +6,4 @@ graphviz
 networkx
 ipycytoscape
 pyscal3
+spglib
