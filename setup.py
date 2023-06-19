@@ -11,10 +11,8 @@ setup(
     author_email='sarath.menon@pyscal.org',
     description='Ontology based structural manipulation and quering',
     long_description=readme,
-    # tell setuptools to look for any packages under 'src'
+    long_description_content_type='text/markdown',
     packages=find_packages(include=['pyscal_rdf', 'pyscal_rdf.*']),
-    # tell setuptools that all packages will be under the 'src' directory
-    # and nowhere else
     zip_safe=False,
     download_url = 'https://github.com/pyscal/pyscal_rdf',
     url = 'https://pyscal.org',
@@ -25,5 +23,4 @@ setup(
         'Programming Language :: Python :: 3'
     ],
     include_package_data=True,
-    #package_data={'': ['*.owl']},
 )
