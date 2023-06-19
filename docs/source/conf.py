@@ -14,7 +14,7 @@ import glob
 #sys.path.insert(0, os.path.abspath('../../pyiron_atomistics/'))
 
 #Of course we should change this
-project = 'pyiron_atomistics'
+project = 'pyscal_rdf'
 copyright = '2023, Sarath Menon, Abril Guzman'
 author = 'Sarath Menon, Abril Guzman'
 
