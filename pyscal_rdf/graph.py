@@ -205,7 +205,7 @@ class RDFGraph:
         -------
         """
 
-        chem_comp = ["=".join([x, str(y)]) for x,y in zip(self.data("ChemicalCompositionElement"), self.data("ChemicalCompositionRatio"))]
+        chem_comp = ["=".join([str(x), str(y)]) for x,y in zip(self.data("ChemicalCompositionElement"), self.data("ChemicalCompositionRatio"))]
         chemical_composition_01 = BNode(name)
         self.add((self.material, CMSO.hasComposition, chemical_composition_01))
         self.add((chemical_composition_01, RDF.type, CMSO.ChemicalComposition))
