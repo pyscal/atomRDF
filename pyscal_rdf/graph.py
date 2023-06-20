@@ -64,7 +64,7 @@ class RDFGraph:
         self.sgraph = None
         self._query_graph = OntologyNetwork()
     
-    def process_structure(self, structure):
+    def process_structure(self, structure, format=None):
         """
         Convert a given :py:class:`pyscal.core.System` to a data dictionary which can be used for annotation
         and storing the data in the RDF Graph.
@@ -110,7 +110,7 @@ class RDFGraph:
         -------
         None
         """
-        self.process_structure(structure)
+        self.process_structure(structure, format=format)
         #now add to graph
         if name_index is None:
             name_index = self.n_samples + 1
