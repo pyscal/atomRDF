@@ -49,13 +49,20 @@ def _replace_keys(refdict, indict):
     return refdict
 
 class RDFGraph:
-    def __init__(self, graph_file=None):
-        self.graph = Graph()
+    def __init__(self, graph_file=None, store="memory", store_file=None):
+        self.graph = Graph(store=store)
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
         #self.graph.parse(owlfile, format='xml')
-
+        if store != "memory":
+            if not store=="SQLAlchemy":
+                raise ValueError("Only SQLAlchemy store is supported")
+            if store_file is None:
+                raise ValueError("store file is needed if store is not memory")
+            uri = Literal(f"sqlite:///{store_file}")
+            self.graph.open(uri, create=True)
         self.graph.bind("cmso", CMSO)
         self.graph.bind("pldo", PLDO)
+        
         if graph_file is not None:
             if os.path.exists(graph_file):
                 self.graph.parse(graph_file)
