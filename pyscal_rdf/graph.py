@@ -14,6 +14,7 @@ from ase.io import write
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.rdfutils import convert_to_dict
 from pyscal_rdf.network import OntologyNetwork
+import pyscal_rdf.properties as prp
 from pyscal.core import System
 from pyscal.atoms import Atoms
 from pyscal.core import System
@@ -79,15 +80,100 @@ class RDFGraph:
         None
         """
         if isinstance(structure, System):
-            self.sysdict = convert_to_dict(structure)
+            #self.sysdict = convert_to_dict(structure)
+            self.sys = structure
         elif os.path.exists(structure):
             sys = System(structure, format=format)
-            self.sysdict = convert_to_dict(sys)
+            #self.sysdict = convert_to_dict(sys)
+            self.sys = sys
     
     def data(self, key):
-        if self.sysdict is not None:
-            if key in self.sysdict:
-                return self.sysdict[key]
+        #this method gets info directly from the dict
+        if key=="ChemicalCompositionElement":
+            return list(self.sys.composition.keys())
+        elif key=="ChemicalCompositionRatio":
+            return [val for key, val in self.sys.composition.items()]
+        elif key=="CellVolume":
+            return self.sys.volume
+        elif key=="NumberOfAtoms":
+            return self.sys.natoms
+        elif key=="SimulationCellLengthX":
+            return self.sys.box_dimensions[0]
+        elif key=="SimulationCellLengthY":
+            return self.sys.box_dimensions[1]
+        elif key=="SimulationCellLengthZ":
+            return self.sys.box_dimensions[2]
+
+        elif key=="SimulationCellVectorA":
+            return self.sys.box[0]
+        elif key=="SimulationCellVectorB":
+            return self.sys.box[1]
+        elif key=="SimulationCellVectorC":
+            return self.sys.box[2]
+        
+        elif key=="SimulationCellAngleAlpha":
+            return prp.get_angle(self.sys.box[0], self.sys.box[1])
+        elif key=="SimulationCellAngleBeta":
+            return prp.get_angle(self.sys.box[1], self.sys.box[2])
+        elif key=="SimulationCellAngleGamma": 
+            return prp.get_angle(self.sys.box[2], self.sys.box[0])
+        
+        elif key=="Element":
+            if self.sys.atoms.species[0] is not None:
+                return self.sys.atoms.species
+            else:
+                return self.sys.atoms.types
+        elif key=="Coordination":
+            return prp.get_coordination(self.sys)
+        elif key=="Positions":
+            return self.sys.atoms.positions
+        elif key=="LatticeParameter":
+            return self.sys.atoms._lattice_constant      
+        
+        elif key=="SpaceGroupSymbol":
+            if self.sys._structure_dict is not None:
+                symbol, number = prp.get_space_group(self.sys)
+                return symbol
+        elif key=="SpaceGroupNumber":
+            if self.sys._structure_dict is not None:
+                symbol, number = prp.get_space_group(self.sys)
+                return number
+            else:
+                return None
+
+        elif key=="CrystalStructureName":
+            if self.sys._structure_dict is not None:
+                return self.sys.atoms._lattice 
+            else:
+                return None
+
+        elif key=="BravaisLattice":
+            if self.sys._structure_dict is not None:
+                return prp.get_bravais_lattice(self.sys)
+            else:
+                return None
+
+        elif key=="BasisPositions":
+            if self.sys._structure_dict is not None:
+                return self.sys._structure_dict['positions']
+            else:
+                return None
+
+        elif key=="BasisOccupancy":
+            if self.sys._structure_dict is not None:
+                return prp.get_basis(self.sys)
+            else:
+                return None
+
+        elif key=="LatticeVectors":
+            if self.sys._structure_dict is not None:
+                return prp.get_lattice_vector(self.sys)
+            else:
+                return None
+
+        #if self.sysdict is not None:
+        #    if key in self.sysdict:
+        #        return self.sysdict[key]
         return None
     
     def add(self, triple):
