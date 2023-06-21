@@ -13,3 +13,5 @@ dependencies:
   - ase 
   - ipycytoscape
   - networkx
+  - sqlalchemy <2.0.0
+  - rdflib-sqlalchemy

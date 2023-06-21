@@ -7,3 +7,5 @@ networkx
 ipycytoscape
 pyscal3
 spglib
+rdflib-sqlalchemy
+sqlalchemy<2.0.0

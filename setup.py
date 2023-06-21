@@ -18,7 +18,7 @@ setup(
     url = 'https://pyscal.org',
     install_requires=['numpy', 'ase', 'rdflib', 
     'pyyaml', 'graphviz', 'networkx', 
-    'ipycytoscape', 'pyscal3', 'spglib'],
+    'ipycytoscape', 'pyscal3', 'spglib',],
     classifiers=[
         'Programming Language :: Python :: 3'
     ],
