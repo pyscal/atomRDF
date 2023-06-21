@@ -12,7 +12,6 @@ import numpy as np
 from ase.io import write
 
 from pyscal_rdf.visualize import visualize_graph
-from pyscal_rdf.rdfutils import convert_to_dict
 from pyscal_rdf.network import OntologyNetwork
 import pyscal_rdf.properties as prp
 from pyscal.core import System
