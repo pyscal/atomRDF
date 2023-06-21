@@ -8,3 +8,4 @@ ipycytoscape
 pyscal3
 spglib
 rdflib-sqlalchemy
+sqlalchemy
