@@ -9,8 +9,11 @@ from pyscal_rdf.graph import RDFGraph
 from pyscal.grain_boundary import GrainBoundary
 
 class StructureGraph(RDFGraph):
-    def __init__(self, graph_file=None, store="Memory", store_file=None):
-        super().__init__(graph_file=graph_file, store=store, store_file=store_file)
+    def __init__(self, graph_file=None, 
+        store="Memory", 
+        store_file=None,
+        identifier="default_graph"):
+        super().__init__(graph_file=graph_file, store=store, store_file=store_file, identifier=identifier)
         self._element_dict = elements
         self._structure_dict = structures
         
