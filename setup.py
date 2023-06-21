@@ -17,8 +17,8 @@ setup(
     download_url = 'https://github.com/pyscal/pyscal_rdf',
     url = 'https://pyscal.org',
     install_requires=['numpy', 'ase', 'rdflib', 
-    'pyyaml', 'graphviz', 'networkx', 'rdflib-sqlalchemy', 
-    'ipycytoscape', 'pyscal3', 'spglib', 'sqlalchemy'],
+    'pyyaml', 'graphviz', 'networkx', 
+    'ipycytoscape', 'pyscal3', 'spglib',],
     classifiers=[
         'Programming Language :: Python :: 3'
     ],
