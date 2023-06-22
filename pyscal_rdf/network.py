@@ -32,8 +32,7 @@ class OntologyNetwork(Network):
     def __init__(self):
         super().__init__()
         self.add("Sample", "hasMaterial", "Material")
-        self.add("Material", "hasComposition", "ChemicalComposition")
-        self.add("ChemicalComposition", "hasElementRatio", "ElementRatio", dtype="string")
+        self.add("Material", "hasElementRatio", "ElementRatio", dtype="string")
 
         self.add("Sample", "hasSimulationCell", "SimulationCell")
         self.add("SimulationCell", "hasVolume", "Volume", dtype="float")
@@ -64,13 +63,11 @@ class OntologyNetwork(Network):
 
         self.add("Material", "hasStructure", "CrystalStructure")
         self.add("CrystalStructure", "hasAltName", "CrystalStructureAltName", dtype="string")
-        self.add("CrystalStructure", "hasSpaceGroup", "SpaceGroup")
-        self.add("SpaceGroup", "hasSpaceGroupSymbol", "SpaceGroupSymbol", dtype="string")
-        self.add("SpaceGroup", "hasSpaceGroupNumber", "SpaceGroupNumber", dtype="integer")
+        self.add("CrystalStructure", "hasSpaceGroupSymbol", "SpaceGroupSymbol", dtype="string")
+        self.add("CrystalStructure", "hasSpaceGroupNumber", "SpaceGroupNumber", dtype="integer")
 
         self.add("CrystalStructure", "hasUnitCell", "UnitCell")
-        self.add("UnitCell", "hasLattice", "BravaisLattice")
-        self.add("BravaisLattice", "hasLatticeSystem", "LatticeSystem", dtype="string")
+        self.add("UnitCell", "hasBravaisLattice", "LatticeSystem")
         self.add("UnitCell", "hasLatticeParameter", "LatticeParameter")
         self.add("LatticeParameter", "hasLength_x", "LatticeParameter_x", dtype="float")
         self.add("LatticeParameter", "hasLength_y", "LatticeParameter_y", dtype="float")
@@ -88,19 +85,14 @@ class OntologyNetwork(Network):
         self.add("Defect", "type", "SymmetricTiltBoundary", pred_prefix="rdf")
         self.add("Defect", "type", "MixedBoundary", pred_prefix="rdf")
         self.add("Defect", "hasSigmaValue", "Sigma", dtype="integer", pred_prefix="pldo")
-        self.add("Defect", "hasGBPlane", "GBPlane", pred_prefix="pldo")
-        self.add("GBPlane", "hasMillerIndices", "MillerIndices", dtype="string", pred_prefix="pldo")
-        self.add("Defect", "hasRotationAxis", "RotationAxis", pred_prefix="pldo")
-        self.add("RotationAxis", "hasComponentX", "RotationAxis_x", dtype="float", pred_prefix="pldo")
-        self.add("RotationAxis", "hasComponentY", "RotationAxis_y", dtype="float", pred_prefix="pldo")
-        self.add("RotationAxis", "hasComponentZ", "RotationAxis_z", dtype="float", pred_prefix="pldo")
-        self.add("Defect", "hasMisorientationAngle", "MisorientationAngle", pred_prefix="pldo")
-        self.add("MisorientationAngle", "hasAngle", "Angle", pred_prefix="pldo", dtype="float")
+        self.add("Defect", "hasGBPlane", "GBPlane", pred_prefix="pldo", dtype="string")
+        self.add("Defect", "hasRotationAxis", "RotationAxis", pred_prefix="pldo", dtype="string")
+        self.add("Defect", "hasMisorientationAngle", "MisorientationAngle", pred_prefix="pldo", dtype="float")
 
         #add vacancy
         self.add("Defect", "type", "Vacancy", pred_prefix="rdf")
-        self.add("Vacancy", "hasVacancyConcentration", "VacancyConcentration", pred_prefix="podo", dtype="float")
-        self.add("Vacancy", "hasNumberOfVacancy", "NumberOfVacancy", pred_prefix="podo", dtype="integer")
+        self.add("SimulationCell", "hasVacancyConcentration", "VacancyConcentration", pred_prefix="podo", dtype="float")
+        self.add("SimulationCell", "hasNumberOfVacancies", "NumberOfVacancy", pred_prefix="podo", dtype="integer")
          
 
     def get_path_from_sample(self, target):
