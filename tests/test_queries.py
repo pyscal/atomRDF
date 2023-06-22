@@ -7,7 +7,7 @@ def test_query():
 	sys = s.create_element("Fe")
 	q = Query()
 
-	assert(len(q.sparql.sample_by_latticesystem(s, "bcc")) == 1)
+	assert(len(q.sparql.sample_by_latticesystem(s, "https://www.wikidata.org/wiki/Q851536")) == 1)
 
 	struct_gb_1 = s.create_grain_boundary(axis=[0,0,1], 
                         sigma=5, 
@@ -15,7 +15,7 @@ def test_query():
                         element='Fe')
 	assert(len(q.sparql.sample_by_defect(s, "symmetric tilt")) == 1)
 	assert(len(q.sparql.sample_by_sigma(s, 5)) == 1)
-	assert(len(q.python.sample_by_altname(s, "bcc")) == 2)
+	assert(len(q.python.sample_by_altname(s, "https://www.wikidata.org/wiki/Q851536")) == 2)
 
 
 

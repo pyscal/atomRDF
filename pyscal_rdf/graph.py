@@ -458,7 +458,10 @@ class RDFGraph:
         self.unit_cell = unit_cell_01
         
         #add bravais lattice
-        self.add((self.unit_cell, CMSO.hasBravaisLattice, URIRef(self.data("BravaisLattice"))))
+        bv = None
+        if self.data("BravaisLattice") is not None:
+            bv = URIRef(self.data("BravaisLattice"))
+            self.add((self.unit_cell, CMSO.hasBravaisLattice, bv))
         
     def add_lattice_properties(self, name=None):
         """
@@ -533,8 +536,8 @@ class RDFGraph:
             if name is not None:
                 uname = f'{name}_{x}_Element'            
             element = BNode(uname)
-            self.add((atom, CMSO.hasElement, getattr(CMSO, self.data("Element"))))
-            #self.add((element, RDF.type, CMSO.Element))
+            self.add((atom, CMSO.hasElement, element))
+            self.add((element, RDF.type, CMSO.Element))
             self.add((element, CMSO.hasSymbol, Literal(str(self.data("Element")[x]),
                                                             datatype=XSD.string)))
             #finally occupancy
@@ -582,7 +585,7 @@ class RDFGraph:
         #    uname = f'{name}GrainBoundaryPlane'
         #gb_plane_01 = BNode(uname)
         self.add((plane_defect_01, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
-                                                             datatype=XSD.string))
+                                                             datatype=XSD.string)))
         #self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
         #self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
         #                                                     datatype=XSD.string)))
