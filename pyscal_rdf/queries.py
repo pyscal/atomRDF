@@ -16,14 +16,13 @@ class Sparql:
     def sample_by_latticesystem(self, g, latticesystem):
         query = """
         PREFIX cmso: <https://purls.helmholtz-metadaten.de/cmso/>
+        PREFIX wiki: <https://www.wikidata.org/wiki/>
         SELECT DISTINCT ?sample
         WHERE {
-            ?bravaislattice cmso:hasLatticeSystem ?latticesystem .
-            ?unitcell cmso:hasLattice ?bravaislattice .
+            ?unitcell cmso:hasBravaisLattice wiki:%s .
             ?structure cmso:hasUnitCell ?unitcell .
             ?material cmso:hasStructure ?structure .
             ?sample cmso:hasMaterial ?material .
-        FILTER (?latticesystem="%s"^^xsd:string)
         }"""%(latticesystem)
         qres = g.graph.query(query)
         samples = [j[0] for j in qres]

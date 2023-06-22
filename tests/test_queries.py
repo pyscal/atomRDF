@@ -7,7 +7,7 @@ def test_query():
 	sys = s.create_element("Fe")
 	q = Query()
 
-	assert(len(q.sparql.sample_by_latticesystem(s, "bcc")) == 1)
+	assert(len(q.sparql.sample_by_latticesystem(s, "Q851536")) == 1)
 
 	struct_gb_1 = s.create_grain_boundary(axis=[0,0,1], 
                         sigma=5, 
