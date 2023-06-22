@@ -43,13 +43,19 @@ def get_lattice_vector(sys, cartesian=False):
 def get_bravais_lattice(sys):
     lattice = sys.atoms._lattice 
     if lattice == "l12":
-        lattice = "fcc"
+        lattice = "https://www.wikidata.org/wiki/Q3006714"
     elif lattice == "b2":
-        lattice = "bcc"
+        lattice = "https://www.wikidata.org/wiki/Q851536"
     elif lattice == "diamond":
-        lattice = "fcc"
+        lattice = "https://www.wikidata.org/wiki/Q3006714"
     elif lattice == "hcp":
-        lattice = "hex"
+        lattice = "https://www.wikidata.org/wiki/Q663314"
+    elif lattice == "a15":
+        lattice = "a15"
+    elif lattice == "bcc":
+        lattice = "https://www.wikidata.org/wiki/Q851536"
+    elif lattice == "fcc":
+        lattice = "https://www.wikidata.org/wiki/Q3006714"
     return lattice
     
 def get_space_group(sys):

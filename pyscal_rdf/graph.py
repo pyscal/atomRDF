@@ -212,7 +212,7 @@ class RDFGraph:
         self.create_graph(names=names, name_index=name_index)
         
     
-    def create_graph(self, names=False, name_index="01"):
+    def create_graph(self, names=False, name_index="1"):
         """
         Create the RDF Graph from the data stored
 
@@ -230,11 +230,11 @@ class RDFGraph:
         """
 
         if names:
-            name_list = [f'{name_index}_Sample', f'{name_index}_Material',
-                        f'{name_index}_ChemicalComposition', f'{name_index}_SimulationCell',
-                        f'{name_index}_SimulationCell', f'{name_index}_CrystalStructure',
-                        f'{name_index}_SpaceGroup', f'{name_index}_UnitCell',
-                        f'{name_index}_UnitCell', f'{name_index}_Atom']
+            name_list = [f'Sample_{name_index}', f'Material_{name_index}',
+                        f'ChemicalComposition_{name_index}', f'SimulationCell_{name_index}',
+                        f'SimulationCell_{name_index}', f'CrystalStructure_{name_index}',
+                        f'SpaceGroup_{name_index}', f'UnitCell_{name_index}',
+                        f'UnitCell_{name_index}', f'Atom_{name_index}']
         else:
             name_list = [None, None,
                         None, None,
@@ -251,6 +251,20 @@ class RDFGraph:
         self.add_unit_cell(name=name_list[7])
         self.add_lattice_properties(name=name_list[8])
         self.add_atoms(name=name_list[9])
+
+        self.add((CMSO.SimulationCellLength, RDFS.subClassOf, CMSO.Length))
+        self.add((CMSO.LatticeParameter, RDFS.subClassOf, CMSO.Length))
+        self.add((CMSO.Length, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#ANGSTROM")))
+        
+        self.add((CMSO.SimulationCellAngle, RDFS.subClassOf, CMSO.Angle))
+        self.add((CMSO.LatticeAngle, RDFS.subClassOf, CMSO.Angle))
+        self.add((CMSO.Angle, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#DEG")))
+        
+        self.add((CMSO.LatticeVector, RDFS.subClassOf, CMSO.Vector))
+        self.add((CMSO.SimulationCellVector, RDFS.subClassOf, CMSO.Vector))
+        self.add((CMSO.PositionVector, RDFS.subClassOf, CMSO.Vector))
+        self.add((CMSO.Vector, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#ANGSTROM")))
+        
         
     def add_sample(self, name=None):
         """
@@ -301,11 +315,8 @@ class RDFGraph:
         """
 
         chem_comp = ["=".join([str(x), str(y)]) for x,y in zip(self.data("ChemicalCompositionElement"), self.data("ChemicalCompositionRatio"))]
-        chemical_composition_01 = BNode(name)
-        self.add((self.material, CMSO.hasComposition, chemical_composition_01))
-        self.add((chemical_composition_01, RDF.type, CMSO.ChemicalComposition))
         for x in range(len(chem_comp)):
-            self.add((chemical_composition_01, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
+            self.add((self.material, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
     
     def add_simulation_cell(self, name=None):
         """
@@ -424,12 +435,8 @@ class RDFGraph:
         Returns
         -------
         """
-
-        space_group_01 = BNode(name)
-        self.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group_01))
-        self.add((space_group_01, RDF.type, CMSO.SpaceGroup))
-        self.add((space_group_01, CMSO.hasSpaceGroupSymbol, Literal(self.data("SpaceGroupSymbol"), datatype=XSD.string)))
-        self.add((space_group_01, CMSO.hasSpaceGroupNumber, Literal(self.data("SpaceGroupNumber"), datatype=XSD.integer)))
+        self.add((self.crystal_structure, CMSO.hasSpaceGroupSymbol, Literal(self.data("SpaceGroupSymbol"), datatype=XSD.string)))
+        self.add((self.crystal_structure, CMSO.hasSpaceGroupNumber, Literal(self.data("SpaceGroupNumber"), datatype=XSD.integer)))
     
             
     def add_unit_cell(self, name=None):
@@ -451,13 +458,7 @@ class RDFGraph:
         self.unit_cell = unit_cell_01
         
         #add bravais lattice
-        uname = None
-        if name is not None:
-            uname = f'Bravais{name}'
-        bravaislattice = BNode(uname)
-        self.add((self.unit_cell, CMSO.hasLattice, bravaislattice))
-        self.add((bravaislattice, RDF.type, CMSO.BravaisLattice))
-        self.add((bravaislattice, CMSO.hasLatticeSystem, Literal(self.data("BravaisLattice"), datatype=XSD.string)))
+        self.add((self.unit_cell, CMSO.hasBravaisLattice, URIRef(self.data("BravaisLattice"))))
         
     def add_lattice_properties(self, name=None):
         """
@@ -532,8 +533,8 @@ class RDFGraph:
             if name is not None:
                 uname = f'{name}_{x}_Element'            
             element = BNode(uname)
-            self.add((atom, CMSO.hasElement, element))
-            self.add((element, RDF.type, CMSO.Element))
+            self.add((atom, CMSO.hasElement, getattr(CMSO, self.data("Element"))))
+            #self.add((element, RDF.type, CMSO.Element))
             self.add((element, CMSO.hasSymbol, Literal(str(self.data("Element")[x]),
                                                             datatype=XSD.string)))
             #finally occupancy
@@ -576,32 +577,34 @@ class RDFGraph:
         self.add((plane_defect_01, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
         
         #now mark that the defect is GB
-        uname = None
-        if name is not None:
-            uname = f'{name}GrainBoundaryPlane'
-        gb_plane_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasGBPlane, gb_plane_01))
-        self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
-        self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
-                                                             datatype=XSD.string)))
+        #uname = None
+        #if name is not None:
+        #    uname = f'{name}GrainBoundaryPlane'
+        #gb_plane_01 = BNode(uname)
+        self.add((plane_defect_01, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
+                                                             datatype=XSD.string))
+        #self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
+        #self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
+        #                                                     datatype=XSD.string)))
         
-        uname = None
-        if name is not None:
-            uname = f'{name}RotationAxis'
-        rotation_axis_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasRotationAxis, rotation_axis_01))
-        self.add((rotation_axis_01, RDF.type, PLDO.RotationAxis))
-        self.add((rotation_axis_01, PLDO.hasComponentX, Literal(gb_dict["RotationAxis"][0], datatype=XSD.float)))
-        self.add((rotation_axis_01, PLDO.hasComponentY, Literal(gb_dict["RotationAxis"][1], datatype=XSD.float)))
-        self.add((rotation_axis_01, PLDO.hasComponentZ, Literal(gb_dict["RotationAxis"][2], datatype=XSD.float)))
+        #uname = None
+        #if name is not None:
+        #    uname = f'{name}RotationAxis'
+        #rotation_axis_01 = BNode(uname)
+        self.add((plane_defect_01, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
+                                                             datatype=XSD.string)))
+        #self.add((rotation_axis_01, RDF.type, PLDO.RotationAxis))
+        #self.add((rotation_axis_01, PLDO.hasComponentX, Literal(gb_dict["RotationAxis"][0], datatype=XSD.float)))
+        #self.add((rotation_axis_01, PLDO.hasComponentY, Literal(gb_dict["RotationAxis"][1], datatype=XSD.float)))
+        #self.add((rotation_axis_01, PLDO.hasComponentZ, Literal(gb_dict["RotationAxis"][2], datatype=XSD.float)))
 
-        uname = None
-        if name is not None:
-            uname = f'{name}MisorientationAngle'
-        misorientation_angle_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasMisorientationAngle, misorientation_angle_01))
-        self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
-        self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
+        #uname = None
+        #if name is not None:
+        #    uname = f'{name}MisorientationAngle'
+        #misorientation_angle_01 = BNode(uname)
+        self.add((plane_defect_01, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
+        #self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
+        #self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
     
     def add_vacancy(self, concentration, number=None, name=None):
         """
@@ -622,9 +625,9 @@ class RDFGraph:
         vacancy_01 = BNode(name)
         self.add((self.material, CMSO.hasDefect, vacancy_01))
         self.add((vacancy_01, RDF.type, PODO.Vacancy))
-        self.add((vacancy_01, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
+        self.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
-            self.add((vacancy_01, PODO.hasNumberOfVacancy, Literal(number, datatype=XSD.integer)))
+            self.add((self.simulation_cell, PODO.hasNumberOfVacancies, Literal(number, datatype=XSD.integer)))
 
     def visualize(self, *args, **kwargs):
         """
