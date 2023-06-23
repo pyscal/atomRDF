@@ -14,9 +14,9 @@ from ase.io import write
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network import OntologyNetwork
 import pyscal_rdf.properties as prp
-from pyscal.core import System
-from pyscal.atoms import Atoms
-from pyscal.core import System
+from pyscal3.core import System
+from pyscal3.atoms import Atoms
+from pyscal3.core import System
 
 CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
