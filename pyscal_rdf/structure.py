@@ -3,10 +3,10 @@ StructureGraph is the central object in pyscal_rdf which combines all the functi
 of :py:class:`pyscal_rdf.graph.RDFGraph` along with easy structural creation routines.
 """
 import numpy as np
-from pyscal.core import System
-from pyscal.crystal_structures import structure_creator, elements, structures
+from pyscal3.core import System
+from pyscal3.crystal_structures import structure_creator, elements, structures
 from pyscal_rdf.graph import RDFGraph
-from pyscal.grain_boundary import GrainBoundary
+from pyscal3.grain_boundary import GrainBoundary
 
 class StructureGraph(RDFGraph):
     def __init__(self, graph_file=None, 
