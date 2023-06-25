@@ -12,3 +12,9 @@ class System(pc.System):
         	customkeys = customkeys)
 		#this is the sample which will be stored
 		self.sample = None
+
+	def __delitem__(self, val):
+        if isinstance(val, int):
+            val = [val]
+        self.delete(indices=list(val))
+
