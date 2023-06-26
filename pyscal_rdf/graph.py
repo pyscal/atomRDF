@@ -656,6 +656,18 @@ class RDFGraph:
         #if vacancy is added, atoms have to be deleted from the existing record!
         #this is indeed a tricky item
 
+
+    def add_calculated_quantity(self, propertyname, value, unit, sample=None):
+        prop = BNode(propertyname)
+        if sample is None:
+            sample = self.sample
+        self.add((sample, CMSO.hasCalculatedProperty, prop))
+        self.add((prop, RDF.type, CMSO.CalculatedProperty))
+        self.add((prop, CMSO.hasValue, Literal(value)))
+        self.add((prop, CMSO.hasUnit, URIRef(f'https://qudt.org/2.1/vocab/unit#{unit}')))
+
+
+
     def visualize(self, *args, **kwargs):
         """
         Vosualise the RDF tree of the Graph
