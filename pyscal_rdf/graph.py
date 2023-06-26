@@ -56,17 +56,8 @@ class RDFGraph:
         
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
         #self.graph.parse(owlfile, format='xml')
-        if inspect.isclass(type(store)):
-            try:
-                prpath = store.path
-            except:
-                raise ValueError("Pass a pyiron project, strings: Memory or SQLAlchemy")
-            prpath = store.path
-            dbfile = os.path.join(prpath, 'project.db')
-            #now start sqlalchemy instance
-            self.graph = Graph(store="SQLAlchemy", identifier=identifier)
-            uri = Literal(f"sqlite:///{dbfile}")
-            self.graph.open(uri, create=True)
+        if store == "Memory":
+            self.graph = Graph(store="Memory", identifier=identifier)
 
         elif store=="SQLAlchemy":
             if store_file is None:
@@ -75,8 +66,16 @@ class RDFGraph:
             uri = Literal(f"sqlite:///{store_file}")
             self.graph.open(uri, create=True)
 
-        elif store == "Memory":
-            self.graph = Graph(store="Memory", identifier=identifier)
+        elif inspect.isclass(type(store)):
+            try:
+                prpath = store.path
+                dbfile = os.path.join(prpath, 'project.db')
+                #now start sqlalchemy instance
+                self.graph = Graph(store="SQLAlchemy", identifier=identifier)
+                uri = Literal(f"sqlite:///{dbfile}")
+                self.graph.open(uri, create=True)
+            except:
+                raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
         else:
             raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
