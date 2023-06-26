@@ -40,11 +40,11 @@ class System(pc.System):
             #this is the list of atoms in this sample
             for atom in atoms:
                 #identify the position
-                position = list([s[2] for s in self.graph.graph.triples((atom, CMSO.hasPositionVector, None))])
+                position = list([s[2] for s in self.graph.graph.triples((atom, CMSO.hasPositionVector, None))])[0]
                 self.graph.graph.remove((position, None, None))
                 #identify element
-                element = list([s[2] for s in self.graph.graph.triples((atom, CMSO.hasElement, None))])
-                self.graph.graph.remove((position, None, None))
+                element = list([s[2] for s in self.graph.graph.triples((atom, CMSO.hasElement, None))])[0]
+                self.graph.graph.remove((element, None, None))
                 #now remove the atom from the list completely
                 self.graph.graph.remove((atom, None, None))
                 self.graph.graph.remove((None, None, atom))
@@ -56,7 +56,7 @@ class System(pc.System):
             self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms, datatype=XSD.integer)))
             #revamp composition
             #for that first get element
-            material = list([s[2] for s in self.graph.graph.triples((self.sample, CMSO.hasMaterial, None))])
+            material = list([s[2] for s in self.graph.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
             #remove existing chem composution
             self.graph.graph.remove((material, CMSO.hasElementRatio, None))
             #now recalculate and add it again
