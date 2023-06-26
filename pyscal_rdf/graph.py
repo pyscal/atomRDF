@@ -666,7 +666,7 @@ class RDFGraph:
             sample = self.sample
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDF.type, CMSO.CalculatedProperty))
-        self.add((prop, RDFS.label, propertyname))
+        self.add((prop, RDFS.label, Literal(propertyname)))
         self.add((prop, CMSO.hasValue, Literal(value)))
         if unit is not None:
             self.add((prop, CMSO.hasUnit, URIRef(f'https://qudt.org/2.1/vocab/unit#{unit}')))
