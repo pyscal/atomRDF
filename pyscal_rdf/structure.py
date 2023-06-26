@@ -12,11 +12,15 @@ class StructureGraph(RDFGraph):
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
-        identifier="default_graph"):
+        identifier="default_graph",
+        source=None):
+        
         super().__init__(graph_file=graph_file, store=store, store_file=store_file, identifier=identifier)
         self._element_dict = elements
         self._structure_dict = structures
-        
+        if source is not None:
+            self.__dict__.update(source.__dict__)
+
     def create_element(self, element, repetitions=(1,1,1), 
                        noise=0, add_to_graph=True, names=False):
         """
