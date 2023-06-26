@@ -62,9 +62,9 @@ class StructureGraph(RDFGraph):
                         element = element))
             if add_to_graph:
                 self.add_structure_to_graph(sys, names=names)
-                sys.sample = self.sample
-                sys._atom_ids = copy.copy(self._atom_ids)
-                sys.graph = self
+                #sys.sample = self.sample
+                #sys._atom_ids = copy.copy(self._atom_ids)
+                #sys.graph = self
             return sys
     
     def create_structure(self, structure, 
@@ -116,9 +116,9 @@ class StructureGraph(RDFGraph):
                         ))
             if add_to_graph:
                 self.add_structure_to_graph(sys, names = names)
-                sys.sample = self.sample
-                sys._atom_ids = copy.copy(self._atom_ids)
-                sys.graph = self
+                #sys.sample = self.sample
+                #sys._atom_ids = copy.copy(self._atom_ids)
+                #sys.graph = self
             return sys
     
     def read_structure(self, filename, format="lammps-dump",
@@ -149,9 +149,9 @@ class StructureGraph(RDFGraph):
         sys = System(filename, format=format)
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
-            sys.sample = self.sample
-            sys._atom_ids = copy.copy(self._atom_ids)
-            sys.graph = self
+            #sys.sample = self.sample
+            #sys._atom_ids = copy.copy(self._atom_ids)
+            #sys.graph = self
         return sys
     
     def create_grain_boundary(self, axis, 
@@ -223,9 +223,9 @@ class StructureGraph(RDFGraph):
             
         #mapping of the system can be done
         self.add_structure_to_graph(sys, names=names)
-        sys.sample = self.sample
-        sys._atom_ids = copy.copy(self._atom_ids)
-        sys.graph = self
+        #sys.sample = self.sample
+        #sys._atom_ids = copy.copy(self._atom_ids)
+        #sys.graph = self
         gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
                   "RotationAxis": axis,
                   "MisorientationAngle": gb.theta,

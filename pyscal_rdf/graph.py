@@ -11,6 +11,7 @@ import os
 import numpy as np
 import inspect
 from ase.io import write
+import copy
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network import OntologyNetwork
@@ -230,7 +231,9 @@ class RDFGraph:
         if name_index is None:
             name_index = self.n_samples + 1
         self.create_graph(names=names, name_index=name_index)
-        
+        structure.sample = self.sample
+        structure._atom_ids = copy.copy(self._atom_ids)
+        structure.graph = self
     
     def create_graph(self, names=False, name_index="1"):
         """
