@@ -48,6 +48,9 @@ class System(pc.System):
                 #now remove the atom from the list completely
                 self.graph.remove((atom, None, None))
                 self.graph.remove((None, None, atom))
+            #now fully remove atoms
+            for atom in atoms:
+                self._atom_ids.remove(atom)
             #now fix the number of atoms
             self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
             self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms, datatype=XSD.integer)))
