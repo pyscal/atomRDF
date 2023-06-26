@@ -676,13 +676,22 @@ class RDFGraph:
             sample = self.sample
         natoms = self.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
         material = list([k[2] for k in self.graph.triples((sample, CMSO.hasMaterial, None))])[0]
-        defects = list([k[2] for k in self.graph.triples((material, CMSO.hasDefect, None))]) 
+        defects = list([k[2] for k in self.graph.triples((material, CMSO.hasDefect, None))])
+        composition = list([k[2].toPython() for k in self.graph.triples((material, CMSO.hasElementRatio, None))])
+        crystalstructure = self.graph.value(material, CMSO.hasStructure)
+        spacegroupsymbol = self.graph.value(crystalstructure, CMSO.hasSpaceGroupSymbol).toPython()
+
+        lattice = self.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
         defect_types = list([self.graph.value(d, RDF.type).toPython() for d in defects])
         props = list([k[2].toPython() for k in self.graph.triples((sample, CMSO.hasCalculatedProperty, None))])
         propvals = list([self.graph.value(d, CMSO.hasValue).toPython() for d in props])
         units = list([self.graph.value(d, CMSO.hasUnit).toPython() for d in props])
         st = []
         st.append(f'Sample with {natoms} atoms.\n')
+        st.append("Material:\n")
+        st.append(" ".join(composition))
+        st.append("\n")
+        st.append(f'Space Group symbol: {spacegroupsymbol}\n')
         if len(defect_types) > 0:
             st.append('With defects:\n')
             for d in defect_types:
