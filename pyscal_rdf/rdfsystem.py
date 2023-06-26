@@ -26,6 +26,7 @@ class System(pc.System):
             self.__dict__.update(source.__dict__)
 
     def __delitem__(self, val):
+        print("tthis function is called")
         if isinstance(val, int):
             val = [val]
         self.delete(indices=list(val))
