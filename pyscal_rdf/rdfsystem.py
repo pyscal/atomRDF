@@ -52,7 +52,7 @@ class System(pc.System):
                 self._atom_ids.remove(atom)
             #now fix the number of atoms
             self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms, datatype=XSD.integer)))
+            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms-len(val), datatype=XSD.integer)))
             #revamp composition
             #for that first get element
             material = list([s[2] for s in self.graph.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
