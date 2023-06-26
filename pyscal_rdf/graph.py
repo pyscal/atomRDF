@@ -668,6 +668,28 @@ class RDFGraph:
             self.add((prop, CMSO.hasUnit, URIRef(f'https://qudt.org/2.1/vocab/unit#{unit}')))
 
 
+    def inspect_sample(self, sample=None):
+        if sample is None:
+            sample = self.sample
+        natoms = self.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
+        material = list([k[2] for k in self.graph.triples((sample, CMSO.hasMaterial, None))])[0]
+        defects = list([k[2] for k in self.graph.triples((material, CMSO.hasDefect, None))]) 
+        defect_types = list([self.graph.value(d, RDF.type).toPython() for d in defects])
+        props = list([k[2].toPython() for k in self.graph.triples((sample, CMSO.hasCalculatedProperty, None))])
+        propvals = list([self.graph.value(d, CMSO.hasValue).toPython() for d in props])
+        units = list([self.graph.value(d, CMSO.hasUnit).toPython() for d in props])
+        st = []
+        st.append(f'Sample with {natoms} atoms.\n')
+        if len(defect_types) > 0:
+            st.append('With defects:\n')
+            for d in defect_types:
+                st.append(f'{d}\n')
+        if len(props) > 0:
+            st.append('With calculated properties:\n')
+            for x in range(len(props)):
+                st.append(f'{props[x]} with value: {propvals[x]} and unit: {units[x]}\n')
+
+        return " ".join(st)
 
     def visualize(self, *args, **kwargs):
         """
