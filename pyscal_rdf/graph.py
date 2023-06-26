@@ -73,6 +73,7 @@ class RDFGraph:
         self.sysdict = None
         self.sgraph = None
         self._query_graph = OntologyNetwork()
+        self._atom_ids = None
     
     def process_structure(self, structure, format=None):
         """
@@ -509,6 +510,7 @@ class RDFGraph:
         Returns
         -------
         """
+        self._atom_list = []
 
         for x in range(len(self.data("Positions"))):
             uname = None
@@ -516,6 +518,7 @@ class RDFGraph:
                 uname = f'{name}_{x}'            
             #create atom
             atom = BNode(uname)
+            self._atom_ids.append(atom)
             self.add((self.sample, CMSO.hasAtom, atom))
             self.add((atom, RDF.type, CMSO.Atom))
 
@@ -631,6 +634,8 @@ class RDFGraph:
         self.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
             self.add((self.simulation_cell, PODO.hasNumberOfVacancies, Literal(number, datatype=XSD.integer)))
+        #if vacancy is added, atoms have to be deleted from the existing record!
+        #this is indeed a tricky item
 
     def visualize(self, *args, **kwargs):
         """
