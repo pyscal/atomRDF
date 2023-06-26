@@ -657,14 +657,15 @@ class RDFGraph:
         #this is indeed a tricky item
 
 
-    def add_calculated_quantity(self, propertyname, value, unit, sample=None):
+    def add_calculated_quantity(self, propertyname, value, unit=None, sample=None):
         prop = BNode(propertyname)
         if sample is None:
             sample = self.sample
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDF.type, CMSO.CalculatedProperty))
         self.add((prop, CMSO.hasValue, Literal(value)))
-        self.add((prop, CMSO.hasUnit, URIRef(f'https://qudt.org/2.1/vocab/unit#{unit}')))
+        if unit is not None:
+            self.add((prop, CMSO.hasUnit, URIRef(f'https://qudt.org/2.1/vocab/unit#{unit}')))
 
 
 
