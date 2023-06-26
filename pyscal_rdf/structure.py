@@ -3,7 +3,9 @@ StructureGraph is the central object in pyscal_rdf which combines all the functi
 of :py:class:`pyscal_rdf.graph.RDFGraph` along with easy structural creation routines.
 """
 import numpy as np
-from pyscal3.core import System
+import copy
+
+from pyscal_rdf.rdfsystem import System
 from pyscal3.crystal_structures import structure_creator, elements, structures
 from pyscal_rdf.graph import RDFGraph
 from pyscal3.grain_boundary import GrainBoundary
@@ -12,14 +14,11 @@ class StructureGraph(RDFGraph):
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
-        identifier="default_graph",
-        source=None):
+        identifier="default_graph"):
         
         super().__init__(graph_file=graph_file, store=store, store_file=store_file, identifier=identifier)
         self._element_dict = elements
         self._structure_dict = structures
-        if source is not None:
-            self.__dict__.update(source.__dict__)
 
     def create_element(self, element, repetitions=(1,1,1), 
                        noise=0, add_to_graph=True, names=False):
@@ -56,15 +55,15 @@ class StructureGraph(RDFGraph):
         """
         if element in self._element_dict.keys():
             structure = self._element_dict[element]['structure']
-            sys = structure_creator(structure,
+            sys = System(source=structure_creator(structure,
                         repetitions=repetitions,
                         noise=noise,
                         lattice_constant=self._element_dict[element]['lattice_constant'],
-                        element = element)
+                        element = element))
             if add_to_graph:
                 self.add_structure_to_graph(sys, names=names)
                 sys.sample = self.sample
-                sys._atom_ids = self._atom_ids
+                sys._atom_ids = copy.copy(self._atom_ids)
             return sys
     
     def create_structure(self, structure, 
@@ -108,16 +107,16 @@ class StructureGraph(RDFGraph):
 
         """
         if structure in self._structure_dict.keys():
-            sys = structure_creator(structure,
+            sys = System(source=structure_creator(structure,
                         repetitions=repetitions,
                         noise=noise,
                         lattice_constant=lattice_constant,
                         element = element,
-                        )
+                        ))
             if add_to_graph:
                 self.add_structure_to_graph(sys, names = names)
                 sys.sample = self.sample
-                sys._atom_ids = self._atom_ids
+                sys._atom_ids = copy.copy(self._atom_ids)
             return sys
     
     def read_structure(self, filename, format="lammps-dump",
@@ -149,7 +148,7 @@ class StructureGraph(RDFGraph):
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
             sys.sample = self.sample
-            sys._atom_ids = self._atom_ids
+            sys._atom_ids = copy.copy(self._atom_ids)
         return sys
     
     def create_grain_boundary(self, axis, 
@@ -208,21 +207,21 @@ class StructureGraph(RDFGraph):
 
         #use standard creation routine
         if structure is not None:
-            sys = gb.populate_grain_boundary(structure, 
+            sys = System(source=gb.populate_grain_boundary(structure, 
                                              repetitions = repetitions,
                                              lattice_parameter = lattice_constant,
-                                             overlap=overlap)
+                                             overlap=overlap))
         elif element is not None:
-            sys = gb.populate_grain_boundary(element, 
+            sys = System(source=gb.populate_grain_boundary(element, 
                                              repetitions=repetitions,
-                                             overlap=overlap)
+                                             overlap=overlap))
         else:
             raise ValueError("Either structure or element should be provided")
             
         #mapping of the system can be done
         self.add_structure_to_graph(sys, names=names)
         sys.sample = self.sample
-        sys._atom_ids = self._atom_ids
+        sys._atom_ids = copy.copy(self._atom_ids)
         gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
                   "RotationAxis": axis,
                   "MisorientationAngle": gb.theta,

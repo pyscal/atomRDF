@@ -10,7 +10,8 @@ class System(pc.System):
     def __init__(self, filename = None, 
             format = "lammps-dump", 
             compressed = False, 
-            customkeys = None):
+            customkeys = None,
+            source=None):
         super().__init__(filename = filename, 
             format = format, 
             compressed = compressed, 
@@ -21,6 +22,8 @@ class System(pc.System):
         #for post-processing of structures
         self.graph = None
         self._atom_ids = None
+        if source is not None:
+            self.__dict__.update(source.__dict__)
 
     def __delitem__(self, val):
         if isinstance(val, int):

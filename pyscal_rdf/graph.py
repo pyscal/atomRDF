@@ -510,7 +510,7 @@ class RDFGraph:
         Returns
         -------
         """
-        self._atom_list = []
+        self._atom_ids = []
 
         for x in range(len(self.data("Positions"))):
             uname = None
