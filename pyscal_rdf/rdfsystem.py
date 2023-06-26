@@ -28,7 +28,6 @@ class System(pc.System):
     def __delitem__(self, val):
         if isinstance(val, int):
             val = [val]
-        self.delete(indices=list(val))
         #now the graph has to be updated accordingly
         if self.graph is not None:
             #first annotate graph
@@ -65,3 +64,4 @@ class System(pc.System):
             chem_comp = ["=".join([str(x), str(y)]) for x,y in zip(chem_comp_element, chem_comp_ratio)]
             for x in range(len(chem_comp)):
                 self.graph.graph.add((material, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
+        self.delete(indices=list(val))
