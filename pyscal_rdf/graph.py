@@ -9,6 +9,7 @@ from rdflib.store import NO_STORE, VALID_STORE
 
 import os
 import numpy as np
+import inspect
 from ase.io import write
 
 from pyscal_rdf.visualize import visualize_graph
@@ -52,22 +53,40 @@ class RDFGraph:
         store="Memory", 
         store_file=None,
         identifier="default_graph"):
-        self.graph = Graph(store=store, identifier=identifier)
+        
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
         #self.graph.parse(owlfile, format='xml')
-        if store != "Memory":
-            if not store=="SQLAlchemy":
-                raise ValueError("Only SQLAlchemy store is supported")
+        if store == "Memory":
+            self.graph = Graph(store="Memory", identifier=identifier)
+
+        elif store=="SQLAlchemy":
             if store_file is None:
                 raise ValueError("store file is needed if store is not memory")
+            self.graph = Graph(store="SQLAlchemy", identifier=identifier)
             uri = Literal(f"sqlite:///{store_file}")
             self.graph.open(uri, create=True)
+
+        elif inspect.isclass(type(store)):
+            try:
+                prpath = store.path
+                dbfile = os.path.join(prpath, 'project.db')
+                #now start sqlalchemy instance
+                self.graph = Graph(store="SQLAlchemy", identifier=identifier)
+                uri = Literal(f"sqlite:///{dbfile}")
+                self.graph.open(uri, create=True)
+            except:
+                raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
+        
+        else:
+            raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
+
         self.graph.bind("cmso", CMSO)
         self.graph.bind("pldo", PLDO)
         
         if graph_file is not None:
             if os.path.exists(graph_file):
                 self.graph.parse(graph_file)
+        
         self.sample = None
         self.material = None
         self.sysdict = None
