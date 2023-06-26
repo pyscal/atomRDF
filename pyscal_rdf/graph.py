@@ -661,11 +661,12 @@ class RDFGraph:
 
 
     def add_calculated_quantity(self, propertyname, value, unit=None, sample=None):
-        prop = BNode(propertyname)
+        prop = BNode()
         if sample is None:
             sample = self.sample
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDF.type, CMSO.CalculatedProperty))
+        self.add((prop, RDFS.label, propertyname))
         self.add((prop, CMSO.hasValue, Literal(value)))
         if unit is not None:
             self.add((prop, CMSO.hasUnit, URIRef(f'https://qudt.org/2.1/vocab/unit#{unit}')))
@@ -683,7 +684,8 @@ class RDFGraph:
 
         lattice = self.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
         defect_types = list([self.graph.value(d, RDF.type).toPython() for d in defects])
-        props = list([k[2].toPython() for k in self.graph.triples((sample, CMSO.hasCalculatedProperty, None))])
+        prop_nodes = list([k[2] for k in self.graph.triples((sample, CMSO.hasCalculatedProperty, None))])
+        props = list([self.graph.value(prop_node, RDFS.label).toPython() for prop_node in prop_nodes])
         propvals = list([self.graph.value(d, CMSO.hasValue).toPython() for d in props])
         units = list([self.graph.value(d, CMSO.hasUnit).toPython() for d in props])
         st = []
