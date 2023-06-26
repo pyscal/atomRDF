@@ -16,7 +16,19 @@ You can try `pyscal_rdf` here:
 
 `pyscal_rdf` can be installed on Linux and Mac OS based systems. On Windows systems, it is recommended to use  [Windows subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install).
 
-### Using a conda environment
+### Using pip
+
+```
+pip install pyscal-rdf
+```
+### Using conda
+
+```
+conda install -c conda-forge pyscal-rdf
+```
+
+
+### Building from the repository
 
 We strongly recommend creating a conda environment for the installation. To see how you can install conda see [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 
