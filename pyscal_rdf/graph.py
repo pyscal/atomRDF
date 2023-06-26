@@ -209,7 +209,7 @@ class RDFGraph:
         if str(triple[2].toPython()) != 'None':
             self.graph.add(triple)
         
-    def add_structure_to_graph(self, structure, names=False, name_index=None, format=None):
+    def add_structure_to_graph(self, structure, names=True, name_index=None, format=None):
         """
         Add a given :py:class:`pyscal.core.System` to the Graph object
 

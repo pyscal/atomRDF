@@ -21,7 +21,7 @@ class StructureGraph(RDFGraph):
         self._structure_dict = structures
 
     def create_element(self, element, repetitions=(1,1,1), 
-                       noise=0, add_to_graph=True, names=False):
+                       noise=0, add_to_graph=True, names=True):
         """
         Create a crystal structure of the given element
 
@@ -71,7 +71,7 @@ class StructureGraph(RDFGraph):
                          lattice_constant = 1.00, 
                          repetitions = None, ca_ratio = 1.633, 
                          noise = 0, element=None,
-                         add_to_graph=True, names=False):
+                         add_to_graph=True, names=True):
         """
         Create a crystal structure and return it as a System object.
 
@@ -122,7 +122,7 @@ class StructureGraph(RDFGraph):
             return sys
     
     def read_structure(self, filename, format="lammps-dump",
-                      add_to_graph=True, names=False):
+                      add_to_graph=True, names=True):
         """
         Read an input file and return it as a System object.
 
@@ -162,7 +162,7 @@ class StructureGraph(RDFGraph):
                               repetitions=(1,1,1),
                               overlap=0.0,
                               add_to_graph=True,
-                              names=False):
+                              names=True):
         """
         Create a grain boundary structure and return it as a System object.
 
