@@ -26,7 +26,6 @@ class System(pc.System):
             self.__dict__.update(source.__dict__)
 
     def __delitem__(self, val):
-        print("tthis function is called")
         if isinstance(val, int):
             val = [val]
         self.delete(indices=list(val))
@@ -41,28 +40,28 @@ class System(pc.System):
             #this is the list of atoms in this sample
             for atom in atoms:
                 #identify the position
-                position = list([s[2] for s in self.graph.triples((atom, CMSO.hasPositionVector, None))])
-                self.graph.remove((position, None, None))
+                position = list([s[2] for s in self.graph.graph.triples((atom, CMSO.hasPositionVector, None))])
+                self.graph.graph.remove((position, None, None))
                 #identify element
-                element = list([s[2] for s in self.graph.triples((atom, CMSO.hasElement, None))])
-                self.graph.remove((position, None, None))
+                element = list([s[2] for s in self.graph.graph.triples((atom, CMSO.hasElement, None))])
+                self.graph.graph.remove((position, None, None))
                 #now remove the atom from the list completely
-                self.graph.remove((atom, None, None))
-                self.graph.remove((None, None, atom))
+                self.graph.graph.remove((atom, None, None))
+                self.graph.graph.remove((None, None, atom))
             #now fully remove atoms
             for atom in atoms:
                 self._atom_ids.remove(atom)
             #now fix the number of atoms
-            self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms, datatype=XSD.integer)))
+            self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms, datatype=XSD.integer)))
             #revamp composition
             #for that first get element
-            material = list([s[2] for s in self.graph.triples((self.sample, CMSO.hasMaterial, None))])
+            material = list([s[2] for s in self.graph.graph.triples((self.sample, CMSO.hasMaterial, None))])
             #remove existing chem composution
-            self.graph.remove((material, CMSO.hasElementRatio, None))
+            self.graph.graph.remove((material, CMSO.hasElementRatio, None))
             #now recalculate and add it again
             chem_comp_element = list(self.composition.keys())
             chem_comp_ratio = [val for key, val in self.composition.items()]
             chem_comp = ["=".join([str(x), str(y)]) for x,y in zip(chem_comp_element, chem_comp_ratio)]
             for x in range(len(chem_comp)):
-                self.add((material, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
+                self.graph.graph.add((material, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
