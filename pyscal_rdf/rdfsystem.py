@@ -33,17 +33,29 @@ class System(pc.System):
         	self.graph.add_vacancy(c, number=len(val))
         	#now we need to re-add atoms, so at to remove
         	#deleted ones from the vacancy
-        	atoms = list([s[2] for s in self.graph.triples((self.sample, CMSO.hasAtom, None))])
+        	atoms = [self._atom_ids[v] for v in val] 
         	#this is the list of atoms in this sample
         	for atom in atoms:
-        		self.graph.remove(())
-
-        	self.graph.remove((None, CMSO.hasAtom, None))
-        	self.graph.remove((None, None, CMSO.Atom))
-        	self.graph.remove((None, CMSO.hasPositionVector, None))
-        	self.graph.remove(())
-        	self.graph.remove(())
-        	self.graph.remove(())
-        	self.graph.remove(())
-        	self.graph.remove(())
-
+        		#identify the position
+        		position = list([s[2] for s in self.graph.triples((atom, CMSO.hasPositionVector, None))])
+        		self.graph.remove((position, None, None))
+        		#identify element
+        		element = list([s[2] for s in self.graph.triples((atom, CMSO.hasElement, None))])
+        		self.graph.remove((position, None, None))
+        		#now remove the atom from the list completely
+        		self.graph.remove((atom, None, None))
+        		self.graph.remove((None, None, atom))
+        	#now fix the number of atoms
+        	self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+        	self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms, datatype=XSD.integer)))
+        	#revamp composition
+        	#for that first get element
+        	material = list([s[2] for s in self.graph.triples((self.sample, CMSO.hasMaterial, None))])
+        	#remove existing chem composution
+        	self.graph.remove((material, CMSO.hasElementRatio, None))
+        	#now recalculate and add it again
+        	chem_comp_element = list(self.composition.keys())
+        	chem_comp_ratio = [val for key, val in self.composition.items()]
+	        chem_comp = ["=".join([str(x), str(y)]) for x,y in zip(chem_comp_element, chem_comp_ratio)]
+	        for x in range(len(chem_comp)):
+	            self.add((material, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
