@@ -685,9 +685,9 @@ class RDFGraph:
         lattice = self.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
         defect_types = list([self.graph.value(d, RDF.type).toPython() for d in defects])
         prop_nodes = list([k[2] for k in self.graph.triples((sample, CMSO.hasCalculatedProperty, None))])
-        props = list([self.graph.value(prop_node, RDFS.label).toPython() for prop_node in prop_nodes])
-        propvals = list([self.graph.value(d, CMSO.hasValue).toPython() for d in props])
-        units = list([self.graph.value(d, CMSO.hasUnit).toPython() for d in props])
+        props = list([self.graph.value(prop_node, RDFS.label) for prop_node in prop_nodes])
+        propvals = list([self.graph.value(d, CMSO.hasValue).toPython() for d in prop_nodes])
+        units = list([self.graph.value(d, CMSO.hasUnit).toPython() for d in prop_nodes])
         st = []
         st.append(f'Sample with {natoms} atoms.\n')
         st.append("Material:\n")
