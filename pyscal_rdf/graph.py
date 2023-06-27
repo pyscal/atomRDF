@@ -534,7 +534,10 @@ class RDFGraph:
         """
         self._atom_ids = []
 
-        for x in range(len(self.data("Positions"))):
+        positions = self.data("Positions")
+        elements = self.data("Element")
+        coordination = self.data("Coordination")
+        for x in range(len(positions)):
             uname = None
             if name is not None:
                 uname = f'{name}_{x}'            
@@ -550,11 +553,11 @@ class RDFGraph:
             position = BNode(uname)
             self.add((atom, CMSO.hasPositionVector, position))
             self.add((position, RDF.type, CMSO.PositionVector))
-            self.add((position, CMSO.hasComponent_x, Literal(self.data("Positions")[x][0],
+            self.add((position, CMSO.hasComponent_x, Literal(positions[x][0],
                                                                   datatype=XSD.float)))
-            self.add((position, CMSO.hasComponent_y, Literal(self.data("Positions")[x][1],
+            self.add((position, CMSO.hasComponent_y, Literal(positions[x][1],
                                                                   datatype=XSD.float)))
-            self.add((position, CMSO.hasComponent_z, Literal(self.data("Positions")[x][2],
+            self.add((position, CMSO.hasComponent_z, Literal(positions[x][2],
                                                                   datatype=XSD.float)))
             #now add coordination
             uname = None
@@ -563,10 +566,10 @@ class RDFGraph:
             element = BNode(uname)
             self.add((atom, CMSO.hasElement, element))
             self.add((element, RDF.type, CMSO.Element))
-            self.add((element, CMSO.hasSymbol, Literal(str(self.data("Element")[x]),
+            self.add((element, CMSO.hasSymbol, Literal(str(elements[x]),
                                                             datatype=XSD.string)))
             #finally occupancy
-            self.add((atom, CMSO.hasCoordinationNumber, Literal(self.data("Coordination")[x],
+            self.add((atom, CMSO.hasCoordinationNumber, Literal(coordination[x],
                                                                      datatype=XSD.integer)))
 
     
