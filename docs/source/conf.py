@@ -55,13 +55,13 @@ myst_enable_extensions = ["dollarmath", "amsmath"]
 html_theme = 'furo'
 #html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-html_logo = "../_static/logo.png"
+html_logo = "_static/logo.png"
 html_theme_options = {
     'logo_only' : True,
     #'canonical_url' : 'https://calphy.readthedocs.io/',
 }
 
-html_extra_path = ['../_static' ]
+html_extra_path = ['_static' ]
 
 source_suffix = ['.rst', '.md']
 
