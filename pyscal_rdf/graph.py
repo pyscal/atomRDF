@@ -12,6 +12,7 @@ import numpy as np
 import inspect
 from ase.io import write
 import copy
+import pandas as pd
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network import OntologyNetwork
@@ -864,7 +865,28 @@ class RDFGraph:
             #write(filename, asesys, format=format)
             sys.to_file(filename, format=format)
     
-        
+    
+    def query(self, inquery):
+        """
+        Query the graph using SPARQL
+
+        Parameters
+        ----------
+        inquery: string
+            SPARQL query to be executed
+
+        Returns
+        -------
+        res: pandas DataFrame
+            pandas dataframe results
+        """
+        res = self.graph.query(inquery)
+        if res is not None:
+            return pd.DataFrame(res)
+        raise ValueError("SPARQL query returned None")
+
+
+
     def query_sample(self, target_property, value, return_query=False):
         """
         Query the Graph for a sample that has the given `value` for the given `target_property`
