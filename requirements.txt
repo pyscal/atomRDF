@@ -9,3 +9,5 @@ pyscal3
 spglib
 rdflib-sqlalchemy
 sqlalchemy<2.0.0
+pandas
+owlready2
