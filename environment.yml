@@ -15,3 +15,5 @@ dependencies:
   - networkx
   - sqlalchemy <2.0.0
   - rdflib-sqlalchemy
+  - pandas
+  - owlready2
