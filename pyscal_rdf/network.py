@@ -1,99 +1,75 @@
 import networkx as nx
+import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+from pyscal_rdf.parser import OntoParser
 
-class Network:
+owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+
+def _replace_name(name):
+    return ".".join(name.split(':'))
+
+class OntologyNetwork:
     """
-    Network representation of CMSO
+    Network representation of Onto
     """
-    def __init__(self):
+    def __init__(self, infile=None):
+        if infile is None:
+            infile = owlfile
+            
         self.g = nx.DiGraph()
-    
-    def add(self, sub, pred, obj, dtype=None, pred_prefix="cmso"):
-        pred = f'{pred_prefix}:{pred}'
-        self.g.add_node(sub, node_type="object")
-        self.g.add_node(pred, node_type="property")
-        if dtype is not None:
-            nd = "data"
-        else:
-            nd = "object"
-        self.g.add_node(obj, dtype=dtype, node_type=nd)            
-        self.g.add_edge(sub, pred)
-        self.g.add_edge(pred, obj)
-    
-    def draw(self):
-        nx.draw(self.g, with_labels=True, font_weight='bold')
+        self.onto = OntoParser(infile)
+        self.data_prefix = 'value'
         
+        #call methods
+        self._add_class_nodes()
+        self._add_object_properties()
+        self._add_data_properties()
+                
     def get_shortest_path(self, source, target):
         path = nx.shortest_path(self.g, source=source, target=target)
         return path
     
-class OntologyNetwork(Network):
-    def __init__(self):
-        super().__init__()
-        self.add("Sample", "hasMaterial", "Material")
-        self.add("Material", "hasElementRatio", "ElementRatio", dtype="string")
-
-        self.add("Sample", "hasSimulationCell", "SimulationCell")
-        self.add("SimulationCell", "hasVolume", "Volume", dtype="float")
-        self.add("Sample", "hasNumberOfAtoms", "NumberOfAtoms", dtype="integer")
-
-        self.add("SimulationCell", "hasLength", "SimulationCellLength")
-        self.add("SimulationCellLength", "hasLength_x", "SimulationCellLength_x", dtype="float")
-        self.add("SimulationCellLength", "hasLength_y", "SimulationCellLength_y", dtype="float")
-        self.add("SimulationCellLength", "hasLength_z", "SimulationCellLength_z", dtype="float")
-
-        self.add("SimulationCell", "hasVector", "SimulationCellVectorA")
-        self.add("SimulationCellVectorA", "hasComponent_x", "SimulationCellVectorA_x", dtype="float")
-        self.add("SimulationCellVectorA", "hasComponent_y", "SimulationCellVectorA_y", dtype="float")
-        self.add("SimulationCellVectorA", "hasComponent_z", "SimulationCellVectorA_z", dtype="float")
-        self.add("SimulationCell", "hasVector", "SimulationCellVectorB")
-        self.add("SimulationCellVectorB", "hasComponent_x", "SimulationCellVectorB_x", dtype="float")
-        self.add("SimulationCellVectorB", "hasComponent_y", "SimulationCellVectorB_y", dtype="float")
-        self.add("SimulationCellVectorB", "hasComponent_z", "SimulationCellVectorB_z", dtype="float")
-        self.add("SimulationCell", "hasVector", "SimulationCellVectorC")
-        self.add("SimulationCellVectorC", "hasComponent_x", "SimulationCellVectorC_x", dtype="float")
-        self.add("SimulationCellVectorC", "hasComponent_y", "SimulationCellVectorC_y", dtype="float")
-        self.add("SimulationCellVectorC", "hasComponent_z", "SimulationCellVectorC_z", dtype="float")
-
-        self.add("SimulationCell", "hasAngle", "SimulationCellAngle")
-        self.add("SimulationCellAngle", "hasAngle_alpha", "SimulationCellAngle_alpha", dtype="float")
-        self.add("SimulationCellAngle", "hasAngle_beta", "SimulationCellAngle_beta", dtype="float")
-        self.add("SimulationCellAngle", "hasAngle_gamma", "SimulationCellAngle_gamma", dtype="float")
-
-        self.add("Material", "hasStructure", "CrystalStructure")
-        self.add("CrystalStructure", "hasAltName", "CrystalStructureAltName", dtype="string")
-        self.add("CrystalStructure", "hasSpaceGroupSymbol", "SpaceGroupSymbol", dtype="string")
-        self.add("CrystalStructure", "hasSpaceGroupNumber", "SpaceGroupNumber", dtype="integer")
-
-        self.add("CrystalStructure", "hasUnitCell", "UnitCell")
-        self.add("UnitCell", "hasBravaisLattice", "LatticeSystem")
-        self.add("UnitCell", "hasLatticeParameter", "LatticeParameter")
-        self.add("LatticeParameter", "hasLength_x", "LatticeParameter_x", dtype="float")
-        self.add("LatticeParameter", "hasLength_y", "LatticeParameter_y", dtype="float")
-        self.add("LatticeParameter", "hasLength_z", "LatticeParameter_z", dtype="float")
-        self.add("UnitCell", "hasAngle", "LatticeAngle")
-        self.add("LatticeAngle", "hasAngle_alpha", "LatticeAngle_alpha", dtype="float")
-        self.add("LatticeAngle", "hasAngle_beta", "LatticeAngle_beta", dtype="float")
-        self.add("LatticeAngle", "hasAngle_gamma", "LatticeAngle_gamma", dtype="float")
-
-        #add GB properties
-        self.add("Material", "hasDefect", "Defect", pred_prefix="cmso")
-        self.add("Defect", "type", "GrainBoundary", pred_prefix="rdf")
-        self.add("Defect", "type", "TwistBoundary", pred_prefix="rdf")
-        self.add("Defect", "type", "TiltBoundary", pred_prefix="rdf")
-        self.add("Defect", "type", "SymmetricTiltBoundary", pred_prefix="rdf")
-        self.add("Defect", "type", "MixedBoundary", pred_prefix="rdf")
-        self.add("Defect", "hasSigmaValue", "Sigma", dtype="integer", pred_prefix="pldo")
-        self.add("Defect", "hasGBPlane", "GBPlane", pred_prefix="pldo", dtype="string")
-        self.add("Defect", "hasRotationAxis", "RotationAxis", pred_prefix="pldo", dtype="string")
-        self.add("Defect", "hasMisorientationAngle", "MisorientationAngle", pred_prefix="pldo", dtype="float")
-
-        #add vacancy
-        self.add("Defect", "type", "Vacancy", pred_prefix="rdf")
-        self.add("SimulationCell", "hasVacancyConcentration", "VacancyConcentration", pred_prefix="podo", dtype="float")
-        self.add("SimulationCell", "hasNumberOfVacancies", "NumberOfVacancy", pred_prefix="podo", dtype="integer")
-         
+    def _add_class_nodes(self):
+        for key, val in self.onto.attributes['class'].items():
+            self.g.add_node(val.name, node_type='class')
+    
+    def _add_object_properties(self):
+        for key, val in self.onto.attributes['object_property'].items():
+            self.g.add_node(val.name, node_type='object_property')
+            #find domain
+            for d in val.domain:
+                self.g.add_edge(d, val.name)
+            for r in val.range:
+                self.g.add_edge(val.name, r)
+    
+    def _add_data_properties(self):
+        for key, val in self.onto.attributes['data_property'].items():
+            self.g.add_node(val.name, node_type='data_property')
+            for d in val.domain:
+                self.g.add_edge(d, val.name)
+            for r in val.range:
+                data_node = f'{val.name}{self.data_prefix}'
+                self.g.add_node(data_node, node_type='literal')
+                self.g.add_edge(val.name, data_node)
+                
+    
+    def draw(self, styledict = {"class": {"shape":"box"},
+                                "object_property": {"shape":"ellipse"},
+                                "data_property": {"shape":"ellipse"},
+                                "literal": {"shape":"parallelogram"},}):
+        dot = graphviz.Digraph()
+        node_list = list(self.g.nodes(data='node_type'))
+        edge_list = list(self.g.edges)
+        for node in node_list:
+            name = _replace_name(node[0])
+            if node[1] is not None:
+                t = node[1]
+                dot.node(name, shape=styledict[t]['shape'], fontsize="6")
+        for edge in edge_list:
+            dot.edge(_replace_name(edge[0]), _replace_name(edge[1]))
+        return dot
 
     def get_path_from_sample(self, target):
         path = self.get_shortest_path(source="Sample", target=target)
