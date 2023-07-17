@@ -18,6 +18,7 @@ class OntoParser:
         self.attributes['data_property'] = {}        
         self.delimiter = delimiter
         self.classes = None
+        self.namespaces = [self.tree.base_iri]
         self._parse_class()
         self._parse_object_property()
         self._parse_data_property()
@@ -37,6 +38,9 @@ class OntoParser:
         if ontoparser.classes is not None:
             for clx in ontoparser.classes:
                 self.classes.append(clx)
+
+        for ns in ontoparser.namespaces:
+            self.namespaces.append(ns)
 
         return self
 
