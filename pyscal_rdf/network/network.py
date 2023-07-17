@@ -189,7 +189,7 @@ class OntologyNetwork:
         
         sparql_phrase_list = []
         for phrase, destination in zip(phrase_list, destinations):
-            sparql_phrase = phrase_to_sparql(phrase)
+            sparql_phrase = self.phrase_to_sparql(phrase)
             sparql_phrase = sparql_phrase.replace('value', self.strip_name(destination))
             sparql_phrase = sparql_phrase.replace('datatype', self.g.nodes[destination]['data_type'])
             sparql_phrase_list.append(sparql_phrase)
@@ -245,7 +245,7 @@ class OntologyNetwork:
             if not len(data_destinations) == len(values):
                 raise ValueError(f'Length of destinations and values should be same, found {len(data_destinations)} and {len(values)}')
             if len(data_destinations) > 0:
-                filter_text = validate_values(data_destinations, values)
+                filter_text = self.validate_values(data_destinations, values)
         query.append(filter_text)
         query.append('}')
         return '\n'.join(query)
