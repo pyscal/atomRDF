@@ -51,8 +51,13 @@ class OntologyNetwork:
     def __radd__(self, ontonetwork):
         return self.__add__(ontonetwork)
 
-    def get_shortest_path(self, source, target):
+    def get_shortest_path(self, source, target, triples=False):
         path = nx.shortest_path(self.g, source=source, target=target)
+        if triples:
+            triple_list = []
+            for x in range(len(path)//2):
+                triple_list.append(path[2*x:2*x+3])
+            return triple_list
         return path
     
     def _add_class_nodes(self):
