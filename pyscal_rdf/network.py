@@ -21,6 +21,7 @@ class OntologyNetwork:
         self.g = nx.DiGraph()
         self.onto = OntoParser(infile)
         self.data_prefix = 'value'
+        self._parse_all()
         
     def _parse_all(self):
         #call methods
@@ -35,6 +36,7 @@ class OntologyNetwork:
         self._parse_all()
         return self
 
+    @property
     def attributes(self):
         return self.onto.attributes
 
