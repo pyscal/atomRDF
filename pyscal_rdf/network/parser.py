@@ -1,4 +1,4 @@
-from onto_network.term import OntoTerm 
+from pyscal_rdf.network.term import OntoTerm 
 from owlready2 import get_ontology
 
 import os

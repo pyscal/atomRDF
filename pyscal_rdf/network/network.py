@@ -3,7 +3,7 @@ import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from pyscal_rdf.parser import OntoParser
+from pyscal_rdf.network.parser import OntoParser
 
 owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
 

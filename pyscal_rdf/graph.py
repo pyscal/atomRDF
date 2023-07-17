@@ -15,7 +15,7 @@ import copy
 import pandas as pd
 
 from pyscal_rdf.visualize import visualize_graph
-from pyscal_rdf.network import OntologyNetwork
+from pyscal_rdf.network.network import OntologyNetwork
 from pyscal_rdf.rdfsystem import System
 import pyscal_rdf.properties as prp
 #from pyscal3.core import System
