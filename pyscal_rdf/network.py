@@ -89,8 +89,13 @@ class OntologyNetwork:
             raise ValueError(f'{pred} not found in self.attributes')
 
         #now add
-        self.g.add_edge(sub, pred)
-        self.g.add_edge(pred, obj) 
+        subclasses = self.onto._get_subclasses(sub)
+        for subclass in subclasses:
+            self.g.add_edge(subclass, pred)
+
+        subclasses = self.onto._get_subclasses(obj)
+        for subclass in subclasses:
+            self.g.add_edge(pred, subclass) 
 
     def draw(self, styledict = {"class": {"shape":"box"},
                                 "object_property": {"shape":"ellipse"},
