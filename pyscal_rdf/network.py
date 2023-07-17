@@ -22,14 +22,21 @@ class OntologyNetwork:
         self.onto = OntoParser(infile)
         self.data_prefix = 'value'
         
+    def _parse_all(self):
         #call methods
         self._add_class_nodes()
         self._add_object_properties()
         self._add_data_properties()
 
     def __add__(self, ontonetwork):
-        pass
-                
+        #add onto network
+        self.onto = self.onto + ontonetwork.onto
+        #now parse again
+        self._parse_all()
+
+    def __radd__(self, ontonetwork):
+        return self.__add__(ontonetwork)
+
     def get_shortest_path(self, source, target):
         path = nx.shortest_path(self.g, source=source, target=target)
         return path
