@@ -36,6 +36,12 @@ class OntologyNetwork:
         self._parse_all()
         return self
 
+    def strip_name(self, name):
+        raw = name.split(':')
+        if len(raw) > 1:
+            return raw[-1]
+        return name
+
     @property
     def attributes(self):
         return self.onto.attributes
