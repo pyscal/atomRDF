@@ -103,7 +103,7 @@ class OntologyNetwork:
         #another possibility it is data property
         elif pred in self.onto.attributes['data_property'].keys():
             data_node = f'{pred}{self.data_prefix}'
-            self.g.add_node(data_node, node_type='literal')
+            self.g.add_node(data_node, node_type='literal', data_type=obj)
             self.g.add_edge(pred, data_node)
         
         else:
