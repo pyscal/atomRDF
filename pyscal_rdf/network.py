@@ -33,6 +33,7 @@ class OntologyNetwork:
         self.onto = self.onto + ontonetwork.onto
         #now parse again
         self._parse_all()
+        return self
 
     def __radd__(self, ontonetwork):
         return self.__add__(ontonetwork)
