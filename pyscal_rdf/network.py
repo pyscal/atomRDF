@@ -26,6 +26,9 @@ class OntologyNetwork:
         self._add_class_nodes()
         self._add_object_properties()
         self._add_data_properties()
+
+    def __add__(self, ontonetwork):
+        pass
                 
     def get_shortest_path(self, source, target):
         path = nx.shortest_path(self.g, source=source, target=target)

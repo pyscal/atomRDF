@@ -17,10 +17,32 @@ class OntoParser:
         self.attributes['object_property'] = {}
         self.attributes['data_property'] = {}        
         self.delimiter = delimiter
+        self.classes = None
         self._parse_class()
         self._parse_object_property()
-        self._parse_data_property()        
-    
+        self._parse_data_property()
+
+    def __add__(self, ontoparser):
+        """
+        Add method; in principle it should add-
+        - classes
+        - attributes dict
+        """
+        for mainkey in ['class', 'object_property', 'data_property']:
+            if mainkey in ontoparser.attributes.keys():
+                for key, val in ontoparser.attributes[mainkey].items():
+                    self.attributes[mainkey][key] = val        
+        
+        #now change classes
+        if ontoparser.classes is not None:
+            for clx in ontoparser.classes:
+                self.classes.append(clx)
+
+        return self
+
+    def __radd__(self, ontoparser):
+        return self.__add__(ontoparser)
+
     def _strip_name(self, uri):
         uri_split = uri.split(self.delimiter)
         if len(uri_split)>1:
