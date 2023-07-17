@@ -67,8 +67,9 @@ class OntologyNetwork:
                 self.g.add_edge(d, val.name)
             for r in val.range:
                 data_node = f'{val.name}{self.data_prefix}'
-                self.g.add_node(data_node, node_type='literal')
+                self.g.add_node(data_node, node_type='literal', data_type=r.name)
                 self.g.add_edge(val.name, data_node)
+
                 
     
     def add_path(self, triple):
