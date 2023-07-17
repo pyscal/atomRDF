@@ -93,7 +93,7 @@ class RDFGraph:
         self.material = None
         self.sysdict = None
         self.sgraph = None
-        self._query_graph = OntologyNetwork()
+        #self._query_graph = OntologyNetwork()
         self._atom_ids = None
     
     def process_structure(self, structure, format=None):

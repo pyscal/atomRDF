@@ -5,7 +5,7 @@ import numpy as np
 import os
 from pyscal_rdf.network.parser import OntoParser
 
-owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
 
 def _replace_name(name):
     return ".".join(name.split(':'))
@@ -151,97 +151,104 @@ class OntologyNetwork:
             triplets.append(path[2*x:2*x+3])
         return triplets
         
-    def formulate_query(self, target, value):
-        #first get triplets
-        triplets = self.get_path_from_sample(target)
-        #start building query
-        query = self._formulate_query_path(triplets)
-        query.append(self._formulate_filter_expression(triplets, value))
-        query.append("}")
-        query = " ".join(query)
-        return query
+    def phrase_to_sparql(self, phrase):
+        def _extract_operation(phr):
+            r = phr.split(' ')
+            if len(r) != 3:
+                raise ValueError('wrong filters!')
+            return f'?value{r[1]}\"{r[2]}\"^^xsd:datatype'
+
+        conditions = []
+        operation = None
         
-    
-    def _formulate_query_path(self, triplets):
+        raw = phrase.split(' and ')
+        
+        if len(raw) > 1:
+            operation = '&&'
+        if operation is None:
+            raw = phrase.split(' or ')
+            if len(raw) > 1:
+                operation = '||'
+        
+        if operation is not None:
+            for ph in raw:
+                conditions.append(_extract_operation(ph))
+        else:
+            conditions.append(_extract_operation(phrase))
+        full_str = f' {operation} '.join(conditions)
+        #replace values
+        return full_str
+        
+
+    def validate_values(self, destinations, values):
+        combinator_dict = {'and': '&&', 'or': '||'}
+        combinator_list = values[1::2]
+        phrase_list = values[::2]
+        if not len(combinator_list) == len(destinations)-1:
+            raise ValueError("Invalid combinations!")
+        
+        sparql_phrase_list = []
+        for phrase, destination in zip(phrase_list, destinations):
+            sparql_phrase = phrase_to_sparql(phrase)
+            sparql_phrase = sparql_phrase.replace('value', self.strip_name(destination))
+            sparql_phrase = sparql_phrase.replace('datatype', self.g.nodes[destination]['data_type'])
+            sparql_phrase_list.append(sparql_phrase)
+            
+        #combine phrases with phrase list
+        updated_sparql_phrase_list = []
+        for count, sparql_phrase in enumerate(sparql_phrase_list):
+            updated_sparql_phrase_list.append(f'({sparql_phrase})')
+            if count < len(sparql_phrase_list)-1:
+                updated_sparql_phrase_list.append(combinator_dict[combinator_list[count]])
+            
+        full_filter = " ".join(updated_sparql_phrase_list)
+        return f'FILTER ({full_filter})'
+        
+    def create_query(self, source, destinations, values = None):
+        """
+        values is a dict with keys value, operation
+        """
+        if not isinstance(destinations, list):
+            destinations = [destinations]
+            
+        #start prefix of quer
         query = []
-        query.append("PREFIX cmso: <https://purls.helmholtz-metadaten.de/cmso/>")
-        query.append("PREFIX pldo: <https://purls.helmholtz-metadaten.de/pldo/>")
-        query.append("PREFIX podo: <https://purls.helmholtz-metadaten.de/podo/>")
-        query.append("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>")
-        query.append("SELECT DISTINCT ?sample")
-        query.append("WHERE {")
-        for triple in triplets:
-            query.append("    ?%s %s ?%s ."%(triple[0].lower(), 
-                                                  triple[1], 
-                                                  triple[2].lower()))
-        return query
-    
-    def _formulate_filter_expression(self, triplets, value):                       
-        value, datatype = self._check_value(value)      
-        last_val = self.g.nodes[triplets[-1][-1]]
-        last_val_name = triplets[-1][-1].lower()
+        for key, val in self.namespaces.items():
+            query.append(f'PREFIX {key}: <{val}>')
+        for key, val in self.extra_namespaces.items():
+            query.append(f'PREFIX {key}: <{val}>')
         
-        #if it is nodetype data
-        if last_val['node_type'] == "data":
-            if datatype == "multi_string":
-                qstr = self._formulate_or_string_query(last_val, 
-                                                   last_val_name, 
-                                                   value)
-            elif datatype == "multi_number":
-                qstr = self._formulate_range_number_query(last_val, 
-                                                   last_val_name, 
-                                                   value)
-            else:
-                qstr = self._formulate_equal_query(last_val, 
-                                                   last_val_name, 
-                                                   value)
-            return qstr
-        else:
-            raise NotImplementedError("Non-data queries are not implemented")
-    
-    def _check_value(self, value):
-        if isinstance(value, list):
-            if not len(value) == 2:
-                raise ValueError("value can be maximum length 2")
-        else:
-            value = [value]
-        if all(isinstance(x, str) for x in value):
-            datatype = "string"
-        elif all(isinstance(x, (int, float)) for x in value):
-            datatype = "number"
-        else:
-            raise TypeError("Values have to be of same type")
-        if len(value) == 1:
-            datatype = f'single_{datatype}'
-        else:
-            datatype = f'multi_{datatype}'
-        return value, datatype
-    
-    
-    def _formulate_equal_query(self, last_val, last_val_name, value):
-        qstr = "FILTER (?%s=\"%s\"^^xsd:%s)"%(last_val_name, 
-                                              str(value[0]), 
-                                              last_val['dtype'])
-        return qstr
-    
-    def _formulate_or_string_query(self, last_val, last_val_name, value):
-        qstr = "FILTER (?%s=\"%s\"^^xsd:%s || ?%s=\"%s\"^^xsd:%s)"%(last_val_name, 
-                                                                    str(value[0]), 
-                                                                    last_val['dtype'],
-                                                                    last_val_name, 
-                                                                    str(value[1]), 
-                                                                    last_val['dtype'],)
-        return qstr
-    
-    def _formulate_range_number_query(self, last_val, last_val_name, value):
-        value = np.sort(value)
-        qstr = "FILTER (?%s >= \"%s\"^^xsd:%s && ?%s <= \"%s\"^^xsd:%s)"%(last_val_name, 
-                                                                    str(value[0]), 
-                                                                    last_val['dtype'],
-                                                                    last_val_name, 
-                                                                    str(value[1]), 
-                                                                    last_val['dtype'],)
-        return qstr
+        #now for each destination, start adding the paths in the query
+        all_triplets = {}
+        for destination in destinations:
+            triplets = self.get_shortest_path(source, destination, triples=True)
+            all_triplets[destination] = triplets
+        
+        select_destinations = [f'?{self.strip_name(destination)}' for destination in destinations]
+        query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
+        query.append("WHERE {")
+        
+        #now add corresponding triples
+        for destination in destinations:
+            for triple in all_triplets[destination]:
+                query.append("    ?%s %s ?%s ."%(self.strip_name(triple[0]), 
+                                                 triple[1], 
+                                                 self.strip_name(triple[2])))
+        
+        #now we have to add filters
+        #filters are only needed if it is a dataproperty
+        filter_text = ''
+        
+        if values is not None:
+            lit_nodes = [node for node in self.g.nodes if 'node_type' in self.g.nodes[node].keys() and self.g.nodes[node]['node_type'] == 'literal']
+            data_destinations = [destination for destination in destinations if destination in lit_nodes]
+            if not len(data_destinations) == len(values):
+                raise ValueError(f'Length of destinations and values should be same, found {len(data_destinations)} and {len(values)}')
+            if len(data_destinations) > 0:
+                filter_text = validate_values(data_destinations, values)
+        query.append(filter_text)
+        query.append('}')
+        return '\n'.join(query)
 
         
             
