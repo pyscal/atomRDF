@@ -69,6 +69,29 @@ class OntologyNetwork:
                 self.g.add_edge(val.name, data_node)
                 
     
+    def add_path(self, triple):
+        """
+        Add a triple as path. Note that all attributes of the triple should already
+        exist in the graph. The ontology itself is not modified. Only the graph
+        representation of it is.
+        The expected use is to bridge between two(or more) different ontologies.
+        Therefore, mapping can only be between classes.
+        """
+        sub = triple[0]
+        pred = triple[1]
+        obj = triple[2]
+
+        for item in [sub, obj]:
+            if not item in self.attributes['class'].keys():
+                raise ValueError(f'{item} not found in self.attributes')
+        
+        if pred not in self.attributesp['object_property'].keys():
+            raise ValueError(f'{pred} not found in self.attributes')
+
+        #now add
+        self.g.add_edge(sub, pred)
+        self.g.add_edge(pred, obj) 
+
     def draw(self, styledict = {"class": {"shape":"box"},
                                 "object_property": {"shape":"ellipse"},
                                 "data_property": {"shape":"ellipse"},
