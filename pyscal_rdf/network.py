@@ -40,6 +40,14 @@ class OntologyNetwork:
     def attributes(self):
         return self.onto.attributes
 
+    @property
+    def namespaces(self):
+        return self.onto.namespaces
+
+    @property
+    def extra_namespaces(self):
+        return self.onto.extra_namespaces
+
     def __radd__(self, ontonetwork):
         return self.__add__(ontonetwork)
 

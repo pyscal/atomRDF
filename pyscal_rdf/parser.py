@@ -18,7 +18,9 @@ class OntoParser:
         self.attributes['data_property'] = {}        
         self.delimiter = delimiter
         self.classes = None
-        self.namespaces = [self.tree.base_iri]
+        self.namespaces = {self.tree.name: self.tree.base_iri}
+        self.extra_namespaces = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+        }
         self._parse_class()
         self._parse_object_property()
         self._parse_data_property()
@@ -39,8 +41,11 @@ class OntoParser:
             for clx in ontoparser.classes:
                 self.classes.append(clx)
 
-        for ns in ontoparser.namespaces:
-            self.namespaces.append(ns)
+        for key, val in ontoparser.namespaces.items():
+            self.namespaces[key] = val
+
+        for key, val in ontoparser.extra_namespaces.items():
+            self.extra_namespaces[key] = val
 
         return self
 
