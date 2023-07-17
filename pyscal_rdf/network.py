@@ -81,21 +81,30 @@ class OntologyNetwork:
         pred = triple[1]
         obj = triple[2]
 
-        for item in [sub, obj]:
-            if not item in self.attributes['class'].keys():
-                raise ValueError(f'{item} not found in self.attributes')
-        
-        if pred not in self.attributesp['object_property'].keys():
-            raise ValueError(f'{pred} not found in self.attributes')
+        if sub not in self.onto.attributes['class'].keys():
+            raise ValueError(f'{sub} not found in self.attributes')
 
         #now add
         subclasses = self.onto._get_subclasses(sub)
         for subclass in subclasses:
-            self.g.add_edge(subclass, pred)
+            self.g.add_edge(subclass, pred)            
+        
+        #now add pred
+        if pred in self.onto.attributes['object_property'].keys():
+            if obj not in self.onto.attributes['class'].keys():
+                raise ValueError(f'{obj} not found in self.attributes')
+            subclasses = self.onto._get_subclasses(obj)
+            for subclass in subclasses:
+                self.g.add_edge(pred, subclass) 
 
-        subclasses = self.onto._get_subclasses(obj)
-        for subclass in subclasses:
-            self.g.add_edge(pred, subclass) 
+        #another possibility it is data property
+        elif pred in self.onto.attributes['data_property'].keys():
+            data_node = f'{pred}{self.data_prefix}'
+            self.g.add_node(data_node, node_type='literal')
+            self.g.add_edge(pred, data_node)
+        
+        else:
+            raise ValueError(f'{pred} not found in self.attributes')
 
     def draw(self, styledict = {"class": {"shape":"box"},
                                 "object_property": {"shape":"ellipse"},
