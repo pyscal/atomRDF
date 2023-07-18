@@ -21,9 +21,9 @@ import pyscal_rdf.properties as prp
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
 
-CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
-PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
-PODO = Namespace("https://purls.helmholtz-metadaten.de/podo/")
+CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
+PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
+PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 
 defstyledict = {
     "BNode": {"color": "#ffe6ff", 
