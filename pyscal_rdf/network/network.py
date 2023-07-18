@@ -3,6 +3,7 @@ import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import warnings
 from pyscal_rdf.network.parser import OntoParser
 
 owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
@@ -243,9 +244,11 @@ class OntologyNetwork:
             lit_nodes = [node for node in self.g.nodes if 'node_type' in self.g.nodes[node].keys() and self.g.nodes[node]['node_type'] == 'literal']
             data_destinations = [destination for destination in destinations if destination in lit_nodes]
             if not len(data_destinations) == len(values):
-                raise ValueError(f'Length of destinations and values should be same, found {len(data_destinations)} and {len(values)}')
-            if len(data_destinations) > 0:
-                filter_text = self.validate_values(data_destinations, values)
+                warnings.warn(f'Length of destinations and values are not same, found {len(data_destinations)} and {len(values)}')
+                considered = " ".join(data_destinations[:len(values)])
+                warnings.warn(f'Conditions are considered for {considered}')
+            if len(values) > 0:
+                filter_text = self.validate_values(data_destinations[:len(values)], values)
         query.append(filter_text)
         query.append('}')
         return '\n'.join(query)
