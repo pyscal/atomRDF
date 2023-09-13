@@ -15,15 +15,15 @@ import copy
 import pandas as pd
 
 from pyscal_rdf.visualize import visualize_graph
-from pyscal_rdf.network import OntologyNetwork
+from pyscal_rdf.network.network import OntologyNetwork
 from pyscal_rdf.rdfsystem import System
 import pyscal_rdf.properties as prp
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
 
-CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
-PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
-PODO = Namespace("https://purls.helmholtz-metadaten.de/podo/")
+CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
+PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
+PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 
 defstyledict = {
     "BNode": {"color": "#ffe6ff", 
@@ -93,7 +93,7 @@ class RDFGraph:
         self.material = None
         self.sysdict = None
         self.sgraph = None
-        self._query_graph = OntologyNetwork()
+        #self._query_graph = OntologyNetwork()
         self._atom_ids = None
     
     def process_structure(self, structure, format=None):
@@ -882,7 +882,11 @@ class RDFGraph:
         """
         res = self.graph.query(inquery)
         if res is not None:
-            return pd.DataFrame(res)
+            for line in inquery.split('\n'):
+                if 'SELECT DISTINCT' in line:
+                    break
+            labels = [x[1:] for x in line.split()[2:]]
+            return pd.DataFrame(res, columns=labels)
         raise ValueError("SPARQL query returned None")
 
 
