@@ -10,6 +10,8 @@ class OntoParser:
     def __init__(self, infile, delimiter='/'):
         if os.path.exists(infile):
             self.tree = get_ontology(f'file://{infile}').load()
+        elif infile[:4] == 'http':
+            self.tree = get_ontology(infile)
         else:
             raise FileNotFoundError(f'file {infile} not found!')
         self.attributes = {}
@@ -131,10 +133,12 @@ class OntoParser:
             self.attributes['object_property'][term.name] = term
             for d in dm:
                 if d!='07:owl#Thing':
-                    self.attributes['class'][d].is_range_of.append(term.name)
+                    if d in self.attributes['class']:
+                        self.attributes['class'][d].is_range_of.append(term.name)
             for r in rn:
                 if r!='07:owl#Thing':
-                    self.attributes['class'][d].is_domain_of.append(term.name)
+                    if d in self.attributes['class']:
+                        self.attributes['class'][d].is_domain_of.append(term.name)
                 
     def _parse_class_basic(self):
         classes = []

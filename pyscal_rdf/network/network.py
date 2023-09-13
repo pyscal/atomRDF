@@ -15,12 +15,12 @@ class OntologyNetwork:
     """
     Network representation of Onto
     """
-    def __init__(self, infile=None):
+    def __init__(self, infile=None, delimiter='/'):
         if infile is None:
             infile = owlfile
             
         self.g = nx.DiGraph()
-        self.onto = OntoParser(infile)
+        self.onto = OntoParser(infile, delimiter=delimiter)
         self.data_prefix = 'value'
         self._parse_all()
         

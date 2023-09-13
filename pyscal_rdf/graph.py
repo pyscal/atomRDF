@@ -882,7 +882,11 @@ class RDFGraph:
         """
         res = self.graph.query(inquery)
         if res is not None:
-            return pd.DataFrame(res)
+            for line in inquery.split('\n'):
+                if 'SELECT DISTINCT' in line:
+                    break
+            labels = [x[1:] for x in line.split()[2:]]
+            return pd.DataFrame(res, columns=labels)
         raise ValueError("SPARQL query returned None")
 
 
