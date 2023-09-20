@@ -1,3 +1,4 @@
+from rdflib import Namespace
 
 class OntoTerm:
     def __init__(self, uri, node_type=None, 
@@ -38,6 +39,24 @@ class OntoTerm:
             return ":".join(uri_split[-2:])
         else:
             return self.uri
-        
+    
+    @property
+    def namespace(self):
+        uri_split = self.uri.split(self.delimiter)
+        if len(uri_split)>1:
+            return uri_split[-2]
+        else:
+            return self.uri
+
+    @property
+    def namespace_object(self):
+        uri_split = self.uri.split(self.delimiter)
+        if len(uri_split)>1:
+            namespace = self.delimiter.join(uri_split[:-1]) + self.delimiter
+            prop = uri_split[-1]
+            return getattr(Namespace(namespace), prop)
+        else:
+            return self.uri
+
     def __repr__(self):
         return str(self.name)

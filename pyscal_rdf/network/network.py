@@ -21,8 +21,10 @@ class OntologyNetwork:
             
         self.g = nx.DiGraph()
         self.onto = OntoParser(infile, delimiter=delimiter)
+        self.onto.attributes['data_node'] = []
         self.data_prefix = 'value'
         self._parse_all()
+        
         
     def _parse_all(self):
         #call methods
@@ -87,6 +89,7 @@ class OntologyNetwork:
                 self.g.add_edge(d, val.name)
             for r in val.range:
                 data_node = f'{val.name}{self.data_prefix}'
+                self.onto.attributes['data_node'].append(data_node)
                 self.g.add_node(data_node, node_type='literal', data_type=r)
                 self.g.add_edge(val.name, data_node)
 
@@ -146,11 +149,8 @@ class OntologyNetwork:
         return dot
 
     def get_path_from_sample(self, target):
-        path = self.get_shortest_path(source="Sample", target=target)
-        triplets = []
-        for x in range(len(path)//2):
-            triplets.append(path[2*x:2*x+3])
-        return triplets
+        path = self.get_shortest_path(source="cmso:ComputationalSample", target=target, triples=True)
+        return path
         
     def phrase_to_sparql(self, phrase):
         def _extract_operation(phr):
