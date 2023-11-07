@@ -98,7 +98,7 @@ class StructureGraph(RDFGraph):
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
-        identifier="default_graph"):
+        identifier="http://default_graph"):
         
         super().__init__(graph_file=graph_file, store=store, store_file=store_file, identifier=identifier)
         self._element_dict = element_dict
