@@ -144,13 +144,13 @@ class StructureGraph(RDFGraph):
                 add_to_graph=True, 
                 names=True):
 
-        sys = _make_crystal(structure, 
+        sys = System(source=_make_crystal(structure, 
                 lattice_constant = lattice_constant, 
                 repetitions = repetitions, 
                 ca_ratio = ca_ratio, 
                 noise = noise, 
                 element=element,
-                primitive=primitive)
+                primitive=primitive))
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
         return sys
@@ -165,13 +165,13 @@ class StructureGraph(RDFGraph):
             add_to_graph=True,
             names=True):
         
-        sys = _make_general_lattice(positions,
+        sys = System(source=_make_general_lattice(positions,
             types, 
             box,
             lattice_constant = lattice_constant, 
             repetitions = repetitions, 
             noise = noise,
-            element=element)
+            element=element))
 
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
@@ -235,6 +235,7 @@ class StructureGraph(RDFGraph):
             lattice_constant = lattice_constant,
             repetitions = repetitions,
             overlap = overlap)
+        sys = System(source=sys)
 
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
