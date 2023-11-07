@@ -69,16 +69,14 @@ class RDFGraph:
         elif inspect.isclass(type(store)):
             try:
                 prpath = store.path
-                dbfile = os.path.join(prpath, 'project.db')
                 #now start sqlalchemy instance
-                self.graph = Graph(store="SQLAlchemy", identifier=identifier)
-                uri = Literal(f"sqlite:///{dbfile}")
-                self.graph.open(uri, create=True)
+                self.graph = Graph(store="Oxigraph", identifier=identifier)
+                self.graph.open(prpath)
             except:
-                raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
+                raise ValueError("store should be pyiron_project, Oxigraph, or Memory")
         
         else:
-            raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
+            raise ValueError("store should be pyiron_project, Oxigraph, or Memory")
 
         self.graph.bind("cmso", CMSO)
         self.graph.bind("pldo", PLDO)
