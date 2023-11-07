@@ -26,18 +26,12 @@ def get_angle(vec1, vec2):
     return np.round(np.arccos(np.dot(vec1, vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2)))*180/np.pi, decimals=2)
 
 def get_coordination(sys):
-    sys.find_neighbors(method="cutoff")
+    sys.find.neighbors(method="cutoff")
     coordination = [len(x) for x in sys.atoms.neighbors.index]
     return coordination
 
 def get_lattice_vector(sys, cartesian=False):
-    box = [[sys._structure_dict['scaling_factors'][0], 0, 0], 
-           [0, sys._structure_dict['scaling_factors'][1], 0], 
-           [0, 0, sys._structure_dict['scaling_factors'][2]]]
-    if cartesian:
-        box[0][0] = box[0][0]*sys.atoms._lattice_constant 
-        box[1][1] = box[1][1]*sys.atoms._lattice_constant 
-        box[2][2] = box[2][2]*sys.atoms._lattice_constant
+    box = sys.box
     return box
 
 def get_bravais_lattice(sys):
