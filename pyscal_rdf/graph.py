@@ -54,20 +54,18 @@ class RDFGraph:
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
-        identifier="default_graph"):
+        identifier="http://default_graph"):
         
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
         #self.graph.parse(owlfile, format='xml')
         if store == "Memory":
             self.graph = Graph(store="Memory", identifier=identifier)
 
-        elif store=="SQLAlchemy":
-            if store_file is None:
-                raise ValueError("store file is needed if store is not memory")
-            self.graph = Graph(store="SQLAlchemy", identifier=identifier)
-            uri = Literal(f"sqlite:///{store_file}")
-            self.graph.open(uri, create=True)
-
+        elif store=="Oxigraph":
+            self.graph = Graph(store="Oxigraph", identifier=identifier)
+            if store_file is not None:
+                self.graph.open(store_file)
+                
         elif inspect.isclass(type(store)):
             try:
                 prpath = store.path
