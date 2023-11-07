@@ -118,7 +118,7 @@ class StructureGraph(RDFGraph):
         
         #lattice creation routines
         mapdict["lattice"] = {}
-        for key in self_structure_dict.keys():
+        for key in self._structure_dict.keys():
             mapdict["lattice"][key] = update_wrapper(partial(self._annotated_make_crystal, 
                 key), 
                 _make_crystal)
