@@ -67,18 +67,27 @@ class RDFGraph:
         #    if store_file is not None:
         #        self.graph.open(store_file)
                 
+        elif store=="SQLAlchemy":
+            if store_file is None:
+                raise ValueError("store file is needed if store is not memory")
+            self.graph = Graph(store="SQLAlchemy", identifier=identifier)
+            uri = Literal(f"sqlite:///{store_file}")
+            self.graph.open(uri, create=True)
+
         elif inspect.isclass(type(store)):
             try:
                 prpath = store.path
+                dbfile = os.path.join(prpath, 'project.db')
                 #now start sqlalchemy instance
-                self.graph = Graph(store="Memory", identifier=identifier)
-                self.store_file = os.path.join(prpath, "triples.ttl")
+                self.graph = Graph(store="SQLAlchemy", identifier=identifier)
+                uri = Literal(f"sqlite:///{dbfile}")
+                self.graph.open(uri, create=True)
             except:
-                raise ValueError("store should be pyiron_project, or Memory")
+                raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
         else:
-            raise ValueError("store should be pyiron_project, Oxigraph, or Memory")
-
+            raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
+            
         self.graph.bind("cmso", CMSO)
         self.graph.bind("pldo", PLDO)
         
@@ -1017,6 +1026,6 @@ class RDFGraph:
         sys = System()
         sys.box = cell_vectors
         sys.atoms = at
-        
+
         
         return sys
