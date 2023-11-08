@@ -56,24 +56,25 @@ class RDFGraph:
         store_file=None,
         identifier="http://default_graph"):
         
+        self.store_file = store_file
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
         #self.graph.parse(owlfile, format='xml')
         if store == "Memory":
             self.graph = Graph(store="Memory", identifier=identifier)
 
-        elif store=="Oxigraph":
-            self.graph = Graph(store="Oxigraph", identifier=identifier)
-            if store_file is not None:
-                self.graph.open(store_file)
+        #elif store=="Oxigraph":
+        #    self.graph = Graph(store="Oxigraph", identifier=identifier)
+        #    if store_file is not None:
+        #        self.graph.open(store_file)
                 
         elif inspect.isclass(type(store)):
             try:
                 prpath = store.path
                 #now start sqlalchemy instance
-                self.graph = Graph(store="Oxigraph", identifier=identifier)
-                self.graph.open(prpath)
+                self.graph = Graph(store="Memory", identifier=identifier)
+                self.store_file = os.path.join(prpath, "triples.ttl")
             except:
-                raise ValueError("store should be pyiron_project, Oxigraph, or Memory")
+                raise ValueError("store should be pyiron_project, or Memory")
         
         else:
             raise ValueError("store should be pyiron_project, Oxigraph, or Memory")

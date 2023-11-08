@@ -13,7 +13,5 @@ dependencies:
   - ase 
   - ipycytoscape
   - networkx
-  - pyoxigraph
-  - oxrdflib
   - pandas
   - owlready2

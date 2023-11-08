@@ -4,7 +4,7 @@ from pyscal_rdf.queries import Query
 
 def test_query():
 	s = StructureGraph()
-	sys = s.create_element("Fe")
+	sys = s.create.element.Fe()
 	#q = Query()
 
 	#assert(len(q.sparql.sample_by_latticesystem(s, "Q851536")) == 1)
