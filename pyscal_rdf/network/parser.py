@@ -28,6 +28,7 @@ class OntoParser:
         self._parse_class()
         self._parse_object_property()
         self._parse_data_property()
+        self._recheck_namespaces()
 
     def __add__(self, ontoparser):
         """
@@ -39,7 +40,8 @@ class OntoParser:
             if mainkey in ontoparser.attributes.keys():
                 for key, val in ontoparser.attributes[mainkey].items():
                     self.attributes[mainkey][key] = val        
-        
+                    
+
         #now change classes
         if ontoparser.classes is not None:
             for clx in ontoparser.classes:
@@ -76,7 +78,15 @@ class OntoParser:
             return self.classes[arg]
         else:
             return [name]
-                
+    
+    def _recheck_namespaces(self):
+        for mainkey in self.attributes.keys():
+            if key, val in self.attributes[mainkey].items():
+                namespace = self.attributes[mainkey][key].namespace
+                if namespace not in self.namespaces.keys():
+                    self.namespaces[namespace] = self.attributes[mainkey][key].namespace_with_prefix
+
+
     def _parse_data_property(self):
         for c in self.tree.data_properties():
             iri = c.iri

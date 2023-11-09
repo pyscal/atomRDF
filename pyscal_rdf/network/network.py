@@ -12,11 +12,12 @@ owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
 def _replace_name(name):
     return ".".join(name.split(':'))
 
-class OntologyNetwork:
+class OntologyNetwork(AttrSetter):
     """
     Network representation of Onto
     """
     def __init__(self, infile=None, delimiter='/'):
+        AttrSetter.__init__(self)
         if infile is None:
             infile = owlfile
             
@@ -35,7 +36,7 @@ class OntologyNetwork:
         #now iterate over all attributes
         for k1 in self.attributes.keys():
             for k2, val in self.attributes[k1].items():
-                mapdict[k2] = val
+                mapdict[val.namespace][val.name_without_prefix] = val
         self._add_attribute(mapdict) 
 
     def _parse_all(self):
@@ -43,6 +44,7 @@ class OntologyNetwork:
         self._add_class_nodes()
         self._add_object_properties()
         self._add_data_properties()
+        #self._assign_attributes()
 
     def __add__(self, ontonetwork):
         #add onto network

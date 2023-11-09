@@ -57,6 +57,15 @@ class OntoTerm:
             return self.uri
 
     @property
+    def namespace_with_prefix(self):
+        uri_split = self.uri.split(self.delimiter)
+        if len(uri_split)>1:
+            namespace = self.delimiter.join(uri_split[:-1]) + self.delimiter
+            return namespace
+        else:
+            return self.uri
+                    
+    @property
     def namespace_object(self):
         uri_split = self.uri.split(self.delimiter)
         if len(uri_split)>1:
