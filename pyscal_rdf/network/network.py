@@ -5,6 +5,7 @@ import numpy as np
 import os
 import warnings
 from pyscal_rdf.network.parser import OntoParser
+from pyscal3.atoms import AttrSetter
 
 owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
 
@@ -23,9 +24,20 @@ class OntologyNetwork:
         self.onto = OntoParser(infile, delimiter=delimiter)
         self.onto.attributes['data_node'] = []
         self.data_prefix = 'value'
-        self._parse_all()
+        self._parse_all()        
+    
+    def _assign_attributes(self):
+        mapdict = {}
+        #add first level - namespaces
+        for key in self.namespaces.keys():
+            mapdict[key] = {}
         
-        
+        #now iterate over all attributes
+        for k1 in self.attributes.keys():
+            for k2, val in self.attributes[k1].items():
+                mapdict[k2] = val
+        self._add_attribute(mapdict) 
+
     def _parse_all(self):
         #call methods
         self._add_class_nodes()

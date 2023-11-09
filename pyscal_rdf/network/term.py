@@ -31,7 +31,15 @@ class OntoTerm:
     @uri.setter
     def uri(self, val):
         self._uri = val
-        
+    
+    @property
+    def name_without_prefix(self):
+        uri_split = self.uri.split(self.delimiter)
+        if len(uri_split)>0:
+            return uri_split[-1]
+        else:
+            return self.uri
+
     @property
     def name(self):
         uri_split = self.uri.split(self.delimiter)

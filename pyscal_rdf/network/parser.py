@@ -1,10 +1,12 @@
 from pyscal_rdf.network.term import OntoTerm 
 from owlready2 import get_ontology
 
+
 import os
 import copy
 import numpy as np
 import itertools
+
 
 class OntoParser:
     def __init__(self, infile, delimiter='/'):
