@@ -81,7 +81,7 @@ class OntoParser:
     
     def _recheck_namespaces(self):
         for mainkey in self.attributes.keys():
-            if key, val in self.attributes[mainkey].items():
+            for key, val in self.attributes[mainkey].items():
                 namespace = self.attributes[mainkey][key].namespace
                 if namespace not in self.namespaces.keys():
                     self.namespaces[namespace] = self.attributes[mainkey][key].namespace_with_prefix

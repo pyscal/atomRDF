@@ -44,7 +44,7 @@ class OntologyNetwork(AttrSetter):
         self._add_class_nodes()
         self._add_object_properties()
         self._add_data_properties()
-        #self._assign_attributes()
+        self._assign_attributes()
 
     def __add__(self, ontonetwork):
         #add onto network
