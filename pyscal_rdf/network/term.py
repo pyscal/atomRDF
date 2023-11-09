@@ -64,7 +64,7 @@ class OntoTerm:
             return namespace
         else:
             return self.uri
-                    
+
     @property
     def namespace_object(self):
         uri_split = self.uri.split(self.delimiter)
@@ -77,3 +77,7 @@ class OntoTerm:
 
     def __repr__(self):
         return str(self.name)
+
+    #overloading operators
+    def __eq__(self, val):
+        print(f'Tried eq {val}')
