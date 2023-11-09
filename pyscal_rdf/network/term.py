@@ -1,3 +1,6 @@
+"""
+https://docs.python.org/3/library/operator.html
+"""
 from rdflib import Namespace
 
 class OntoTerm:
