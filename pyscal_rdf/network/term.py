@@ -2,6 +2,7 @@
 https://docs.python.org/3/library/operator.html
 """
 from rdflib import Namespace
+import numbers
 
 class OntoTerm:
     def __init__(self, uri, node_type=None, 
@@ -26,6 +27,7 @@ class OntoTerm:
         self.delimiter = delimiter
         self.is_domain_of = []
         self.is_range_of = []
+        self._condition = None
 
     @property
     def uri(self):
@@ -78,9 +80,63 @@ class OntoTerm:
         else:
             return self.uri
 
+    @property
+    def query_name(self):
+        """
+        What it is called in a sparql query
+        """
+        if self.node_type == "data_property":
+            return self.name + "value"
+        return self.name
+
     def __repr__(self):
         return str(self.name)
 
+    #convenience methods for overload checking
+    def _is_number(self, val):
+        if not isinstance(val, numbers.Number):
+            raise TypeError("can only be performed with a number!")
+    
+    def _is_data_node(self):
+        if not self.node_type == "data_property":
+            raise TypeError("This operation can only be performed with a data property!")
+
+    def _create_condition_string(self, condition, val):
+        return f'?{self.name_without_prefix}{condition}\"{val}\"^^xsd:{self.range[0]}'
+    
     #overloading operators
     def __eq__(self, val):
-        print(f'Tried eq {val}')
+        """
+        = 
+        """
+        self._is_number(val)
+        self._is_data_node()
+        self._condition = self._create_condition_string("=", val)
+
+    def __lt__(self, val):
+        self._is_number(val)
+        self._is_data_node()
+        self._condition = self._create_condition_string("<", val)
+
+    def __le__(self, val):
+        self._is_number(val)
+        self._is_data_node()
+        self._condition = self._create_condition_string("<=", val)
+
+
+    def __ne__(self, val):
+        self._is_number(val)
+        self._is_data_node()
+        self._condition = self._create_condition_string("!=", val)
+    
+    def __ge__(self, val):
+        self._is_number(val)
+        self._is_data_node()
+        self._condition = self._create_condition_string(">=", val)
+    
+    def __gt__(self, val):
+        self._is_number(val)
+        self._is_data_node()
+        self._condition = self._create_condition_string(">", val)
+
+
