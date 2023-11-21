@@ -93,6 +93,14 @@ class OntoTerm:
         return str(self.name)
 
     #convenience methods for overload checking
+    def _ensure_condition_exists(self):
+        if self._condition is None:
+            raise ValueError("Individual terms should have condition for this operation!")
+
+    def _is_term(self, val):
+        if not isinstance(val, OntoTerm):
+            raise TypeError("can only be performed with an OntoTerm!")
+
     def _is_number(self, val):
         if not isinstance(val, numbers.Number):
             raise TypeError("can only be performed with a number!")
@@ -102,7 +110,7 @@ class OntoTerm:
             raise TypeError("This operation can only be performed with a data property!")
 
     def _create_condition_string(self, condition, val):
-        return f'?{self.name_without_prefix}{condition}\"{val}\"^^xsd:{self.range[0]}'
+        return f'(?{self.name_without_prefix}{condition}\"{val}\"^^xsd:{self.range[0]})'
     
     #overloading operators
     def __eq__(self, val):
@@ -139,4 +147,26 @@ class OntoTerm:
         self._is_data_node()
         self._condition = self._create_condition_string(">", val)
 
+    def __and__(self, term):
+        self._is_term(term)
+        self._is_data_node()
+        term._is_data_node()
+        self._ensure_condition_exists()
+        term._ensure_condition_exists()        
+        self._condition = "&&".join([self._condition, term._condition])
+        self._condition = f'({self._condition})'
 
+    def and_(self, term):
+        self.__and__(term)
+
+    def __or__(self, term):
+        self._is_term(term)
+        self._is_data_node()
+        term._is_data_node()
+        self._ensure_condition_exists()
+        term._ensure_condition_exists()        
+        self._condition = "||".join([self._condition, term._condition])
+        self._condition = f'({self._condition})'
+
+    def or_(self, term):
+        self.__or__(term)
