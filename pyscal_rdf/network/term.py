@@ -89,6 +89,15 @@ class OntoTerm:
             return self.name + "value"
         return self.name
 
+    @property
+    def query_name_without_prefix(self):
+        """
+        What it is called in a sparql query
+        """
+        if self.node_type == "data_property":
+            return self.name_without_prefix + "value"
+        return self.name_without_prefix
+
     def __repr__(self):
         return str(self.name)
 
@@ -110,14 +119,14 @@ class OntoTerm:
             raise TypeError("This operation can only be performed with a data property!")
 
     def _create_condition_string(self, condition, val):
-        return f'(?{self.name_without_prefix}{condition}\"{val}\"^^xsd:{self.range[0]})'
+        return f'(?{self.query_name_without_prefix}{condition}\"{val}\"^^xsd:{self.range[0]})'
     
     #overloading operators
     def __eq__(self, val):
         """
         = 
         """
-        self._is_number(val)
+        #self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string("=", val)
 
@@ -133,7 +142,7 @@ class OntoTerm:
 
 
     def __ne__(self, val):
-        self._is_number(val)
+        #self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string("!=", val)
     

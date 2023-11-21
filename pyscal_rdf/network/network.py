@@ -221,7 +221,7 @@ class OntologyNetwork:
         full_filter = " ".join(updated_sparql_phrase_list)
         return f'FILTER ({full_filter})'
         
-    def create_query(self, source, destinations, values = None):
+    def create_query(self, source, destinations):
         """
         values is a dict with keys value, operation
         """
@@ -259,15 +259,15 @@ class OntologyNetwork:
         #filters are only needed if it is a dataproperty
         filter_text = ''
         
-        #if values is not None:
-        #    lit_nodes = [node for node in self.g.nodes if 'node_type' in self.g.nodes[node].keys() and self.g.nodes[node]['node_type'] == 'literal']
-        #    data_destinations = [destination for destination in destinations if destination in lit_nodes]
-        #    if not len(data_destinations) == len(values):
-        #        warnings.warn(f'Length of destinations and values are not same, found {len(data_destinations)} and {len(values)}')
-        #        considered = " ".join(data_destinations[:len(values)])
-        #        warnings.warn(f'Conditions are considered for {considered}')
-        #    if len(values) > 0:
-        #        filter_text = self.validate_values(data_destinations[:len(values)], values)
+        #make filters; get all the unique filters from all the classes in destinations
+        filters = np.unique([term._condition for term in destinations])
+        #only one unique filter, all ok
+        if len(filters==1):
+            filter_text = filters[0]
+        else:
+            filter_text = "&&".join(filters)
+            filter_text = f'({filter_text})'
+
         query.append(filter_text)
         query.append('}')
         return '\n'.join(query)
