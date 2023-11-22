@@ -23,18 +23,18 @@ def strip_name(uri, delimiter, get_what='name'):
     
     elif get_what == "namespace":
         if delimiter == "/":
-            uri_split = self.uri.split(self.delimiter)
+            uri_split = uri.split(delimiter)
             if len(uri_split)>1:
                 namespace = uri_split[-2]
             else:
-                namespace = self.uri 
+                namespace = uri 
         else:
-            uri_split = self.uri.split(self.delimiter)
+            uri_split = uri.split(delimiter)
             uri_split = uri_split[0].split("/")
             if len(uri_split)>0:
                 namespace = uri_split[-1]
             else:
-                namespace = self.uri
+                namespace = uri
         return namespace 
 
 
