@@ -1,4 +1,4 @@
-from pyscal_rdf.network.term import OntoTerm 
+from pyscal_rdf.network.term import OntoTerm, strip_name 
 from owlready2 import get_ontology
 import owlready2
 
@@ -58,13 +58,6 @@ class OntoParser:
 
     def __radd__(self, ontoparser):
         return self.__add__(ontoparser)
-
-    def _strip_name(self, uri):
-        uri_split = uri.split(self.delimiter)
-        if len(uri_split)>1:
-            return ":".join(uri_split[-2:])
-        else:
-            return uri
     
     def _strip_datatype(self, uri, delimiter='#'):
         uri_split = uri.split(delimiter)
@@ -93,9 +86,9 @@ class OntoParser:
             iri = c.iri
             dm = c.domain
             try:
-                dm = [self._strip_name(d.iri) for d in dm[0].Classes]
+                dm = [strip_name(d.iri, self.delimiter) for d in dm[0].Classes]
             except:
-                dm = [self._strip_name(d.iri) for d in dm]
+                dm = [strip_name(d.iri, self.delimiter) for d in dm]
             
             #now get subclasses
             dm = [self._get_subclasses(d) for d in dm]
@@ -121,15 +114,15 @@ class OntoParser:
             iri = c.iri
             dm = c.domain
             try:
-                dm = [self._strip_name(d.iri) for d in dm[0].Classes]
+                dm = [strip_name(d.iri, self.delimiter) for d in dm[0].Classes]
             except:
                 dmnew = []
                 for d in dm:
                     if isinstance(d, owlready2.class_construct.Or):
                         for x in d.Classes:
-                            dmnew.append(self._strip_name(x.iri))
+                            dmnew.append(strip_name(x.iri, self.delimiter))
                     else:
-                        dmnew.append(self._strip_name(d.iri))
+                        dmnew.append(strip_name(d.iri, self.delimiter))
                 dm = dmnew
             
             #now get subclasses
@@ -138,9 +131,9 @@ class OntoParser:
 
             rn = c.range
             try:
-                rn = [self._strip_name(r.iri) for r in rn[0].Classes]
+                rn = [strip_name(r.iri, self.delimiter) for r in rn[0].Classes]
             except:
-                rn = [self._strip_name(r.iri) for r in rn]
+                rn = [strip_name(r.iri, self.delimiter) for r in rn]
             
             #now get subclasses
             rn = [self._get_subclasses(d) for d in rn]
@@ -172,13 +165,13 @@ class OntoParser:
                     term = OntoTerm(sb.iri, delimiter=self.delimiter)
                     term.node_type ='class'
                     self.attributes['class'][term.name] = term
-                subclasses = [self._strip_name(sb.iri) for sb in subclasses]
+                subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
                 classes.append(subclasses)
             except:
                 term = OntoTerm(c.iri, delimiter=self.delimiter)
                 term.node_type ='class'
                 self.attributes['class'][term.name] = term                
-                classes.append([self._strip_name(c.iri)])
+                classes.append([strip_name(c.iri, self.delimiter)])
         return classes
     
     def _aggregate_keys(self, dd):
