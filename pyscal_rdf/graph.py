@@ -16,6 +16,7 @@ import pandas as pd
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
+from pyscal_rdf.network.ontology import read_ontology
 from pyscal_rdf.rdfsystem import System
 import pyscal_rdf.properties as prp
 #from pyscal3.core import System
@@ -25,7 +26,6 @@ CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 
-structures = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
 with open(structures, 'r') as fin:
     for line in fin:
         a=line
@@ -104,7 +104,7 @@ class RDFGraph:
         self.material = None
         self.sysdict = None
         self.sgraph = None
-        #self._query_graph = OntologyNetwork()
+        self.ontology = read_ontology()
         self._atom_ids = None
 
     
@@ -901,41 +901,13 @@ class RDFGraph:
             return pd.DataFrame(res, columns=labels)
         raise ValueError("SPARQL query returned None")
 
+    def auto_query(self, source, destination, condition):
+        query = self.ontology.create_query(source, destination, condition)
+        return self.query(query)
 
 
     def query_sample(self, target_property, value, return_query=False):
-        """
-        Query the Graph for a sample that has the given `value` for the given `target_property`
-
-        Parameters
-        ----------
-        target_property: string
-            The target property can be any Ontology data property
-
-        value: number, string, or list of either
-            The value of the target property to be queried
-
-        return_query: bool, optional
-            If True, return the SPARQL query 
-
-        Returns
-        -------
-        res: list
-            list of queried samples
-
-        query: string
-            only returned if `return_query` is True
-
-        Notes
-        -----
-        """
-
-        query = self._query_graph.formulate_query(target_property, value)
-        res = self.graph.query(query)
-        res = [r for r in res]
-        if return_query:
-            return res, query
-        return res
+        raise NotImplementedError()
     
     #################################
     # Methods to interact with sample
