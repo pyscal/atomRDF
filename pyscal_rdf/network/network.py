@@ -229,7 +229,7 @@ class OntologyNetwork:
             destinations = [destinations]
         
         source = source.query_name
-        destinations = [destination.query_name for destination in destinations]
+        destination_names = [destination.query_name for destination in destinations]
 
         #start prefix of quer
         query = []
@@ -240,16 +240,16 @@ class OntologyNetwork:
         
         #now for each destination, start adding the paths in the query
         all_triplets = {}
-        for destination in destinations:
+        for destination in destination_names:
             triplets = self.get_shortest_path(source, destination, triples=True)
             all_triplets[destination] = triplets
         
-        select_destinations = [f'?{self.strip_name(destination)}' for destination in destinations]
+        select_destinations = [f'?{self.strip_name(destination)}' for destination in destination_names]
         query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
         query.append("WHERE {")
         
         #now add corresponding triples
-        for destination in destinations:
+        for destination in destination_names:
             for triple in all_triplets[destination]:
                 query.append("    ?%s %s ?%s ."%(self.strip_name(triple[0]), 
                                                  triple[1], 
@@ -260,7 +260,7 @@ class OntologyNetwork:
         filter_text = ''
         
         #make filters; get all the unique filters from all the classes in destinations
-        filters = np.unique([term._condition for term in destinations])
+        filters = np.unique([term._condition for term in destinations if term._condition is not None ])
         #only one unique filter, all ok
         if len(filters==1):
             filter_text = filters[0]
@@ -268,7 +268,7 @@ class OntologyNetwork:
             filter_text = "&&".join(filters)
             filter_text = f'({filter_text})'
 
-        query.append(filter_text)
+        query.append(f'FILTER {filter_text}')
         query.append('}')
         return '\n'.join(query)
 

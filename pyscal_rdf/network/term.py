@@ -164,6 +164,7 @@ class OntoTerm:
         term._ensure_condition_exists()        
         self._condition = "&&".join([self._condition, term._condition])
         self._condition = f'({self._condition})'
+        return self
 
     def and_(self, term):
         self.__and__(term)
@@ -176,6 +177,7 @@ class OntoTerm:
         term._ensure_condition_exists()        
         self._condition = "||".join([self._condition, term._condition])
         self._condition = f'({self._condition})'
+        return self
 
     def or_(self, term):
         self.__or__(term)
