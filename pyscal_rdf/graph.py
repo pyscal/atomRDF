@@ -25,6 +25,11 @@ CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 
+structures = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
+with open(structures, 'r') as fin:
+    for line in fin:
+        a=line
+
 defstyledict = {
     "BNode": {"color": "#ffe6ff", 
               "shape": "box", 
@@ -101,6 +106,7 @@ class RDFGraph:
         self.sgraph = None
         #self._query_graph = OntologyNetwork()
         self._atom_ids = None
+
     
     def process_structure(self, structure, format=None):
         """
