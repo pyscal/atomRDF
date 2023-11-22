@@ -1,6 +1,6 @@
 from pyscal_rdf.network.term import OntoTerm 
 from owlready2 import get_ontology
-
+import owlready2
 
 import os
 import copy
@@ -26,6 +26,7 @@ class OntoParser:
         self.extra_namespaces = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
         }
         self._parse_class()
+        #print(self.attributes)
         self._parse_object_property()
         self._parse_data_property()
         self._recheck_namespaces()
@@ -105,7 +106,7 @@ class OntoParser:
                 rn = [r.__name__ for r in rn[0].Classes if r is not None]
             except:
                 rn = [r.__name__ for r in rn if r is not None]
-            term = OntoTerm(iri)
+            term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
             term.node_type = 'data_property'
@@ -122,7 +123,14 @@ class OntoParser:
             try:
                 dm = [self._strip_name(d.iri) for d in dm[0].Classes]
             except:
-                dm = [self._strip_name(d.iri) for d in dm]
+                dmnew = []
+                for d in dm:
+                    if isinstance(d, owlready2.class_construct.Or):
+                        for x in d.Classes:
+                            dmnew.append(self._strip_name(x.iri))
+                    else:
+                        dmnew.append(self._strip_name(d.iri))
+                dm = dmnew
             
             #now get subclasses
             dm = [self._get_subclasses(d) for d in dm]
@@ -138,7 +146,7 @@ class OntoParser:
             rn = [self._get_subclasses(d) for d in rn]
             rn = list(itertools.chain(*rn))
 
-            term = OntoTerm(iri)
+            term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
             term.node_type = 'object_property'
@@ -157,16 +165,17 @@ class OntoParser:
         for c in self.tree.classes():
             iri = c.iri
             #print(iri)
+            #print(iri)
             try:
                 subclasses = self.tree.search(subclass_of=getattr(self.tree, c.name))
                 for sb in subclasses:
-                    term = OntoTerm(sb.iri)
+                    term = OntoTerm(sb.iri, delimiter=self.delimiter)
                     term.node_type ='class'
                     self.attributes['class'][term.name] = term
                 subclasses = [self._strip_name(sb.iri) for sb in subclasses]
                 classes.append(subclasses)
             except:
-                term = OntoTerm(c.iri)
+                term = OntoTerm(c.iri, delimiter=self.delimiter)
                 term.node_type ='class'
                 self.attributes['class'][term.name] = term                
                 classes.append([self._strip_name(c.iri)])
