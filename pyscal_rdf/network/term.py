@@ -4,6 +4,40 @@ https://docs.python.org/3/library/operator.html
 from rdflib import Namespace
 import numbers
 
+def strip_name(uri, delimiter, get_what='name'):
+    if get_what == "name": 
+        if delimiter == "/":
+            uri_split = uri.split(delimiter)
+            if len(uri_split)>1:
+                name = ":".join(uri_split[-2:])
+            else:
+                name = uri 
+        else:
+            uri_split = uri.split(delimiter)
+            name = uri_split[-1]
+            uri_split = uri_split[0].split("/")
+            if len(uri_split)>0:
+                namespace = uri_split[-1]
+                name = ":".join([namespace, name])
+        return name
+    
+    elif get_what == "namespace":
+        if delimiter == "/":
+            uri_split = self.uri.split(self.delimiter)
+            if len(uri_split)>1:
+                namespace = uri_split[-2]
+            else:
+                namespace = self.uri 
+        else:
+            uri_split = self.uri.split(self.delimiter)
+            uri_split = uri_split[0].split("/")
+            if len(uri_split)>0:
+                namespace = uri_split[-1]
+            else:
+                namespace = self.uri
+        return namespace 
+
+
 class OntoTerm:
     def __init__(self, uri, node_type=None, 
                 dm=[], rn=[], data_type=None, 
@@ -47,19 +81,11 @@ class OntoTerm:
 
     @property
     def name(self):
-        uri_split = self.uri.split(self.delimiter)
-        if len(uri_split)>1:
-            return ":".join(uri_split[-2:])
-        else:
-            return self.uri
-    
+        return strip_name(self.uri, self.delimiter, get_what="name")        
+
     @property
     def namespace(self):
-        uri_split = self.uri.split(self.delimiter)
-        if len(uri_split)>1:
-            return uri_split[-2]
-        else:
-            return self.uri
+        return strip_name(self.uri, self.delimiter, get_what="namespace")        
 
     @property
     def namespace_with_prefix(self):
