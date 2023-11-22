@@ -129,32 +129,38 @@ class OntoTerm:
         #self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string("=", val)
+        return self
 
     def __lt__(self, val):
         self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string("<", val)
+        return self
 
     def __le__(self, val):
         self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string("<=", val)
+        return self
 
 
     def __ne__(self, val):
         #self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string("!=", val)
+        return self
     
     def __ge__(self, val):
         self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string(">=", val)
+        return self
     
     def __gt__(self, val):
         self._is_number(val)
         self._is_data_node()
         self._condition = self._create_condition_string(">", val)
+        return self
 
     def __and__(self, term):
         self._is_term(term)
