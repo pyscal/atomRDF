@@ -221,7 +221,7 @@ class OntologyNetwork:
         full_filter = " ".join(updated_sparql_phrase_list)
         return f'FILTER ({full_filter})'
         
-    def create_query(self, source, destinations):
+    def create_query(self, source, destinations, condition=None):
         """
         values is a dict with keys value, operation
         """
@@ -260,13 +260,9 @@ class OntologyNetwork:
         filter_text = ''
         
         #make filters; get all the unique filters from all the classes in destinations
-        filters = np.unique([term._condition for term in destinations if term._condition is not None ])
-        #only one unique filter, all ok
-        if len(filters==1):
-            filter_text = filters[0]
-        else:
-            filter_text = "&&".join(filters)
-            filter_text = f'({filter_text})'
+        if condition is not None:
+            if condition._condition is not None:
+                filter_text = condition._condition
 
         query.append(f'FILTER {filter_text}')
         query.append('}')
