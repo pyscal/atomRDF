@@ -39,11 +39,24 @@ def strip_name(uri, delimiter, get_what='name'):
 
 
 class OntoTerm:
-    def __init__(self, uri, node_type=None, 
-                dm=[], rn=[], data_type=None, 
-                 node_id=None, delimiter='/'):
+    def __init__(self, uri,
+        namespace=None, 
+        node_type=None, 
+        dm=[], rn=[], 
+        data_type=None, 
+        node_id=None, 
+        delimiter='/'):
         """
-        This is class that represents an ontology element
+        This is class that represents an ontology element.
+
+        Parameters
+        -----------
+        uri: string
+            uri of the ontology term
+
+        namespace: string, optional
+            if provided this will be used as namespace
+        
         """
         self.uri = uri
         #name of the class
@@ -62,6 +75,9 @@ class OntoTerm:
         self.is_domain_of = []
         self.is_range_of = []
         self._condition = None
+        self._namespace = namespace
+
+
 
     @property
     def uri(self):
@@ -85,7 +101,10 @@ class OntoTerm:
 
     @property
     def namespace(self):
-        return strip_name(self.uri, self.delimiter, get_what="namespace")        
+        if self._namespace is not None:
+            return self._namespace
+        else:
+            return strip_name(self.uri, self.delimiter, get_what="namespace")        
 
     @property
     def namespace_with_prefix(self):
