@@ -5,6 +5,7 @@ import numpy as np
 import os
 import warnings
 from pyscal_rdf.network.parser import OntoParser
+from pyscal_rdf.network.term import OntoTerm, strip_name
 from pyscal3.atoms import AttrSetter
 
 owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
@@ -110,7 +111,30 @@ class OntologyNetwork:
                 self.g.add_edge(val.name, data_node)
 
                 
-    
+    def add_namespace(self, namespace_name, namespace_iri):
+        """
+        Add a new namespace
+        """
+        if namespace_name not in self.onto.namespaces.keys():
+            self.onto.namespaces[namespace_name] = namespace_iri
+        else:
+            raise KeyError("namespace is already there!")
+
+    def add_term(self, uri, node_type, 
+                dm=[], rn=[], data_type=None, 
+                node_id=None, delimiter='/'):
+        """
+        Add a node
+        """
+        namespace = strip_name(uri, delimiter, get_what="namespace")
+        name = strip_name(uri, delimiter, get_what="name")
+        term = OntoTerm(uri, node_type=node_type, dm =dm, 
+            rn=rn, data_type=data_type, node_id=node_id,
+            delimiter=delimiter)
+        if not namespace in self.onto.namespaces.keys():
+            raise ValueError("Namespace not found, first add namespace")
+        self.onto.attributes[node_type][name] = term
+
     def add_path(self, triple):
         """
         Add a triple as path. Note that all attributes of the triple should already
@@ -168,58 +192,6 @@ class OntologyNetwork:
         path = self.get_shortest_path(source="cmso:ComputationalSample", target=target, triples=True)
         return path
         
-    def phrase_to_sparql(self, phrase):
-        def _extract_operation(phr):
-            r = phr.split(' ')
-            if len(r) != 3:
-                raise ValueError('wrong filters!')
-            return f'?value{r[1]}\"{r[2]}\"^^xsd:datatype'
-
-        conditions = []
-        operation = None
-        
-        raw = phrase.split(' and ')
-        
-        if len(raw) > 1:
-            operation = '&&'
-        if operation is None:
-            raw = phrase.split(' or ')
-            if len(raw) > 1:
-                operation = '||'
-        
-        if operation is not None:
-            for ph in raw:
-                conditions.append(_extract_operation(ph))
-        else:
-            conditions.append(_extract_operation(phrase))
-        full_str = f' {operation} '.join(conditions)
-        #replace values
-        return full_str
-        
-
-    def validate_values(self, destinations, values):
-        combinator_dict = {'and': '&&', 'or': '||'}
-        combinator_list = values[1::2]
-        phrase_list = values[::2]
-        if not len(combinator_list) == len(destinations)-1:
-            raise ValueError("Invalid combinations!")
-        
-        sparql_phrase_list = []
-        for phrase, destination in zip(phrase_list, destinations):
-            sparql_phrase = self.phrase_to_sparql(phrase)
-            sparql_phrase = sparql_phrase.replace('value', self.strip_name(destination))
-            sparql_phrase = sparql_phrase.replace('datatype', self.g.nodes[destination]['data_type'])
-            sparql_phrase_list.append(sparql_phrase)
-            
-        #combine phrases with phrase list
-        updated_sparql_phrase_list = []
-        for count, sparql_phrase in enumerate(sparql_phrase_list):
-            updated_sparql_phrase_list.append(f'({sparql_phrase})')
-            if count < len(sparql_phrase_list)-1:
-                updated_sparql_phrase_list.append(combinator_dict[combinator_list[count]])
-            
-        full_filter = " ".join(updated_sparql_phrase_list)
-        return f'FILTER ({full_filter})'
         
     def create_query(self, source, destinations, condition=None):
         """
