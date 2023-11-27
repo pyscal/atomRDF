@@ -26,9 +26,6 @@ CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 
-with open(structures, 'r') as fin:
-    for line in fin:
-        a=line
 
 defstyledict = {
     "BNode": {"color": "#ffe6ff", 
