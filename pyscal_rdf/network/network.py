@@ -120,20 +120,21 @@ class OntologyNetwork:
         else:
             raise KeyError("namespace is already there!")
 
-    def add_term(self, uri, node_type, 
+    def add_term(self, uri, node_type, namespace=None,
                 dm=[], rn=[], data_type=None, 
                 node_id=None, delimiter='/'):
         """
         Add a node
         """
-        namespace = strip_name(uri, delimiter, get_what="namespace")
-        name = strip_name(uri, delimiter, get_what="name")
-        term = OntoTerm(uri, node_type=node_type, dm =dm, 
+        #namespace = strip_name(uri, delimiter, get_what="namespace")
+        #name = strip_name(uri, delimiter, get_what="name")
+        term = OntoTerm(uri, namespace=namespace,
+            node_type=node_type, dm =dm, 
             rn=rn, data_type=data_type, node_id=node_id,
             delimiter=delimiter)
-        if not namespace in self.onto.namespaces.keys():
+        if not term.namespace in self.onto.namespaces.keys():
             raise ValueError("Namespace not found, first add namespace")
-        self.onto.attributes[node_type][name] = term
+        self.onto.attributes[node_type][term.name] = term
 
     def add_path(self, triple):
         """
