@@ -15,14 +15,47 @@ Traceback (most recent call last):
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
-from pyscal_rdf import StructureGraph
+struct = graph.create.lattice.l12(element=['Ni', 'Al'])
+struct.show.all()
 ------------------
 
+----- stdout -----
+Install plotly for visualisation
+Install ipyvolume for visualisation
+------------------
 
 [0;31m---------------------------------------------------------------------------[0m
-[0;31mModuleNotFoundError[0m                       Traceback (most recent call last)
-Cell [0;32mIn[2], line 1[0m
-[0;32m----> 1[0m [38;5;28;01mfrom[39;00m [38;5;21;01mpyscal_rdf[39;00m [38;5;28;01mimport[39;00m StructureGraph
+[0;31mUnboundLocalError[0m                         Traceback (most recent call last)
+Cell [0;32mIn[4], line 2[0m
+[1;32m      1[0m struct [38;5;241m=[39m graph[38;5;241m.[39mcreate[38;5;241m.[39mlattice[38;5;241m.[39ml12(element[38;5;241m=[39m[[38;5;124m'[39m[38;5;124mNi[39m[38;5;124m'[39m, [38;5;124m'[39m[38;5;124mAl[39m[38;5;124m'[39m])
+[0;32m----> 2[0m [43mstruct[49m[38;5;241;43m.[39;49m[43mshow[49m[38;5;241;43m.[39;49m[43mall[49m[43m([49m[43m)[49m
 
-[0;31mModuleNotFoundError[0m: No module named 'pyscal_rdf'
+File [0;32m/usr/share/miniconda/envs/test/lib/python3.8/site-packages/pyscal3/operations/visualize.py:333[0m, in [0;36mplot_simple[0;34m(sys, colors, radius, opacity)[0m
+[1;32m    331[0m box [38;5;241m=[39m sys[38;5;241m.[39mbox[38;5;241m.[39mcopy()
+[1;32m    332[0m origin [38;5;241m=[39m np[38;5;241m.[39marray([[38;5;241m0[39m,[38;5;241m0[39m,[38;5;241m0[39m])
+[0;32m--> 333[0m traces [38;5;241m=[39m [43mcreate_box_plot[49m[43m([49m[43mbox[49m[43m,[49m[43m [49m[43morigin[49m[43m)[49m
+[1;32m    335[0m [38;5;28;01mfor[39;00m key [38;5;129;01min[39;00m comp_ints[38;5;241m.[39mkeys():
+[1;32m    336[0m     data[38;5;241m=[39mgo[38;5;241m.[39mScatter3d(
+[1;32m    337[0m         x[38;5;241m=[39msys[38;5;241m.[39matoms[38;5;241m.[39mpositions[:,[38;5;241m0[39m][sys[38;5;241m.[39matoms[38;5;241m.[39mtypes [38;5;241m==[39m key],
+[1;32m    338[0m         y[38;5;241m=[39msys[38;5;241m.[39matoms[38;5;241m.[39mpositions[:,[38;5;241m1[39m][sys[38;5;241m.[39matoms[38;5;241m.[39mtypes [38;5;241m==[39m key],
+[0;32m   (...)[0m
+[1;32m    350[0m         )
+[1;32m    351[0m     )
+
+File [0;32m/usr/share/miniconda/envs/test/lib/python3.8/site-packages/pyscal3/operations/visualize.py:44[0m, in [0;36mcreate_box_plot[0;34m(box, origin)[0m
+[1;32m     42[0m traces [38;5;241m=[39m []
+[1;32m     43[0m [38;5;28;01mfor[39;00m face [38;5;129;01min[39;00m faces:
+[0;32m---> 44[0m     trace [38;5;241m=[39m [43mgo[49m[38;5;241m.[39mScatter3d(
+[1;32m     45[0m         x[38;5;241m=[39mface[:,[38;5;241m0[39m],
+[1;32m     46[0m         y[38;5;241m=[39mface[:,[38;5;241m1[39m],
+[1;32m     47[0m         z[38;5;241m=[39mface[:,[38;5;241m2[39m],
+[1;32m     48[0m         mode[38;5;241m=[39m[38;5;124m'[39m[38;5;124mlines[39m[38;5;124m'[39m,
+[1;32m     49[0m         name[38;5;241m=[39m[38;5;124m'[39m[38;5;124mlines[39m[38;5;124m'[39m,
+[1;32m     50[0m         line[38;5;241m=[39m[38;5;28mdict[39m(width[38;5;241m=[39m[38;5;241m2.0[39m, color[38;5;241m=[39m[38;5;124m'[39m[38;5;124m#263238[39m[38;5;124m'[39m),
+[1;32m     51[0m         showlegend[38;5;241m=[39m[38;5;28;01mFalse[39;00m
+[1;32m     52[0m     )
+[1;32m     53[0m     traces[38;5;241m.[39mappend(trace)
+[1;32m     54[0m [38;5;28;01mreturn[39;00m traces
+
+[0;31mUnboundLocalError[0m: local variable 'go' referenced before assignment
 
