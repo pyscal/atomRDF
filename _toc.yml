@@ -5,6 +5,7 @@ format: jb-book
 root: docs/intro
 chapters:
   - file: docs/examples.md
+  - file: docs/gettingstarted.md
     sections:
     - file: examples/01_getting_started
     - file: examples/02_grain_boundaries
