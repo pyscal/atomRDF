@@ -23,6 +23,7 @@ jobs:
     - name: Install Jupyterbook
       shell: bash -l {0}
       run: |
+        pip install .
         jupyter-book build . --path-output public
     - run: mv public/_build/html public_html
     - run: touch public_html/.nojekyll
