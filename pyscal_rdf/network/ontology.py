@@ -38,6 +38,8 @@ def read_ontology():
 	combo.add_path(('msmo:ComputationalMethod', 'prov:wasAssociatedWith', 'prov:SoftwareAgent'))
 	combo.add_path(('cmso:ComputationalSample', 'rdf:type', 'prov:Entity'))
 	combo.add_path(('msmo:ComputationalMethod', 'rdf:type', 'prov:Activity'))
+	#for Alt Name, maybe this should not be here
+	combo.add_path(('cmso:CrystalStructure', 'cmso:hasAltName', 'string'))
 	
 	#return
 	return combo
