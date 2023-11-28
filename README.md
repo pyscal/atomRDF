@@ -4,7 +4,7 @@
 
 The package is currently under activate development and could be unstable .
 
-You can try `pyscal_rdf` here:
+You can try `pyscal_rdf`  here:
 
 | Jupyter notebook  | GUI |
 |-------------------|-----|
