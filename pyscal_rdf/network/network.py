@@ -196,7 +196,7 @@ class OntologyNetwork:
         return path
         
         
-    def create_query(self, source, destinations, condition=None):
+    def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
         values is a dict with keys value, operation
         """
@@ -240,9 +240,10 @@ class OntologyNetwork:
                                                  self.strip_name(triple[2])))
         
         #we enforce types of the source and destination
-        query.append("    ?%s rdf:type %s ."%(source_name, source.name))
-        for (destination_name, destination) in zip(destination_names, destinations):
-            query.append("    ?%s rdf:type %s ."%(destination_name, destination.name))
+        if enforce_types:
+            query.append("    ?%s rdf:type %s ."%(self.strip_name(source.query_name), source.query_name))
+            for destination in destinations:
+                query.append("    ?%s rdf:type %s ."%(self.strip_name(destination.query_name), destination.query_name))
         #now we have to add filters
         #filters are only needed if it is a dataproperty
         filter_text = ''
