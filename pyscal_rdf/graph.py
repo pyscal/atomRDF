@@ -866,7 +866,9 @@ class RDFGraph:
 
         if filename is None:
             filename = os.path.join(os.getcwd(), "out")
+        
         sys = self.get_system_from_sample(sample)
+        
         if format=="ase":
             return sys.to_ase()
         elif format=='poscar':
@@ -875,7 +877,7 @@ class RDFGraph:
         else:
             #asesys = sys.to_ase()
             #write(filename, asesys, format=format)
-            sys.to_file(filename, format=format)
+            sys.write.file(filename, format=format)
     
     
     def query(self, inquery):
