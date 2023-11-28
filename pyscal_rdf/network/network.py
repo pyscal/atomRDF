@@ -203,7 +203,7 @@ class OntologyNetwork:
         if not isinstance(destinations, list):
             destinations = [destinations]
         
-        source = source.query_name
+        source_name = source.query_name
         destination_names = [destination.query_name for destination in destinations]
         
         #if condition is specified, and is not there, add it
@@ -212,9 +212,9 @@ class OntologyNetwork:
                 destination_names.append(condition.query_name)
         
         #add source if not available
-        if source not in destination_names:
-            destination_names.append(source)
-            
+        if source_name not in destination_names:
+            destination_names.append(source_name)
+
         #start prefix of query
         query = []
         for key, val in self.namespaces.items():
@@ -225,7 +225,7 @@ class OntologyNetwork:
         #now for each destination, start adding the paths in the query
         all_triplets = {}
         for destination in destination_names:
-            triplets = self.get_shortest_path(source, destination, triples=True)
+            triplets = self.get_shortest_path(source_name, destination, triples=True)
             all_triplets[destination] = triplets
         
         select_destinations = [f'?{self.strip_name(destination)}' for destination in destination_names]
@@ -239,6 +239,10 @@ class OntologyNetwork:
                                                  triple[1], 
                                                  self.strip_name(triple[2])))
         
+        #we enforce types of the source and destination
+        query.append("    ?%s rdf:type %s ."%(source_name, source.name))
+        for (destination_name, destination) in zip(destination_names, destinations):
+            query.append("    ?%s rdf:type %s ."%(destination_name, destination.name))
         #now we have to add filters
         #filters are only needed if it is a dataproperty
         filter_text = ''
