@@ -611,13 +611,13 @@ class RDFGraph:
         if gb_dict["GBType"] is None:
             self.add((plane_defect_01, RDF.type, PLDO.GrainBoundary))
         elif gb_dict["GBType"] == "Twist":
-            self.add((plane_defect_01, RDF.type, PLDO.TwistBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.TwistGrainBoundary))
         elif gb_dict["GBType"] == "Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.TiltBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.TiltGrainBoundary))
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.SymmetricTiltBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.SymmetricTiltGrainBoundary))
         elif gb_dict["GBType"] == "Mixed":
-            self.add((plane_defect_01, RDF.type, PLDO.MixedBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.MixedGrainBoundary))
         self.add((plane_defect_01, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
         
         #now mark that the defect is GB
