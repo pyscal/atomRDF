@@ -1,0 +1,51 @@
+sample:
+  material:
+    element_ratio:
+      element1: float
+    crystal_structure:
+      altname: string
+      spacegroup_symbol: string
+      spacegroup_number: int
+      unit_cell:
+        bravais_lattice: string
+        lattice_parameter:
+          x: float
+          y: float
+          z: float
+        angle:
+          alpha: float
+          beta: float
+          gamma: float
+    defect:
+      grain_boundary:
+        type: string
+        sigma: int
+        plane: int(3)
+        rotation_axis: int(3)
+        misorientation_angle: float
+      vacancy:
+        type: string
+
+  simulation_cell:
+    volume: float
+    number_of_atoms: int
+    length:
+      x: float
+      y: float
+      z: float
+    vector:
+      x: float(3)
+      y: float(3)
+      z: float(3)
+    angle:
+      alpha: float
+      beta: float
+      gamma: float
+    vacancy_concentration: float
+    number_of_vacancies: int
+
+  calculated_property:
+    - label: string
+      value: float
+      unit: string
+
