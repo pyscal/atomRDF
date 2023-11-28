@@ -4,9 +4,9 @@ import os
 #prov = OntologyNetwork('pyscal_rdf/data/prov.rdf', delimiter='#')
 def read_ontology():
 	#read in ontologies
-	cmso = OntologyNetwork('../pyscal_rdf/data/cmso.owl')
-	pldo = OntologyNetwork('../pyscal_rdf/data/pldo.owl')
-	podo = OntologyNetwork('../pyscal_rdf/data/podo.owl')
+	cmso = OntologyNetwork(os.path.join(os.path.dirname(__file__), '../pyscal_rdf/data/cmso.owl'))
+	pldo = OntologyNetwork(os.path.join(os.path.dirname(__file__), '../pyscal_rdf/data/pldo.owl'))
+	podo = OntologyNetwork(os.path.join(os.path.dirname(__file__), '../pyscal_rdf/data/podo.owl'))
 	#msmo = OntologyNetwork('../pyscal_rdf/data/msmo.owl')
 	
 	#combine them
