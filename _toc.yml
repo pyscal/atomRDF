@@ -1,0 +1,11 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: docs/intro
+chapters:
+  - file: docs/examples.md
+    sections:
+    - file: examples/01_getting_started
+    - file: examples/02_grain_boundaries
+
