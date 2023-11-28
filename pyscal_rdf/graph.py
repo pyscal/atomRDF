@@ -870,7 +870,7 @@ class RDFGraph:
         sys = self.get_system_from_sample(sample)
         
         if format=="ase":
-            return sys.to_ase()
+            return sys.write.ase()
         elif format=='poscar':
             asesys = sys.to_ase()
             write(filename, asesys, format="vasp")
