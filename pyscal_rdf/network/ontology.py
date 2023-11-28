@@ -12,7 +12,7 @@ def read_ontology():
 	#combine them
 	#combo = cmso + pldo + podo + msmo	
 	combo = cmso + pldo + podo
-	
+
 	#add namespaces
 	#combo.add_namespace('prov', 'http://www.w3.org/ns/prov#')
 	combo.add_namespace('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
@@ -37,7 +37,7 @@ def read_ontology():
 	#combo.add_path(('cmso:ComputationalSample', 'prov:wasDerivedFrom', 'cmso:ComputationalSample'))
 	#combo.add_path(('cmso:ComputationalSample', 'prov:wasGeneratedBy', 'msmo:ComputationalMethod'))
 	#combo.add_path(('msmo:ComputationalMethod', 'prov:wasAssociatedWith', 'prov:SoftwareAgent'))
-	combo.add_path(('cmso:ComputationalSample', 'rdf:type', 'prov:Entity'))
+	#combo.add_path(('cmso:ComputationalSample', 'rdf:type', 'prov:Entity'))
 	#combo.add_path(('msmo:ComputationalMethod', 'rdf:type', 'prov:Activity'))
 	#for Alt Name, maybe this should not be here
 	combo.add_path(('cmso:CrystalStructure', 'cmso:hasAltName', 'string'))
