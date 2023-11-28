@@ -901,15 +901,16 @@ class RDFGraph:
             return pd.DataFrame(res, columns=labels)
         raise ValueError("SPARQL query returned None")
 
-    def auto_query(self, source, destination, condition, return_query=False):
-        query = self.ontology.create_query(source, destination, condition)
+    def auto_query(self, source, destination, condition=None, return_query=False):
+        query = self.ontology.create_query(source, destination, condition=condition)
         if return_query:
             return query
         return self.query(query)
 
 
-    def query_sample(self, target_property, value, return_query=False):
-        raise NotImplementedError()
+    def query_sample(self, destination, condition=None, return_query=False):
+        return self.auto_query(self.ontology.terms.cmso.ComputationalSample, destination,
+            condition=condition, return_query=return_query)
     
     #################################
     # Methods to interact with sample
