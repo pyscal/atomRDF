@@ -10,7 +10,8 @@ def read_ontology():
 	#msmo = OntologyNetwork('../pyscal_rdf/data/msmo.owl')
 	
 	#combine them
-	combo = cmso + pldo + podo + msmo	
+	#combo = cmso + pldo + podo + msmo	
+	combo = cmso + pldo + podo
 	
 	#add namespaces
 	#combo.add_namespace('prov', 'http://www.w3.org/ns/prov#')
