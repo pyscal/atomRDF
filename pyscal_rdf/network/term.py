@@ -4,38 +4,39 @@ https://docs.python.org/3/library/operator.html
 from rdflib import Namespace
 import numbers
 
-def strip_name(uri, delimiter, get_what='name'):
-    if get_what == "name": 
-        if delimiter == "/":
-            uri_split = uri.split(delimiter)
-            if len(uri_split)>1:
-                name = ":".join(uri_split[-2:])
-            else:
-                name = uri 
+def _get_name(uri, delimiter):
+    """
+    Just get name with namespace prefix
+    """
+    uri_split = uri.split(delimiter)
+    name = uri_split[-1]
+    return name
+
+def _get_namespace(uri, delimiter):
+    if delimiter == "/":
+        uri_split = uri.split(delimiter)
+        if len(uri_split)>1:
+            namespace = uri_split[-2]
         else:
-            uri_split = uri.split(delimiter)
-            name = uri_split[-1]
-            uri_split = uri_split[0].split("/")
-            if len(uri_split)>0:
-                namespace = uri_split[-1]
-                name = ":".join([namespace, name])
-        return name
+            namespace = uri 
+    else:
+        uri_split = uri.split(delimiter)
+        uri_split = uri_split[0].split("/")
+        if len(uri_split)>0:
+            namespace = uri_split[-1]
+        else:
+            namespace = uri
+    return namespace    
+
+def strip_name(uri, delimiter, get_what='name', namespace=None):
+    if get_what == "namespace":
+        return _get_namespace(uri, delimiter)
     
-    elif get_what == "namespace":
-        if delimiter == "/":
-            uri_split = uri.split(delimiter)
-            if len(uri_split)>1:
-                namespace = uri_split[-2]
-            else:
-                namespace = uri 
-        else:
-            uri_split = uri.split(delimiter)
-            uri_split = uri_split[0].split("/")
-            if len(uri_split)>0:
-                namespace = uri_split[-1]
-            else:
-                namespace = uri
-        return namespace 
+    elif get_what == "name":    
+        if namespace is None:
+            namespace = _get_namespace(uri, delimiter)
+        name = _get_name(uri, delimiter)
+        return ":".join([namespace, name])
 
 
 class OntoTerm:
@@ -59,8 +60,6 @@ class OntoTerm:
         
         """
         self.uri = uri
-        #name of the class
-        self._name = None
         #type: can be object property, data property, or class
         self.node_type = node_type
         #now we need domain and range
@@ -76,6 +75,8 @@ class OntoTerm:
         self.is_range_of = []
         self._condition = None
         self._namespace = namespace
+        #name of the class
+        self._name = None
 
 
 
@@ -89,15 +90,12 @@ class OntoTerm:
     
     @property
     def name_without_prefix(self):
-        uri_split = self.uri.split(self.delimiter)
-        if len(uri_split)>0:
-            return uri_split[-1]
-        else:
-            return self.uri
+        return _get_name(self.uri, self.delimiter)
 
     @property
     def name(self):
-        return strip_name(self.uri, self.delimiter, get_what="name")        
+        return strip_name(self.uri, self.delimiter, 
+            namespace=self._namespace, get_what="name")        
 
     @property
     def namespace(self):
