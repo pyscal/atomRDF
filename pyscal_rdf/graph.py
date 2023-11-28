@@ -56,7 +56,8 @@ class RDFGraph:
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
-        identifier="http://default_graph"):
+        identifier="http://default_graph",
+        ontology=None):
         
         self.store_file = store_file
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
@@ -101,7 +102,9 @@ class RDFGraph:
         self.material = None
         self.sysdict = None
         self.sgraph = None
-        self.ontology = read_ontology()
+        if ontology is None:
+            ontology = read_ontology()
+        self.ontology = ontology
         self._atom_ids = None
 
     
