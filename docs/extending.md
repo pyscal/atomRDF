@@ -1,5 +1,12 @@
 
-# Support, contributing and extending
+# Support
+
+In case of bugs and feature improvements, you are welcome to create a
+new issue on the [github repo](https://github.com/pyscal/pyscal_rdf). You
+are also welcome to fix a bug or implement a feature. 
+
+Any other questions or suggestions are welcome, please contact
+[us](mailto:rdf@pyscal.org).
 
 `pyscal-rdf` welcomes and appreciates contribution and extension to the
 module. Rather than local modifications, we request that the

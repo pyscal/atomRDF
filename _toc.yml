@@ -9,7 +9,6 @@ chapters:
     sections:
     - file: examples/01_getting_started
     - file: examples/02_grain_boundaries
-  - file: docs/helpandsupport.md
   - file: docs/extending.md
   - file: docs/license.md
   - file: docs/acknowledgements.md
