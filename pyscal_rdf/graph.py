@@ -16,6 +16,7 @@ import pandas as pd
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
+from pyscal_rdf.network.ontology import read_ontology
 from pyscal_rdf.rdfsystem import System
 import pyscal_rdf.properties as prp
 #from pyscal3.core import System
@@ -24,6 +25,7 @@ from pyscal3.atoms import Atoms
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
+
 
 defstyledict = {
     "BNode": {"color": "#ffe6ff", 
@@ -54,7 +56,8 @@ class RDFGraph:
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
-        identifier="http://default_graph"):
+        identifier="http://default_graph",
+        ontology=None):
         
         self.store_file = store_file
         #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
@@ -99,8 +102,11 @@ class RDFGraph:
         self.material = None
         self.sysdict = None
         self.sgraph = None
-        #self._query_graph = OntologyNetwork()
+        if ontology is None:
+            ontology = read_ontology()
+        self.ontology = ontology
         self._atom_ids = None
+
     
     def process_structure(self, structure, format=None):
         """
@@ -605,13 +611,13 @@ class RDFGraph:
         if gb_dict["GBType"] is None:
             self.add((plane_defect_01, RDF.type, PLDO.GrainBoundary))
         elif gb_dict["GBType"] == "Twist":
-            self.add((plane_defect_01, RDF.type, PLDO.TwistBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.TwistGrainBoundary))
         elif gb_dict["GBType"] == "Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.TiltBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.TiltGrainBoundary))
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.SymmetricTiltBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
         elif gb_dict["GBType"] == "Mixed":
-            self.add((plane_defect_01, RDF.type, PLDO.MixedBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.MixedGrainBoundary))
         self.add((plane_defect_01, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
         
         #now mark that the defect is GB
@@ -860,16 +866,17 @@ class RDFGraph:
 
         if filename is None:
             filename = os.path.join(os.getcwd(), "out")
+        
         sys = self.get_system_from_sample(sample)
+        
         if format=="ase":
-            return sys.to_ase()
+            return sys.write.ase()
         elif format=='poscar':
-            asesys = sys.to_ase()
+            asesys = sys.write.ase()
             write(filename, asesys, format="vasp")
         else:
-            #asesys = sys.to_ase()
-            #write(filename, asesys, format=format)
-            sys.to_file(filename, format=format)
+            asesys = sys.write.ase()
+            write(filename, asesys, format=format)
     
     
     def query(self, inquery):
@@ -895,41 +902,18 @@ class RDFGraph:
             return pd.DataFrame(res, columns=labels)
         raise ValueError("SPARQL query returned None")
 
-
-
-    def query_sample(self, target_property, value, return_query=False):
-        """
-        Query the Graph for a sample that has the given `value` for the given `target_property`
-
-        Parameters
-        ----------
-        target_property: string
-            The target property can be any Ontology data property
-
-        value: number, string, or list of either
-            The value of the target property to be queried
-
-        return_query: bool, optional
-            If True, return the SPARQL query 
-
-        Returns
-        -------
-        res: list
-            list of queried samples
-
-        query: string
-            only returned if `return_query` is True
-
-        Notes
-        -----
-        """
-
-        query = self._query_graph.formulate_query(target_property, value)
-        res = self.graph.query(query)
-        res = [r for r in res]
+    def auto_query(self, source, destination, 
+        condition=None, return_query=False, enforce_types=True):
+        query = self.ontology.create_query(source, destination, 
+            condition=condition, enforce_types=enforce_types)
         if return_query:
-            return res, query
-        return res
+            return query
+        return self.query(query)
+
+
+    def query_sample(self, destination, condition=None, return_query=False, enforce_types=True):
+        return self.auto_query(self.ontology.terms.cmso.AtomicScaleSample, destination,
+            condition=condition, return_query=return_query, enforce_types=enforce_types)
     
     #################################
     # Methods to interact with sample

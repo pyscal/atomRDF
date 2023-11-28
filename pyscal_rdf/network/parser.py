@@ -1,10 +1,12 @@
-from pyscal_rdf.network.term import OntoTerm 
+from pyscal_rdf.network.term import OntoTerm, strip_name 
 from owlready2 import get_ontology
+import owlready2
 
 import os
 import copy
 import numpy as np
 import itertools
+
 
 class OntoParser:
     def __init__(self, infile, delimiter='/'):
@@ -21,11 +23,12 @@ class OntoParser:
         self.delimiter = delimiter
         self.classes = None
         self.namespaces = {self.tree.name: self.tree.base_iri}
-        self.extra_namespaces = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-        }
+        self.extra_namespaces = {}
         self._parse_class()
+        #print(self.attributes)
         self._parse_object_property()
         self._parse_data_property()
+        self._recheck_namespaces()
 
     def __add__(self, ontoparser):
         """
@@ -37,7 +40,8 @@ class OntoParser:
             if mainkey in ontoparser.attributes.keys():
                 for key, val in ontoparser.attributes[mainkey].items():
                     self.attributes[mainkey][key] = val        
-        
+                    
+
         #now change classes
         if ontoparser.classes is not None:
             for clx in ontoparser.classes:
@@ -53,13 +57,6 @@ class OntoParser:
 
     def __radd__(self, ontoparser):
         return self.__add__(ontoparser)
-
-    def _strip_name(self, uri):
-        uri_split = uri.split(self.delimiter)
-        if len(uri_split)>1:
-            return ":".join(uri_split[-2:])
-        else:
-            return uri
     
     def _strip_datatype(self, uri, delimiter='#'):
         uri_split = uri.split(delimiter)
@@ -74,15 +71,23 @@ class OntoParser:
             return self.classes[arg]
         else:
             return [name]
-                
+    
+    def _recheck_namespaces(self):
+        for mainkey in self.attributes.keys():
+            for key, val in self.attributes[mainkey].items():
+                namespace = self.attributes[mainkey][key].namespace
+                if namespace not in self.namespaces.keys():
+                    self.namespaces[namespace] = self.attributes[mainkey][key].namespace_with_prefix
+
+
     def _parse_data_property(self):
         for c in self.tree.data_properties():
             iri = c.iri
             dm = c.domain
             try:
-                dm = [self._strip_name(d.iri) for d in dm[0].Classes]
+                dm = [strip_name(d.iri, self.delimiter) for d in dm[0].Classes]
             except:
-                dm = [self._strip_name(d.iri) for d in dm]
+                dm = [strip_name(d.iri, self.delimiter) for d in dm]
             
             #now get subclasses
             dm = [self._get_subclasses(d) for d in dm]
@@ -93,7 +98,7 @@ class OntoParser:
                 rn = [r.__name__ for r in rn[0].Classes if r is not None]
             except:
                 rn = [r.__name__ for r in rn if r is not None]
-            term = OntoTerm(iri)
+            term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
             term.node_type = 'data_property'
@@ -108,9 +113,16 @@ class OntoParser:
             iri = c.iri
             dm = c.domain
             try:
-                dm = [self._strip_name(d.iri) for d in dm[0].Classes]
+                dm = [strip_name(d.iri, self.delimiter) for d in dm[0].Classes]
             except:
-                dm = [self._strip_name(d.iri) for d in dm]
+                dmnew = []
+                for d in dm:
+                    if isinstance(d, owlready2.class_construct.Or):
+                        for x in d.Classes:
+                            dmnew.append(strip_name(x.iri, self.delimiter))
+                    else:
+                        dmnew.append(strip_name(d.iri, self.delimiter))
+                dm = dmnew
             
             #now get subclasses
             dm = [self._get_subclasses(d) for d in dm]
@@ -118,15 +130,15 @@ class OntoParser:
 
             rn = c.range
             try:
-                rn = [self._strip_name(r.iri) for r in rn[0].Classes]
+                rn = [strip_name(r.iri, self.delimiter) for r in rn[0].Classes]
             except:
-                rn = [self._strip_name(r.iri) for r in rn]
+                rn = [strip_name(r.iri, self.delimiter) for r in rn]
             
             #now get subclasses
             rn = [self._get_subclasses(d) for d in rn]
             rn = list(itertools.chain(*rn))
 
-            term = OntoTerm(iri)
+            term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
             term.node_type = 'object_property'
@@ -145,19 +157,20 @@ class OntoParser:
         for c in self.tree.classes():
             iri = c.iri
             #print(iri)
+            #print(iri)
             try:
                 subclasses = self.tree.search(subclass_of=getattr(self.tree, c.name))
                 for sb in subclasses:
-                    term = OntoTerm(sb.iri)
+                    term = OntoTerm(sb.iri, delimiter=self.delimiter)
                     term.node_type ='class'
                     self.attributes['class'][term.name] = term
-                subclasses = [self._strip_name(sb.iri) for sb in subclasses]
+                subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
                 classes.append(subclasses)
             except:
-                term = OntoTerm(c.iri)
+                term = OntoTerm(c.iri, delimiter=self.delimiter)
                 term.node_type ='class'
                 self.attributes['class'][term.name] = term                
-                classes.append([self._strip_name(c.iri)])
+                classes.append([strip_name(c.iri, self.delimiter)])
         return classes
     
     def _aggregate_keys(self, dd):

@@ -5,6 +5,8 @@ import numpy as np
 import os
 import warnings
 from pyscal_rdf.network.parser import OntoParser
+from pyscal_rdf.network.term import OntoTerm, strip_name
+from pyscal3.atoms import AttrSetter
 
 owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
 
@@ -23,14 +25,29 @@ class OntologyNetwork:
         self.onto = OntoParser(infile, delimiter=delimiter)
         self.onto.attributes['data_node'] = []
         self.data_prefix = 'value'
-        self._parse_all()
+        self.terms = AttrSetter()
+        self._parse_all()        
+    
+    def _assign_attributes(self):
+        mapdict = {}
+        #add first level - namespaces
+        for key in self.namespaces.keys():
+            mapdict[key] = {}
         
+        #now iterate over all attributes
+        for k1 in ['class', 'object_property', 'data_property']:
+            for k2, val in self.onto.attributes[k1].items():
+                mapdict[val.namespace][val.name_without_prefix] = val
         
+
+        self.terms._add_attribute(mapdict) 
+
     def _parse_all(self):
         #call methods
         self._add_class_nodes()
         self._add_object_properties()
         self._add_data_properties()
+        self._assign_attributes()
 
     def __add__(self, ontonetwork):
         #add onto network
@@ -81,6 +98,7 @@ class OntologyNetwork:
                 self.g.add_edge(d, val.name)
             for r in val.range:
                 self.g.add_edge(val.name, r)
+
     
     def _add_data_properties(self):
         for key, val in self.onto.attributes['data_property'].items():
@@ -94,7 +112,32 @@ class OntologyNetwork:
                 self.g.add_edge(val.name, data_node)
 
                 
-    
+    def add_namespace(self, namespace_name, namespace_iri):
+        """
+        Add a new namespace
+        """
+        if namespace_name not in self.onto.namespaces.keys():
+            self.onto.namespaces[namespace_name] = namespace_iri
+        else:
+            raise KeyError("namespace is already there!")
+
+    def add_term(self, uri, node_type, namespace=None,
+                dm=[], rn=[], data_type=None, 
+                node_id=None, delimiter='/'):
+        """
+        Add a node
+        """
+        #namespace = strip_name(uri, delimiter, get_what="namespace")
+        #name = strip_name(uri, delimiter, get_what="name")
+        term = OntoTerm(uri, namespace=namespace,
+            node_type=node_type, dm =dm, 
+            rn=rn, data_type=data_type, node_id=node_id,
+            delimiter=delimiter)
+        if not term.namespace in self.onto.namespaces.keys():
+            raise ValueError("Namespace not found, first add namespace")
+        self.onto.attributes[node_type][term.name] = term
+        self._assign_attributes()
+
     def add_path(self, triple):
         """
         Add a triple as path. Note that all attributes of the triple should already
@@ -152,67 +195,27 @@ class OntologyNetwork:
         path = self.get_shortest_path(source="cmso:ComputationalSample", target=target, triples=True)
         return path
         
-    def phrase_to_sparql(self, phrase):
-        def _extract_operation(phr):
-            r = phr.split(' ')
-            if len(r) != 3:
-                raise ValueError('wrong filters!')
-            return f'?value{r[1]}\"{r[2]}\"^^xsd:datatype'
-
-        conditions = []
-        operation = None
         
-        raw = phrase.split(' and ')
-        
-        if len(raw) > 1:
-            operation = '&&'
-        if operation is None:
-            raw = phrase.split(' or ')
-            if len(raw) > 1:
-                operation = '||'
-        
-        if operation is not None:
-            for ph in raw:
-                conditions.append(_extract_operation(ph))
-        else:
-            conditions.append(_extract_operation(phrase))
-        full_str = f' {operation} '.join(conditions)
-        #replace values
-        return full_str
-        
-
-    def validate_values(self, destinations, values):
-        combinator_dict = {'and': '&&', 'or': '||'}
-        combinator_list = values[1::2]
-        phrase_list = values[::2]
-        if not len(combinator_list) == len(destinations)-1:
-            raise ValueError("Invalid combinations!")
-        
-        sparql_phrase_list = []
-        for phrase, destination in zip(phrase_list, destinations):
-            sparql_phrase = self.phrase_to_sparql(phrase)
-            sparql_phrase = sparql_phrase.replace('value', self.strip_name(destination))
-            sparql_phrase = sparql_phrase.replace('datatype', self.g.nodes[destination]['data_type'])
-            sparql_phrase_list.append(sparql_phrase)
-            
-        #combine phrases with phrase list
-        updated_sparql_phrase_list = []
-        for count, sparql_phrase in enumerate(sparql_phrase_list):
-            updated_sparql_phrase_list.append(f'({sparql_phrase})')
-            if count < len(sparql_phrase_list)-1:
-                updated_sparql_phrase_list.append(combinator_dict[combinator_list[count]])
-            
-        full_filter = " ".join(updated_sparql_phrase_list)
-        return f'FILTER ({full_filter})'
-        
-    def create_query(self, source, destinations, values = None):
+    def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
         values is a dict with keys value, operation
         """
         if not isinstance(destinations, list):
             destinations = [destinations]
-            
-        #start prefix of quer
+        
+        source_name = source.query_name
+        destination_names = [destination.query_name for destination in destinations]
+        
+        #if condition is specified, and is not there, add it
+        if condition is not None:
+            if condition.query_name not in destination_names:
+                destination_names.append(condition.query_name)
+        
+        #add source if not available
+        if source_name not in destination_names:
+            destination_names.append(source_name)
+
+        #start prefix of query
         query = []
         for key, val in self.namespaces.items():
             query.append(f'PREFIX {key}: <{val}>')
@@ -221,35 +224,39 @@ class OntologyNetwork:
         
         #now for each destination, start adding the paths in the query
         all_triplets = {}
-        for destination in destinations:
-            triplets = self.get_shortest_path(source, destination, triples=True)
+        for destination in destination_names:
+            triplets = self.get_shortest_path(source_name, destination, triples=True)
             all_triplets[destination] = triplets
         
-        select_destinations = [f'?{self.strip_name(destination)}' for destination in destinations]
+        select_destinations = [f'?{self.strip_name(destination)}' for destination in destination_names]
         query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
         query.append("WHERE {")
         
         #now add corresponding triples
-        for destination in destinations:
+        for destination in destination_names:
             for triple in all_triplets[destination]:
                 query.append("    ?%s %s ?%s ."%(self.strip_name(triple[0]), 
                                                  triple[1], 
                                                  self.strip_name(triple[2])))
         
+        #we enforce types of the source and destination
+        if enforce_types:
+            if source.node_type == 'class':
+                query.append("    ?%s rdf:type %s ."%(self.strip_name(source.query_name), source.query_name))
+            for destination in destinations:
+                if destination.node_type == 'class':
+                    query.append("    ?%s rdf:type %s ."%(self.strip_name(destination.query_name), destination.query_name))
         #now we have to add filters
         #filters are only needed if it is a dataproperty
         filter_text = ''
         
-        if values is not None:
-            lit_nodes = [node for node in self.g.nodes if 'node_type' in self.g.nodes[node].keys() and self.g.nodes[node]['node_type'] == 'literal']
-            data_destinations = [destination for destination in destinations if destination in lit_nodes]
-            if not len(data_destinations) == len(values):
-                warnings.warn(f'Length of destinations and values are not same, found {len(data_destinations)} and {len(values)}')
-                considered = " ".join(data_destinations[:len(values)])
-                warnings.warn(f'Conditions are considered for {considered}')
-            if len(values) > 0:
-                filter_text = self.validate_values(data_destinations[:len(values)], values)
-        query.append(filter_text)
+        #make filters; get all the unique filters from all the classes in destinations
+        if condition is not None:
+            if condition._condition is not None:
+                filter_text = condition._condition
+
+        if filter_text != '':
+            query.append(f'FILTER {filter_text}')
         query.append('}')
         return '\n'.join(query)
 

@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="http://purls.helmholtz-metadaten.de/msmo/"
+         xmlns="http://purls.helmholtz-metadaten.de/msmo/">
+
+<owl:Ontology rdf:about="http://purls.helmholtz-metadaten.de/msmo"/>
+
+<owl:Class rdf:about="ComputationalMethod">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="AtomisticMethod">
+  <rdfs:subClassOf rdf:resource="ComputationalMethod"/>
+</owl:Class>
+
+<owl:Class rdf:about="Calculation">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="DensityFunctionalTheory">
+  <rdfs:subClassOf rdf:resource="AtomisticMethod"/>
+</owl:Class>
+
+<owl:Class rdf:about="MolecularDynamics">
+  <rdfs:subClassOf rdf:resource="AtomisticMethod"/>
+</owl:Class>
+
+<owl:Class rdf:about="AbinitioMolecularDynamics">
+  <rdfs:subClassOf rdf:resource="AtomisticMethod"/>
+</owl:Class>
+
+<owl:Class rdf:about="MonteCarloMethod">
+  <rdfs:subClassOf rdf:resource="ComputationalMethod"/>
+</owl:Class>
+
+<owl:Class rdf:about="KineticMonteCarloMethod">
+  <rdfs:subClassOf rdf:resource="MonteCarloMethod"/>
+</owl:Class>
+
+<owl:Class rdf:about="MolecularDynamicsMinimization">
+  <rdfs:subClassOf rdf:resource="MolecularDynamics"/>
+</owl:Class>
+
+<owl:Class rdf:about="MolecularDynamicsNPT">
+  <rdfs:subClassOf rdf:resource="MolecularDynamics"/>
+</owl:Class>
+
+<owl:Class rdf:about="MolecularDynamicsNVT">
+  <rdfs:subClassOf rdf:resource="MolecularDynamics"/>
+</owl:Class>
+
+
+</rdf:RDF>
