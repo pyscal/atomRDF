@@ -615,7 +615,7 @@ class RDFGraph:
         elif gb_dict["GBType"] == "Tilt":
             self.add((plane_defect_01, RDF.type, PLDO.TiltGrainBoundary))
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.SymmetricTiltGrainBoundary))
+            self.add((plane_defect_01, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
         elif gb_dict["GBType"] == "Mixed":
             self.add((plane_defect_01, RDF.type, PLDO.MixedGrainBoundary))
         self.add((plane_defect_01, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
@@ -913,7 +913,7 @@ class RDFGraph:
 
 
     def query_sample(self, destination, condition=None, return_query=False, enforce_types=True):
-        return self.auto_query(self.ontology.terms.cmso.ComputationalSample, destination,
+        return self.auto_query(self.ontology.terms.cmso.AtomicScaleSample, destination,
             condition=condition, return_query=return_query, enforce_types=enforce_types)
     
     #################################
