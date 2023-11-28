@@ -1,10 +1,6 @@
  # Installation
 
-### Supported operating systems
-
-`pyscal-rdf` can be installed on Linux and Mac OS based systems. On Windows systems, it is recommended to use  [Windows subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install).
-
-The following instructions will help install `pyscal-rdf`:
+`pyscal-rdf` can be installed on Linux and Mac OS based systems. On Windows systems, it is recommended to use  [Windows subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install). The following instructions will help install `pyscal-rdf`:
 
 ````{tab-set}
 ```{tab-item} pip
