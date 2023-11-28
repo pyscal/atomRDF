@@ -872,12 +872,11 @@ class RDFGraph:
         if format=="ase":
             return sys.write.ase()
         elif format=='poscar':
-            asesys = sys.to_ase()
+            asesys = sys.write.ase()
             write(filename, asesys, format="vasp")
         else:
-            #asesys = sys.to_ase()
-            #write(filename, asesys, format=format)
-            sys.write.file(filename, format=format)
+            asesys = sys.write.ase()
+            write(filename, asesys, format=format)
     
     
     def query(self, inquery):
