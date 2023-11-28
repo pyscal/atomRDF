@@ -241,9 +241,11 @@ class OntologyNetwork:
         
         #we enforce types of the source and destination
         if enforce_types:
-            query.append("    ?%s rdf:type %s ."%(self.strip_name(source.query_name), source.query_name))
+            if source.node_type == 'class':
+                query.append("    ?%s rdf:type %s ."%(self.strip_name(source.query_name), source.query_name))
             for destination in destinations:
-                query.append("    ?%s rdf:type %s ."%(self.strip_name(destination.query_name), destination.query_name))
+                if destination.node_type == 'class':
+                    query.append("    ?%s rdf:type %s ."%(self.strip_name(destination.query_name), destination.query_name))
         #now we have to add filters
         #filters are only needed if it is a dataproperty
         filter_text = ''
