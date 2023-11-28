@@ -23,8 +23,7 @@ class OntoParser:
         self.delimiter = delimiter
         self.classes = None
         self.namespaces = {self.tree.name: self.tree.base_iri}
-        self.extra_namespaces = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-        }
+        self.extra_namespaces = {}
         self._parse_class()
         #print(self.attributes)
         self._parse_object_property()
