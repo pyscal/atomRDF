@@ -238,7 +238,8 @@ class OntologyNetwork:
             if condition._condition is not None:
                 filter_text = condition._condition
 
-        query.append(f'FILTER {filter_text}')
+        if filter_text != '':
+            query.append(f'FILTER {filter_text}')
         query.append('}')
         return '\n'.join(query)
 
