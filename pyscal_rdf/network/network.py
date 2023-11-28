@@ -98,6 +98,7 @@ class OntologyNetwork:
                 self.g.add_edge(d, val.name)
             for r in val.range:
                 self.g.add_edge(val.name, r)
+
     
     def _add_data_properties(self):
         for key, val in self.onto.attributes['data_property'].items():

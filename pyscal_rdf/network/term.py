@@ -144,6 +144,11 @@ class OntoTerm:
     def __repr__(self):
         return str(self.name)
 
+    def _clean_datatype(self, r):
+        if r=='str':
+            return 'string'
+        return r
+
     #convenience methods for overload checking
     def _ensure_condition_exists(self):
         if self._condition is None:
@@ -162,7 +167,7 @@ class OntoTerm:
             raise TypeError("This operation can only be performed with a data property!")
 
     def _create_condition_string(self, condition, val):
-        return f'(?{self.query_name_without_prefix}{condition}\"{val}\"^^xsd:{self.range[0]})'
+        return f'(?{self.query_name_without_prefix}{condition}\"{val}\"^^xsd:{self._clean_datatype(self.range[0])})'
     
     #overloading operators
     def __eq__(self, val):
