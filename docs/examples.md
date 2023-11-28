@@ -10,18 +10,18 @@ The gallery of examples below cover different ways in which pyscal-rdf can be us
 :link: ../examples/01_getting_started
 :link-type: doc
 :class-header: bg-light
-Getting started with pyscal
+Getting started with pyscal-rdf
 ^^^
-Learn the very basis, including the concepts of `System` and `Atoms`.
+Learn the very basis, including the concepts of creating structures, and querying them.
 :::
 
 :::{grid-item-card}
 :link: ../examples/02_grain_boundaries
 :link-type: doc
 :class-header: bg-light
-Creating structures
+Creating grain boundary structures
 ^^^
-Create common atomic structures like bcc, fcc; and custom ones. Save and read from files.
+Create, visualize, query, and export grain boundary structures.
 :::
 
 ::::
