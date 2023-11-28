@@ -4,9 +4,13 @@
 format: jb-book
 root: docs/intro
 chapters:
-  - file: docs/examples.md
   - file: docs/gettingstarted.md
+  - file: docs/examples.md
     sections:
     - file: examples/01_getting_started
     - file: examples/02_grain_boundaries
+  - file: docs/helpandsupport.md
+  - file: docs/extending.md
+  - file: docs/license.md
+  - file: docs/acknowledgements.md
 
