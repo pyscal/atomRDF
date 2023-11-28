@@ -211,6 +211,10 @@ class OntologyNetwork:
             if condition.query_name not in destination_names:
                 destination_names.append(condition.query_name)
         
+        #add source if not available
+        if source not in destination_names:
+            destination_names.append(source)
+            
         #start prefix of query
         query = []
         for key, val in self.namespaces.items():
