@@ -10,7 +10,7 @@ def read_ontology():
 	cmso = OntologyNetwork(os.path.join(file_location,  'data/cmso.owl'))
 	pldo = OntologyNetwork(os.path.join(file_location,  'data/pldo.owl'))
 	podo = OntologyNetwork(os.path.join(file_location,  'data/podo.owl'))
-	msmo = OntologyNetwork('../pyscal_rdf/data/msmo.owl')
+	msmo = OntologyNetwork(os.path.join(file_location,  'data/msmo.owl'))
 	
 	#combine them
 	combo = cmso + pldo + podo + msmo	
