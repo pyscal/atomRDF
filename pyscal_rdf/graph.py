@@ -13,6 +13,7 @@ import inspect
 from ase.io import write
 import copy
 import pandas as pd
+import yaml
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
@@ -25,6 +26,13 @@ from pyscal3.atoms import Atoms
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
+
+#read element data file
+file_location = os.path.dirname(__file__).split('/')
+file_location = "/".join(file_location[:-1])
+file_location = os.path.join(file_location,  'data/element.yml')
+with open(file_location, 'r') as fin:
+    element_indetifiers = yaml.safe_load(fin)
 
 
 defstyledict = {
@@ -132,10 +140,8 @@ class RDFGraph:
     
     def data(self, key):
         #this method gets info directly from the dict
-        if key=="ChemicalCompositionElement":
-            return list(self.sys.composition.keys())
-        elif key=="ChemicalCompositionRatio":
-            return [val for key, val in self.sys.composition.items()]
+        if key=="ChemicalComposition":
+            return self.sys.composition
         elif key=="CellVolume":
             return self.sys.volume
         elif key=="NumberOfAtoms":
@@ -349,10 +355,17 @@ class RDFGraph:
         Returns
         -------
         """
+        composition = self.data("ChemicalComposition")
 
-        chem_comp = ["=".join([str(x), str(y)]) for x,y in zip(self.data("ChemicalCompositionElement"), self.data("ChemicalCompositionRatio"))]
-        for x in range(len(chem_comp)):
-            self.add((self.material, CMSO.hasElementRatio, Literal(chem_comp[x], datatype=XSD.string)))
+        chemical_species = BNode(name)
+        self.add((self.sample, CMSO.hasSpecies, chemical_species))
+        self.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+        
+        for e, r in composition.keys():
+            if e in element_indetifiers.keys():
+                element = URIRef(element_indetifiers[e])
+                self.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                self.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
     
     def add_simulation_cell(self, name=None):
         """
