@@ -30,7 +30,7 @@ PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 #read element data file
 file_location = os.path.dirname(__file__).split('/')
 file_location = "/".join(file_location[:-1])
-file_location = os.path.join(file_location,  'data/element.yml')
+file_location = os.path.join(os.path.dirname(__file__),  'data/element.yml')
 with open(file_location, 'r') as fin:
     element_indetifiers = yaml.safe_load(fin)
 
