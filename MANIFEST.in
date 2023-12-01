@@ -1,1 +1,2 @@
 include pyscal_rdf/data/*.owl
+include pyscal_rdf/data/*.yml
