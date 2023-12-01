@@ -585,45 +585,38 @@ class RDFGraph:
         Returns
         -------
         """
-        self._atom_ids = []
-
-        positions = self.data("Positions")
-        elements = self.data("Element")
-        coordination = self.data("Coordination")
-        for x in range(len(positions)):
+        if "positions" in self.sys.atoms.keys():
             uname = None
             if name is not None:
-                uname = f'{name}_{x}'            
-            #create atom
-            atom = BNode(uname)
-            self._atom_ids.append(atom)
-            self.add((self.sample, CMSO.hasAtom, atom))
-            self.add((atom, RDF.type, CMSO.Atom))
-
-            uname = None
-            if name is not None:
-                uname = f'{name}_{x}_Position'            
+                uname = f'{name}_{x}_Position'
             position = BNode(uname)
-            self.add((atom, CMSO.hasPositionVector, position))
-            self.add((position, RDF.type, CMSO.PositionVector))
-            self.add((position, CMSO.hasComponent_x, Literal(positions[x][0],
-                                                                  datatype=XSD.float)))
-            self.add((position, CMSO.hasComponent_y, Literal(positions[x][1],
-                                                                  datatype=XSD.float)))
-            self.add((position, CMSO.hasComponent_z, Literal(positions[x][2],
-                                                                  datatype=XSD.float)))
-            #now add coordination
+            self.add((self.sample, CMSO.hasAttribute, position))
+            self.add((position, RDF.type, CMSO.AtomAttribute))            
+
+        if "species" in self.sys.atoms.keys():
             uname = None
             if name is not None:
-                uname = f'{name}_{x}_Element'            
-            element = BNode(uname)
-            self.add((atom, CMSO.hasElement, element))
-            self.add((element, RDF.type, CMSO.Element))
-            self.add((element, CMSO.hasSymbol, Literal(str(elements[x]),
-                                                            datatype=XSD.string)))
-            #finally occupancy
-            self.add((atom, CMSO.hasCoordinationNumber, Literal(coordination[x],
-                                                                     datatype=XSD.integer)))
+                uname = f'{name}_{x}_Element'
+            species = BNode(uname)
+            self.add((self.sample, CMSO.hasAttribute, species))
+            self.add((species, RDF.type, CMSO.AtomAttribute))            
+
+        if "velocities" in self.sys.atoms.keys():
+            uname = None
+            if name is not None:
+                uname = f'{name}_{x}_Element'
+            velocity = BNode(uname)
+            self.add((self.sample, CMSO.hasAttribute, velocity))
+            self.add((velocity, RDF.type, CMSO.AtomAttribute))            
+
+        if "forces" in self.sys.atoms.keys():
+            uname = None
+            if name is not None:
+                uname = f'{name}_{x}_Element'  
+            force = BNode(uname)
+            self.add((self.sample, CMSO.hasAttribute, force))
+            self.add((force, RDF.type, CMSO.AtomAttribute))            
+
 
     
     
