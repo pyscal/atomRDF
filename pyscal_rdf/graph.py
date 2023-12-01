@@ -167,22 +167,49 @@ class RDFGraph:
         elif key=="SimulationCellAngleGamma": 
             return prp.get_angle(self.sys.box[2], self.sys.box[0])
         
+        elif key=="LatticeAngleAlpha":
+            if self.sys._structure_dict is not None:
+                return prp.get_angle(self.sys._structure_dict["box"][0], self.sys._structure_dict["box"][1]) 
+            return None
+        elif key=="LatticeAngleBeta":
+            if self.sys._structure_dict is not None:
+                return prp.get_angle(self.sys._structure_dict["box"][1], self.sys._structure_dict["box"][2]) 
+            return None
+        elif key=="LatticeAngleGamma": 
+            if self.sys._structure_dict is not None:
+                return prp.get_angle(self.sys._structure_dict["box"][2], self.sys._structure_dict["box"][0]) 
+            return None
+        
         elif key=="Element":
             if self.sys.atoms.species[0] is not None:
                 return self.sys.atoms.species
             else:
                 return self.sys.atoms.types
+        
         elif key=="Coordination":
             return prp.get_coordination(self.sys)
+        
         elif key=="Positions":
             return self.sys.atoms.positions
+        
         elif key=="LatticeParameter":
-            return self.sys.atoms._lattice_constant      
+            if self.sys.atoms._lattice_constant is None:
+                return [None, None, None]
+            else:
+                if self.sys._structure_dict is not None:
+                    return [np.linalg.norm(self.sys._structure_dict["box"][0])*self.sys.atoms._lattice_constant,
+                            np.linalg.norm(self.sys._structure_dict["box"][1])*self.sys.atoms._lattice_constant,
+                            np.linalg.norm(self.sys._structure_dict["box"][2])*self.sys.atoms._lattice_constant]
+                else:
+                    return [self.sys.atoms._lattice_constant, 
+                            self.sys.atoms._lattice_constant, 
+                            self.sys.atoms._lattice_constant]
         
         elif key=="SpaceGroupSymbol":
             if self.sys._structure_dict is not None:
                 symbol, number = prp.get_space_group(self.sys)
                 return symbol
+        
         elif key=="SpaceGroupNumber":
             if self.sys._structure_dict is not None:
                 symbol, number = prp.get_space_group(self.sys)
@@ -216,7 +243,7 @@ class RDFGraph:
 
         elif key=="LatticeVectors":
             if self.sys._structure_dict is not None:
-                return prp.get_lattice_vector(self.sys)
+                return self.sys_structure_dict["box"]
             else:
                 return None
 
@@ -532,9 +559,9 @@ class RDFGraph:
         lattice_parameter_01 = BNode(uname)
         self.add((self.unit_cell, CMSO.hasLatticeParamter, lattice_parameter_01))
         self.add((lattice_parameter_01, RDF.type, CMSO.LatticeParameter))
-        self.add((lattice_parameter_01, CMSO.hasLength_x, Literal(self.data("LatticeParameter"), datatype=XSD.float)))
-        self.add((lattice_parameter_01, CMSO.hasLength_y, Literal(self.data("LatticeParameter"), datatype=XSD.float)))
-        self.add((lattice_parameter_01, CMSO.hasLength_z, Literal(self.data("LatticeParameter"), datatype=XSD.float)))
+        self.add((lattice_parameter_01, CMSO.hasLength_x, Literal(self.data("LatticeParameter")[0], datatype=XSD.float)))
+        self.add((lattice_parameter_01, CMSO.hasLength_y, Literal(self.data("LatticeParameter")[1], datatype=XSD.float)))
+        self.add((lattice_parameter_01, CMSO.hasLength_z, Literal(self.data("LatticeParameter")[2], datatype=XSD.float)))
         
         uname = None
         if name is not None:
@@ -542,9 +569,9 @@ class RDFGraph:
         lattice_angle_01 = BNode(uname)
         self.add((self.unit_cell, CMSO.hasAngle, lattice_angle_01))
         self.add((lattice_angle_01, RDF.type, CMSO.LatticeAngle))
-        self.add((lattice_angle_01, CMSO.hasAngle_alpha, Literal(90, datatype=XSD.float)))
-        self.add((lattice_angle_01, CMSO.hasAngle_beta, Literal(90, datatype=XSD.float)))
-        self.add((lattice_angle_01, CMSO.hasAngle_gamma, Literal(90, datatype=XSD.float)))        
+        self.add((lattice_angle_01, CMSO.hasAngle_alpha, Literal(self.data("LatticeAngleAlpha"), datatype=XSD.float)))
+        self.add((lattice_angle_01, CMSO.hasAngle_beta, Literal(self.data("LatticeAngleBeta"), datatype=XSD.float)))
+        self.add((lattice_angle_01, CMSO.hasAngle_gamma, Literal(self.data("LatticeAngleGamma"), datatype=XSD.float)))        
         
     def add_atoms(self, name=None):
         """
