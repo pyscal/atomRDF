@@ -1,5 +1,10 @@
 import numpy as np
+from functools import partial, update_wrapper
+
 import pyscal3.core as pc
+from pyscal3.atoms import AttrSetter
+import pyscal_rdf.properties as prp
+
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
 CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
@@ -24,6 +29,38 @@ class System(pc.System):
         self._atom_ids = None
         if source is not None:
             self.__dict__.update(source.__dict__)
+
+        #assign attributes
+        self.schema = AttrSetter()
+        mapdict = {
+        "material": {
+            "element_ratio": partial(prp.get_chemical_composition, self),
+            "crystal_structure": {
+                "name": partial(prp.get_crystal_structure_name, self),
+                "spacegroup_symbol": partial(prp.get_spacegroup_symbol, self),
+                "spacegroup_number": partial(prp.get_spacegroup_number, self),
+                "unit_cell": {
+                    "bravais_lattice": partial(prp.get_bravais_lattice, self),
+                    "lattice_parameter": partial(prp.get_lattice_parameter, self),
+                    "angle": partial(prp.get_lattice_angle, self),
+                    },            
+                },        
+            },
+        "simulation_cell": {
+            "volume": partial(prp.get_cell_volume, self),
+            "number_of_atoms": partial(prp.get_number_of_atoms, self),
+            "length": partial(prp.get_simulation_cell_length, self),
+            "vector": partial(prp.get_simulation_cell_vector, self),
+            "angle": partial(prp.get_simulation_cell_angle, self),
+            },
+        "atom_attribute": {
+            "position": partial(prp.get_position, self),
+            "species": partial(prp.get_species, self),
+            },
+        }
+
+        self.schema._add_attribute(mapdict)
+
 
     def __delitem__(self, val):
         if isinstance(val, int):

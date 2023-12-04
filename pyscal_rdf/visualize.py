@@ -8,12 +8,23 @@ import ipycytoscape
 def get_title_from_BNode(x):
     return x.toPython()
 
-def get_string_from_URI(x, ):
-    raw = x.toPython().split("#")
-    if len(raw)>1:
-        return raw[-1]
-    else:
-        return ".".join(x.toPython().split("/")[-2:])
+def get_string_from_URI(x):
+    raw = x.toPython()
+    #first try splitting by #
+    rawsplit = raw.split("#")
+    if len(rawsplit) > 1:
+        return rawsplit[-1]
+    #try splitting by = for chebi values
+    if 'CHEBI' in raw:
+        rawsplit = raw.split("=")
+        rawsplit = rawsplit[-1].split(":")
+        if len(rawsplit) > 1:
+            return ".".join(rawsplit[-2:])
+    
+    #just a normal url split now
+    rawsplit = raw.split("/")
+    if len(rawsplit) > 1:
+        return ".".join(rawsplit[-2:])
 
 def parse_object(x):
     if isinstance(x, BNode):
