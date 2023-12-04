@@ -271,7 +271,9 @@ class RDFGraph:
         if str(triple[2].toPython()) != 'None':
             self.graph.add(triple)
         
-    def add_structure_to_graph(self, structure, names=True, name_index=None, format=None):
+    def add_structure_to_graph(self, structure, names=True, 
+            name_index=None, 
+            format=None):
         """
         Add a given :py:class:`pyscal.core.System` to the Graph object
 
@@ -286,6 +288,9 @@ class RDFGraph:
         Returns
         -------
         None
+
+        Notes
+        -----
         """
         self.process_structure(structure, format=format)
         #now add to graph
@@ -607,7 +612,7 @@ class RDFGraph:
         """
         #start a path to store the data
         #samples are BNodes, so names may not be unique, therefore we create one
-        
+
         if "positions" in self.sys.atoms.keys():
             uname = None
             if name is not None:
