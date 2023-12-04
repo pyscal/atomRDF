@@ -518,7 +518,7 @@ class RDFGraph:
             self.add((position, RDF.type, CMSO.AtomAttribute))
             self.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
-            self.add((position, CMSO.hasPath, Literal(os.path.relpath(outfile), datatype=XSD.string)))
+            self.add((position, CMSO.hasPath, Literal(os.path.relpath(outfile+'.json'), datatype=XSD.string)))
 
         if "species" in self.system.atoms.keys():
             species = URIRef(f'{self._name}_Species')
@@ -526,7 +526,7 @@ class RDFGraph:
             self.add((species, RDF.type, CMSO.AtomAttribute))
             self.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
-            self.add((species, CMSO.hasPath, Literal(os.path.relpath(outfile), datatype=XSD.string)))
+            self.add((species, CMSO.hasPath, Literal(os.path.relpath(outfile+'.json'), datatype=XSD.string)))
 
         #if "velocities" in self.sys.atoms.keys():
         #    uname = None
