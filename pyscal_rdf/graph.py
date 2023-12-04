@@ -16,6 +16,7 @@ import pandas as pd
 import yaml
 import uuid
 import json
+import shutil
 import pyscal_rdf.json_io as json_io
 
 from pyscal_rdf.visualize import visualize_graph
@@ -829,41 +830,37 @@ class RDFGraph:
 
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
-            
-        
-    def to_file(self, sample, filename=None, format="lammps-dump"):
-        """
-        Save a given sample to a file
-
-        Parameters
-        ----------
-        sample
-            ID of the sample
-
-        filename: string
-            name of output file
-
-        format: string, {"lammps-dump","lammps-data", "poscar"}
-
-        Returns
-        -------
-        None
-        """
-
-        if filename is None:
-            filename = os.path.join(os.getcwd(), "out")
-        
-        sys = self.get_system_from_sample(sample)
-        
-        if format=="ase":
-            return sys.write.ase()
-        elif format=='poscar':
-            asesys = sys.write.ase()
-            write(filename, asesys, format="vasp")
-        else:
-            asesys = sys.write.ase()
-            write(filename, asesys, format=format)
     
+    def publish(self, package_name, format='turtle'):
+        """
+        Publish a dataset from graph including per atom quantities
+        """
+        #first step make a folder
+        if os.path.exists(package_name):
+            raise ValueError(f'{package_name} already exists')
+        os.mkdir(package_name)
+        structure_store = f'{package_name}/{os.path.basename(self.structure_store)}' 
+        os.mkdir(structure_store)
+
+        #now go through each sample, and copy the file, at the same time fix the paths
+        for sample in self.samples:
+            filepath = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
+            shutil.copy(filepath, structure_store)
+            
+            #now we have to remove the old path, and fix new
+            for val in ['Position', 'Species']:
+                self.graph.remove((URIRef(f'{sample}_{val}'), CMSO.hasPath, None))
+            
+                #assign corrected path
+                new_relpath = "/".join([os.path.basename(self.structure_store), filepath.split('/')[-1]])
+                self.graph.add((URIRef(f'{sample}_{val}'), CMSO.hasPath, Literal(new_relpath, datatype=XSD.string)))
+
+        triple_file = os.path.join(package_name, 'triples')
+        self.write(triple_file, format=format)
+
+
+
+
     
     def query(self, inquery):
         """
@@ -895,15 +892,15 @@ class RDFGraph:
         if return_query:
             return query
         return self.query(query)
-
-
-    def query_sample(self, destination, condition=None, return_query=False, enforce_types=True):
-        return self.auto_query(self.ontology.terms.cmso.AtomicScaleSample, destination,
-            condition=condition, return_query=return_query, enforce_types=enforce_types)
     
+
     #################################
     # Methods to interact with sample
     #################################
+    def query_sample(self, destination, condition=None, return_query=False, enforce_types=True):
+        return self.auto_query(self.ontology.terms.cmso.AtomicScaleSample, destination,
+            condition=condition, return_query=return_query, enforce_types=enforce_types)
+
     @property
     def n_samples(self):
         """
@@ -992,7 +989,38 @@ class RDFGraph:
         at.from_dict(atoms)
         sys = System()
         sys.box = cell_vectors
-        sys.atoms = at
-
-        
+        sys.atoms = at       
         return sys
+
+    def to_file(self, sample, filename=None, format="lammps-dump"):
+        """
+        Save a given sample to a file
+
+        Parameters
+        ----------
+        sample
+            ID of the sample
+
+        filename: string
+            name of output file
+
+        format: string, {"lammps-dump","lammps-data", "poscar"}
+
+        Returns
+        -------
+        None
+        """
+
+        if filename is None:
+            filename = os.path.join(os.getcwd(), "out")
+        
+        sys = self.get_system_from_sample(sample)
+        
+        if format=="ase":
+            return sys.write.ase()
+        elif format=='poscar':
+            asesys = sys.write.ase()
+            write(filename, asesys, format="vasp")
+        else:
+            asesys = sys.write.ase()
+            write(filename, asesys, format=format)
