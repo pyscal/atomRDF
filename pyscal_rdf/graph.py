@@ -553,27 +553,27 @@ class RDFGraph:
             species_identifier = uuid.uuid4()
             self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
 
-        if "velocities" in self.sys.atoms.keys():
-            uname = None
-            if name is not None:
-                uname = f'{name}_Velocity'
-            velocity = BNode(uname)
-            self.add((self.sample, CMSO.hasAttribute, velocity))
-            self.add((velocity, RDF.type, CMSO.AtomAttribute))
-            self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string)))
-            velocity_identifier = uuid.uuid4()
-            self.add((velocity, CMSO.hasIdentifier, Literal(velocity_identifier, datatype=XSD.string)))            
+        #if "velocities" in self.sys.atoms.keys():
+        #    uname = None
+        #    if name is not None:
+        #        uname = f'{name}_Velocity'
+        #    velocity = BNode(uname)
+        #    self.add((self.sample, CMSO.hasAttribute, velocity))
+        #    self.add((velocity, RDF.type, CMSO.AtomAttribute))
+        #    self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string)))
+        #    velocity_identifier = uuid.uuid4()
+        #    self.add((velocity, CMSO.hasIdentifier, Literal(velocity_identifier, datatype=XSD.string)))            
 
-        if "forces" in self.sys.atoms.keys():
-            uname = None
-            if name is not None:
-                uname = f'{name}_Force'  
-            force = BNode(uname)
-            self.add((self.sample, CMSO.hasAttribute, force))
-            self.add((force, RDF.type, CMSO.AtomAttribute))
-            self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string)))
-            force_identifier = uuid.uuid4()
-            self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))            
+        #if "forces" in self.sys.atoms.keys():
+        #    uname = None
+        #    if name is not None:
+        #        uname = f'{name}_Force'  
+        #    force = BNode(uname)
+        #    self.add((self.sample, CMSO.hasAttribute, force))
+        #    self.add((force, RDF.type, CMSO.AtomAttribute))
+        #    self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string)))
+        #    force_identifier = uuid.uuid4()
+        #    self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))            
 
 
     
@@ -596,27 +596,27 @@ class RDFGraph:
 
         #mark that the structure has a defect
 
-        plane_defect_01 = BNode(name)
-        self.add((self.material, CMSO.hasDefect, plane_defect_01))
+        plane_defect = BNode(name)
+        self.add((self.material, CMSO.hasDefect, plane_defect))
         
         if gb_dict["GBType"] is None:
-            self.add((plane_defect_01, RDF.type, PLDO.GrainBoundary))
+            self.add((plane_defect, RDF.type, PLDO.GrainBoundary))
         elif gb_dict["GBType"] == "Twist":
-            self.add((plane_defect_01, RDF.type, PLDO.TwistGrainBoundary))
+            self.add((plane_defect, RDF.type, PLDO.TwistGrainBoundary))
         elif gb_dict["GBType"] == "Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.TiltGrainBoundary))
+            self.add((plane_defect, RDF.type, PLDO.TiltGrainBoundary))
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
+            self.add((plane_defect, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
         elif gb_dict["GBType"] == "Mixed":
-            self.add((plane_defect_01, RDF.type, PLDO.MixedGrainBoundary))
-        self.add((plane_defect_01, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
+            self.add((plane_defect, RDF.type, PLDO.MixedGrainBoundary))
+        self.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
         
         #now mark that the defect is GB
         #uname = None
         #if name is not None:
         #    uname = f'{name}GrainBoundaryPlane'
         #gb_plane_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
+        self.add((plane_defect, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
                                                              datatype=XSD.string)))
         #self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
         #self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
@@ -626,7 +626,7 @@ class RDFGraph:
         #if name is not None:
         #    uname = f'{name}RotationAxis'
         #rotation_axis_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
+        self.add((plane_defect, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
                                                              datatype=XSD.string)))
         #self.add((rotation_axis_01, RDF.type, PLDO.RotationAxis))
         #self.add((rotation_axis_01, PLDO.hasComponentX, Literal(gb_dict["RotationAxis"][0], datatype=XSD.float)))
@@ -637,7 +637,7 @@ class RDFGraph:
         #if name is not None:
         #    uname = f'{name}MisorientationAngle'
         #misorientation_angle_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
+        self.add((plane_defect, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
         #self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
         #self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
     
@@ -657,9 +657,9 @@ class RDFGraph:
         -------
         """
 
-        vacancy_01 = BNode(name)
-        self.add((self.material, CMSO.hasDefect, vacancy_01))
-        self.add((vacancy_01, RDF.type, PODO.Vacancy))
+        vacancy = BNode(name)
+        self.add((self.material, CMSO.hasDefect, vacancy))
+        self.add((vacancy, RDF.type, PODO.Vacancy))
         self.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
             self.add((self.simulation_cell, PODO.hasNumberOfVacancies, Literal(number, datatype=XSD.integer)))
