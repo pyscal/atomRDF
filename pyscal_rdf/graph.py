@@ -15,6 +15,7 @@ import copy
 import pandas as pd
 import yaml
 import uuid
+import pyscal_rdf.json_io as json_io
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
@@ -494,8 +495,19 @@ class RDFGraph:
         Note that for the moment, we will dump the structures in a given folder,
         maybe this could be input from the Job class directly
         """
-        #start a path to store the data
-        #samples are BNodes, so names may not be unique, therefore we create one
+        #now we write out file
+        datadict = {
+            position_identifier:{
+                "value": self.system.atom_attribute.position,
+                "label": "position", 
+            },
+            species_identifier:{
+                "value": self.system.atom_attribute.species,
+                "label": "species", 
+            },
+        }
+        outfile = os.path.join(self.structure_store, self._sample)
+        json_io.write_file(outfile,  datadict)
 
         if "positions" in self.system.atoms.keys():
             position = URIRef(f'{self._name}_Position')
@@ -504,6 +516,7 @@ class RDFGraph:
             self.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             position_identifier = uuid.uuid4()
             self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
+            self.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         if "species" in self.system.atoms.keys():
             species = URIRef(f'{self._name}_Species')
@@ -512,6 +525,7 @@ class RDFGraph:
             self.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             species_identifier = uuid.uuid4()
             self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
+            self.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         #if "velocities" in self.sys.atoms.keys():
         #    uname = None
