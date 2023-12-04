@@ -482,23 +482,23 @@ class RDFGraph:
 
 
     def _save_atom_attributes(self, position_identifier, species_identifier):
-        if self.store == 'pyiron':
-            pass
-        else:
-            #this is the file based store system
-            datadict = {
-                position_identifier:{
-                    "value": self.system.schema.atom_attribute.position(),
-                    "label": "position", 
-                },
-                species_identifier:{
-                    "value": self.system.schema.atom_attribute.species(),
-                    "label": "species", 
-                },
-            }
-            outfile = os.path.join(self.structure_store, str(self._name))
-            json_io.write_file(outfile,  datadict)
-            return os.path.relpath(outfile+'.json')
+        #if self.store == 'pyiron':
+        #    pass
+        #else:
+        #    #this is the file based store system
+        datadict = {
+            position_identifier:{
+                "value": self.system.schema.atom_attribute.position(),
+                "label": "position", 
+            },
+            species_identifier:{
+                "value": self.system.schema.atom_attribute.species(),
+                "label": "species", 
+            },
+        }
+        outfile = os.path.join(self.structure_store, str(self._name))
+        json_io.write_file(outfile,  datadict)
+        return os.path.relpath(outfile+'.json')
 
 
     def add_atoms(self):
