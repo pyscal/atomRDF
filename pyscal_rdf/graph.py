@@ -196,7 +196,7 @@ class RDFGraph:
                 name_index = self.n_samples + 1
             self._name = f'sample_{name_index}'
         else:
-            self._name = uuid.uuid4()
+            self._name = str(uuid.uuid4())
 
         self.create_graph()
         structure.sample = self.sample
