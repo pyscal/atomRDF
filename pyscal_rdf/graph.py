@@ -839,6 +839,10 @@ class RDFGraph:
         #first step make a folder
         if os.path.exists(package_name):
             raise ValueError(f'{package_name} already exists')
+        if compress:
+            if os.path.exists(f'{package_name}.tar.gz'):
+                raise ValueError(f'{package_name} tarball already exists')
+        
         os.mkdir(package_name)
         structure_store = f'{package_name}/{os.path.basename(self.structure_store)}' 
         os.mkdir(structure_store)
