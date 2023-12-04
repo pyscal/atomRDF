@@ -15,6 +15,7 @@ import copy
 import pandas as pd
 import yaml
 import uuid
+import json
 import pyscal_rdf.json_io as json_io
 
 from pyscal_rdf.visualize import visualize_graph
@@ -974,21 +975,18 @@ class RDFGraph:
             cell_vectors[0].append(self.graph.value(s[2], CMSO.hasComponent_x).toPython())
             cell_vectors[1].append(self.graph.value(s[2], CMSO.hasComponent_y).toPython())
             cell_vectors[2].append(self.graph.value(s[2], CMSO.hasComponent_z).toPython())
-        #cell_vectors
-
-        positions = []
-        species = []
-
-        for atom in self.graph.triples((sample, CMSO.hasAtom, None)):
-            vector = self.graph.value(atom[2], CMSO.hasPositionVector)
-            pt = []
-            pt.append(self.graph.value(vector, CMSO.hasComponent_x).toPython())
-            pt.append(self.graph.value(vector, CMSO.hasComponent_y).toPython())
-            pt.append(self.graph.value(vector, CMSO.hasComponent_z).toPython())
-            element = self.graph.value(atom[2], CMSO.hasElement)
-            species.append(self.graph.value(element, CMSO.hasSymbol).toPython())
-            positions.append(pt)
         
+        #cell_vectors
+        filepath = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
+        position_identifier = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasIdentifier).toPython()
+        species_identifier = self.graph.value(URIRef(f'{sample}_Species'), CMSO.hasIdentifier).toPython()
+
+        #open the file for reading
+        with open(filepath, 'r') as fin:
+            data = json.load(fin)
+            positions = data[position_identifier]['value']
+            species = data[species_identifier]['value']
+
         atoms = {"positions": positions, "species": species}
         at = Atoms()
         at.from_dict(atoms)
