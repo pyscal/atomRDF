@@ -67,7 +67,7 @@ def _replace_keys(refdict, indict):
 
 def _setup_structure_store(structure_store):
     if structure_store is None:
-        structure_store = os.path.join(os.getcwd(), 'pyscal_rdf_structure_store')
+        structure_store = os.path.join(os.getcwd(), 'rdf_structure_store')
     if not os.path.exists(structure_store):
         os.mkdir(structure_store)
     return structure_store
@@ -832,7 +832,7 @@ class RDFGraph:
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
     
-    def publish(self, package_name, format='turtle', compress=True):
+    def archive(self, package_name, format='turtle', compress=True):
         """
         Publish a dataset from graph including per atom quantities
         """
@@ -844,7 +844,7 @@ class RDFGraph:
                 raise ValueError(f'{package_name} tarball already exists')
         
         os.mkdir(package_name)
-        structure_store = f'{package_name}/{os.path.basename(self.structure_store)}' 
+        structure_store = f'{package_name}/rdf_structure_store' 
         os.mkdir(structure_store)
 
         #now go through each sample, and copy the file, at the same time fix the paths
@@ -857,7 +857,7 @@ class RDFGraph:
                 self.graph.remove((URIRef(f'{sample}_{val}'), CMSO.hasPath, None))
             
                 #assign corrected path
-                new_relpath = "/".join([os.path.basename(self.structure_store), filepath.split('/')[-1]])
+                new_relpath = "/".join(['rdf_structure_store', filepath.split('/')[-1]])
                 self.graph.add((URIRef(f'{sample}_{val}'), CMSO.hasPath, Literal(new_relpath, datatype=XSD.string)))
 
         triple_file = os.path.join(package_name, 'triples')
@@ -866,6 +866,27 @@ class RDFGraph:
         if compress:
             with tarfile.open(f'{package_name}.tar.gz', "w:gz") as tar:
                 tar.add(package_name, arcname=os.path.basename(package_name))
+            shutil.rmtree(package_name)
+
+
+    @classmethod
+    def unarchive(cls, package_name, compress=True, 
+        store="Memory", 
+        store_file=None,
+        identifier="http://default_graph",
+        ontology=None):
+        if compress:
+            package_base_name = ".".join(package_name.split(".")[:-2])
+            with tarfile.open(package_name) as fin: 
+                fin.extractall(package_base_name)
+            os.remove(package_name)
+        print(package_base_name)
+        print(f'{package_base_name}/triples')
+        return cls(store=store, store_file=store_file,
+            identifier=identifier, 
+            graph_file=f'{package_base_name}/triples', 
+            structure_store=f'{package_base_name}/rdf_structure_store',
+            ontology=ontology)
     
     def query(self, inquery):
         """
