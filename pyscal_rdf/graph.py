@@ -191,19 +191,19 @@ class RDFGraph:
         
         self.process_structure(structure, format=format)
         
-        #now add to graph
-        if name_index is None:
-            name_index = self.n_samples + 1
-        
-        self.create_graph(names=names, name_index=name_index)
+        if names:
+            if name_index is None:
+                name_index = self.n_samples + 1
+            self._name = f'sample_{name_index}'
+        else:
+            self._name = uuid.uuid4()
+
+        self.create_graph()
         structure.sample = self.sample
         #structure._atom_ids = copy.copy(self._atom_ids)
         structure.graph = self
     
-    def _generate_names(self, names=False, name_index=1):
-        pass
-
-    def create_graph(self, names=False, name_index=1):
+    def create_graph(self):
         """
         Create the RDF Graph from the data stored
 
@@ -218,32 +218,19 @@ class RDFGraph:
         Returns
         -------
         None
-        """
+        """        
+        self.add_sample()
+        self.add_material()
+        self.add_chemical_composition()
+        self.add_simulation_cell()
+        self.add_simulation_cell_properties()
+        self.add_crystal_structure()
+        self.add_space_group()
+        self.add_unit_cell()
+        self.add_lattice_properties()
+        self.add_atoms()
 
-        if names:
-            name_list = [f'Sample_{name_index}', f'Material_{name_index}',
-                        f'ChemicalComposition_{name_index}', f'SimulationCell_{name_index}',
-                        f'SimulationCell_{name_index}', f'CrystalStructure_{name_index}',
-                        f'SpaceGroup_{name_index}', f'UnitCell_{name_index}',
-                        f'UnitCell_{name_index}', f'Atom_{name_index}']
-        else:
-            name_list = [None, None,
-                        None, None,
-                        None, None,
-                        None, None,
-                        None, None]
-        
-        self.add_sample(name=name_list[0])
-        self.add_material(name=name_list[1])
-        self.add_chemical_composition(name=name_list[2])
-        self.add_simulation_cell(name=name_list[3])
-        self.add_simulation_cell_properties(name=name_list[4])
-        self.add_crystal_structure(name=name_list[5])
-        self.add_space_group(name=name_list[6])
-        self.add_unit_cell(name=name_list[7])
-        self.add_lattice_properties(name=name_list[8])
-        self.add_atoms(name=name_list[9])
-
+        #extra triples
         self.add((CMSO.SimulationCellLength, RDFS.subClassOf, CMSO.Length))
         self.add((CMSO.LatticeParameter, RDFS.subClassOf, CMSO.Length))
         self.add((CMSO.Length, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#ANGSTROM")))
