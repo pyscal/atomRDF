@@ -258,7 +258,7 @@ class RDFGraph:
         -------
         """
 
-        sample = BNode(name)
+        sample = URIRef(f'{self._name}')
         self.add((sample, RDF.type, CMSO.AtomicScaleSample))
         self.sample = sample
     
@@ -275,7 +275,7 @@ class RDFGraph:
         -------
         """
 
-        material = BNode(name)
+        material = URIRef(f'{self._name}_Material')
         self.add((self.sample, CMSO.hasMaterial, material))
         self.add((material, RDF.type, CMSO.CrystallineMaterial))        
         self.material = material
