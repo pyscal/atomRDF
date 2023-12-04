@@ -148,6 +148,3 @@ def _get_symmetry_dict(system):
     results = spglib.get_symmetry_dataset((box,
     direct_coordinates, atom_types))
     return results["international"], results["number"]    
-    
-    
-
