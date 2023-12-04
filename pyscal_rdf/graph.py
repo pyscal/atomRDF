@@ -605,6 +605,9 @@ class RDFGraph:
         Note that for the moment, we will dump the structures in a given folder,
         maybe this could be input from the Job class directly
         """
+        #start a path to store the data
+        #samples are BNodes, so names may not be unique, therefore we create one
+        
         if "positions" in self.sys.atoms.keys():
             uname = None
             if name is not None:
