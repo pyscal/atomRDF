@@ -271,7 +271,9 @@ class RDFGraph:
         if str(triple[2].toPython()) != 'None':
             self.graph.add(triple)
         
-    def add_structure_to_graph(self, structure, names=True, 
+    def add_structure_to_graph(self, 
+            structure, 
+            names=True, 
             name_index=None, 
             format=None):
         """
@@ -291,17 +293,31 @@ class RDFGraph:
 
         Notes
         -----
+        BNodes, or relational nodes will be avoided as much as possible so that merging of datasets would be possible.
+        Instead URIref containers will be made use of. This makes the `names` and `name_index` parameters crucial.
+        `names` parameter means that legible names starting with the string `Sample_x` would be used. `x` would ensure
+        that there is conflict with the current database. However, they do not ensure there is no conflicts when various
+        graphs are merged together. Hence this value is recommended only for simple, demonstration cases.
+
+        If `names` are False, unique ids are generated which would be id of the sample. These ids use the python `uuid` module
+        and therefore ensures that the names are always unique.
         """
+        
         self.process_structure(structure, format=format)
+        
         #now add to graph
         if name_index is None:
             name_index = self.n_samples + 1
+        
         self.create_graph(names=names, name_index=name_index)
         structure.sample = self.sample
-        structure._atom_ids = copy.copy(self._atom_ids)
+        #structure._atom_ids = copy.copy(self._atom_ids)
         structure.graph = self
     
-    def create_graph(self, names=False, name_index="1"):
+    def _generate_names(self, names=False, name_index=1):
+        pass
+
+    def create_graph(self, names=False, name_index=1):
         """
         Create the RDF Graph from the data stored
 
@@ -330,6 +346,7 @@ class RDFGraph:
                         None, None,
                         None, None,
                         None, None]
+        
         self.add_sample(name=name_list[0])
         self.add_material(name=name_list[1])
         self.add_chemical_composition(name=name_list[2])
