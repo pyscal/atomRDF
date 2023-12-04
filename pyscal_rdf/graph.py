@@ -17,6 +17,7 @@ import yaml
 import uuid
 import json
 import shutil
+import tarfile
 import pyscal_rdf.json_io as json_io
 
 from pyscal_rdf.visualize import visualize_graph
@@ -831,7 +832,7 @@ class RDFGraph:
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
     
-    def publish(self, package_name, format='turtle'):
+    def publish(self, package_name, format='turtle', compress=True):
         """
         Publish a dataset from graph including per atom quantities
         """
@@ -858,9 +859,9 @@ class RDFGraph:
         triple_file = os.path.join(package_name, 'triples')
         self.write(triple_file, format=format)
 
-
-
-
+        if compress:
+            with tarfile.open(f'{package_name}.tar.gz', "w:gz") as tar:
+                tar.add(package_name, arcname=os.path.basename(package_name))
     
     def query(self, inquery):
         """
