@@ -14,6 +14,7 @@ from ase.io import write
 import copy
 import pandas as pd
 import yaml
+import uuid
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
@@ -612,7 +613,8 @@ class RDFGraph:
             self.add((self.sample, CMSO.hasAttribute, position))
             self.add((position, RDF.type, CMSO.AtomAttribute))
             self.add((position, CMSO.hasName, Literal('Position', data_type=XSD.string)))
-            self.add(())            
+            position_identifier = uuid.uuid4()
+            self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
 
         if "species" in self.sys.atoms.keys():
             uname = None
@@ -621,8 +623,9 @@ class RDFGraph:
             species = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, species))
             self.add((species, RDF.type, CMSO.AtomAttribute))
-            self.add((species, CMSO.hasName, Literal('Species', data_type=XSD.string))
-            self.add(())            
+            self.add((species, CMSO.hasName, Literal('Species', data_type=XSD.string)))
+            species_identifier = uuid.uuid4()
+            self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
 
         if "velocities" in self.sys.atoms.keys():
             uname = None
@@ -631,8 +634,9 @@ class RDFGraph:
             velocity = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, velocity))
             self.add((velocity, RDF.type, CMSO.AtomAttribute))
-            self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string))
-            self.add(())            
+            self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string)))
+            velocity_identifier = uuid.uuid4()
+            self.add((velocity, CMSO.hasIdentifier, Literal(velocity_identifier, datatype=XSD.string)))            
 
         if "forces" in self.sys.atoms.keys():
             uname = None
@@ -641,8 +645,9 @@ class RDFGraph:
             force = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, force))
             self.add((force, RDF.type, CMSO.AtomAttribute))
-            self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string))
-            self.add(())            
+            self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string)))
+            force_identifier = uuid.uuid4()
+            self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))            
 
 
     
