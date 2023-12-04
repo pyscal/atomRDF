@@ -8,18 +8,38 @@ import ipycytoscape
 def get_title_from_BNode(x):
     return x.toPython()
 
-def get_string_from_URI(x, ):
-    raw = x.toPython().split("#")
-    if len(raw)>1:
-        return raw[-1]
-    else:
-        return ".".join(x.toPython().split("/")[-2:])
+def get_string_from_URI(x):
+    """
+    Extract a presentable string from URI
+
+    Also differentiate between fixed notes and URIs, and assign color
+    """
+    raw = x.toPython()
+    #first try splitting by #
+    rawsplit = raw.split("#")
+    if len(rawsplit) > 1:
+        return rawsplit[-1], "URIRef"
+    
+    #try splitting by = for chebi values
+    if 'CHEBI' in raw:
+        rawsplit = raw.split("=")
+        rawsplit = rawsplit[-1].split(":")
+        if len(rawsplit) > 1:
+            return ".".join(rawsplit[-2:]), "URIRef"
+    
+    #just a normal url split now
+    rawsplit = raw.split("/")
+    if len(rawsplit) > 1:
+        return ".".join(rawsplit[-2:]), "URIRef"
+
+    #none of the conditions, worked, which means its a hex string
+    return raw, "BNode"
 
 def parse_object(x):
     if isinstance(x, BNode):
         return get_title_from_BNode(x), "BNode"
     elif isinstance(x, URIRef):
-        return get_string_from_URI(x), "URIRef"
+        return get_string_from_URI(x)
     elif isinstance(x, Literal):
         return str(x.title()), "Literal"
 

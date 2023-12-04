@@ -14,6 +14,7 @@ from ase.io import write
 import copy
 import pandas as pd
 import yaml
+import uuid
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
@@ -110,7 +111,7 @@ class RDFGraph:
             raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
         #start the storage
-        _set_structure_store(self.structure_store)
+        _setup_structure_store(self.structure_store)
 
         #start binding
         self.graph.bind("cmso", CMSO)
@@ -146,131 +147,21 @@ class RDFGraph:
         """
         if isinstance(structure, System):
             #self.sysdict = convert_to_dict(structure)
-            self.sys = structure
+            self.system = structure
         elif os.path.exists(structure):
             sys = System(structure, format=format)
             #self.sysdict = convert_to_dict(sys)
-            self.sys = sys
-    
-    def data(self, key):
-        #this method gets info directly from the dict
-        if key=="ChemicalComposition":
-            return self.sys.composition
-        elif key=="CellVolume":
-            return self.sys.volume
-        elif key=="NumberOfAtoms":
-            return self.sys.natoms
-        elif key=="SimulationCellLengthX":
-            return self.sys.box_dimensions[0]
-        elif key=="SimulationCellLengthY":
-            return self.sys.box_dimensions[1]
-        elif key=="SimulationCellLengthZ":
-            return self.sys.box_dimensions[2]
-
-        elif key=="SimulationCellVectorA":
-            return self.sys.box[0]
-        elif key=="SimulationCellVectorB":
-            return self.sys.box[1]
-        elif key=="SimulationCellVectorC":
-            return self.sys.box[2]
+            self.system = sys
         
-        elif key=="SimulationCellAngleAlpha":
-            return prp.get_angle(self.sys.box[0], self.sys.box[1])
-        elif key=="SimulationCellAngleBeta":
-            return prp.get_angle(self.sys.box[1], self.sys.box[2])
-        elif key=="SimulationCellAngleGamma": 
-            return prp.get_angle(self.sys.box[2], self.sys.box[0])
-        
-        elif key=="LatticeAngleAlpha":
-            if self.sys._structure_dict is not None:
-                return prp.get_angle(self.sys._structure_dict["box"][0], self.sys._structure_dict["box"][1]) 
-            return None
-        elif key=="LatticeAngleBeta":
-            if self.sys._structure_dict is not None:
-                return prp.get_angle(self.sys._structure_dict["box"][1], self.sys._structure_dict["box"][2]) 
-            return None
-        elif key=="LatticeAngleGamma": 
-            if self.sys._structure_dict is not None:
-                return prp.get_angle(self.sys._structure_dict["box"][2], self.sys._structure_dict["box"][0]) 
-            return None
-        
-        elif key=="Element":
-            if self.sys.atoms.species[0] is not None:
-                return self.sys.atoms.species
-            else:
-                return self.sys.atoms.types
-        
-        elif key=="Coordination":
-            return prp.get_coordination(self.sys)
-        
-        elif key=="Positions":
-            return self.sys.atoms.positions
-        
-        elif key=="LatticeParameter":
-            if self.sys.atoms._lattice_constant is None:
-                return [None, None, None]
-            else:
-                if self.sys._structure_dict is not None:
-                    return [np.linalg.norm(self.sys._structure_dict["box"][0])*self.sys.atoms._lattice_constant,
-                            np.linalg.norm(self.sys._structure_dict["box"][1])*self.sys.atoms._lattice_constant,
-                            np.linalg.norm(self.sys._structure_dict["box"][2])*self.sys.atoms._lattice_constant]
-                else:
-                    return [self.sys.atoms._lattice_constant, 
-                            self.sys.atoms._lattice_constant, 
-                            self.sys.atoms._lattice_constant]
-        
-        elif key=="SpaceGroupSymbol":
-            if self.sys._structure_dict is not None:
-                symbol, number = prp.get_space_group(self.sys)
-                return symbol
-        
-        elif key=="SpaceGroupNumber":
-            if self.sys._structure_dict is not None:
-                symbol, number = prp.get_space_group(self.sys)
-                return number
-            else:
-                return None
-
-        elif key=="CrystalStructureName":
-            if self.sys._structure_dict is not None:
-                return self.sys.atoms._lattice 
-            else:
-                return None
-
-        elif key=="BravaisLattice":
-            if self.sys._structure_dict is not None:
-                return prp.get_bravais_lattice(self.sys)
-            else:
-                return None
-
-        elif key=="BasisPositions":
-            if self.sys._structure_dict is not None:
-                return self.sys._structure_dict['positions']
-            else:
-                return None
-
-        elif key=="BasisOccupancy":
-            if self.sys._structure_dict is not None:
-                return prp.get_basis(self.sys)
-            else:
-                return None
-
-        elif key=="LatticeVectors":
-            if self.sys._structure_dict is not None:
-                return self.sys_structure_dict["box"]
-            else:
-                return None
-
-        #if self.sysdict is not None:
-        #    if key in self.sysdict:
-        #        return self.sysdict[key]
-        return None
-    
     def add(self, triple):
         if str(triple[2].toPython()) != 'None':
             self.graph.add(triple)
         
-    def add_structure_to_graph(self, structure, names=True, name_index=None, format=None):
+    def add_structure_to_graph(self, 
+            structure, 
+            names=True, 
+            name_index=None, 
+            format=None):
         """
         Add a given :py:class:`pyscal.core.System` to the Graph object
 
@@ -285,17 +176,34 @@ class RDFGraph:
         Returns
         -------
         None
+
+        Notes
+        -----
+        BNodes, or relational nodes will be avoided as much as possible so that merging of datasets would be possible.
+        Instead URIref containers will be made use of. This makes the `names` and `name_index` parameters crucial.
+        `names` parameter means that legible names starting with the string `Sample_x` would be used. `x` would ensure
+        that there is conflict with the current database. However, they do not ensure there is no conflicts when various
+        graphs are merged together. Hence this value is recommended only for simple, demonstration cases.
+
+        If `names` are False, unique ids are generated which would be id of the sample. These ids use the python `uuid` module
+        and therefore ensures that the names are always unique.
         """
+        
         self.process_structure(structure, format=format)
-        #now add to graph
-        if name_index is None:
-            name_index = self.n_samples + 1
-        self.create_graph(names=names, name_index=name_index)
+        
+        if names:
+            if name_index is None:
+                name_index = self.n_samples + 1
+            self._name = f'sample_{name_index}'
+        else:
+            self._name = str(uuid.uuid4())
+
+        self.create_graph()
         structure.sample = self.sample
-        structure._atom_ids = copy.copy(self._atom_ids)
+        #structure._atom_ids = copy.copy(self._atom_ids)
         structure.graph = self
     
-    def create_graph(self, names=False, name_index="1"):
+    def create_graph(self):
         """
         Create the RDF Graph from the data stored
 
@@ -310,31 +218,19 @@ class RDFGraph:
         Returns
         -------
         None
-        """
+        """        
+        self.add_sample()
+        self.add_material()
+        self.add_chemical_composition()
+        self.add_simulation_cell()
+        self.add_simulation_cell_properties()
+        self.add_crystal_structure()
+        self.add_space_group()
+        self.add_unit_cell()
+        self.add_lattice_properties()
+        self.add_atoms()
 
-        if names:
-            name_list = [f'Sample_{name_index}', f'Material_{name_index}',
-                        f'ChemicalComposition_{name_index}', f'SimulationCell_{name_index}',
-                        f'SimulationCell_{name_index}', f'CrystalStructure_{name_index}',
-                        f'SpaceGroup_{name_index}', f'UnitCell_{name_index}',
-                        f'UnitCell_{name_index}', f'Atom_{name_index}']
-        else:
-            name_list = [None, None,
-                        None, None,
-                        None, None,
-                        None, None,
-                        None, None]
-        self.add_sample(name=name_list[0])
-        self.add_material(name=name_list[1])
-        self.add_chemical_composition(name=name_list[2])
-        self.add_simulation_cell(name=name_list[3])
-        self.add_simulation_cell_properties(name=name_list[4])
-        self.add_crystal_structure(name=name_list[5])
-        self.add_space_group(name=name_list[6])
-        self.add_unit_cell(name=name_list[7])
-        self.add_lattice_properties(name=name_list[8])
-        self.add_atoms(name=name_list[9])
-
+        #extra triples
         self.add((CMSO.SimulationCellLength, RDFS.subClassOf, CMSO.Length))
         self.add((CMSO.LatticeParameter, RDFS.subClassOf, CMSO.Length))
         self.add((CMSO.Length, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#ANGSTROM")))
@@ -349,7 +245,7 @@ class RDFGraph:
         self.add((CMSO.Vector, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#ANGSTROM")))
         
         
-    def add_sample(self, name=None):
+    def add_sample(self):
         """
         Add a CMSO Sample object
 
@@ -362,11 +258,11 @@ class RDFGraph:
         -------
         """
 
-        sample_01 = BNode(name)
-        self.add((sample_01, RDF.type, CMSO.AtomicScaleSample))
-        self.sample = sample_01
+        sample = URIRef(f'{self._name}')
+        self.add((sample, RDF.type, CMSO.AtomicScaleSample))
+        self.sample = sample
     
-    def add_material(self, name=None):
+    def add_material(self):
         """
         Add a CMSO Material object
 
@@ -379,12 +275,12 @@ class RDFGraph:
         -------
         """
 
-        material_01 = BNode(name)
-        self.add((self.sample, CMSO.hasMaterial, material_01))
-        self.add((material_01, RDF.type, CMSO.CrystallineMaterial))        
-        self.material = material_01
+        material = URIRef(f'{self._name}_Material')
+        self.add((self.sample, CMSO.hasMaterial, material))
+        self.add((material, RDF.type, CMSO.CrystallineMaterial))        
+        self.material = material
     
-    def add_chemical_composition(self, name=None):
+    def add_chemical_composition(self):
         """
         Add chemical composition
 
@@ -396,19 +292,21 @@ class RDFGraph:
         Returns
         -------
         """
-        composition = self.data("ChemicalComposition")
+        composition = self.system.schema.material.element_ratio()
 
-        chemical_species = BNode(name)
+        chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
         self.add((self.sample, CMSO.hasSpecies, chemical_species))
         self.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-        
-        for e, r in composition.keys():
+
+        for e, r in composition.items():
             if e in element_indetifiers.keys():
                 element = URIRef(element_indetifiers[e])
+                self.add((chemical_species, CMSO.hasElement, element))
+                self.add((element, RDF.type, CMSO.Element))
                 self.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                 self.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
     
-    def add_simulation_cell(self, name=None):
+    def add_simulation_cell(self):
         """
         Add a CMSO SimulationCell
 
@@ -421,15 +319,19 @@ class RDFGraph:
         -------
         """
 
-        simulation_cell_01 = BNode(name)
-        self.add((self.sample, CMSO.hasSimulationCell, simulation_cell_01))
-        self.add((simulation_cell_01, RDF.type, CMSO.SimulationCell))
-        self.add((simulation_cell_01, CMSO.hasVolume, Literal(np.round(self.data("CellVolume"), decimals=2), datatype=XSD.float)))
-        self.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.data("NumberOfAtoms"), datatype=XSD.integer)))
-        self.simulation_cell = simulation_cell_01
+        simulation_cell = URIRef(f'{self._name}_SimulationCell')
+        self.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
+        self.add((simulation_cell, RDF.type, CMSO.SimulationCell))
+        self.add((simulation_cell, CMSO.hasVolume, 
+            Literal(np.round(self.system.schema.simulation_cell.volume(), decimals=2), 
+                datatype=XSD.float)))
+        self.add((self.sample, CMSO.hasNumberOfAtoms, 
+            Literal(self.system.schema.simulation_cell.number_of_atoms(), 
+                datatype=XSD.integer)))
+        self.simulation_cell = simulation_cell
         
     
-    def add_simulation_cell_properties(self, name=None):
+    def add_simulation_cell_properties(self):
         """
         Add a CMSO SimulationCell properties such as SimulationCellLength,
         and Vectors.
@@ -442,59 +344,46 @@ class RDFGraph:
         Returns
         -------
         """
-
-        uname = None
-        if name is not None:
-            uname = f'{name}Length'
-        simulation_cell_length_01 = BNode(uname)
-        self.add((self.simulation_cell, CMSO.hasLength, simulation_cell_length_01))
-        self.add((simulation_cell_length_01, RDF.type, CMSO.SimulationCellLength))
-        self.add((simulation_cell_length_01, CMSO.hasLength_x, Literal(self.data("SimulationCellLengthX"), datatype=XSD.float)))
-        self.add((simulation_cell_length_01, CMSO.hasLength_y, Literal(self.data("SimulationCellLengthY"), datatype=XSD.float)))
-        self.add((simulation_cell_length_01, CMSO.hasLength_z, Literal(self.data("SimulationCellLengthZ"), datatype=XSD.float)))
+        simulation_cell_length = URIRef(f'{self._name}_SimulationCellLength')
+        self.add((self.simulation_cell, CMSO.hasLength, simulation_cell_length))
+        data = self.system.schema.simulation_cell.length()
+        self.add((simulation_cell_length, RDF.type, CMSO.SimulationCellLength))
+        self.add((simulation_cell_length, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
+        self.add((simulation_cell_length, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
+        self.add((simulation_cell_length, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
         
-        uname = None
-        if name is not None:
-            uname = f'{name}Vector01'
-        simulation_cell_vector_01 = BNode(uname)
+        simulation_cell_vector_01 = URIRef(f'{self._name}_SimulationCellVector_1')
+        data = self.system.schema.simulation_cell.vector()
         self.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
         self.add((simulation_cell_vector_01, RDF.type, CMSO.SimulationCellVector))
-        self.add((simulation_cell_vector_01, CMSO.hasComponent_x, Literal(self.data("SimulationCellVectorA")[0], datatype=XSD.float)))
-        self.add((simulation_cell_vector_01, CMSO.hasComponent_y, Literal(self.data("SimulationCellVectorA")[1], datatype=XSD.float)))
-        self.add((simulation_cell_vector_01, CMSO.hasComponent_z, Literal(self.data("SimulationCellVectorA")[2], datatype=XSD.float)))
+        self.add((simulation_cell_vector_01, CMSO.hasComponent_x, Literal(data[0][0], datatype=XSD.float)))
+        self.add((simulation_cell_vector_01, CMSO.hasComponent_y, Literal(data[0][1], datatype=XSD.float)))
+        self.add((simulation_cell_vector_01, CMSO.hasComponent_z, Literal(data[0][2], datatype=XSD.float)))
         
-        uname = None
-        if name is not None:
-            uname = f'{name}Vector02'
-        simulation_cell_vector_02 = BNode(uname)
+        simulation_cell_vector_02 = URIRef(f'{self._name}_SimulationCellVector_2')
         self.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
         self.add((simulation_cell_vector_02, RDF.type, CMSO.SimulationCellVector))
-        self.add((simulation_cell_vector_02, CMSO.hasComponent_x, Literal(self.data("SimulationCellVectorB")[0], datatype=XSD.float)))
-        self.add((simulation_cell_vector_02, CMSO.hasComponent_y, Literal(self.data("SimulationCellVectorB")[1], datatype=XSD.float)))
-        self.add((simulation_cell_vector_02, CMSO.hasComponent_z, Literal(self.data("SimulationCellVectorB")[2], datatype=XSD.float)))
+        self.add((simulation_cell_vector_02, CMSO.hasComponent_x, Literal(data[1][0], datatype=XSD.float)))
+        self.add((simulation_cell_vector_02, CMSO.hasComponent_y, Literal(data[1][1], datatype=XSD.float)))
+        self.add((simulation_cell_vector_02, CMSO.hasComponent_z, Literal(data[1][2], datatype=XSD.float)))
         
-        uname = None
-        if name is not None:
-            uname = f'{name}Vector03'
-        simulation_cell_vector_03 = BNode(uname)
+        simulation_cell_vector_03 = URIRef(f'{self._name}_SimulationCellVector_3')
         self.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
         self.add((simulation_cell_vector_03, RDF.type, CMSO.SimulationCellVector))
-        self.add((simulation_cell_vector_03, CMSO.hasComponent_x, Literal(self.data("SimulationCellVectorC")[0], datatype=XSD.float)))
-        self.add((simulation_cell_vector_03, CMSO.hasComponent_y, Literal(self.data("SimulationCellVectorC")[1], datatype=XSD.float)))
-        self.add((simulation_cell_vector_03, CMSO.hasComponent_z, Literal(self.data("SimulationCellVectorC")[2], datatype=XSD.float)))
+        self.add((simulation_cell_vector_03, CMSO.hasComponent_x, Literal(data[2][0], datatype=XSD.float)))
+        self.add((simulation_cell_vector_03, CMSO.hasComponent_y, Literal(data[2][1], datatype=XSD.float)))
+        self.add((simulation_cell_vector_03, CMSO.hasComponent_z, Literal(data[2][2], datatype=XSD.float)))
         
-        uname = None
-        if name is not None:
-            uname = f'{name}Angle'
-        simulation_cell_angle_01 = BNode(uname)
-        self.add((self.simulation_cell, CMSO.hasAngle, simulation_cell_angle_01))
-        self.add((simulation_cell_angle_01, RDF.type, CMSO.SimulationCellAngle))
-        self.add((simulation_cell_angle_01, CMSO.hasAngle_alpha, Literal(self.data("SimulationCellAngleAlpha"), datatype=XSD.float)))
-        self.add((simulation_cell_angle_01, CMSO.hasAngle_beta, Literal(self.data("SimulationCellAngleBeta"), datatype=XSD.float)))
-        self.add((simulation_cell_angle_01, CMSO.hasAngle_gamma, Literal(self.data("SimulationCellAngleGamma"), datatype=XSD.float)))
+        simulation_cell_angle = URIRef(f'{self._name}_SimulationCellAngle')
+        data = self.system.schema.simulation_cell.angle()
+        self.add((self.simulation_cell, CMSO.hasAngle, simulation_cell_angle))
+        self.add((simulation_cell_angle, RDF.type, CMSO.SimulationCellAngle))
+        self.add((simulation_cell_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
+        self.add((simulation_cell_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
+        self.add((simulation_cell_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))
         
     
-    def add_crystal_structure(self, name=None):
+    def add_crystal_structure(self):
         """
         Add a CMSO Crystal Structure
 
@@ -507,13 +396,15 @@ class RDFGraph:
         -------
         """
 
-        crystal_structure_01 = BNode(name)
-        self.add((self.material, CMSO.hasStructure, crystal_structure_01))
-        self.add((crystal_structure_01, RDF.type, CMSO.CrystalStructure))    
-        self.add((crystal_structure_01, CMSO.hasAltName, Literal(self.data("CrystalStructureName"), datatype=XSD.string)))
-        self.crystal_structure = crystal_structure_01
+        crystal_structure = URIRef(f'{self._name}_CrystalStructure')
+        self.add((self.material, CMSO.hasStructure, crystal_structure))
+        self.add((crystal_structure, RDF.type, CMSO.CrystalStructure))    
+        self.add((crystal_structure, CMSO.hasAltName, 
+            Literal(self.system.schema.material.crystal_structure.name(), 
+                datatype=XSD.string)))
+        self.crystal_structure = crystal_structure
         
-    def add_space_group(self, name=None):
+    def add_space_group(self):
         """
         Add a CMSO Space Group
 
@@ -525,11 +416,15 @@ class RDFGraph:
         Returns
         -------
         """
-        self.add((self.crystal_structure, CMSO.hasSpaceGroupSymbol, Literal(self.data("SpaceGroupSymbol"), datatype=XSD.string)))
-        self.add((self.crystal_structure, CMSO.hasSpaceGroupNumber, Literal(self.data("SpaceGroupNumber"), datatype=XSD.integer)))
+        self.add((self.crystal_structure, CMSO.hasSpaceGroupSymbol, 
+            Literal(self.system.schema.material.crystal_structure.spacegroup_symbol(), 
+                datatype=XSD.string)))
+        self.add((self.crystal_structure, CMSO.hasSpaceGroupNumber, 
+            Literal(self.system.schema.material.crystal_structure.spacegroup_number(), 
+                datatype=XSD.integer)))
     
             
-    def add_unit_cell(self, name=None):
+    def add_unit_cell(self):
         """
         Add a CMSO Unit Cell
 
@@ -542,18 +437,18 @@ class RDFGraph:
         -------
         """
 
-        unit_cell_01 = BNode(name)
-        self.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell_01))
-        self.add((unit_cell_01, RDF.type, CMSO.UnitCell))
-        self.unit_cell = unit_cell_01
+        unit_cell = URIRef(f'{self._name}_UnitCell')
+        self.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell))
+        self.add((unit_cell, RDF.type, CMSO.UnitCell))
+        self.unit_cell = unit_cell
         
         #add bravais lattice
-        bv = None
-        if self.data("BravaisLattice") is not None:
-            bv = URIRef(self.data("BravaisLattice"))
+        bv = self.system.schema.material.crystal_structure.unit_cell.bravais_lattice()
+        if bv is not None:
+            bv = URIRef(bv)
             self.add((self.unit_cell, CMSO.hasBravaisLattice, bv))
         
-    def add_lattice_properties(self, name=None):
+    def add_lattice_properties(self):
         """
         Add CMSO lattice properties such as Lattice Parameter,
         and its lengths and angles. 
@@ -566,28 +461,23 @@ class RDFGraph:
         Returns
         -------
         """
-
-        uname = None
-        if name is not None:
-            uname = f'{name}LatticeParameter'
-        lattice_parameter_01 = BNode(uname)
-        self.add((self.unit_cell, CMSO.hasLatticeParamter, lattice_parameter_01))
-        self.add((lattice_parameter_01, RDF.type, CMSO.LatticeParameter))
-        self.add((lattice_parameter_01, CMSO.hasLength_x, Literal(self.data("LatticeParameter")[0], datatype=XSD.float)))
-        self.add((lattice_parameter_01, CMSO.hasLength_y, Literal(self.data("LatticeParameter")[1], datatype=XSD.float)))
-        self.add((lattice_parameter_01, CMSO.hasLength_z, Literal(self.data("LatticeParameter")[2], datatype=XSD.float)))
+        data = self.system.schema.material.crystal_structure.unit_cell.lattice_parameter()
+        lattice_parameter = URIRef(f'{self._name}_LatticeParameter')
+        self.add((self.unit_cell, CMSO.hasLatticeParamter, lattice_parameter))
+        self.add((lattice_parameter, RDF.type, CMSO.LatticeParameter))
+        self.add((lattice_parameter, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
+        self.add((lattice_parameter, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
+        self.add((lattice_parameter, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
         
-        uname = None
-        if name is not None:
-            uname = f'{name}LatticeAngle'
-        lattice_angle_01 = BNode(uname)
-        self.add((self.unit_cell, CMSO.hasAngle, lattice_angle_01))
-        self.add((lattice_angle_01, RDF.type, CMSO.LatticeAngle))
-        self.add((lattice_angle_01, CMSO.hasAngle_alpha, Literal(self.data("LatticeAngleAlpha"), datatype=XSD.float)))
-        self.add((lattice_angle_01, CMSO.hasAngle_beta, Literal(self.data("LatticeAngleBeta"), datatype=XSD.float)))
-        self.add((lattice_angle_01, CMSO.hasAngle_gamma, Literal(self.data("LatticeAngleGamma"), datatype=XSD.float)))        
+        lattice_angle = URIRef(f'{self._name}_LatticeAngle')
+        data = self.system.schema.material.crystal_structure.unit_cell.angle()
+        self.add((self.unit_cell, CMSO.hasAngle, lattice_angle))
+        self.add((lattice_angle, RDF.type, CMSO.LatticeAngle))
+        self.add((lattice_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
+        self.add((lattice_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
+        self.add((lattice_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))        
         
-    def add_atoms(self, name=None):
+    def add_atoms(self):
         """
         Add Atoms including their species and positions
 
@@ -604,50 +494,51 @@ class RDFGraph:
         Note that for the moment, we will dump the structures in a given folder,
         maybe this could be input from the Job class directly
         """
-        if "positions" in self.sys.atoms.keys():
-            uname = None
-            if name is not None:
-                uname = f'{name}_Position'
-            position = BNode(uname)
+        #start a path to store the data
+        #samples are BNodes, so names may not be unique, therefore we create one
+
+        if "positions" in self.system.atoms.keys():
+            position = URIRef(f'{self._name}_Position')
             self.add((self.sample, CMSO.hasAttribute, position))
             self.add((position, RDF.type, CMSO.AtomAttribute))
-            self.add((position, CMSO.hasName, Literal('Position', data_type=XSD.string)))
-            self.add(())            
+            self.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
+            position_identifier = uuid.uuid4()
+            self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
 
-        if "species" in self.sys.atoms.keys():
-            uname = None
-            if name is not None:
-                uname = f'{name}_Species'
-            species = BNode(uname)
+        if "species" in self.system.atoms.keys():
+            species = URIRef(f'{self._name}_Species')
             self.add((self.sample, CMSO.hasAttribute, species))
             self.add((species, RDF.type, CMSO.AtomAttribute))
-            self.add((species, CMSO.hasName, Literal('Species', data_type=XSD.string))
-            self.add(())            
+            self.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
+            species_identifier = uuid.uuid4()
+            self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
 
-        if "velocities" in self.sys.atoms.keys():
-            uname = None
-            if name is not None:
-                uname = f'{name}_Velocity'
-            velocity = BNode(uname)
-            self.add((self.sample, CMSO.hasAttribute, velocity))
-            self.add((velocity, RDF.type, CMSO.AtomAttribute))
-            self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string))
-            self.add(())            
+        #if "velocities" in self.sys.atoms.keys():
+        #    uname = None
+        #    if name is not None:
+        #        uname = f'{name}_Velocity'
+        #    velocity = BNode(uname)
+        #    self.add((self.sample, CMSO.hasAttribute, velocity))
+        #    self.add((velocity, RDF.type, CMSO.AtomAttribute))
+        #    self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string)))
+        #    velocity_identifier = uuid.uuid4()
+        #    self.add((velocity, CMSO.hasIdentifier, Literal(velocity_identifier, datatype=XSD.string)))            
 
-        if "forces" in self.sys.atoms.keys():
-            uname = None
-            if name is not None:
-                uname = f'{name}_Force'  
-            force = BNode(uname)
-            self.add((self.sample, CMSO.hasAttribute, force))
-            self.add((force, RDF.type, CMSO.AtomAttribute))
-            self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string))
-            self.add(())            
+        #if "forces" in self.sys.atoms.keys():
+        #    uname = None
+        #    if name is not None:
+        #        uname = f'{name}_Force'  
+        #    force = BNode(uname)
+        #    self.add((self.sample, CMSO.hasAttribute, force))
+        #    self.add((force, RDF.type, CMSO.AtomAttribute))
+        #    self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string)))
+        #    force_identifier = uuid.uuid4()
+        #    self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))            
 
 
     
     
-    def add_gb(self, gb_dict, name=None):
+    def add_gb(self, gb_dict):
         """
         Add GB details which will be annotated using PLDO
 
@@ -663,29 +554,36 @@ class RDFGraph:
         -------
         """
 
-        #mark that the structure has a defect
-
-        plane_defect_01 = BNode(name)
-        self.add((self.material, CMSO.hasDefect, plane_defect_01))
-        
+        #mark that the structure has a defect        
         if gb_dict["GBType"] is None:
-            self.add((plane_defect_01, RDF.type, PLDO.GrainBoundary))
+            plane_defect = URIRef(f'{self._name}_GrainBoundary')
+            self.add((plane_defect, RDF.type, PLDO.GrainBoundary))
+        
         elif gb_dict["GBType"] == "Twist":
-            self.add((plane_defect_01, RDF.type, PLDO.TwistGrainBoundary))
+            plane_defect = URIRef(f'{self._name}_TwistGrainBoundary')
+            self.add((plane_defect, RDF.type, PLDO.TwistGrainBoundary))
+        
         elif gb_dict["GBType"] == "Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.TiltGrainBoundary))
+            plane_defect = URIRef(f'{self._name}_TiltGrainBoundary')
+            self.add((plane_defect, RDF.type, PLDO.TiltGrainBoundary))
+        
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            self.add((plane_defect_01, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
+            plane_defect = URIRef(f'{self._name}_SymmetricalTiltGrainBoundary')
+            self.add((plane_defect, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
+        
         elif gb_dict["GBType"] == "Mixed":
-            self.add((plane_defect_01, RDF.type, PLDO.MixedGrainBoundary))
-        self.add((plane_defect_01, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
+            plane_defect = URIRef(f'{self._name}_MixedGrainBoundary')
+            self.add((plane_defect, RDF.type, PLDO.MixedGrainBoundary))
+        
+        self.add((self.material, CMSO.hasDefect, plane_defect))
+        self.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
         
         #now mark that the defect is GB
         #uname = None
         #if name is not None:
         #    uname = f'{name}GrainBoundaryPlane'
         #gb_plane_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
+        self.add((plane_defect, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
                                                              datatype=XSD.string)))
         #self.add((gb_plane_01, RDF.type, PLDO.GrainBoundaryPlane))
         #self.add((gb_plane_01, PLDO.hasMillerIndices, Literal(gb_dict["GBPlane"], 
@@ -695,7 +593,7 @@ class RDFGraph:
         #if name is not None:
         #    uname = f'{name}RotationAxis'
         #rotation_axis_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
+        self.add((plane_defect, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
                                                              datatype=XSD.string)))
         #self.add((rotation_axis_01, RDF.type, PLDO.RotationAxis))
         #self.add((rotation_axis_01, PLDO.hasComponentX, Literal(gb_dict["RotationAxis"][0], datatype=XSD.float)))
@@ -706,11 +604,11 @@ class RDFGraph:
         #if name is not None:
         #    uname = f'{name}MisorientationAngle'
         #misorientation_angle_01 = BNode(uname)
-        self.add((plane_defect_01, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
+        self.add((plane_defect, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
         #self.add((misorientation_angle_01, RDF.type, PLDO.MisorientationAngle))
         #self.add((misorientation_angle_01, PLDO.hasAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))    
     
-    def add_vacancy(self, concentration, number=None, name=None):
+    def add_vacancy(self, concentration, number=None):
         """
         Add Vacancy details which will be annotated by PODO
 
@@ -726,9 +624,9 @@ class RDFGraph:
         -------
         """
 
-        vacancy_01 = BNode(name)
-        self.add((self.material, CMSO.hasDefect, vacancy_01))
-        self.add((vacancy_01, RDF.type, PODO.Vacancy))
+        vacancy = URIRef(f'{self._name}_Vacancy')
+        self.add((self.material, CMSO.hasDefect, vacancy))
+        self.add((vacancy, RDF.type, PODO.Vacancy))
         self.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
             self.add((self.simulation_cell, PODO.hasNumberOfVacancies, Literal(number, datatype=XSD.integer)))
@@ -737,7 +635,7 @@ class RDFGraph:
 
 
     def add_calculated_quantity(self, propertyname, value, unit=None, sample=None):
-        prop = BNode()
+        prop = URIRef(f'{self._name}_{propertyname}')
         if sample is None:
             sample = self.sample
         self.add((sample, CMSO.hasCalculatedProperty, prop))
