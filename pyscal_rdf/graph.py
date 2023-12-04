@@ -105,6 +105,7 @@ class RDFGraph:
                 #here modify structure store if needed
                 if self.structure_store is None:
                     self.structure_store = os.path.join(prpath, 'pyscal_rdf_structure_store')
+                store = 'pyiron_project'
             except:
                 raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
@@ -130,6 +131,7 @@ class RDFGraph:
             ontology = read_ontology()
         self.ontology = ontology
         self._atom_ids = None
+        self.store = store
 
     
     def process_structure(self, structure, format=None):
@@ -477,7 +479,28 @@ class RDFGraph:
         self.add((lattice_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
         self.add((lattice_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
         self.add((lattice_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))        
-        
+
+
+    def _save_atom_attributes(self, position_identifier, species_identifier):
+        if self.store == 'pyiron':
+            pass
+        else:
+            #this is the file based store system
+            datadict = {
+                position_identifier:{
+                    "value": self.system.schema.atom_attribute.position(),
+                    "label": "position", 
+                },
+                species_identifier:{
+                    "value": self.system.schema.atom_attribute.species(),
+                    "label": "species", 
+                },
+            }
+            outfile = os.path.join(self.structure_store, str(self._name))
+            json_io.write_file(outfile,  datadict)
+            return os.path.relpath(outfile+'.json')
+
+
     def add_atoms(self):
         """
         Add Atoms including their species and positions
@@ -499,18 +522,7 @@ class RDFGraph:
         position_identifier = str(uuid.uuid4())
         species_identifier = str(uuid.uuid4())
 
-        datadict = {
-            position_identifier:{
-                "value": self.system.schema.atom_attribute.position(),
-                "label": "position", 
-            },
-            species_identifier:{
-                "value": self.system.schema.atom_attribute.species(),
-                "label": "species", 
-            },
-        }
-        outfile = os.path.join(self.structure_store, str(self._name))
-        json_io.write_file(outfile,  datadict)
+        outfile = self._save_atom_attributes(position_identifier, species_identifier)
 
         if "positions" in self.system.atoms.keys():
             position = URIRef(f'{self._name}_Position')
@@ -518,7 +530,7 @@ class RDFGraph:
             self.add((position, RDF.type, CMSO.AtomAttribute))
             self.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
-            self.add((position, CMSO.hasPath, Literal(os.path.relpath(outfile+'.json'), datatype=XSD.string)))
+            self.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         if "species" in self.system.atoms.keys():
             species = URIRef(f'{self._name}_Species')
@@ -526,7 +538,7 @@ class RDFGraph:
             self.add((species, RDF.type, CMSO.AtomAttribute))
             self.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
-            self.add((species, CMSO.hasPath, Literal(os.path.relpath(outfile+'.json'), datatype=XSD.string)))
+            self.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         #if "velocities" in self.sys.atoms.keys():
         #    uname = None
