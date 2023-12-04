@@ -584,38 +584,51 @@ class RDFGraph:
 
         Returns
         -------
+
+        Notes
+        -----
+        Note that for the moment, we will dump the structures in a given folder,
+        maybe this could be input from the Job class directly
         """
         if "positions" in self.sys.atoms.keys():
             uname = None
             if name is not None:
-                uname = f'{name}_{x}_Position'
+                uname = f'{name}_Position'
             position = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, position))
-            self.add((position, RDF.type, CMSO.AtomAttribute))            
+            self.add((position, RDF.type, CMSO.AtomAttribute))
+            self.add((position, CMSO.hasName, Literal('Position', data_type=XSD.string)))
+            self.add(())            
 
         if "species" in self.sys.atoms.keys():
             uname = None
             if name is not None:
-                uname = f'{name}_{x}_Element'
+                uname = f'{name}_Species'
             species = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, species))
-            self.add((species, RDF.type, CMSO.AtomAttribute))            
+            self.add((species, RDF.type, CMSO.AtomAttribute))
+            self.add((species, CMSO.hasName, Literal('Species', data_type=XSD.string))
+            self.add(())            
 
         if "velocities" in self.sys.atoms.keys():
             uname = None
             if name is not None:
-                uname = f'{name}_{x}_Element'
+                uname = f'{name}_Velocity'
             velocity = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, velocity))
-            self.add((velocity, RDF.type, CMSO.AtomAttribute))            
+            self.add((velocity, RDF.type, CMSO.AtomAttribute))
+            self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string))
+            self.add(())            
 
         if "forces" in self.sys.atoms.keys():
             uname = None
             if name is not None:
-                uname = f'{name}_{x}_Element'  
+                uname = f'{name}_Force'  
             force = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, force))
-            self.add((force, RDF.type, CMSO.AtomAttribute))            
+            self.add((force, RDF.type, CMSO.AtomAttribute))
+            self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string))
+            self.add(())            
 
 
     
