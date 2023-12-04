@@ -111,7 +111,7 @@ class RDFGraph:
             raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
         #start the storage
-        _set_structure_store(self.structure_store)
+        _setup_structure_store(self.structure_store)
 
         #start binding
         self.graph.bind("cmso", CMSO)
@@ -314,6 +314,8 @@ class RDFGraph:
         for e, r in composition.keys():
             if e in element_indetifiers.keys():
                 element = URIRef(element_indetifiers[e])
+                self.add((chemical_species, CMSO.hasElement, element))
+                self.add((element, RDF.type, CMSO.Element))
                 self.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                 self.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
     
@@ -531,25 +533,25 @@ class RDFGraph:
         #start a path to store the data
         #samples are BNodes, so names may not be unique, therefore we create one
 
-        if "positions" in self.sys.atoms.keys():
+        if "positions" in self.system.atoms.keys():
             uname = None
             if name is not None:
                 uname = f'{name}_Position'
             position = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, position))
             self.add((position, RDF.type, CMSO.AtomAttribute))
-            self.add((position, CMSO.hasName, Literal('Position', data_type=XSD.string)))
+            self.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             position_identifier = uuid.uuid4()
             self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
 
-        if "species" in self.sys.atoms.keys():
+        if "species" in self.system.atoms.keys():
             uname = None
             if name is not None:
                 uname = f'{name}_Species'
             species = BNode(uname)
             self.add((self.sample, CMSO.hasAttribute, species))
             self.add((species, RDF.type, CMSO.AtomAttribute))
-            self.add((species, CMSO.hasName, Literal('Species', data_type=XSD.string)))
+            self.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             species_identifier = uuid.uuid4()
             self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
 

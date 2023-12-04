@@ -87,7 +87,7 @@ def get_basis_occupancy(system):
         occ_numbers = [tdict[x] for x in occ_numbers]
     return occ_numbers
 
-def get_lattice_vectors(system):
+def get_lattice_vector(system):
     if system._structure_dict is None:
         return None
     return system._structure_dict["box"]
@@ -96,13 +96,13 @@ def get_spacegroup_symbol(system):
     if system._structure_dict is None:
         return None
     results = _get_symmetry_dict(system)
-    return results["international"]
+    return results[0]
 
 def get_spacegroup_number(system):
     if system._structure_dict is None:
         return None
     results = _get_symmetry_dict(system)
-    return results["number"]
+    return results[1]
 
 # ATOM attributes
 #--------------------------------------------
