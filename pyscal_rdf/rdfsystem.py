@@ -1,5 +1,7 @@
 import numpy as np
 import pyscal3.core as pc
+from pyscal3.atoms import AttrSetter
+
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
 CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
@@ -24,6 +26,13 @@ class System(pc.System):
         self._atom_ids = None
         if source is not None:
             self.__dict__.update(source.__dict__)
+
+        #assign attributes
+        self.schema = AttrSetter()
+        mapdict = {}
+
+        self.schema._add_attribute(mapdict)
+
 
     def __delitem__(self, val):
         if isinstance(val, int):
