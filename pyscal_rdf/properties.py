@@ -107,7 +107,7 @@ def get_spacegroup_number(system):
 # ATOM attributes
 #--------------------------------------------
 def get_position(system):
-    return system.atoms.position
+    return system.atoms.positions
 
 def get_species(system):
     return system.atoms.species

@@ -112,7 +112,7 @@ class RDFGraph:
             raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
         #start the storage
-        _setup_structure_store(self.structure_store)
+        self.structure_store = _setup_structure_store(self.structure_store)
 
         #start binding
         self.graph.bind("cmso", CMSO)
@@ -496,17 +496,20 @@ class RDFGraph:
         maybe this could be input from the Job class directly
         """
         #now we write out file
+        position_identifier = str(uuid.uuid4())
+        species_identifier = str(uuid.uuid4())
+
         datadict = {
             position_identifier:{
-                "value": self.system.atom_attribute.position,
+                "value": self.system.schema.atom_attribute.position(),
                 "label": "position", 
             },
             species_identifier:{
-                "value": self.system.atom_attribute.species,
+                "value": self.system.schema.atom_attribute.species(),
                 "label": "species", 
             },
         }
-        outfile = os.path.join(self.structure_store, self._sample)
+        outfile = os.path.join(self.structure_store, str(self._name))
         json_io.write_file(outfile,  datadict)
 
         if "positions" in self.system.atoms.keys():
@@ -514,18 +517,16 @@ class RDFGraph:
             self.add((self.sample, CMSO.hasAttribute, position))
             self.add((position, RDF.type, CMSO.AtomAttribute))
             self.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
-            position_identifier = uuid.uuid4()
             self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
-            self.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
+            self.add((position, CMSO.hasPath, Literal(os.path.relpath(outfile), datatype=XSD.string)))
 
         if "species" in self.system.atoms.keys():
             species = URIRef(f'{self._name}_Species')
             self.add((self.sample, CMSO.hasAttribute, species))
             self.add((species, RDF.type, CMSO.AtomAttribute))
             self.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
-            species_identifier = uuid.uuid4()
             self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
-            self.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
+            self.add((species, CMSO.hasPath, Literal(os.path.relpath(outfile), datatype=XSD.string)))
 
         #if "velocities" in self.sys.atoms.keys():
         #    uname = None
