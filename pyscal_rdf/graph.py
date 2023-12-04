@@ -310,8 +310,8 @@ class RDFGraph:
         chemical_species = BNode(name)
         self.add((self.sample, CMSO.hasSpecies, chemical_species))
         self.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-        
-        for e, r in composition.keys():
+
+        for e, r in composition.items():
             if e in element_indetifiers.keys():
                 element = URIRef(element_indetifiers[e])
                 self.add((chemical_species, CMSO.hasElement, element))
