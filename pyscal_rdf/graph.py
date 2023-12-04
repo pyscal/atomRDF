@@ -60,23 +60,28 @@ def _replace_keys(refdict, indict):
                 refdict[key] = val
     return refdict
 
+def _setup_structure_store(structure_store):
+    if structure_store is None:
+        structure_store = os.path.join(os.getcwd(), 'pyscal_rdf_structure_store')
+    if not os.path.exists(structure_store):
+        os.mkdir(structure_store)
+    return structure_store
+
 class RDFGraph:
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
         identifier="http://default_graph",
-        ontology=None):
+        ontology=None,
+        structure_store=None):
         
         self.store_file = store_file
-        #owlfile = os.path.join(os.path.dirname(__file__), "data/cmso.owl")
-        #self.graph.parse(owlfile, format='xml')
+        self.structure_store = structure_store
+
+
         if store == "Memory":
             self.graph = Graph(store="Memory", identifier=identifier)
 
-        #elif store=="Oxigraph":
-        #    self.graph = Graph(store="Oxigraph", identifier=identifier)
-        #    if store_file is not None:
-        #        self.graph.open(store_file)
                 
         elif store=="SQLAlchemy":
             if store_file is None:
@@ -89,16 +94,25 @@ class RDFGraph:
             try:
                 prpath = store.path
                 dbfile = os.path.join(prpath, 'project.db')
+                
                 #now start sqlalchemy instance
                 self.graph = Graph(store="SQLAlchemy", identifier=identifier)
                 uri = Literal(f"sqlite:///{dbfile}")
                 self.graph.open(uri, create=True)
+                
+                #here modify structure store if needed
+                if self.structure_store is None:
+                    self.structure_store = os.path.join(prpath, 'pyscal_rdf_structure_store')
             except:
                 raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
         else:
             raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
-            
+        
+        #start the storage
+        _set_structure_store(self.structure_store)
+
+        #start binding
         self.graph.bind("cmso", CMSO)
         self.graph.bind("pldo", PLDO)
         
