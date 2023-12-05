@@ -200,9 +200,9 @@ class RDFGraph:
         if names:
             if name_index is None:
                 name_index = self.n_samples + 1
-            self._name = f'sample_{name_index}'
+            self._name = f'sample:{name_index}'
         else:
-            self._name = str(uuid.uuid4())
+            self._name = f'sample:{str(uuid.uuid4())}'
 
         self.create_graph()
         structure.sample = self.sample
@@ -499,7 +499,7 @@ class RDFGraph:
                 "label": "species", 
             },
         }
-        outfile = os.path.join(self.structure_store, str(self._name))
+        outfile = os.path.join(self.structure_store, str(self._name).split(':')[-1])
         json_io.write_file(outfile,  datadict)
         return os.path.relpath(outfile+'.json')
 
@@ -880,7 +880,8 @@ class RDFGraph:
             with tarfile.open(package_name) as fin: 
                 fin.extractall(".")
             #os.remove(package_name)
-        
+            #copy things out
+
         return cls(store=store, store_file=store_file,
             identifier=identifier, 
             graph_file=f'{package_base_name}/triples', 
