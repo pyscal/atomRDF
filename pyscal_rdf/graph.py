@@ -93,25 +93,7 @@ class RDFGraph:
                 raise ValueError("store file is needed if store is not memory")
             self.graph = Graph(store="SQLAlchemy", identifier=identifier)
             uri = Literal(f"sqlite:///{store_file}")
-            self.graph.open(uri, create=True)
-
-        elif inspect.isclass(type(store)):
-            try:
-                prpath = store.path
-                dbfile = os.path.join(prpath, 'project.db')
-                
-                #now start sqlalchemy instance
-                self.graph = Graph(store="SQLAlchemy", identifier=identifier)
-                uri = Literal(f"sqlite:///{dbfile}")
-                self.graph.open(uri, create=True)
-                
-                #here modify structure store if needed
-                if self.structure_store is None:
-                    self.structure_store = os.path.join(prpath, 'pyscal_rdf_structure_store')
-                store = 'pyiron_project'
-            except:
-                raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
-        
+            self.graph.open(uri, create=True)        
         else:
             raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
