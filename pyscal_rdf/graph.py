@@ -878,10 +878,9 @@ class RDFGraph:
         if compress:
             package_base_name = ".".join(package_name.split(".")[:-2])
             with tarfile.open(package_name) as fin: 
-                fin.extractall(package_base_name)
-            os.remove(package_name)
-        print(package_base_name)
-        print(f'{package_base_name}/triples')
+                fin.extractall(".")
+            #os.remove(package_name)
+        
         return cls(store=store, store_file=store_file,
             identifier=identifier, 
             graph_file=f'{package_base_name}/triples', 
