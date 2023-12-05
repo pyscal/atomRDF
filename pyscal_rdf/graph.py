@@ -221,16 +221,16 @@ class RDFGraph:
         #extra triples
         self.add((CMSO.SimulationCellLength, RDFS.subClassOf, CMSO.Length))
         self.add((CMSO.LatticeParameter, RDFS.subClassOf, CMSO.Length))
-        self.add((CMSO.Length, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#ANGSTROM")))
+        self.add((CMSO.Length, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/ANGSTROM")))
         
         self.add((CMSO.SimulationCellAngle, RDFS.subClassOf, CMSO.Angle))
         self.add((CMSO.LatticeAngle, RDFS.subClassOf, CMSO.Angle))
-        self.add((CMSO.Angle, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#DEG")))
+        self.add((CMSO.Angle, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/DEG")))
         
         self.add((CMSO.LatticeVector, RDFS.subClassOf, CMSO.Vector))
         self.add((CMSO.SimulationCellVector, RDFS.subClassOf, CMSO.Vector))
         self.add((CMSO.PositionVector, RDFS.subClassOf, CMSO.Vector))
-        self.add((CMSO.Vector, CMSO.hasUnit, URIRef("https://qudt.org/2.1/vocab/unit#ANGSTROM")))
+        self.add((CMSO.Vector, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/ANGSTROM")))
         
         
     def add_sample(self):
@@ -655,7 +655,7 @@ class RDFGraph:
         self.add((prop, RDFS.label, Literal(propertyname)))
         self.add((prop, CMSO.hasValue, Literal(value)))
         if unit is not None:
-            self.add((prop, CMSO.hasUnit, URIRef(f'https://qudt.org/2.1/vocab/unit#{unit}')))
+            self.add((prop, CMSO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
 
 
     def inspect_sample(self, sample=None):
