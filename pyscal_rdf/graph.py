@@ -15,6 +15,10 @@ import copy
 import pandas as pd
 import yaml
 import uuid
+import json
+import shutil
+import tarfile
+import pyscal_rdf.json_io as json_io
 
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
@@ -63,7 +67,7 @@ def _replace_keys(refdict, indict):
 
 def _setup_structure_store(structure_store):
     if structure_store is None:
-        structure_store = os.path.join(os.getcwd(), 'pyscal_rdf_structure_store')
+        structure_store = os.path.join(os.getcwd(), 'rdf_structure_store')
     if not os.path.exists(structure_store):
         os.mkdir(structure_store)
     return structure_store
@@ -104,6 +108,7 @@ class RDFGraph:
                 #here modify structure store if needed
                 if self.structure_store is None:
                     self.structure_store = os.path.join(prpath, 'pyscal_rdf_structure_store')
+                store = 'pyiron_project'
             except:
                 raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
@@ -111,7 +116,7 @@ class RDFGraph:
             raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
         
         #start the storage
-        _setup_structure_store(self.structure_store)
+        self.structure_store = _setup_structure_store(self.structure_store)
 
         #start binding
         self.graph.bind("cmso", CMSO)
@@ -129,6 +134,7 @@ class RDFGraph:
             ontology = read_ontology()
         self.ontology = ontology
         self._atom_ids = None
+        self.store = store
 
     
     def process_structure(self, structure, format=None):
@@ -476,7 +482,28 @@ class RDFGraph:
         self.add((lattice_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
         self.add((lattice_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
         self.add((lattice_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))        
-        
+
+
+    def _save_atom_attributes(self, position_identifier, species_identifier):
+        #if self.store == 'pyiron':
+        #    pass
+        #else:
+        #    #this is the file based store system
+        datadict = {
+            position_identifier:{
+                "value": self.system.schema.atom_attribute.position(),
+                "label": "position", 
+            },
+            species_identifier:{
+                "value": self.system.schema.atom_attribute.species(),
+                "label": "species", 
+            },
+        }
+        outfile = os.path.join(self.structure_store, str(self._name))
+        json_io.write_file(outfile,  datadict)
+        return os.path.relpath(outfile+'.json')
+
+
     def add_atoms(self):
         """
         Add Atoms including their species and positions
@@ -494,24 +521,27 @@ class RDFGraph:
         Note that for the moment, we will dump the structures in a given folder,
         maybe this could be input from the Job class directly
         """
-        #start a path to store the data
-        #samples are BNodes, so names may not be unique, therefore we create one
+        #now we write out file
+        position_identifier = str(uuid.uuid4())
+        species_identifier = str(uuid.uuid4())
+
+        outfile = self._save_atom_attributes(position_identifier, species_identifier)
 
         if "positions" in self.system.atoms.keys():
             position = URIRef(f'{self._name}_Position')
             self.add((self.sample, CMSO.hasAttribute, position))
             self.add((position, RDF.type, CMSO.AtomAttribute))
             self.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
-            position_identifier = uuid.uuid4()
             self.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
+            self.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         if "species" in self.system.atoms.keys():
             species = URIRef(f'{self._name}_Species')
             self.add((self.sample, CMSO.hasAttribute, species))
             self.add((species, RDF.type, CMSO.AtomAttribute))
             self.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
-            species_identifier = uuid.uuid4()
             self.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
+            self.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         #if "velocities" in self.sys.atoms.keys():
         #    uname = None
@@ -801,41 +831,61 @@ class RDFGraph:
 
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
-            
-        
-    def to_file(self, sample, filename=None, format="lammps-dump"):
-        """
-        Save a given sample to a file
-
-        Parameters
-        ----------
-        sample
-            ID of the sample
-
-        filename: string
-            name of output file
-
-        format: string, {"lammps-dump","lammps-data", "poscar"}
-
-        Returns
-        -------
-        None
-        """
-
-        if filename is None:
-            filename = os.path.join(os.getcwd(), "out")
-        
-        sys = self.get_system_from_sample(sample)
-        
-        if format=="ase":
-            return sys.write.ase()
-        elif format=='poscar':
-            asesys = sys.write.ase()
-            write(filename, asesys, format="vasp")
-        else:
-            asesys = sys.write.ase()
-            write(filename, asesys, format=format)
     
+    def archive(self, package_name, format='turtle', compress=True):
+        """
+        Publish a dataset from graph including per atom quantities
+        """
+        #first step make a folder
+        if os.path.exists(package_name):
+            raise ValueError(f'{package_name} already exists')
+        if compress:
+            if os.path.exists(f'{package_name}.tar.gz'):
+                raise ValueError(f'{package_name} tarball already exists')
+        
+        os.mkdir(package_name)
+        structure_store = f'{package_name}/rdf_structure_store' 
+        os.mkdir(structure_store)
+
+        #now go through each sample, and copy the file, at the same time fix the paths
+        for sample in self.samples:
+            filepath = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
+            shutil.copy(filepath, structure_store)
+            
+            #now we have to remove the old path, and fix new
+            for val in ['Position', 'Species']:
+                self.graph.remove((URIRef(f'{sample}_{val}'), CMSO.hasPath, None))
+            
+                #assign corrected path
+                new_relpath = "/".join(['rdf_structure_store', filepath.split('/')[-1]])
+                self.graph.add((URIRef(f'{sample}_{val}'), CMSO.hasPath, Literal(new_relpath, datatype=XSD.string)))
+
+        triple_file = os.path.join(package_name, 'triples')
+        self.write(triple_file, format=format)
+
+        if compress:
+            with tarfile.open(f'{package_name}.tar.gz', "w:gz") as tar:
+                tar.add(package_name, arcname=os.path.basename(package_name))
+            shutil.rmtree(package_name)
+
+
+    @classmethod
+    def unarchive(cls, package_name, compress=True, 
+        store="Memory", 
+        store_file=None,
+        identifier="http://default_graph",
+        ontology=None):
+        if compress:
+            package_base_name = ".".join(package_name.split(".")[:-2])
+            with tarfile.open(package_name) as fin: 
+                fin.extractall(".")
+            #os.remove(package_name)
+        
+        return cls(store=store, store_file=store_file,
+            identifier=identifier, 
+            graph_file=f'{package_base_name}/triples', 
+            structure_store=f'{package_base_name}/rdf_structure_store',
+            ontology=ontology)
     
     def query(self, inquery):
         """
@@ -867,15 +917,15 @@ class RDFGraph:
         if return_query:
             return query
         return self.query(query)
-
-
-    def query_sample(self, destination, condition=None, return_query=False, enforce_types=True):
-        return self.auto_query(self.ontology.terms.cmso.AtomicScaleSample, destination,
-            condition=condition, return_query=return_query, enforce_types=enforce_types)
     
+
     #################################
     # Methods to interact with sample
     #################################
+    def query_sample(self, destination, condition=None, return_query=False, enforce_types=True):
+        return self.auto_query(self.ontology.terms.cmso.AtomicScaleSample, destination,
+            condition=condition, return_query=return_query, enforce_types=enforce_types)
+
     @property
     def n_samples(self):
         """
@@ -947,27 +997,55 @@ class RDFGraph:
             cell_vectors[0].append(self.graph.value(s[2], CMSO.hasComponent_x).toPython())
             cell_vectors[1].append(self.graph.value(s[2], CMSO.hasComponent_y).toPython())
             cell_vectors[2].append(self.graph.value(s[2], CMSO.hasComponent_z).toPython())
-        #cell_vectors
-
-        positions = []
-        species = []
-
-        for atom in self.graph.triples((sample, CMSO.hasAtom, None)):
-            vector = self.graph.value(atom[2], CMSO.hasPositionVector)
-            pt = []
-            pt.append(self.graph.value(vector, CMSO.hasComponent_x).toPython())
-            pt.append(self.graph.value(vector, CMSO.hasComponent_y).toPython())
-            pt.append(self.graph.value(vector, CMSO.hasComponent_z).toPython())
-            element = self.graph.value(atom[2], CMSO.hasElement)
-            species.append(self.graph.value(element, CMSO.hasSymbol).toPython())
-            positions.append(pt)
         
+        #cell_vectors
+        filepath = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
+        position_identifier = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasIdentifier).toPython()
+        species_identifier = self.graph.value(URIRef(f'{sample}_Species'), CMSO.hasIdentifier).toPython()
+
+        #open the file for reading
+        with open(filepath, 'r') as fin:
+            data = json.load(fin)
+            positions = data[position_identifier]['value']
+            species = data[species_identifier]['value']
+
         atoms = {"positions": positions, "species": species}
         at = Atoms()
         at.from_dict(atoms)
         sys = System()
         sys.box = cell_vectors
-        sys.atoms = at
-
-        
+        sys.atoms = at       
         return sys
+
+    def to_file(self, sample, filename=None, format="lammps-dump"):
+        """
+        Save a given sample to a file
+
+        Parameters
+        ----------
+        sample
+            ID of the sample
+
+        filename: string
+            name of output file
+
+        format: string, {"lammps-dump","lammps-data", "poscar"}
+
+        Returns
+        -------
+        None
+        """
+
+        if filename is None:
+            filename = os.path.join(os.getcwd(), "out")
+        
+        sys = self.get_system_from_sample(sample)
+        
+        if format=="ase":
+            return sys.write.ase()
+        elif format=='poscar':
+            asesys = sys.write.ase()
+            write(filename, asesys, format="vasp")
+        else:
+            asesys = sys.write.ase()
+            write(filename, asesys, format=format)
