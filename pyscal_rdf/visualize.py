@@ -27,6 +27,11 @@ def get_string_from_URI(x):
         if len(rawsplit) > 1:
             return ".".join(rawsplit[-2:]), "URIRef"
     
+    if 'sample:' in raw:
+        rawsplit = raw.split(":")
+        if len(rawsplit) > 1:
+            return "_".join(rawsplit), "BNode"
+    
     #just a normal url split now
     rawsplit = raw.split("/")
     if len(rawsplit) > 1:
