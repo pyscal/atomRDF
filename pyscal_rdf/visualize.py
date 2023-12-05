@@ -31,6 +31,10 @@ def get_string_from_URI(x):
         rawsplit = raw.split(":")
         if len(rawsplit) > 1:
             return "_".join(rawsplit), "BNode"
+
+    rawsplit = raw.split(':')
+    if len(rawsplit) == 2:
+        return "_".join(rawsplit), "BNode"        
     
     #just a normal url split now
     rawsplit = raw.split("/")
