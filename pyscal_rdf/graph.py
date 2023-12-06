@@ -740,7 +740,9 @@ class RDFGraph:
                   edge_color="#37474F",
                   styledict=None, 
                   graph_attr ={'rankdir': 'BT'},
-                  layoutname='cola'):
+                  layoutname='cola',
+                  hide_types=False,
+                  workflow_view=False):
         """
         Vosualise the RDF tree of the Graph
 
@@ -791,7 +793,9 @@ class RDFGraph:
                                edge_color=edge_color,
                                styledict=sdict, 
                                graph_attr=graph_attr,
-                               layoutname=layoutname)
+                               layoutname=layoutname,
+                               hide_types=hide_types,
+                               workflow_view=workflow_view)
     
     
     def write(self, filename, format="json-ld"):
