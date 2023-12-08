@@ -10,11 +10,10 @@ def read_ontology():
 	cmso = OntologyNetwork(os.path.join(file_location,  'data/cmso.owl'))
 	pldo = OntologyNetwork(os.path.join(file_location,  'data/pldo.owl'))
 	podo = OntologyNetwork(os.path.join(file_location,  'data/podo.owl'))
-	msmo = OntologyNetwork(os.path.join(file_location,  'data/msmo.owl'))
+	asmo = OntologyNetwork(os.path.join(file_location,  'data/asmo.owl'))
 	
-	#combine them
-	combo = cmso + pldo + podo + msmo	
-	#combo = cmso + pldo + podo
+	#combine them	
+	combo = cmso + pldo + podo + asmo
 
 	#add namespaces
 	combo.add_namespace('prov', 'http://www.w3.org/ns/prov#')
@@ -33,17 +32,16 @@ def read_ontology():
 	combo.add_term('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'object_property', delimiter='#', namespace='rdf')
 	
 	#add paths
+	combo.add_path(('cmso:CrystalStructure', 'cmso:hasAltName', 'string'))
 	combo.add_path(('cmso:Material', 'cmso:hasDefect', 'pldo:PlanarDefect'))
 	combo.add_path(('cmso:Material', 'cmso:hasDefect', 'podo:Vacancy'))
 	combo.add_path(('cmso:SimulationCell', 'podo:hasVacancyConcentration', 'float'))
 	combo.add_path(('cmso:SimulationCell', 'podo:hasNumberOfVacancies', 'int'))
 	combo.add_path(('cmso:ComputationalSample', 'prov:wasDerivedFrom', 'cmso:ComputationalSample'))
-	combo.add_path(('cmso:ComputationalSample', 'prov:wasGeneratedBy', 'msmo:ComputationalMethod'))
-	combo.add_path(('msmo:ComputationalMethod', 'prov:wasAssociatedWith', 'prov:SoftwareAgent'))
 	combo.add_path(('cmso:ComputationalSample', 'rdf:type', 'prov:Entity'))
-	combo.add_path(('msmo:ComputationalMethod', 'rdf:type', 'prov:Activity'))
-	#for Alt Name, maybe this should not be here
-	combo.add_path(('cmso:CrystalStructure', 'cmso:hasAltName', 'string'))
+	combo.add_path(('asmo:StructureOptimization', 'rdf:type', 'prov:Activity'))	
+	combo.add_path(('asmo:StructureOptimization', 'prov:wasAssociatedWith', 'prov:SoftwareAgent'))
+	combo.add_path(('cmso:ComputationalSample', 'prov:wasGeneratedBy', 'asmo:StructureOptimization'))
 	
 	#return
 	return combo
