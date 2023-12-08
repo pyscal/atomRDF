@@ -40,7 +40,7 @@ def get_simulation_cell_angle(system):
 
 def get_lattice_angle(system):
     if system._structure_dict is None:
-        return None
+        return [None, None, None]
 
     return [_get_angle(system._structure_dict["box"][0], system._structure_dict["box"][1]),
             _get_angle(system._structure_dict["box"][1], system._structure_dict["box"][2]),
@@ -89,7 +89,7 @@ def get_basis_occupancy(system):
 
 def get_lattice_vector(system):
     if system._structure_dict is None:
-        return None
+        return [None, None, None]
     return system._structure_dict["box"]
 
 def get_spacegroup_symbol(system):
