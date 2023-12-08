@@ -231,17 +231,6 @@
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAtom -->
-
-    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAtom">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample"/>
-        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Atom"/>
-        <rdfs:label>has atom</rdfs:label>
-        <skos:definition>The relation between an atomic scale sample and the atoms it contains.</skos:definition>
-    </owl:ObjectProperty>
-    
-
-
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasBasis -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasBasis">
@@ -322,25 +311,6 @@
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/cmso/hasPositionVector -->
-
-    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasPositionVector">
-        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasVector"/>
-        <rdfs:domain>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Atom"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Basis"/>
-                </owl:unionOf>
-            </owl:Class>
-        </rdfs:domain>
-        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/PositionVector"/>
-        <rdfs:label>has position vector</rdfs:label>
-        <skos:definition>The relation between an atom or basis and its position vector.</skos:definition>
-    </owl:ObjectProperty>
-    
-
-
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasSimulationCell -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSimulationCell">
@@ -366,10 +336,10 @@
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasSpecies -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSpecies">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalSpecies"/>
         <rdfs:label>has species</rdfs:label>
-        <skos:definition>The relation between a material and the species that constitutes it.</skos:definition>
+        <skos:definition>The relation between a computational sample and the species that constitutes it.</skos:definition>
     </owl:ObjectProperty>
     
 
@@ -392,6 +362,7 @@
             <owl:Class>
                 <owl:unionOf rdf:parseType="Collection">
                     <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
                     <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
                     <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
                     <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
@@ -514,6 +485,18 @@
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasAtomicPercent -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAtomicPercent">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalElement"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:comment>abbreviated at.%</rdfs:comment>
+        <rdfs:label>has atomic percent</rdfs:label>
+        <skos:definition>A data property linking a chemical element with atomic percentage present in the material.</skos:definition>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasChemicalSymbol -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasChemicalSymbol">
@@ -559,24 +542,25 @@
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/cmso/hasCoordinationNumber -->
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasElementRatio -->
 
-    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasCoordinationNumber">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Atom"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
-        <rdfs:label>has coordination number</rdfs:label>
-        <skos:definition>A data property linking an atom with its coordination number. The coordination number of an atom in an extended structure is the number of nearest neighbors.</skos:definition>
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasElementRatio">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalElement"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:comment>Indicated with a value from 0 to 1.</rdfs:comment>
+        <rdfs:label>has element ratio</rdfs:label>
+        <skos:definition>A data property linking a chemical element with the ratio or fraction of it in the material.</skos:definition>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/cmso/hasElementRatio -->
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasIdentifier -->
 
-    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasElementRatio">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasIdentifier">
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-        <rdfs:label>has element ratio</rdfs:label>
-        <skos:definition>A data property linking a material with the ratio or fraction of an element that constitutes it. Comment: indicated with a value from 0 to 1.</skos:definition>
+        <rdfs:label>has identifier</rdfs:label>
+        <skos:definition>A data property linking an entity with an identifier (internal or external) that represents the entity.</skos:definition>
     </owl:DatatypeProperty>
     
 
@@ -653,6 +637,17 @@
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
         <rdfs:label>has number of atoms</rdfs:label>
         <skos:definition>A data property linking an atomic scale sample with the number of atoms it contains.</skos:definition>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasPath -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasPath">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>has path</rdfs:label>
+        <skos:definition>A data property linking an atom attribute (per atom quantity) with the path pointing to the file where the data is stored.</skos:definition>
     </owl:DatatypeProperty>
     
 
@@ -756,6 +751,18 @@
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasWeightPercent -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasWeightPercent">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ChemicalElement"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:comment>abbreviated wt.%</rdfs:comment>
+        <rdfs:label>has weight percent</rdfs:label>
+        <skos:definition>A data property linking a chemical element with percentage by mass present in the material.</skos:definition>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -799,12 +806,52 @@
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cmso/AtomAttribute -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute">
+        <rdfs:label>Atom Attribute</rdfs:label>
+        <skos:definition>Atom attribute refers to the features or quantities per atom of an atomic scale sample.</skos:definition>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/AtomicForce -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomicForce">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
+        <rdfs:label>Atomic Force</rdfs:label>
+        <skos:definition>Atomic force refers to the vector that represents the force of each atom.</skos:definition>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/AtomicPosition -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomicPosition">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
+        <rdfs:comment>Cartesian coordinates are preferred over direct (or fractional) coordinates.</rdfs:comment>
+        <rdfs:label>Atomic Position</rdfs:label>
+        <skos:definition>Atomic position refers to the vector that represents the position of each atom.</skos:definition>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
         <rdfs:label>Atomic Scale Sample</rdfs:label>
         <skos:definition>Atomic scale sample is a computational sample in the atomic length scale.</skos:definition>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/AtomicVelocity -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomicVelocity">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
+        <rdfs:label>Atomic Velocity</rdfs:label>
+        <skos:definition>Atomic velocity refers to the vector that represents the velocity of each atom.</skos:definition>
     </owl:Class>
     
 
@@ -823,6 +870,15 @@
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty">
         <rdfs:label>Calculated Property</rdfs:label>
         <skos:definition>A calculated property is a property of a material resulting from a calculation or simulation.</skos:definition>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/ChemicalComposition -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/ChemicalComposition">
+        <rdfs:label>Chemical Composition</rdfs:label>
+        <skos:definition>Chemical composition refers to the type, arrangement and ratio of the chemical elements of a compound (or material).</skos:definition>
     </owl:Class>
     
 
@@ -853,6 +909,17 @@
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample">
         <rdfs:label>Computational Sample</rdfs:label>
         <skos:definition>A computational sample is a representative system of a material for analysis through computational methods in the context of materials science.</skos:definition>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/CoordinationNumber -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/CoordinationNumber">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
+        <rdfs:comment>In the case of molecules, it refers to the number of atoms, molecules or ions bonded to a central atom of the molecule. Also known as ligancy.</rdfs:comment>
+        <rdfs:label>Coordination Number</rdfs:label>
+        <skos:definition>Coordination number refers to the number of neighbors of each atom.</skos:definition>
     </owl:Class>
     
 
@@ -1013,13 +1080,13 @@
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/cmso/PositionVector -->
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Occupancy -->
 
-    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/PositionVector">
-        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
-        <rdfs:comment>Cartesian coordinates are preferred over direct (or fractional) coordinates.</rdfs:comment>
-        <rdfs:label>Position Vector</rdfs:label>
-        <skos:definition>The position vector is a vector that represents the position of the atoms.</skos:definition>
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Occupancy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
+        <rdfs:comment>Note the difference from a total ratio or percentage of the occupancy of a site in the crystal structure (as defined in CIF)</rdfs:comment>
+        <rdfs:label>Occupancy</rdfs:label>
+        <skos:definition>Occupancy refers to the atom type at each lattice site.</skos:definition>
     </owl:Class>
     
 
