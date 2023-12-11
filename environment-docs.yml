@@ -21,3 +21,4 @@ dependencies:
   - plotly
   - ipywidgets
   - sphinx
+  - sphinx-inline-tabs
