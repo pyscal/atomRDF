@@ -20,8 +20,8 @@ dependencies:
   - jupyter-book
   - plotly
   - ipywidgets
-  - sphinx
   - pip:
+    - sphinx==5.3.0
     - sphinx_rtd_theme
     - myst_parser
     - furo
