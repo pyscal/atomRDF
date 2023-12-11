@@ -9,9 +9,13 @@ build:
       # Generate the Sphinx configuration for this Jupyter Book so it builds.
       - "jupyter-book config sphinx ."
 
-
 conda:
   environment: environment-docs.yml
+
+python:
+  install:
+    - method: pip
+      path: .
 
 sphinx:
   builder: html
