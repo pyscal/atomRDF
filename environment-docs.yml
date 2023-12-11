@@ -21,11 +21,4 @@ dependencies:
   - plotly
   - ipywidgets
   - sphinx
-  - sphinx_rtd_theme
-  - myst_parser
-  - furo
-  - nbsphinx
-  - sphinx_inline_tabs
-  - sphinx_design
-  - docutils
 
