@@ -291,8 +291,8 @@ class StructureGraph(RDFGraph):
             species = np.atleast_1d(species)
             #now map species to the types, in order
             types = sys.atoms.types
-            if not (max(types) != len(species)):
-                raise ValueError("Mismatch between types and species!")
+            if not (max(types) == len(species)):
+                raise ValueError(f'Mismatch between types and species! types: {max(types)} species: {len(species)}')
             
             #now assign the species to custom
             atomspecies = []        
