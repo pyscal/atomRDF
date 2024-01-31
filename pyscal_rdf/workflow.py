@@ -104,14 +104,18 @@ def annotate_md(graph,
     else:
         potential = URIRef(f'potential:{main_id}')
 
-        if 'meam' in potential_type:
+        if 'meam' in potential_type.lower():
             graph.add((potential, RDF.type, ASO.MEAM))
-        elif 'eam' in potential_type:
+        elif 'eam' in potential_type.lower():
             graph.add((potential, RDF.type, ASO.EAM))
-        elif 'lj' in potential_type:
+        elif 'lj' in potential_type.lower():
             graph.add((potential, RDF.type, ASO.LennardJones))
-        elif 'ace' in potential_type:
+        elif 'ace' in potential_type.lower():
             graph.add((potential, RDF.type, ASO.MLPotential))
+        elif 'snap' in potential_type.lower():
+            graph.add((potential, RDF.type, ASO.MLPotential))
+        elif 'tersoff' in potential_type.lower():
+            graph.add((potential, RDF.type, ASO.Tersoff))
         else:
             graph.add((potential, RDF.type, ASO.InteratomicPotential))
 
