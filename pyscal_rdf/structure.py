@@ -285,20 +285,8 @@ class StructureGraph(RDFGraph):
         system will be populated with given atoms and simulation box
 
         """
-        sys = System(filename, format=format)
+        sys = System(filename, format=format, species=species)
         
-        if species is not None:
-            species = np.atleast_1d(species)
-            #now map species to the types, in order
-            types = sys.atoms.types
-            if not (max(types) == len(species)):
-                raise ValueError(f'Mismatch between types and species! types: {max(types)} species: {len(species)}')
-            
-            #now assign the species to custom
-            atomspecies = []        
-            for cc, typ in enumerate(types):
-                atomspecies.append(species[int(typ-1)])
-
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
             #sys.sample = self.sample
