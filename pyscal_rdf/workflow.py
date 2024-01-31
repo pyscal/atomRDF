@@ -115,7 +115,7 @@ def annotate_molecular_dynamics(graph,
         else:
             graph.add((potential, RDF.type, ASO.InteratomicPotential))
 
-        graph.add((potential, ASO.hasReference, Literal(potential_doi))
+        graph.add((potential, ASO.hasReference, Literal(potential_doi)))
         graph.add((method, ASO.hasInteratomicPotential, potential))
 
     if software_id is not None:
