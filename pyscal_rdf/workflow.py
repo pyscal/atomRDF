@@ -121,6 +121,7 @@ def annotate_md(graph,
     if software_id is not None:
         software_agent = URIRef(software_id)
         graph.add((software_agent, RDF.type, PROV.SoftwareAgent))
+        graph.add((activity, PROV.wasAssociatedWith, software_agent))
         if software is not None:
             graph.add((software_agent, RDFS.label, Literal(software)))
 
@@ -174,6 +175,7 @@ def annotate_dft(graph,
     if software_id is not None:
         software_agent = URIRef(software_id)
         graph.add((software_agent, RDF.type, PROV.SoftwareAgent))
+        graph.add((activity, PROV.wasAssociatedWith, software_agent))
         if software is not None:
             graph.add((software_agent, RDFS.label, Literal(software)))
 
