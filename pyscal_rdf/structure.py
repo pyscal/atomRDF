@@ -149,7 +149,7 @@ class StructureGraph(RDFGraph):
                 element=None,
                 primitive=False,
                 add_to_graph=True, 
-                names=True):
+                names=False):
 
         sys = System(source=_make_crystal(structure, 
                 lattice_constant = lattice_constant, 
@@ -170,7 +170,7 @@ class StructureGraph(RDFGraph):
             noise = 0,
             element=None,
             add_to_graph=True,
-            names=True):
+            names=False):
         
         sys = System(source=_make_general_lattice(positions,
             types, 
@@ -192,7 +192,7 @@ class StructureGraph(RDFGraph):
             repetitions = (1,1,1),
             overlap = 0.0,
             add_to_graph = True,
-            names = True):
+            names = False):
         """
         Create a grain boundary structure and return it as a System object.
 
@@ -260,7 +260,7 @@ class StructureGraph(RDFGraph):
 
     
     def read_structure(self, filename, format="lammps-dump",
-                      add_to_graph=True, names=True):
+                      add_to_graph=True, names=False):
         """
         Read an input file and return it as a System object.
 

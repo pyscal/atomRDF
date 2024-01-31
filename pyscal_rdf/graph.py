@@ -147,7 +147,7 @@ class RDFGraph:
         
     def add_structure_to_graph(self, 
             structure, 
-            names=True, 
+            names=False, 
             name_index=None, 
             format=None):
         """
