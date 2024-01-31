@@ -16,11 +16,13 @@ class System(pc.System):
             format = "lammps-dump", 
             compressed = False, 
             customkeys = None,
+            species = None,
             source=None):
         super().__init__(filename = filename, 
             format = format, 
             compressed = compressed, 
-            customkeys = customkeys)
+            customkeys = customkeys,
+            species = species)
         #this is the sample which will be stored
         self.sample = None
         #the graph object should also be attached

@@ -260,7 +260,13 @@ class StructureGraph(RDFGraph):
 
     
     def read_structure(self, filename, format="lammps-dump",
-                      add_to_graph=True, names=False):
+                      add_to_graph=True, names=False,
+                      species=None,
+                      lattice=None,
+                      lattice_constant=None,
+                      basis_box=None,
+                      basis_positions=None,
+                      ):
         """
         Read an input file and return it as a System object.
 
@@ -284,7 +290,22 @@ class StructureGraph(RDFGraph):
         system will be populated with given atoms and simulation box
 
         """
-        sys = System(filename, format=format)
+        #prepare the dict for storing extra info; if lattice is provided, extract it
+        datadict = {}
+        if lattice is not None:
+            if lattice in structure_dict.keys():
+                datadict = structure_dict[lattice]['conventional']
+            datadict['lattice'] = lattice
+        if lattice_constant is not None:
+            datadict['lattice_constant'] = lattice_constant
+        if basis_box is not None:
+            datadict['box'] = basis_box
+        if basis_positions is not None:
+            datadict['positions'] = basis_positions
+
+        sys = System(filename, format=format, species=species)
+        sys.lattice_properties = datadict
+        
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
             #sys.sample = self.sample
