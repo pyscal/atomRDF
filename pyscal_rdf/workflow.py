@@ -120,9 +120,9 @@ def annotate_md(graph,
 
     if software_id is not None:
         software_agent = URIRef(software_id)
-        graph.add((lammps_agent, RDF.type, PROV.SoftwareAgent))
+        graph.add((software_agent, RDF.type, PROV.SoftwareAgent))
         if software is not None:
-            graph.add((lammps_agent, RDFS.label, Literal(software)))
+            graph.add((software_agent, RDFS.label, Literal(software)))
 
 def annotate_dft(graph,
                                 structure,
@@ -173,7 +173,7 @@ def annotate_dft(graph,
 
     if software_id is not None:
         software_agent = URIRef(software_id)
-        graph.add((lammps_agent, RDF.type, PROV.SoftwareAgent))
+        graph.add((software_agent, RDF.type, PROV.SoftwareAgent))
         if software is not None:
-            graph.add((lammps_agent, RDFS.label, Literal(software)))
+            graph.add((software_agent, RDFS.label, Literal(software)))
 
