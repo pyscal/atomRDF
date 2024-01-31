@@ -19,7 +19,7 @@ CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
-def annotate_molecular_dynamics(graph,
+def annotate_md(graph,
                                 structure,
                                 id = None,
                                 pressure = None,
@@ -124,7 +124,7 @@ def annotate_molecular_dynamics(graph,
         if software is not None:
             graph.add((lammps_agent, RDFS.label, Literal(software)))
 
-def annotate_molecular_dynamics(graph,
+def annotate_dft(graph,
                                 structure,
                                 id = None,
                                 pressure = None,
