@@ -260,7 +260,8 @@ class StructureGraph(RDFGraph):
 
     
     def read_structure(self, filename, format="lammps-dump",
-                      add_to_graph=True, names=False):
+                      add_to_graph=True, names=False,
+                      species=None):
         """
         Read an input file and return it as a System object.
 
@@ -285,6 +286,19 @@ class StructureGraph(RDFGraph):
 
         """
         sys = System(filename, format=format)
+        
+        if species is not None:
+            species = np.atleast_1d(species)
+            #now map species to the types, in order
+            types = sys.atoms.types
+            if not (max(types) != len(species)):
+                raise ValueError("Mismatch between types and species!")
+            
+            #now assign the species to custom
+            atomspecies = []        
+            for cc, typ in enumerate(types):
+                atomspecies.append(species[int(typ-1)])
+
         if add_to_graph:
             self.add_structure_to_graph(sys, names=names)
             #sys.sample = self.sample
