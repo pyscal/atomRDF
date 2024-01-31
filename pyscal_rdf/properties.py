@@ -41,23 +41,25 @@ def get_simulation_cell_angle(system):
 def get_lattice_angle(system):
     if system._structure_dict is None:
         return [None, None, None]
-
-    return [_get_angle(system._structure_dict["box"][0], system._structure_dict["box"][1]),
+    if "box" in system._structure_dict.keys():
+        return [_get_angle(system._structure_dict["box"][0], system._structure_dict["box"][1]),
             _get_angle(system._structure_dict["box"][1], system._structure_dict["box"][2]),
             _get_angle(system._structure_dict["box"][2], system._structure_dict["box"][0])]
+    else:
+        return [None, None, None]
 
 def get_lattice_parameter(system):
     if system.atoms._lattice_constant is None:
         return [None, None, None]
     else:
         if system._structure_dict is not None:
-            return [np.linalg.norm(system._structure_dict["box"][0])*system.atoms._lattice_constant,
-                    np.linalg.norm(system._structure_dict["box"][1])*system.atoms._lattice_constant,
-                    np.linalg.norm(system._structure_dict["box"][2])*system.atoms._lattice_constant]
-        else:
-            return [system.atoms._lattice_constant, 
-                    system.atoms._lattice_constant, 
-                    system.atoms._lattice_constant]
+            if "box" in system._structure_dict.keys():
+                return [np.linalg.norm(system._structure_dict["box"][0])*system.atoms._lattice_constant,
+                        np.linalg.norm(system._structure_dict["box"][1])*system.atoms._lattice_constant,
+                        np.linalg.norm(system._structure_dict["box"][2])*system.atoms._lattice_constant]
+        return [system.atoms._lattice_constant, 
+                system.atoms._lattice_constant, 
+                system.atoms._lattice_constant]
 
 def get_crystal_structure_name(system):
     if system._structure_dict is None:
@@ -74,35 +76,48 @@ def get_bravais_lattice(system):
 def get_basis_positions(system):
     if system._structure_dict is None:
         return None
-    return system._structure_dict["positions"]
+    if "positions" in system._structure_dict.keys():
+        return system._structure_dict["positions"]
+    return None
 
 def get_basis_occupancy(system):
     if system._structure_dict is None:
         return None
-    occ_numbers = system._structure_dict['species']
-    tdict = system.atoms._type_dict
-    vals = [val for key, val in tdict.items()]
-    
-    if vals[0] is not None:
-        occ_numbers = [tdict[x] for x in occ_numbers]
-    return occ_numbers
+
+    if "species" in system._structure_dict.keys():
+        occ_numbers = system._structure_dict['species']
+        tdict = system.atoms._type_dict
+        vals = [val for key, val in tdict.items()]
+        
+        if vals[0] is not None:
+            occ_numbers = [tdict[x] for x in occ_numbers]
+        return occ_numbers
+    return None
 
 def get_lattice_vector(system):
     if system._structure_dict is None:
         return [None, None, None]
-    return system._structure_dict["box"]
+    if "box" in system._structure_dict.keys():
+        return system._structure_dict["box"]
+    return [None, None, None]
 
 def get_spacegroup_symbol(system):
     if system._structure_dict is None:
         return None
-    results = _get_symmetry_dict(system)
-    return results[0]
+    try:
+        results = _get_symmetry_dict(system)
+        return results[0]
+    except:
+        return None
 
 def get_spacegroup_number(system):
     if system._structure_dict is None:
         return None
-    results = _get_symmetry_dict(system)
-    return results[1]
+    try:
+        results = _get_symmetry_dict(system)
+        return results[1]
+    except:
+        return None
 
 # ATOM attributes
 #--------------------------------------------
