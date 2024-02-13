@@ -99,13 +99,21 @@ class OntoParser:
             except:
                 rn = [r.__name__ for r in rn if r is not None]
 
-            #PATCH for symbol; could be removed in later versions
-            print(iri, type(rn))
-            if len(rn) == 0:
-                if os.path.basename(iri) == "hasSymbol":
-                    rn = ['str'] 
+            subprops = self.tree.search(subproperty_of=getattr(self.tree, c.name))
+            print('------------------')
+            print(f'Subprops of {iri}')
+            for subprop in subprops:
+                if subprop.iri != iri:
+                    print(subprop.iri)
+            print('------------------')
 
-            print(iri, rn)
+            #PATCH for symbol; could be removed in later versions
+            #print(iri, type(rn))
+            #if len(rn) == 0:
+            #    if os.path.basename(iri) == "hasSymbol":
+            #        rn = ['str'] 
+
+            #print(iri, rn)
             term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
@@ -115,6 +123,10 @@ class OntoParser:
             for d in dm:
                 if d!='07:owl#Thing':
                     self.attributes['class'][d].is_range_of.append(term.name)
+
+
+            #subproperties should be treated the same
+
             
     def _parse_object_property(self):
         for c in self.tree.object_properties():

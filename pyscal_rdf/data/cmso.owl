@@ -723,6 +723,7 @@
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSymbol">
         <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label>has symbol</rdfs:label>
         <skos:definition>A data property linking an entity with its symbol.</skos:definition>
     </owl:DatatypeProperty>

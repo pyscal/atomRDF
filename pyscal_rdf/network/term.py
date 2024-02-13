@@ -70,6 +70,7 @@ class OntoTerm:
         #identifier
         self.node_id = node_id
         self.subclasses = []
+        self.subproperties = []
         self.delimiter = delimiter
         self.is_domain_of = []
         self.is_range_of = []
