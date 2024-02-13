@@ -712,7 +712,6 @@
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroupSymbol">
         <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasSymbol"/>
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SpaceGroup"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label>has space group symbol</rdfs:label>
         <skos:definition>A data property linking a crystal structure with its space group symbol.</skos:definition>
     </owl:DatatypeProperty>

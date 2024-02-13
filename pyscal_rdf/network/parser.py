@@ -1,4 +1,6 @@
 from pyscal_rdf.network.term import OntoTerm, strip_name 
+from pyscal_rdf.network.patch import patch_terms
+
 from owlready2 import get_ontology
 import owlready2
 
@@ -99,21 +101,21 @@ class OntoParser:
             except:
                 rn = [r.__name__ for r in rn if r is not None]
 
-            subprops = self.tree.search(subproperty_of=getattr(self.tree, c.name))
-            print('------------------')
-            print(f'Subprops of {iri}')
-            for subprop in subprops:
-                if subprop.iri != iri:
-                    print(subprop.iri)
-            print('------------------')
+            
+            #Subproperties
+            #Commented out for now
+            #subprops = self.tree.search(subproperty_of=getattr(self.tree, c.name))
+            #for subprop in subprops:
+            #    if subprop.iri != iri:
+            #        #print(subprop.iri)
+            #        pass
 
-            #PATCH for symbol; could be removed in later versions
-            #print(iri, type(rn))
-            #if len(rn) == 0:
-            #    if os.path.basename(iri) == "hasSymbol":
-            #        rn = ['str'] 
+            #PATCH
+            #Here: we patch specific items specifically for pyscal rdf
+            rn  = patch_terms(iri, rn)
 
-            #print(iri, rn)
+            print(iri, rn)
+            print(iri, dm)
             term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
