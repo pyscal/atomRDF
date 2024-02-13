@@ -115,6 +115,7 @@ class RDFGraph:
         if ontology is None:
             ontology = read_ontology()
         self.ontology = ontology
+        self.terms = self.ontology.terms
         self._atom_ids = None
         self.store = store
 
