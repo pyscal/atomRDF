@@ -781,7 +781,7 @@
         <rdfs:label>Amorphous Material</rdfs:label>
         <skos:altLabel>Amorphous Solid</skos:altLabel>
         <skos:altLabel>Non-crystalline Solid</skos:altLabel>
-        <skos:definition>An amorphous material or solid is a material which has no defined long-range periodicity.</skos:definition>
+        <skos:definition>An amorphous material or solid is a material which has no defined long-range order.</skos:definition>
     </owl:Class>
     
 

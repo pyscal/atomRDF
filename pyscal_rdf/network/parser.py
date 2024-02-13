@@ -98,6 +98,14 @@ class OntoParser:
                 rn = [r.__name__ for r in rn[0].Classes if r is not None]
             except:
                 rn = [r.__name__ for r in rn if r is not None]
+
+            #PATCH for symbol; could be removed in later versions
+            print(iri, type(rn))
+            if len(rn) == 0:
+                if os.path.basename(iri) == "hasSymbol":
+                    rn = ['str'] 
+
+            print(iri, rn)
             term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
