@@ -901,13 +901,27 @@ class RDFGraph:
         raise ValueError("SPARQL query returned None")
 
     def auto_query(self, source, destination, 
-        condition=None, return_query=False, enforce_types=True):
-        query = self.ontology.create_query(source, destination, 
-            condition=condition, enforce_types=enforce_types)
-        if return_query:
-            return query
-        return self.query(query)
-    
+        condition=None, 
+        return_query=False, 
+        enforce_types=None):
+
+        if enforce_types is None:
+            for val in [True, False]:
+                query = self.ontology.create_query(source, destination, 
+                    condition=condition, enforce_types=val)
+                if return_query:
+                    return query
+                res = self.query(query)
+                if len(res) != 0:
+                    return res
+        else:
+            query = self.ontology.create_query(source, destination, 
+                condition=condition, enforce_types=val)
+            if return_query:
+                return query
+            res = self.query(query)
+
+        return res    
 
     #################################
     # Methods to interact with sample
