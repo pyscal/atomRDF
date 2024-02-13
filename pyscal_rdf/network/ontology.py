@@ -35,7 +35,7 @@ def read_ontology():
 
 	#General fixes
 	combo.add_path(('cmso:CrystalStructure', 'cmso:hasAltName', 'string'))
-	combo.add_path(('cmso:Element', 'cmso:hasSymbol', 'string'))
+	combo.add_path(('cmso:ChemicalElement', 'cmso:hasSymbol', 'string'))
 
 	#interontology paths
 	combo.add_path(('cmso:Material', 'cmso:hasDefect', 'pldo:PlanarDefect'))
