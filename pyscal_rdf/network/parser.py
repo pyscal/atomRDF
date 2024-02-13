@@ -114,8 +114,8 @@ class OntoParser:
             #Here: we patch specific items specifically for pyscal rdf
             rn  = patch_terms(iri, rn)
 
-            print(iri, rn)
-            print(iri, dm)
+            #print(iri, rn)
+            #print(iri, dm)
             term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
