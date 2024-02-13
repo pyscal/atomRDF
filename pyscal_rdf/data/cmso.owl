@@ -712,7 +712,6 @@
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroupSymbol">
         <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasSymbol"/>
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SpaceGroup"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label>has space group symbol</rdfs:label>
         <skos:definition>A data property linking a crystal structure with its space group symbol.</skos:definition>
     </owl:DatatypeProperty>
@@ -723,6 +722,7 @@
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSymbol">
         <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label>has symbol</rdfs:label>
         <skos:definition>A data property linking an entity with its symbol.</skos:definition>
     </owl:DatatypeProperty>
@@ -781,7 +781,7 @@
         <rdfs:label>Amorphous Material</rdfs:label>
         <skos:altLabel>Amorphous Solid</skos:altLabel>
         <skos:altLabel>Non-crystalline Solid</skos:altLabel>
-        <skos:definition>An amorphous material or solid is a material which has no defined long-range periodicity.</skos:definition>
+        <skos:definition>An amorphous material or solid is a material which has no defined long-range order.</skos:definition>
     </owl:Class>
     
 

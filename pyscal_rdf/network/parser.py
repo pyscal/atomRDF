@@ -1,4 +1,6 @@
 from pyscal_rdf.network.term import OntoTerm, strip_name 
+from pyscal_rdf.network.patch import patch_terms
+
 from owlready2 import get_ontology
 import owlready2
 
@@ -98,6 +100,22 @@ class OntoParser:
                 rn = [r.__name__ for r in rn[0].Classes if r is not None]
             except:
                 rn = [r.__name__ for r in rn if r is not None]
+
+            
+            #Subproperties
+            #Commented out for now
+            #subprops = self.tree.search(subproperty_of=getattr(self.tree, c.name))
+            #for subprop in subprops:
+            #    if subprop.iri != iri:
+            #        #print(subprop.iri)
+            #        pass
+
+            #PATCH
+            #Here: we patch specific items specifically for pyscal rdf
+            rn  = patch_terms(iri, rn)
+
+            #print(iri, rn)
+            #print(iri, dm)
             term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
@@ -107,6 +125,10 @@ class OntoParser:
             for d in dm:
                 if d!='07:owl#Thing':
                     self.attributes['class'][d].is_range_of.append(term.name)
+
+
+            #subproperties should be treated the same
+
             
     def _parse_object_property(self):
         for c in self.tree.object_properties():

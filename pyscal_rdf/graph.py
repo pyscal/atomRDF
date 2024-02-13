@@ -115,6 +115,7 @@ class RDFGraph:
         if ontology is None:
             ontology = read_ontology()
         self.ontology = ontology
+        self.terms = self.ontology.terms
         self._atom_ids = None
         self.store = store
 
@@ -291,7 +292,7 @@ class RDFGraph:
                 element = URIRef(element_indetifiers[e])
                 self.add((chemical_species, CMSO.hasElement, element))
                 self.add((element, RDF.type, CMSO.Element))
-                self.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                self.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
                 self.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
     
     def add_simulation_cell(self):
@@ -404,10 +405,12 @@ class RDFGraph:
         Returns
         -------
         """
-        self.add((self.crystal_structure, CMSO.hasSpaceGroupSymbol, 
+        space_group = URIRef(f'{self._name}_SpaceGroup')
+        self.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
+        self.add((space_group, CMSO.hasSpaceGroupSymbol, 
             Literal(self.system.schema.material.crystal_structure.spacegroup_symbol(), 
                 datatype=XSD.string)))
-        self.add((self.crystal_structure, CMSO.hasSpaceGroupNumber, 
+        self.add((space_group, CMSO.hasSpaceGroupNumber, 
             Literal(self.system.schema.material.crystal_structure.spacegroup_number(), 
                 datatype=XSD.integer)))
     
@@ -898,13 +901,27 @@ class RDFGraph:
         raise ValueError("SPARQL query returned None")
 
     def auto_query(self, source, destination, 
-        condition=None, return_query=False, enforce_types=True):
-        query = self.ontology.create_query(source, destination, 
-            condition=condition, enforce_types=enforce_types)
-        if return_query:
-            return query
-        return self.query(query)
-    
+        condition=None, 
+        return_query=False, 
+        enforce_types=None):
+
+        if enforce_types is None:
+            for val in [True, False]:
+                query = self.ontology.create_query(source, destination, 
+                    condition=condition, enforce_types=val)
+                if return_query:
+                    return query
+                res = self.query(query)
+                if len(res) != 0:
+                    return res
+        else:
+            query = self.ontology.create_query(source, destination, 
+                condition=condition, enforce_types=val)
+            if return_query:
+                return query
+            res = self.query(query)
+
+        return res    
 
     #################################
     # Methods to interact with sample
