@@ -32,7 +32,12 @@ def read_ontology():
 	combo.add_term('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'object_property', delimiter='#', namespace='rdf')
 	
 	#add paths
+
+	#General fixes
 	combo.add_path(('cmso:CrystalStructure', 'cmso:hasAltName', 'string'))
+	combo.add_path(('cmso:Element', 'cmso:hasSymbol', 'string'))
+
+	#interontology paths
 	combo.add_path(('cmso:Material', 'cmso:hasDefect', 'pldo:PlanarDefect'))
 	combo.add_path(('cmso:Material', 'cmso:hasDefect', 'podo:Vacancy'))
 	combo.add_path(('cmso:SimulationCell', 'podo:hasVacancyConcentration', 'float'))
