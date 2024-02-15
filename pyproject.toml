@@ -29,6 +29,7 @@ dependencies=['numpy',
     		'pyscal3', 
     		'spglib',
 ]
+requires-python = ">=3.9,<3.12"
 
 [project.urls]
 Homepage = "https://pyscal.org"
