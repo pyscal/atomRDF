@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'pyscal_rdf'
+version = '0.1.6'
+authors = [
+  {name = "Abril Azocar Guzman", email = "a.azocar.guzman@fz-juelich.de"},
+  {name = "Sarath Menon", email = "sarath.menon@pyscal.org"},
+]
+maintainers = [
+  {name = "Sarath Menon", email = "sarath.menon@pyscal.org"}
+]
+description = 'Ontology based structural manipulation and quering'
+readme = "README.md"
+license = {text = "MIT License"}
+keywords = ["ontology", "research-data-management", "rdm", "computational-materials-science", "atomic-simulation", "atomic-structures"]
+classifiers=[
+    'Programming Language :: Python :: 3'
+]
+dependencies=['numpy', 
+			'ase', 
+			'rdflib', 
+    		'pyyaml', 
+    		'graphviz', 
+    		'networkx', 
+    		'ipycytoscape', 
+    		'pyscal3', 
+    		'spglib',
+]
+
+[project.urls]
+Homepage = "https://pyscal.org"
+Documentation = "https://rdf.pyscal.org"
+Repository = "https://github.com/pyscal/pyscal_rdf"
+
+[tool.setuptools.packages.find]
+where = ["pyscal_rdf/data"]
+
+[tool.setuptools.package-data]
+mypkg = ["*.owl", "*.yml"]
