@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: pyscal-rdf, python tool for ontology-based creation, manipulation, and quering of atomic structures.
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+- given-names: Sarath
+  family-names: Menon
+  affiliation: Max-Planck-Institut für Eisenforschung GmbH
+  orcid: 'https://orcid.org/0000-0002-6776-1213'
+- given-names: Abril
+  family-names: Azocar Guzman
+  affiliation: 1Institute for Advanced Simulations – Materials Data Science and Informatics (IAS-9), Forschungszentrum Jülich GmbH
+  orcid: 'https://orcid.org/0000-0001-7564-7990'
+date-released: '2024-02-15'
+doi: 10.5281/zenodo.8146527
+url: 'https://rdf.pyscal.org'
+license:
+- mit
+repository-code: https://github.com/pyscal/pyscal_rdf
+type: software
+version: 0.1.6
