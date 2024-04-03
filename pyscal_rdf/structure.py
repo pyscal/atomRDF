@@ -610,6 +610,29 @@ class System(pc.System):
         #    self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))            
 
 
+    def add_vacancy(self, concentration, number=None):
+        """
+        Add Vacancy details which will be annotated by PODO
+
+        Parameters
+        ----------
+        concentration: float
+            vacancy concentration, value should be between 0-1
+
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+
+        vacancy = URIRef(f'{self._name}_Vacancy')
+        self.graph.add((self.material, CMSO.hasDefect, vacancy))
+        self.graph.add((vacancy, RDF.type, PODO.Vacancy))
+        self.graph.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
+        if number is not None:
+            self.graph.add((self.simulation_cell, PODO.hasNumberOfVacancies, Literal(number, datatype=XSD.integer)))
+
     def add_gb(self, gb_dict):
         """
         Add GB details which will be annotated using PLDO
