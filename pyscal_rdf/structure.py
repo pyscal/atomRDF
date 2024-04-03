@@ -12,7 +12,6 @@ import json
 import shutil
 import tarfile
 
-from pyscal_rdf.rdfsystem import System
 import pyscal_rdf.json_io as json_io
 
 import pyscal3.structure_creator as pcs
@@ -130,7 +129,7 @@ def _make_grain_boundary(axis,
     s.add_gb(gb_dict)
     return s
 
-def _read_structure(self, filename, 
+def _read_structure(filename, 
                   format="lammps-dump",
                   graph=None, 
                   names=False,

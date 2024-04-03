@@ -1,9 +1,9 @@
 import pytest
-from pyscal_rdf import StructureGraph
+from pyscal_rdf import KnowledgeGraph, System
 
 def test_structuregraph():
-	s = StructureGraph()
-	sys = s.create.element.Fe()
+	s = KnowledgeGraph()
+	sys = System.create.element.Fe(graph=s)
 
 	vis = s.visualise()
 	assert(vis != None)
@@ -12,12 +12,13 @@ def test_structuregraph():
 	assert(vis != None)
 
 	s.write("temp.ttl", format="turtle")
-	s = StructureGraph(graph_file="temp.ttl")
+	s = KnowledgeGraph(graph_file="temp.ttl")
 
-	sys = s.create.element.Fe()
-	s.add_vacancy(0.5, number=1)
+	sys = System.create.element.Fe(graph=s)
+	sys.add_vacancy(0.5, number=1)
 
-	s = StructureGraph()
-	sys = s.create.element.Fe()
+	s = KnowledgeGraph()
+	sys = System.create.element.Fe(graph=s)
+	assert s.n_samples == 1
 	#res = s.query_sample("NumberOfAtoms", 2)
 	#assert(len(res) == 1)
