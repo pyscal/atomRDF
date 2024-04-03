@@ -42,14 +42,13 @@ def _make_crystal(structure,
         return_structure_dict=True,
         primitive=primitive)
     
-    s = System()
+    s = System(graph=graph, names=names)
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
-    if graph is not None:
-        graph.add_structure_to_graph(s, names=names)
+    s.to_graph()
     return s
 
 def _make_general_lattice(positions,
@@ -70,14 +69,13 @@ def _make_general_lattice(positions,
         noise=noise,
         element=element,
         return_structure_dict=True)
-    s = System()
+    s = System(graph=graph, names=names)
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = 'custom'
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
-    if graph is not None:
-        graph.add_structure_to_graph(s, names=names)
+    s.to_graph()
 
     return s
 
@@ -104,21 +102,20 @@ def _make_grain_boundary(axis,
         atoms, box, sdict = gb.populate_grain_boundary(element, 
                                         repetitions=repetitions,
                                         overlap=overlap)
-    s = System()
+    s = System(graph=graph, names=names)
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
-    if graph is not None:
-        graph.add_structure_to_graph(s, names=names)
-        gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
-                  "RotationAxis": axis,
-                  "MisorientationAngle": gb.theta,
-                  "GBType": gb.find_gb_character(),
-                  "sigma": gb.sigma,
-                  }
-        graph.add_gb(gb_dict)
+    s.to_graph()
+    gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
+              "RotationAxis": axis,
+              "MisorientationAngle": gb.theta,
+              "GBType": gb.find_gb_character(),
+              "sigma": gb.sigma,
+              }
+    #graph.add_gb(gb_dict)
     return s
 
 def _read_structure(self, filename, 
@@ -143,11 +140,10 @@ def _read_structure(self, filename,
     if basis_positions is not None:
         datadict['positions'] = basis_positions
 
-    s = System(filename, format=format, species=species)
+    s = System(filename, format=format, species=species, 
+        graph=graph, names=names)
     s.lattice_properties = datadict
-    
-    if graph is not None:
-        graph.add_structure_to_graph(s, names=names)
+    s.to_graph()
     return s   
 
 
@@ -199,7 +195,8 @@ class System(pc.System):
         self.sample = None
         #the graph object should also be attached
         #for post-processing of structures
-        self.graph = None
+        self.graph = graph
+        self.names = names
         self._atom_ids = None
         if source is not None:
             self.__dict__.update(source.__dict__)
@@ -275,228 +272,37 @@ class System(pc.System):
         self.delete(indices=list(val))
 
 
+    def _generate_names(self, name_index=None):
+        if names:
+            if name_index is None:
+                name_index = self.graph.n_samples + 1
+            self._name = f'sample:{name_index}'
+        else:
+            self._name = f'sample:{str(uuid.uuid4())}'        
 
+    def _add_sample(self):
+        sample = URIRef(f'{self._name}')
+        self.graph.add((sample, RDF.type, CMSO.AtomicScaleSample))
+        self.sample = sample
 
-
-
-
-
-class StructureGraph(RDFGraph):
-    def __init__(self, graph_file=None, 
-        store="Memory", 
-        store_file=None,
-        identifier="http://default_graph",
-        ontology=None,
-        structure_store=None):
-        
-        super().__init__(graph_file=graph_file, 
-            store=store, 
-            store_file=store_file, 
-            identifier=identifier,
-            ontology=ontology,
-            structure_store=structure_store)
-        self._element_dict = element_dict
-        self._structure_dict = structure_dict
-
-        #add create methods
-        self.create = AttrSetter()
-        mapdict = {}
-
-        #element creation routines
-        mapdict["element"] = {}
-        for key in self._element_dict.keys():
-            mapdict["element"][key] = update_wrapper(partial(self._annotated_make_crystal,
-                self._element_dict[key]['structure'],
-                lattice_constant=self._element_dict[key]['lattice_constant'],
-                element = key), pcs.make_crystal)
-        
-        #lattice creation routines
-        mapdict["lattice"] = {}
-        for key in self._structure_dict.keys():
-            mapdict["lattice"][key] = update_wrapper(partial(self._annotated_make_crystal, 
-                key), 
-                _make_crystal)
-
-        #custom creation routines
-        mapdict["lattice"]["custom"] = self._annotated_make_general_lattice
-
-        #create defects
-        mapdict["defect"] = {}
-        mapdict["defect"]["grain_boundary"] = self._annotated_make_grain_boundary
-
-        self.create._add_attribute(mapdict)
-
-
-
-    def _annotated_make_crystal(self, structure, 
-                lattice_constant = 1.00, 
-                repetitions = None, 
-                ca_ratio = 1.633, 
-                noise = 0, 
-                element=None,
-                primitive=False,
-                add_to_graph=True, 
-                names=False):
-
-        sys = System(source=_make_crystal(structure, 
-                lattice_constant = lattice_constant, 
-                repetitions = repetitions, 
-                ca_ratio = ca_ratio, 
-                noise = noise, 
-                element=element,
-                primitive=primitive))
-        if add_to_graph:
-            self.add_structure_to_graph(sys, names=names)
-        return sys
-
-    def _annotated_make_general_lattice(self, positions,
-            types, 
-            box,
-            lattice_constant = 1.00, 
-            repetitions = None, 
-            noise = 0,
-            element=None,
-            add_to_graph=True,
-            names=False):
-        
-        sys = System(source=_make_general_lattice(positions,
-            types, 
-            box,
-            lattice_constant = lattice_constant, 
-            repetitions = repetitions, 
-            noise = noise,
-            element=element))
-
-        if add_to_graph:
-            self.add_structure_to_graph(sys, names=names)
-        return sys
-
-    def _annotated_make_grain_boundary(self, axis, 
-            sigma, gb_plane,
-            structure = None,
-            element = None, 
-            lattice_constant = 1,
-            repetitions = (1,1,1),
-            overlap = 0.0,
-            add_to_graph = True,
-            names = False):
+    def _add_material(self):
         """
-        Create a grain boundary structure and return it as a System object.
+        Add a CMSO Material object
 
         Parameters
         ----------
-        axis: list of ints of length 3
-            The grain boundary axis
-
-        sigma: int
-            sigma value of the grain boundary
-        
-        gb_plane: list of ints of length 3
-            The grain boundary plane
-
-        structure : {'sc', 'bcc', 'fcc', 'hcp', 'diamond', 'a15' or 'l12'}
-            type of the crystal structure
-
-        element : string, optional
-            The chemical element
-
-        lattice_constant : float, optional
-            lattice constant of the crystal structure, default 1
-
-        repetitions : list of ints of len 3, optional
-            of type `[nx, ny, nz]`, repetions of the unit cell in x, y and z directions.
-            default `[1, 1, 1]`.
-
-        overlap: float, optional
-            overlap between the two grains
-
-        add_to_graph: bool, optinal
-            If False, the created structure will not be added to the graph
-
-        names: bool, optional
-            If True, names will be used as IDs            
+        name
+            if provided, the name will be used instead of random identifier
 
         Returns
         -------
-        System: pyscal System
-
         """
+        material = URIRef(f'{self._name}_Material')
+        self.graph.add((self.sample, CMSO.hasMaterial, material))
+        self.graph.add((material, RDF.type, CMSO.CrystallineMaterial))        
+        self.material = material
 
-        sys, gb = _make_grain_boundary(axis, 
-            sigma, gb_plane,
-            structure = structure,
-            element = element, 
-            lattice_constant = lattice_constant,
-            repetitions = repetitions,
-            overlap = overlap)
-        sys = System(source=sys)
-
-        if add_to_graph:
-            self.add_structure_to_graph(sys, names=names)
-
-        gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
-                  "RotationAxis": axis,
-                  "MisorientationAngle": gb.theta,
-                  "GBType": gb.find_gb_character(),
-                  "sigma": gb.sigma,
-                  }
-        self.add_gb(gb_dict)
-
-        return sys
-
-
-    
-    def read_structure(self, filename, format="lammps-dump",
-                      add_to_graph=True, names=False,
-                      species=None,
-                      lattice=None,
-                      lattice_constant=None,
-                      basis_box=None,
-                      basis_positions=None,
-                      ):
-        """
-        Read an input file and return it as a System object.
-
-        Parameters
-        ----------
-        filename: string
-            name of the input file
-
-        format: string
-            format of the input file
-
-        add_to_graph: bool, optinal
-            If False, the created structure will not be added to the graph
-
-        names: bool, optional
-            If True, names will be used as IDs
-
-        Returns
-        -------
-        System: pyscal System
-        system will be populated with given atoms and simulation box
-
-        """
-        #prepare the dict for storing extra info; if lattice is provided, extract it
-        datadict = {}
-        if lattice is not None:
-            if lattice in structure_dict.keys():
-                datadict = structure_dict[lattice]['conventional']
-            datadict['lattice'] = lattice
-        if lattice_constant is not None:
-            datadict['lattice_constant'] = lattice_constant
-        if basis_box is not None:
-            datadict['box'] = basis_box
-        if basis_positions is not None:
-            datadict['positions'] = basis_positions
-
-        sys = System(filename, format=format, species=species)
-        sys.lattice_properties = datadict
-        
-        if add_to_graph:
-            self.add_structure_to_graph(sys, names=names)
-            #sys.sample = self.sample
-            #sys._atom_ids = copy.copy(self._atom_ids)
-            #sys.graph = self
-        return sys            
-
+    def to_graph(self):
+        if self.graph is not None:
+            self._add_sample()
+            self._add_material()
