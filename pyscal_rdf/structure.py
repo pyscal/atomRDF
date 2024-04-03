@@ -284,18 +284,20 @@ class System(pc.System):
         self.delete(indices=list(val))
 
     def to_graph(self):
-        if self.graph is not None:
-            self._generate_name()
-            self._add_sample()
-            self._add_material()
-            self._add_chemical_composition()
-            self._add_simulation_cell()
-            self._add_simulation_cell_properties()
-            self._add_crystal_structure()
-            self._add_space_group()
-            self._add_unit_cell()
-            self._add_lattice_properties()
-            self._add_atoms()
+        if self.graph is None:
+            return
+
+        self._generate_name()
+        self._add_sample()
+        self._add_material()
+        self._add_chemical_composition()
+        self._add_simulation_cell()
+        self._add_simulation_cell_properties()
+        self._add_crystal_structure()
+        self._add_space_group()
+        self._add_unit_cell()
+        self._add_lattice_properties()
+        self._add_atoms()
 
 
 
@@ -625,6 +627,8 @@ class System(pc.System):
         Returns
         -------
         """
+        if self.graph is None:
+            return
 
         vacancy = URIRef(f'{self._name}_Vacancy')
         self.graph.add((self.material, CMSO.hasDefect, vacancy))
@@ -649,7 +653,10 @@ class System(pc.System):
         -------
         """
 
-        #mark that the structure has a defect        
+        #mark that the structure has a defect
+        if self.graph is None:
+            return
+                    
         if gb_dict["GBType"] is None:
             plane_defect = URIRef(f'{self._name}_GrainBoundary')
             self.graph.add((plane_defect, RDF.type, PLDO.GrainBoundary))
