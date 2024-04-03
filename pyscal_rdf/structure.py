@@ -21,6 +21,12 @@ CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
 PODO = Namespace("https://purls.helmholtz-metadaten.de/podo/")
 
+#read element data file
+file_location = os.path.dirname(__file__).split('/')
+file_location = "/".join(file_location[:-1])
+file_location = os.path.join(os.path.dirname(__file__),  'data/element.yml')
+with open(file_location, 'r') as fin:
+    element_indetifiers = yaml.safe_load(fin)
 
 def _make_crystal(structure, 
     lattice_constant = 1.00, 
@@ -306,6 +312,31 @@ class System(pc.System):
         self.graph.add((material, RDF.type, CMSO.CrystallineMaterial))        
         self.material = material
 
+    def _add_chemical_composition(self):
+        """
+        Add chemical composition
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+        composition = self.schema.material.element_ratio()
+
+        chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
+        self.add((self.sample, CMSO.hasSpecies, chemical_species))
+        self.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+
+        for e, r in composition.items():
+            if e in element_indetifiers.keys():
+                element = URIRef(element_indetifiers[e])
+                self.graph.add((chemical_species, CMSO.hasElement, element))
+                self.graph.add((element, RDF.type, CMSO.Element))
+                self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
+                self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
     def add_gb(self, gb_dict):
         """
