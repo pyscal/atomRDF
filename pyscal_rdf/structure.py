@@ -171,8 +171,13 @@ class System(pc.System):
 
     mapdict["defect"] = {}
     mapdict["defect"]["grain_boundary"] = _make_grain_boundary
-
     create._add_attribute(mapdict)
+
+    read = AttrSetter()
+    mapdict = {}
+    mapdict['file'] = _read_structure
+    mapdict['ase'] = update_wrapper(partial(_read_structure, format='ase'), _read_structure)
+    read._add_attribute(mapdict)
 
     def __init__(self, filename = None, 
             format = "lammps-dump", 
