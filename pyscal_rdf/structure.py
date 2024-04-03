@@ -7,7 +7,6 @@ import copy
 from functools import partial, update_wrapper
 
 from pyscal_rdf.rdfsystem import System
-from pyscal_rdf.graph import RDFGraph
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
@@ -115,7 +114,7 @@ def _make_grain_boundary(axis,
               "GBType": gb.find_gb_character(),
               "sigma": gb.sigma,
               }
-    #graph.add_gb(gb_dict)
+    s.add_gb(gb_dict)
     return s
 
 def _read_structure(self, filename, 
@@ -271,9 +270,14 @@ class System(pc.System):
                     self.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
         self.delete(indices=list(val))
 
+    def to_graph(self):
+        if self.graph is not None:
+            self._generate_name()
+            self._add_sample()
+            self._add_material()
 
-    def _generate_names(self, name_index=None):
-        if names:
+    def _generate_name(self, name_index=None):
+        if self.names:
             if name_index is None:
                 name_index = self.graph.n_samples + 1
             self._name = f'sample:{name_index}'
@@ -302,7 +306,50 @@ class System(pc.System):
         self.graph.add((material, RDF.type, CMSO.CrystallineMaterial))        
         self.material = material
 
-    def to_graph(self):
-        if self.graph is not None:
-            self._add_sample()
-            self._add_material()
+
+    def add_gb(self, gb_dict):
+        """
+        Add GB details which will be annotated using PLDO
+
+        Parameters
+        ----------
+        gb_dict: dict
+            dict containing details about the grain boundary
+
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+
+        #mark that the structure has a defect        
+        if gb_dict["GBType"] is None:
+            plane_defect = URIRef(f'{self._name}_GrainBoundary')
+            self.graph.add((plane_defect, RDF.type, PLDO.GrainBoundary))
+        
+        elif gb_dict["GBType"] == "Twist":
+            plane_defect = URIRef(f'{self._name}_TwistGrainBoundary')
+            self.graph.add((plane_defect, RDF.type, PLDO.TwistGrainBoundary))
+        
+        elif gb_dict["GBType"] == "Tilt":
+            plane_defect = URIRef(f'{self._name}_TiltGrainBoundary')
+            self.graph.add((plane_defect, RDF.type, PLDO.TiltGrainBoundary))
+        
+        elif gb_dict["GBType"] == "Symmetric Tilt":
+            plane_defect = URIRef(f'{self._name}_SymmetricalTiltGrainBoundary')
+            self.graph.add((plane_defect, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
+        
+        elif gb_dict["GBType"] == "Mixed":
+            plane_defect = URIRef(f'{self._name}_MixedGrainBoundary')
+            self.graph.add((plane_defect, RDF.type, PLDO.MixedGrainBoundary))
+        
+        self.add((self.material, CMSO.hasDefect, plane_defect))
+        self.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
+        self.add((plane_defect, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
+                                                             datatype=XSD.string)))
+        self.add((plane_defect, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
+                                                             datatype=XSD.string)))
+        self.add((plane_defect, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
+
+
