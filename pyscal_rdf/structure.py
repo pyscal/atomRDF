@@ -5,6 +5,8 @@ of :py:class:`pyscal_rdf.graph.RDFGraph` along with easy structural creation rou
 import numpy as np
 import copy
 from functools import partial, update_wrapper
+import os
+import yaml
 
 from pyscal_rdf.rdfsystem import System
 
@@ -281,6 +283,7 @@ class System(pc.System):
             self._generate_name()
             self._add_sample()
             self._add_material()
+            self._add_chemical_composition()
 
     def _generate_name(self, name_index=None):
         if self.names:
@@ -327,8 +330,8 @@ class System(pc.System):
         composition = self.schema.material.element_ratio()
 
         chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-        self.add((self.sample, CMSO.hasSpecies, chemical_species))
-        self.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+        self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+        self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
 
         for e, r in composition.items():
             if e in element_indetifiers.keys():
