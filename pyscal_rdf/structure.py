@@ -7,6 +7,7 @@ import copy
 from functools import partial, update_wrapper
 import os
 import yaml
+import uuid
 
 from pyscal_rdf.rdfsystem import System
 
