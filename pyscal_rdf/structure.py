@@ -290,7 +290,8 @@ class System(pc.System):
             self._add_space_group()
             self._add_unit_cell()
             self._add_lattice_properties()
-            
+            self._add_atoms()
+
 
 
     def _generate_name(self, name_index=None):
@@ -521,6 +522,87 @@ class System(pc.System):
         self.graph.add((lattice_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
         self.graph.add((lattice_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
         self.graph.add((lattice_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))        
+
+
+    def _save_atom_attributes(self, position_identifier, species_identifier):
+        #if self.store == 'pyiron':
+        #    pass
+        #else:
+        #    #this is the file based store system
+        datadict = {
+            position_identifier:{
+                "value": self.schema.atom_attribute.position(),
+                "label": "position", 
+            },
+            species_identifier:{
+                "value": self.schema.atom_attribute.species(),
+                "label": "species", 
+            },
+        }
+        outfile = os.path.join(self.graph.structure_store, str(self._name).split(':')[-1])
+        json_io.write_file(outfile,  datadict)
+        return os.path.relpath(outfile+'.json')
+
+    def _add_atoms(self):
+        """
+        Add Atoms including their species and positions
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+
+        Notes
+        -----
+        Note that for the moment, we will dump the structures in a given folder,
+        maybe this could be input from the Job class directly
+        """
+        #now we write out file
+        position_identifier = str(uuid.uuid4())
+        species_identifier = str(uuid.uuid4())
+
+        outfile = self._save_atom_attributes(position_identifier, species_identifier)
+
+        if "positions" in self.atoms.keys():
+            position = URIRef(f'{self._name}_Position')
+            self.graph.add((self.sample, CMSO.hasAttribute, position))
+            self.graph.add((position, RDF.type, CMSO.AtomAttribute))
+            self.graph.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
+            self.graph.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
+            self.graph.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
+
+        if "species" in self.atoms.keys():
+            species = URIRef(f'{self._name}_Species')
+            self.graph.add((self.sample, CMSO.hasAttribute, species))
+            self.graph.add((species, RDF.type, CMSO.AtomAttribute))
+            self.graph.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
+            self.graph.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
+            self.graph.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
+
+        #if "velocities" in self.sys.atoms.keys():
+        #    uname = None
+        #    if name is not None:
+        #        uname = f'{name}_Velocity'
+        #    velocity = BNode(uname)
+        #    self.add((self.sample, CMSO.hasAttribute, velocity))
+        #    self.add((velocity, RDF.type, CMSO.AtomAttribute))
+        #    self.add((velocity, CMSO.hasName, Literal('Velocity', data_type=XSD.string)))
+        #    velocity_identifier = uuid.uuid4()
+        #    self.add((velocity, CMSO.hasIdentifier, Literal(velocity_identifier, datatype=XSD.string)))            
+
+        #if "forces" in self.sys.atoms.keys():
+        #    uname = None
+        #    if name is not None:
+        #        uname = f'{name}_Force'  
+        #    force = BNode(uname)
+        #    self.add((self.sample, CMSO.hasAttribute, force))
+        #    self.add((force, RDF.type, CMSO.AtomAttribute))
+        #    self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string)))
+        #    force_identifier = uuid.uuid4()
+        #    self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))            
 
 
     def add_gb(self, gb_dict):
