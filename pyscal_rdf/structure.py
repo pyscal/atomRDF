@@ -677,11 +677,11 @@ class System(pc.System):
             plane_defect = URIRef(f'{self._name}_MixedGrainBoundary')
             self.graph.add((plane_defect, RDF.type, PLDO.MixedGrainBoundary))
         
-        self.add((self.material, CMSO.hasDefect, plane_defect))
-        self.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
-        self.add((plane_defect, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
+        self.graph.add((self.material, CMSO.hasDefect, plane_defect))
+        self.graph.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
+        self.graph.add((plane_defect, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
                                                              datatype=XSD.string)))
-        self.add((plane_defect, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
+        self.graph.add((plane_defect, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
                                                              datatype=XSD.string)))
-        self.add((plane_defect, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
+        self.graph.add((plane_defect, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
 
