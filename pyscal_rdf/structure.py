@@ -678,4 +678,3 @@ class System(pc.System):
                                                              datatype=XSD.string)))
         self.add((plane_defect, PLDO.hasMisorientationAngle, Literal(gb_dict["MisorientationAngle"], datatype=XSD.float)))
 
-
