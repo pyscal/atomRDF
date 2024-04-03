@@ -73,7 +73,7 @@ def _setup_structure_store(structure_store):
         os.mkdir(structure_store)
     return structure_store
 
-class RDFGraph:
+class KnowledgeGraph:
     def __init__(self, graph_file=None, 
         store="Memory", 
         store_file=None,
@@ -452,7 +452,7 @@ class RDFGraph:
         
     def iterate_graph(self, item, create_new_graph=False):
         if create_new_graph:
-            self.sgraph = RDFGraph()
+            self.sgraph = KnowledgeGraph()
         triples = list(self.graph.triples((item, None, None)))
         for triple in triples:
             self.sgraph.graph.add(triple)
