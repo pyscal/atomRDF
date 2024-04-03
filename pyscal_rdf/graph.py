@@ -916,7 +916,7 @@ class RDFGraph:
                     return res
         else:
             query = self.ontology.create_query(source, destination, 
-                condition=condition, enforce_types=val)
+                condition=condition, enforce_types=enforce_types)
             if return_query:
                 return query
             res = self.query(query)
@@ -926,7 +926,7 @@ class RDFGraph:
     #################################
     # Methods to interact with sample
     #################################
-    def query_sample(self, destination, condition=None, return_query=False, enforce_types=True):
+    def query_sample(self, destination, condition=None, return_query=False, enforce_types=None):
         return self.auto_query(self.ontology.terms.cmso.AtomicScaleSample, destination,
             condition=condition, return_query=return_query, enforce_types=enforce_types)
 
