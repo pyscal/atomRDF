@@ -284,6 +284,14 @@ class System(pc.System):
             self._add_sample()
             self._add_material()
             self._add_chemical_composition()
+            self._add_simulation_cell()
+            self._add_simulation_cell_properties()
+            self._add_crystal_structure()
+            self._add_space_group()
+            self._add_unit_cell()
+            self._add_lattice_properties()
+            
+
 
     def _generate_name(self, name_index=None):
         if self.names:
@@ -340,6 +348,180 @@ class System(pc.System):
                 self.graph.add((element, RDF.type, CMSO.Element))
                 self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
                 self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+
+    def _add_simulation_cell(self):
+        """
+        Add a CMSO SimulationCell
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+
+        simulation_cell = URIRef(f'{self._name}_SimulationCell')
+        self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
+        self.graph.add((simulation_cell, RDF.type, CMSO.SimulationCell))
+        self.graph.add((simulation_cell, CMSO.hasVolume, 
+            Literal(np.round(self.schema.simulation_cell.volume(), decimals=2), 
+                datatype=XSD.float)))
+        self.graph.add((self.sample, CMSO.hasNumberOfAtoms, 
+            Literal(self.schema.simulation_cell.number_of_atoms(), 
+                datatype=XSD.integer)))
+        self.simulation_cell = simulation_cell
+        
+    
+    def _add_simulation_cell_properties(self):
+        """
+        Add a CMSO SimulationCell properties such as SimulationCellLength,
+        and Vectors.
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+        simulation_cell_length = URIRef(f'{self._name}_SimulationCellLength')
+        self.graph.add((self.simulation_cell, CMSO.hasLength, simulation_cell_length))
+        data = self.schema.simulation_cell.length()
+        self.graph.add((simulation_cell_length, RDF.type, CMSO.SimulationCellLength))
+        self.graph.add((simulation_cell_length, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
+        self.graph.add((simulation_cell_length, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
+        self.graph.add((simulation_cell_length, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
+        
+        simulation_cell_vector_01 = URIRef(f'{self._name}_SimulationCellVector_1')
+        data = self.schema.simulation_cell.vector()
+        self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
+        self.graph.add((simulation_cell_vector_01, RDF.type, CMSO.SimulationCellVector))
+        self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_x, Literal(data[0][0], datatype=XSD.float)))
+        self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_y, Literal(data[0][1], datatype=XSD.float)))
+        self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_z, Literal(data[0][2], datatype=XSD.float)))
+        
+        simulation_cell_vector_02 = URIRef(f'{self._name}_SimulationCellVector_2')
+        self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
+        self.graph.add((simulation_cell_vector_02, RDF.type, CMSO.SimulationCellVector))
+        self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_x, Literal(data[1][0], datatype=XSD.float)))
+        self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_y, Literal(data[1][1], datatype=XSD.float)))
+        self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_z, Literal(data[1][2], datatype=XSD.float)))
+        
+        simulation_cell_vector_03 = URIRef(f'{self._name}_SimulationCellVector_3')
+        self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
+        self.graph.add((simulation_cell_vector_03, RDF.type, CMSO.SimulationCellVector))
+        self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_x, Literal(data[2][0], datatype=XSD.float)))
+        self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_y, Literal(data[2][1], datatype=XSD.float)))
+        self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_z, Literal(data[2][2], datatype=XSD.float)))
+        
+        simulation_cell_angle = URIRef(f'{self._name}_SimulationCellAngle')
+        data = self.schema.simulation_cell.angle()
+        self.graph.add((self.simulation_cell, CMSO.hasAngle, simulation_cell_angle))
+        self.graph.add((simulation_cell_angle, RDF.type, CMSO.SimulationCellAngle))
+        self.graph.add((simulation_cell_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
+        self.graph.add((simulation_cell_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
+        self.graph.add((simulation_cell_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))
+        
+    
+    def _add_crystal_structure(self):
+        """
+        Add a CMSO Crystal Structure
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+
+        crystal_structure = URIRef(f'{self._name}_CrystalStructure')
+        self.graph.add((self.material, CMSO.hasStructure, crystal_structure))
+        self.graph.add((crystal_structure, RDF.type, CMSO.CrystalStructure))    
+        self.graph.add((crystal_structure, CMSO.hasAltName, 
+            Literal(self.schema.material.crystal_structure.name(), 
+                datatype=XSD.string)))
+        self.crystal_structure = crystal_structure
+        
+    def _add_space_group(self):
+        """
+        Add a CMSO Space Group
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+        space_group = URIRef(f'{self._name}_SpaceGroup')
+        self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
+        self.graph.add((space_group, CMSO.hasSpaceGroupSymbol, 
+            Literal(self.schema.material.crystal_structure.spacegroup_symbol(), 
+                datatype=XSD.string)))
+        self.graph.add((space_group, CMSO.hasSpaceGroupNumber, 
+            Literal(self.schema.material.crystal_structure.spacegroup_number(), 
+                datatype=XSD.integer)))
+    
+            
+    def _add_unit_cell(self):
+        """
+        Add a CMSO Unit Cell
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+
+        unit_cell = URIRef(f'{self._name}_UnitCell')
+        self.graph.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell))
+        self.graph.add((unit_cell, RDF.type, CMSO.UnitCell))
+        self.unit_cell = unit_cell
+        
+        #add bravais lattice
+        bv = self.schema.material.crystal_structure.unit_cell.bravais_lattice()
+        if bv is not None:
+            bv = URIRef(bv)
+            self.graph.add((self.unit_cell, CMSO.hasBravaisLattice, bv))
+        
+    def _add_lattice_properties(self):
+        """
+        Add CMSO lattice properties such as Lattice Parameter,
+        and its lengths and angles. 
+
+        Parameters
+        ----------
+        name
+            if provided, the name will be used instead of random identifier
+
+        Returns
+        -------
+        """
+        data = self.schema.material.crystal_structure.unit_cell.lattice_parameter()
+        lattice_parameter = URIRef(f'{self._name}_LatticeParameter')
+        self.graph.add((self.unit_cell, CMSO.hasLatticeParamter, lattice_parameter))
+        self.graph.add((lattice_parameter, RDF.type, CMSO.LatticeParameter))
+        self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
+        
+        lattice_angle = URIRef(f'{self._name}_LatticeAngle')
+        data = self.schema.material.crystal_structure.unit_cell.angle()
+        self.graph.add((self.unit_cell, CMSO.hasAngle, lattice_angle))
+        self.graph.add((lattice_angle, RDF.type, CMSO.LatticeAngle))
+        self.graph.add((lattice_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
+        self.graph.add((lattice_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
+        self.graph.add((lattice_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))        
+
 
     def add_gb(self, gb_dict):
         """
