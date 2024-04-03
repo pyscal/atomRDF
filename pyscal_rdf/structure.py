@@ -12,7 +12,15 @@ from pyscal_rdf.graph import RDFGraph
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
 from pyscal3.atoms import AttrSetter
+import pyscal_rdf.properties as prp
 from pyscal3.core import structure_dict, element_dict
+
+from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
+
+CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
+PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
+PODO = Namespace("https://purls.helmholtz-metadaten.de/podo/")
+
 
 def _make_crystal(structure, 
     lattice_constant = 1.00, 
@@ -20,7 +28,9 @@ def _make_crystal(structure,
     ca_ratio = 1.633, 
     noise = 0, 
     element=None,
-    primitive=False):
+    primitive=False,
+    graph=None,
+    names=True):
     
     atoms, box, sdict = pcs.make_crystal(structure, 
         lattice_constant=lattice_constant,
@@ -37,6 +47,8 @@ def _make_crystal(structure,
     s.atoms._lattice = structure
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
+    if graph is not None:
+        graph.add_structure_to_graph(s, names=names)
     return s
 
 def _make_general_lattice(positions,
@@ -45,7 +57,9 @@ def _make_general_lattice(positions,
     lattice_constant = 1.00, 
     repetitions = None, 
     noise = 0,
-    element=None):
+    element=None,
+    graph=None,
+    names=True):
 
     atoms, box, sdict = pcs.general_lattice(positions,
         types,
@@ -61,6 +75,9 @@ def _make_general_lattice(positions,
     s.atoms._lattice = 'custom'
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
+    if graph is not None:
+        graph.add_structure_to_graph(s, names=names)
+
     return s
 
 def _make_grain_boundary(axis, 
@@ -69,7 +86,9 @@ def _make_grain_boundary(axis,
     element = None, 
     lattice_constant = 1,
     repetitions = (1,1,1),
-    overlap=0.0):
+    overlap=0.0,
+    graph=None,
+    names=True):
 
     gb = GrainBoundary()
     gb.create_grain_boundary(axis=axis, sigma=sigma, 
@@ -90,8 +109,55 @@ def _make_grain_boundary(axis,
     s.atoms._lattice = structure
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
-    #s = operations.remap_to_box(s)
-    return s, gb
+    if graph is not None:
+        graph.add_structure_to_graph(s, names=names)
+        gb_dict = {"GBPlane": " ".join(np.array(gb_plane).astype(str)),
+                  "RotationAxis": axis,
+                  "MisorientationAngle": gb.theta,
+                  "GBType": gb.find_gb_character(),
+                  "sigma": gb.sigma,
+                  }
+        graph.add_gb(gb_dict)
+    return s
+
+def _read_structure(self, filename, 
+                  format="lammps-dump",
+                  graph=None, 
+                  names=False,
+                  species=None,
+                  lattice=None,
+                  lattice_constant=None,
+                  basis_box=None,
+                  basis_positions=None,
+                  ):
+    datadict = {}
+    if lattice is not None:
+        if lattice in structure_dict.keys():
+            datadict = structure_dict[lattice]['conventional']
+        datadict['lattice'] = lattice
+    if lattice_constant is not None:
+        datadict['lattice_constant'] = lattice_constant
+    if basis_box is not None:
+        datadict['box'] = basis_box
+    if basis_positions is not None:
+        datadict['positions'] = basis_positions
+
+    s = System(filename, format=format, species=species)
+    s.lattice_properties = datadict
+    
+    if graph is not None:
+        graph.add_structure_to_graph(s, names=names)
+    return s   
+
+
+
+
+
+
+
+
+
+
 
 
 class StructureGraph(RDFGraph):
