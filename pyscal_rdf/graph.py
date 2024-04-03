@@ -23,7 +23,7 @@ import pyscal_rdf.json_io as json_io
 from pyscal_rdf.visualize import visualize_graph
 from pyscal_rdf.network.network import OntologyNetwork
 from pyscal_rdf.network.ontology import read_ontology
-from pyscal_rdf.rdfsystem import System
+from pyscal_rdf.structure import System
 import pyscal_rdf.properties as prp
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -134,14 +134,8 @@ class RDFGraph:
         -------
         None
         """
-        if isinstance(structure, System):
-            #self.sysdict = convert_to_dict(structure)
-            self.system = structure
-        elif os.path.exists(structure):
-            sys = System(structure, format=format)
-            #self.sysdict = convert_to_dict(sys)
-            self.system = sys
-        
+        self.system = structure
+    
     def add(self, triple):
         if str(triple[2].toPython()) != 'None':
             self.graph.add(triple)

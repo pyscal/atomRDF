@@ -13,6 +13,7 @@ import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
 from pyscal3.atoms import AttrSetter
 import pyscal_rdf.properties as prp
+import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
