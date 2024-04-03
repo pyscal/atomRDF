@@ -24,9 +24,9 @@ from pyscal3.core import structure_dict, element_dict
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
-CMSO = Namespace("https://purls.helmholtz-metadaten.de/cmso/")
-PLDO = Namespace("https://purls.helmholtz-metadaten.de/pldo/")
-PODO = Namespace("https://purls.helmholtz-metadaten.de/podo/")
+CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
+PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
+PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 
 #read element data file
 file_location = os.path.dirname(__file__).split('/')
@@ -305,7 +305,7 @@ class System(pc.System):
                 name_index = self.graph.n_samples + 1
             self._name = f'sample:{name_index}'
         else:
-            self._name = f'sample:{str(uuid.uuid4())}'        
+            self._name = f'sample:{str(uuid.uuid4())}'
 
     def _add_sample(self):
         sample = URIRef(f'{self._name}')
