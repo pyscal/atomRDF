@@ -8,7 +8,7 @@ def test_structuregraph():
 	vis = s.visualise()
 	assert(vis != None)
 
-	vis = s.visualise(styledict={"BNode":{"fontsize":10}})
+	vis = s.visualise()
 	assert(vis != None)
 
 	s.write("temp.ttl", format="turtle")
