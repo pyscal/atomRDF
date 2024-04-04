@@ -3,7 +3,6 @@ import os
 from rdflib import BNode, URIRef, Literal, Namespace
 import uuid
 import json
-import ipycytoscape
 
 
 def get_title_from_BNode(x):
