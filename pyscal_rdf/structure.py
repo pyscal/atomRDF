@@ -281,7 +281,35 @@ class System(pc.System):
                     self.graph.add((chemical_species, CMSO.hasElement, element))
                     self.graph.add((element, RDF.type, CMSO.Element))
                     self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))        
+                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+
+            #we also have to read in file and clean it up
+            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+
+            #open the file for reading
+            with open(filepath, 'r') as fin:
+                data = json.load(fin)
+                positions = data[position_identifier]['value']
+                species = data[species_identifier]['value']
+
+            #clean up items
+            positions = [pos for count, pos in enumerate(positions) if count not in delete_ids]
+            species = [pos for count, pos in enumerate(species) if count not in delete_ids]
+
+            datadict = {
+                position_identifier:{
+                    "value": positions,
+                    "label": "position", 
+                },
+                species_identifier:{
+                    "value": species,
+                    "label": "species", 
+                },
+            }
+            outfile = os.path.join(self.graph.structure_store, str(self._name).split(':')[-1])
+            json_io.write_file(outfile,  datadict)
 
 
     def __delitem__(self, val):
