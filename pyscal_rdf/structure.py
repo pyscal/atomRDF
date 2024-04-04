@@ -243,22 +243,24 @@ class System(pc.System):
 
         self.schema._add_attribute(mapdict)
 
-
-    def __delitem__(self, val):
-        if isinstance(val, int):
-            val = [val]
+    def delete(self, ids=None, indices=None, condition=None, selection=False):
         
-        #now the graph has to be updated accordingly
+        masks = self.atoms._generate_bool_list(ids=ids, indices=indices, condition=condition, selection=selection)
+        delete_list = [masks[self.atoms["head"][x]] for x in range(self.atoms.ntotal)]
+        delete_ids = [x for x in range(self.atoms.ntotal) if delete_list[x]]
+        self.atoms._delete_atoms(delete_ids)
+
         if self.graph is not None:
             #first annotate graph
-            c = (len(val)/self.natoms)
-            self.graph.add_vacancy(c, number=len(val))
+            val = len([x for x in masks if x])        
+            c = (val/self.natoms)
+            self.add_vacancy(c, number=val)
             #now we need to re-add atoms, so at to remove
             self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms-len(val), datatype=XSD.integer)))
+            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms-val, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
-            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
             for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
@@ -276,10 +278,16 @@ class System(pc.System):
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
                     element = URIRef(element_indetifiers[e])
-                    self.add((chemical_species, CMSO.hasElement, element))
-                    self.add((element, RDF.type, CMSO.Element))
-                    self.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                    self.graph.add((chemical_species, CMSO.hasElement, element))
+                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))        
+
+
+    def __delitem__(self, val):
+        if isinstance(val, int):
+            val = [val]
+        #now the graph has to be updated accordingly
         self.delete(indices=list(val))
 
     def to_graph(self):
