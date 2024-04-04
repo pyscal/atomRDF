@@ -41,19 +41,22 @@ with open(file_location, 'r') as fin:
 
 
 defstyledict = {
-    "BNode": {"color": "#ffe6ff", 
+    "edgecolor": "#263238",
+    "BNode": {"color": "#D9D9D9", 
               "shape": "box", 
               "style": "filled",
               "fontsize": "8",
-              "fontname": "Courier"},
-    "URIRef": {"color": "#ffffcc", 
+              "fontname": "Helvetica"},
+    "URIRef": {"color": "#C9DAF8", 
                "shape": "box", 
                "style": "filled",
-               "fontsize": "8"},
-    "Literal": {"color": "#e6ffcc", 
+               "fontsize": "8",
+               "fontname": "Helvetica"},
+    "Literal": {"color": "#E6B8AF", 
                 "shape": "parallelogram", 
                 "style": "filled",
-                "fontsize": "8"},
+                "fontsize": "8",
+                "fontname": "Helvetica"},
 }
 
 
@@ -243,22 +246,17 @@ class KnowledgeGraph:
         self.visualise(*args, **kwargs)
         
     def visualise(self,
-                  backend='ipycytoscape',
-                  edge_color="#37474F",
                   styledict=None, 
-                  graph_attr ={'rankdir': 'BT'},
-                  layoutname='cola',
+                  rankdir='BT',
                   hide_types=False,
-                  workflow_view=False):
+                  workflow_view=False,
+                  size=None,
+                  layout='neato'):
         """
         Vosualise the RDF tree of the Graph
 
         Parameters
         ----------
-        backend: string, {'ipycytoscape', 'graphviz'}
-            Chooses the backend with which the graph will be plotted. ipycytoscape provides an interactive, 
-            but slow visualisation, whereas graphviz provides a non-interactive fast visualisation.
-
         edge_color: string
             Edge color of the boxes
 
@@ -291,18 +289,20 @@ class KnowledgeGraph:
           shape:  
           style:         
         """
-        
+        if size is not None:
+            size = f"{size[0]},{size[1]}"
+
         sdict = defstyledict.copy()
         if styledict is not None:
             sdict = _replace_keys(sdict, styledict)
+        
         return visualize_graph(self.graph, 
-                               backend=backend,
-                               edge_color=edge_color,
                                styledict=sdict, 
-                               graph_attr=graph_attr,
-                               layoutname=layoutname,
+                               rankdir=rankdir,
                                hide_types=hide_types,
-                               workflow_view=workflow_view)
+                               workflow_view=workflow_view,
+                               size=size,
+                               layout=layout)
     
     
     def write(self, filename, format="json-ld"):
