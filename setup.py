@@ -6,7 +6,7 @@ with open('README.md') as readme_file:
 
 setup(
     name='pyscal_rdf',
-    version='0.2.3',
+    version='0.2.4',
     author='Abril Azocar Guzman, Sarath Menon',
     author_email='sarath.menon@pyscal.org',
     description='Ontology based structural manipulation and quering',
