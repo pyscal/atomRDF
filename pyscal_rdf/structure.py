@@ -296,8 +296,8 @@ class System(pc.System):
                 species = data[species_identifier]['value']
 
             #clean up items
-            positions = self.schema.positions
-            species = self.schema.species
+            positions = self.schema.atom_attribute.positions
+            species = self.schema.atom_attribute.species
             datadict = {
                 position_identifier:{
                     "value": positions,
