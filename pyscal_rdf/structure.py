@@ -248,6 +248,7 @@ class System(pc.System):
         masks = self.atoms._generate_bool_list(ids=ids, indices=indices, condition=condition, selection=selection)
         delete_list = [masks[self.atoms["head"][x]] for x in range(self.atoms.ntotal)]
         delete_ids = [x for x in range(self.atoms.ntotal) if delete_list[x]]
+        actual_natoms = self.natoms
         self.atoms._delete_atoms(delete_ids)
 
         if self.graph is not None:
@@ -257,7 +258,7 @@ class System(pc.System):
             self.add_vacancy(c, number=val)
             #now we need to re-add atoms, so at to remove
             self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(self.natoms-val, datatype=XSD.integer)))
+            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
             chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
@@ -295,9 +296,8 @@ class System(pc.System):
                 species = data[species_identifier]['value']
 
             #clean up items
-            positions = [pos for count, pos in enumerate(positions) if count not in delete_ids]
-            species = [pos for count, pos in enumerate(species) if count not in delete_ids]
-
+            positions = self.schema.positions
+            species = self.schema.species
             datadict = {
                 position_identifier:{
                     "value": positions,
