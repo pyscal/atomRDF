@@ -289,22 +289,14 @@ class System(pc.System):
             position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
             species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
 
-            #open the file for reading
-            with open(filepath, 'r') as fin:
-                data = json.load(fin)
-                positions = data[position_identifier]['value']
-                species = data[species_identifier]['value']
-
             #clean up items
-            positions = self.schema.atom_attribute.positions
-            species = self.schema.atom_attribute.species
             datadict = {
                 position_identifier:{
-                    "value": positions,
+                    "value": self.schema.atom_attribute.position(),
                     "label": "position", 
                 },
                 species_identifier:{
-                    "value": species,
+                    "value": self.schema.atom_attribute.species(),
                     "label": "species", 
                 },
             }
