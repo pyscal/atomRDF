@@ -6,6 +6,7 @@ object is stored in triplets.
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 from rdflib.store import NO_STORE, VALID_STORE
+from rdflib import plugin
 
 import os
 import numpy as np
@@ -93,13 +94,24 @@ class KnowledgeGraph:
 
                 
         elif store=="SQLAlchemy":
+            #check for modules
+            try:
+                import sqlalchemy as sa
+            except ImportError:
+                raise RuntimeError('Please install the sqlalchemy package')
+            try:
+                import rdflib_sqlalchemy as rsa
+            except ImportError:
+                raise RuntimeError('Please install the rdllib-sqlalchemy package. The development version is needed, please do pip install git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop')
+
             if store_file is None:
                 raise ValueError("store file is needed if store is not memory")
-            self.graph = Graph(store="SQLAlchemy", identifier=identifier)
+
+            self.graph = Graph(store="SQLAlchemy", identifier=identifier)            
             uri = Literal(f"sqlite:///{store_file}")
             self.graph.open(uri, create=True)        
         else:
-            raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
+            raise ValueError("Memory or SQLAlchemy")
         
         #start the storage
         self.structure_store = _setup_structure_store(self.structure_store)
