@@ -5,6 +5,7 @@ import os
 from functools import partial, update_wrapper
 import pyscal_rdf.workflow.workflow as wf
 from pyscal_rdf.structure import _make_crystal
+from pyscal_rdf.structure import System
 from pyscal3.core import structure_dict, element_dict
 
 
@@ -14,6 +15,15 @@ def _check_if_job_is_valid(job):
     if not type(job).__name__ in valid_jobs:
         raise TypeError('These type of pyiron Job is not currently supported')
 
+
+def _add_structures(kg, job):
+    initial_structure = job.structure
+    final_structure = job.get_structure(frame=-1)
+    if 'sample_id' in initial_structure.info.keys():
+        if not initial_structure.info['sample_id'] in kg.samples:
+            kg.add_structure(System.read.ase(initial_structure))
+    else:
+        kg.add_structure(System.read.ase(initial_structure))
 
 def update_project(pr, kg):
     """
