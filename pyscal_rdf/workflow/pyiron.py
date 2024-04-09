@@ -4,7 +4,6 @@ Wrappers for pyiron jobs
 import os
 from functools import partial, update_wrapper
 import pyscal_rdf.workflow.workflow as wf
-from pyscal_rdf import KnowledgeGraph, System
 from pyscal_rdf.structure import _make_crystal
 from pyscal3.core import structure_dict, element_dict
 
