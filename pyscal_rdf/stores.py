@@ -1,6 +1,6 @@
 from rdflib.store import NO_STORE, VALID_STORE
 from rdflib import plugin
-from rdflib import Graph
+from rdflib import Graph, Literal
 
 import os
 #special methods; for supporting workflow envs
