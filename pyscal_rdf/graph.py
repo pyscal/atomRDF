@@ -29,6 +29,11 @@ import pyscal_rdf.properties as prp
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
 
+
+#special methods; for supporting workflow envs
+from pyscal_rdf.workflow import update_project
+
+
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
@@ -127,6 +132,9 @@ class KnowledgeGraph:
             self.graph = Graph(store="SQLAlchemy", identifier=identifier)            
             uri = Literal(f"sqlite:///{store_file}")
             self.graph.open(uri, create=True)
+
+            #finally update project object
+            update_project(store)
 
 
         else:
