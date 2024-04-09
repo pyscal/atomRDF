@@ -27,8 +27,8 @@ def update_project(pr, kg):
         raise ImportError('Please install pyiron_base and pyiron_atomistics')
 
     class StructureFactory(PyironFactory):
-        def __init__(self):
-            pass
+        def __init__(self, graph):
+            self.graph = graph
     
         def bulk(self, 
             element,
@@ -36,8 +36,7 @@ def update_project(pr, kg):
             crystalstructure=None,
             a=None,
             covera=None,
-            cubic=True,
-            graph=None):
+            cubic=True):
 
             if crystalstructure is None:
                 crystalstructure = element_dict[element]['structure']
@@ -50,7 +49,7 @@ def update_project(pr, kg):
                 ca_ratio = covera,
                 element = element,
                 primitive = not cubic,
-                graph=graph,
+                graph=self.graph,
                 )
             
             ase_structure = struct.write.ase()
@@ -80,7 +79,7 @@ def update_project(pr, kg):
                 lattice_constant=a,
                 repetitions=repetitions,
                 overlap=overlap,
-                graph=graph)
+                graph=self.graph)
 
             ase_structure = struct.write.ase()
             pyiron_structure = ase_to_pyiron(ase_structure)
@@ -92,7 +91,7 @@ def update_project(pr, kg):
     class StructureCreator(Creator):
         def __init__(self, project):
             super().__init__(project)
-            self._structure = StructureFactory()
+            self._structure = StructureFactory(project.graph)
     
         @property
         def annotated_structure(self):
