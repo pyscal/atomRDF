@@ -543,7 +543,7 @@ class System(pc.System):
         """
         data = self.schema.material.crystal_structure.unit_cell.lattice_parameter()
         lattice_parameter = URIRef(f'{self._name}_LatticeParameter')
-        self.graph.add((self.unit_cell, CMSO.hasLatticeParamter, lattice_parameter))
+        self.graph.add((self.unit_cell, CMSO.hasLatticeParameter, lattice_parameter))
         self.graph.add((lattice_parameter, RDF.type, CMSO.LatticeParameter))
         self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
         self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))

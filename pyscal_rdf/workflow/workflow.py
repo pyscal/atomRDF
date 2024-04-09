@@ -184,3 +184,62 @@ def annotate_dft(graph,
         if software is not None:
             graph.add((software_agent, RDFS.label, Literal(software)))
 
+
+def _get_inherited_properties(kg, from_sample, to_sample):
+    #Here we need to add inherited info: CalculatedProperties will be lost
+    #Defects will be inherited
+    #add vac stuff
+    material = list([k[2] for k in kg.graph.triples((from_sample, CMSO.hasMaterial, None))])[0]
+    defects = list([x[2] for x in kg.graph.triples((material, CMSO.hasDefect, None))])
+    #now for each defect we copy add this to the final sample
+    final_material = list([k[2] for k in kg.graph.triples((to_sample, CMSO.hasMaterial, None))])[0]
+    
+    for defect in defects:
+        new_defect = URIRef(defect.toPython())
+        kg.graph.add((final_material, CMSO.hasDefect, new_defect))
+        #now fetch all defect based info
+        for triple in kg.graph.triples((defect, None, None)):
+            kg.graph.add((new_defect, triple[1], triple[2]))
+    
+    #now add the special props for vacancy
+    initial_simcell = kg.graph.value(from_sample, CMSO.hasSimulationCell)
+    final_simcell = kg.graph.value(to_sample, CMSO.hasSimulationCell) 
+    for triple in kg.graph.triples((initial_simcell, PODO.hasVacancyConcentration, None)):
+        kg.graph.add((final_simcell, triple[1], triple[2]))
+    for triple in kg.graph.triples((initial_simcell, PODO.hasNumberOfVacancies, None)):
+        kg.graph.add((final_simcell, triple[1], triple[2]))
+
+def _get_lattice_properties(kg, from_sample, to_sample):
+    material = list([k[2] for k in kg.graph.triples((from_sample, CMSO.hasMaterial, None))])[0]
+    crystal_structure = kg.graph.value(material, CMSO.hasStructure)
+    altname = kg.graph.value(crystalstructure, CMSO.hasAltName)
+
+    #add this to new structure
+    final_material = list([k[2] for k in kg.graph.triples((to_sample, CMSO.hasMaterial, None))])[0]
+    final_crystal_structure = kg.graph.value(final_material, CMSO.hasStructure)
+    kg.add((final_crystal_structure, CMSO.hasAltName, altname))
+
+    #space group
+    space_group = kg.graph.value(crystal_structure, CMSO.hasSpaceGroup)
+    final_space_group = kg.graph.value(final_crystal_structure, CMSO.hasSpaceGroup)
+    for triple in kg.graph.triples((space_group, None, None)):
+        kg.graph.add((final_space_group, triple[1], triple[2]))
+
+    #unit cell
+    unit_cell = kg.graph.value(crystal_structure, CMSO.hasUnitCell)
+    bv = kg.graph.value(unit_cell, CMSO.hasBravaisLattice)
+
+    final_unit_cell = kg.graph.value(final_crystal_structure, CMSO.hasUnitCell)
+    kg.graph.add((final_unit_cell, CMSO.hasBravaisLattice, bv))
+
+    #lattice parameter
+    lattice_parameter = kg.graph.value(unit_cell, CMSO.hasLatticeParameter)
+    final_lattice_parameter = kg.graph.value(final_unit_cell, CMSO.hasLatticeParameter)
+    for triple in kg.graph.triples((lattice_parameter, None, None)):
+        kg.graph.add((final_lattice_parameter, triple[1], triple[2]))
+    
+    #lattice angle
+    lattice_angle = kg.graph.value(unit_cell, CMSO.hasAngle)
+    final_lattice_angle = kg.graph.value(final_unit_cell, CMSO.hasAngle)
+    for triple in kg.graph.triples((lattice_angle, None, None)):
+        kg.graph.add((final_lattice_angle, triple[1], triple[2]))
