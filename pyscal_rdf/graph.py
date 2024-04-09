@@ -106,7 +106,11 @@ class KnowledgeGraph:
         self._atom_ids = None
         self.store = store
 
-        
+    
+    def add_structure(self, structure):
+        structure.graph = self
+        structure.to_graph()
+
     def add(self, triple):
         if str(triple[2].toPython()) != 'None':
             self.graph.add(triple)
