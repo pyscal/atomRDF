@@ -252,3 +252,44 @@ def add_derived_structure(kg, initial_sample, final_sample):
     kg.add((initial_sample, RDF.type, PROV.Entity))
     kg.add((final_sample, RDF.type, PROV.Entity))
     kg.add((final_sample, PROV.wasDerivedFrom, initial_sample))
+
+def add_method(kg, mdict):
+    main_id = mdict['id']
+    activity = URIRef(f'activity:{main_id}')
+    kg.add((activity, RDF.type, PROV.Activity))
+
+    if len(mdict['dof']) == 0:
+        kg.add((activity, RDF.type, ASO.RigidEnergyCalculation))
+    else:
+        kg.add((activity, RDF.type, ASO.StructureOptimization))
+
+    method = URIRef(f'method:{main_id}')
+    if mdict['method'] == 'MolecularStatics':
+        kg.add((method, RDF.type, ASO.MolecularStatics))
+    elif mdict['method'] == 'MolecularDynamics':
+        kg.add((method, RDF.type, ASO.MolecularDynamics))
+    kg.add((activity, ASO.hasMethod, method))
+
+    for dof in mdict['dof']:
+        kg.add((activity, ASO.hasRelaxationDOF, getattr(ASO, dof)))
+
+    kg.add((method, ASO.hasStatisticalEnsemble, getattr(ASO, mdict['ensemble'])))
+
+
+    #add temperature if needed
+    if mdict['temperature'] is not None:
+        temperature = URIRef(f'temperature:{main_id}')
+        kg.add((temperature, RDF.type, ASO.InputParameter))
+        kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
+        kg.add((activity, ASO.hasInputParameter, temperature))
+        kg.add((temperature, ASO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
+        kg.add((temperature, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
+
+    if mdict['pressure'] is not None:
+        pressure = URIRef(f'pressure:{main_id}')
+        kg.add((pressure, RDF.type, ASO.InputParameter))
+        kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
+        kg.add((activity, ASO.hasInputParameter, pressure))
+        kg.add((pressure, ASO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
+        kg.add((pressure, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
+

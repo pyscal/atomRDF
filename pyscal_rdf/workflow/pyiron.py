@@ -97,8 +97,10 @@ def _identify_method(job):
     mdict['pressure'] = press
     mdict['dof'] = dof
     mdict['ensemble'] = ensemble
+    mdict['id'] = job.id
 
     return mdict
+
 
 def update_project(pr, kg):
     """
