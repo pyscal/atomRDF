@@ -102,6 +102,10 @@ def _identify_method(job):
     return mdict
 
 
+def _add_method(kg, job):
+    mdict = _identify_method(job)
+    wf.add_method(kg, mdict)
+
 def update_project(pr, kg):
     """
     Update project to add extra creator functions
