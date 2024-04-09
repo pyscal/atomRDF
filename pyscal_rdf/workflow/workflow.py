@@ -19,6 +19,7 @@ CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
+
 def annotate_md(graph,
                 structure,
                 id = None,
