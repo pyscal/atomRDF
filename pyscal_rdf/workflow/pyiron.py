@@ -44,38 +44,59 @@ def _add_structures(kg, job):
 def _identify_method(job):
     job_dict = job.input.to_dict()
     input_dict = {job_dict['control_inp/data_dict']['Parameter'][x]:job_dict['control_inp/data_dict']['Value'][x] for x in range(len(job_dict['control_inp/data_dict']['Parameter']))}
-    method = None
+    dof = []
     temp = None
     press = None
+    md_method = None
+    ensemble = None
 
     if 'min_style' in input_dict.keys():
-        method = 'minimization'
+        dof.append('AtomicPosition')
+        dof.append('CellVolume')
+        md_method = 'MolecularStatics'
 
     elif 'nve' in input_dict['fix___ensemble']:
         if int(input_dict['run']) == 0:
             method = 'static'
+            md_method = 'MolecularStatics'
+            ensemble = 'NVE'
+
         elif int(input_dict['run']) > 0:
             method = 'md_nve'
+            dof.append('AtomicPosition')
+            md_method = 'MolecularDynamics'
+            ensemble = 'NVE'
+
 
     elif 'nvt' in input_dict['fix___ensemble']:
         method = 'md_nvt'
         raw = input_dict['fix___ensemble'].split()
         temp = float(raw[3])
+        dof.append('AtomicPosition')
+        md_method = 'MolecularDynamics'
+        ensemble = 'NVT'
 
     elif 'npt' in input_dict['fix___ensemble']:
+        dof.append('AtomicPosition')
+        dof.append('CellVolume')
         if 'aniso' in input_dict['fix___ensemble']:
             method = 'md_npt_aniso'
+            dof.append('CellShape')
         else:
             method = 'md_npt_iso'
+        md_method = 'MolecularDynamics'        
         raw = input_dict['fix___ensemble'].split()
         temp = float(raw[3])
         press = float(raw[7])
+        ensemble = 'NPT'
 
 
     mdict = {}
-    mdict['method'] = method
+    mdict['method'] = md_method
     mdict['temperature'] = temp
     mdict['pressure'] = press
+    mdict['dof'] = dof
+    mdict['ensemble'] = ensemble
 
     return mdict
 
