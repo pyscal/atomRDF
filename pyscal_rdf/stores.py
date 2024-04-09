@@ -9,7 +9,7 @@ from pyscal_rdf.workflow import update_project
 
 def create_store(kg, store, identifier, 
     store_file=None,
-    structure_store=structure_store):
+    structure_store=None):
 
     kg.store_file = store_file
     if store == 'Memory':
