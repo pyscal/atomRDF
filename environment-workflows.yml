@@ -1,0 +1,32 @@
+name: workflow-rdf-v0.1
+channels:
+  - conda-forge
+dependencies:
+  - python >3.8, <3.12
+  - pyscal3 >=3.1.5
+  - pyscal-rdf
+  - rdflib
+  - pyyaml
+  - jupyterlab
+  - graphviz
+  - python-graphviz
+  - pyyaml
+  - ase 
+  - networkx
+  - pandas
+  - owlready2
+  - plotly
+  - ipywidgets
+  #workflow packages
+  - pyiron_base
+  - pyiron_atomistics
+  - pyiron-data
+  - sqlalchemy
+  - iprpy-data
+  - sphinxdft >=2.7.0
+  - sphinxdft-data
+  - lammps
+  - nglview
+  - pip:
+    - "git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"
+
