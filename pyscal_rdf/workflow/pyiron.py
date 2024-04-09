@@ -10,22 +10,22 @@ from pyscal3.core import structure_dict, element_dict
 
 
 def _check_if_job_is_valid(job):
-	valid_jobs = ['Lammps', ]
-	
-	if not type(job).__name__ in valid_jobs:
-		raise TypeError('These type of pyiron Job is not currently supported')
+    valid_jobs = ['Lammps', ]
+    
+    if not type(job).__name__ in valid_jobs:
+        raise TypeError('These type of pyiron Job is not currently supported')
 
 
 def update_project(pr):
-	"""
-	Update project to add extra creator functions
-	"""
+    """
+    Update project to add extra creator functions
+    """
 
     try:
-    	from pyiron_base import Creator, PyironFactory
-    	from pyiron_atomistics.atomistics.structure.atoms import ase_to_pyiron, pyiron_to_ase
+        from pyiron_base import Creator, PyironFactory
+        from pyiron_atomistics.atomistics.structure.atoms import ase_to_pyiron, pyiron_to_ase
     except ImportError:
-    	raise ImportError('Please install pyiron_base and pyiron_atomistics')
+        raise ImportError('Please install pyiron_base and pyiron_atomistics')
 
     class StructureFactory(PyironFactory):
         def __init__(self):
@@ -40,10 +40,10 @@ def update_project(pr):
             cubic=True,
             graph=None):
 
-	        if crystalstructure is None:
-	            crystalstructure = element_dict[element]['structure']
-	            if a is None:
-	                a = _element_dict[element]['lattice_constant']
+            if crystalstructure is None:
+                crystalstructure = element_dict[element]['structure']
+                if a is None:
+                    a = _element_dict[element]['lattice_constant']
         
             struct = _make_crystal(crystalstructure,
                 repetitions=repetitions,
@@ -53,36 +53,36 @@ def update_project(pr):
                 primitive = not cubic,
                 graph=graph,
                 )
-			
-			ase_structure = struct.write.ase()
+            
+            ase_structure = struct.write.ase()
             pyiron_structure = ase_to_pyiron(ase_structure)
             pyiron_structure.info['sample_id'] = struct.sample
             return pyiron_structure
 
 
-	    def grain_boundary(self,
-	        element,
-	        axis,
-	        sigma,
-	        gb_plane,
-	        repetitions = (1,1,1),
-	        crystalstructure=None,
-	        a=1,
-	        overlap=0.0,
-	        graph=None,
-	        ):
+        def grain_boundary(self,
+            element,
+            axis,
+            sigma,
+            gb_plane,
+            repetitions = (1,1,1),
+            crystalstructure=None,
+            a=1,
+            overlap=0.0,
+            graph=None,
+            ):
 
-	        struct = self._graph._annotated_make_grain_boundary(axis,
-	            sigma,
-	            gb_plane,
-	            structure = crystalstructure,
-	            element=element,
-	            lattice_constant=a,
-	            repetitions=repetitions,
-	            overlap=overlap,
-	            graph=graph)
+            struct = self._graph._annotated_make_grain_boundary(axis,
+                sigma,
+                gb_plane,
+                structure = crystalstructure,
+                element=element,
+                lattice_constant=a,
+                repetitions=repetitions,
+                overlap=overlap,
+                graph=graph)
 
-			ase_structure = struct.write.ase()
+            ase_structure = struct.write.ase()
             pyiron_structure = ase_to_pyiron(ase_structure)
             pyiron_structure.info['sample_id'] = struct.sample
             return pyiron_structure
