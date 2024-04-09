@@ -212,7 +212,7 @@ def _get_inherited_properties(kg, from_sample, to_sample):
 def _get_lattice_properties(kg, from_sample, to_sample):
     material = list([k[2] for k in kg.graph.triples((from_sample, CMSO.hasMaterial, None))])[0]
     crystal_structure = kg.graph.value(material, CMSO.hasStructure)
-    altname = kg.graph.value(crystalstructure, CMSO.hasAltName)
+    altname = kg.graph.value(crystal_structure, CMSO.hasAltName)
 
     #add this to new structure
     final_material = list([k[2] for k in kg.graph.triples((to_sample, CMSO.hasMaterial, None))])[0]
@@ -243,3 +243,12 @@ def _get_lattice_properties(kg, from_sample, to_sample):
     final_lattice_angle = kg.graph.value(final_unit_cell, CMSO.hasAngle)
     for triple in kg.graph.triples((lattice_angle, None, None)):
         kg.graph.add((final_lattice_angle, triple[1], triple[2]))
+
+
+def add_derived_structure(kg, initial_sample, final_sample):
+    _get_inherited_properties(kg, initial_sample, final_sample)
+    _get_lattice_properties(kg, initial_sample, final_sample)
+
+    kg.add((initial_sample, RDF.type, PROV.Entity))
+    kg.add((final_sample, RDF.type, PROV.Entity))
+    kg.add((final_sample, PROV.wasDerivedFrom, initial_sample))

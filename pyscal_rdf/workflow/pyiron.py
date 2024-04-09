@@ -22,7 +22,7 @@ def _add_structures(kg, job):
     initial_pyscal_structure =  System.read.ase(initial_pyiron_structure)
 
     initial_sample_id = None
-    if 'sample_id' in initial_structure.info.keys():
+    if 'sample_id' in initial_pyiron_structure.info.keys():
         if not initial_pyiron_structure.info['sample_id'] in kg.samples:
             kg.add_structure(initial_pyscal_structure)
         else:
@@ -34,12 +34,11 @@ def _add_structures(kg, job):
         initial_sample_id = initial_pyscal_structure.sample
 
     #add final structure
-    final_pyscal_structure = System.read.ase(final_structure, graph=kg)
+    final_pyscal_structure = System.read.ase(final_pyiron_structure, graph=kg)
     final_sample_id = final_pyscal_structure.sample
 
     #now we do rthe transfer
-    wf._get_inherited_properties(kg, initial_sample_id, final_sample_id)
-    wf._get_lattice_properties(kg, initial_sample_id, final_sample_id)
+    wf.add_derived_structure(kg, initial_sample_id, final_sample_id)
 
 def update_project(pr, kg):
     """
