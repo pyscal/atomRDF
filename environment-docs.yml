@@ -14,8 +14,6 @@ dependencies:
   - networkx
   - pandas
   - owlready2
-  - sqlalchemy <2.0.0
-  - rdflib-sqlalchemy
   - jupyter-book
   - plotly
   - ipywidgets
