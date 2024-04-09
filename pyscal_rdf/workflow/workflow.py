@@ -4,7 +4,6 @@ Workflows aspects for non-automated annotation of structures.
 """
 
 from pyscal_rdf.rdfsystem import System
-from pyscal_rdf import StructureGraph
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
 import warnings

@@ -43,7 +43,7 @@ def update_project(pr):
             if crystalstructure is None:
                 crystalstructure = element_dict[element]['structure']
                 if a is None:
-                    a = _element_dict[element]['lattice_constant']
+                    a = element_dict[element]['lattice_constant']
         
             struct = _make_crystal(crystalstructure,
                 repetitions=repetitions,
