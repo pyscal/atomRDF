@@ -15,7 +15,7 @@ def _check_if_job_is_valid(job):
         raise TypeError('These type of pyiron Job is not currently supported')
 
 
-def update_project(pr):
+def update_project(pr, kg):
     """
     Update project to add extra creator functions
     """
@@ -99,3 +99,4 @@ def update_project(pr):
             return self._structure
     
     pr._creator = StructureCreator(pr)
+    pr.graph = kg 
