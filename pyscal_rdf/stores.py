@@ -40,7 +40,7 @@ def store_alchemy(kg, store, identifier, store_file=None, structure_store=None):
 
 def store_pyiron(kg, store, identifier, store_file=None, structure_store=None):        
     structure_store = os.path.join(store.path, 'rdf_structure_store')
-    kg.structure_store = kg._setup_structure_store(structure_store=structure_store)
+    kg.structure_store = _setup_structure_store(structure_store=structure_store)
     store_file = os.path.join(store.path, f'{store.name}.db')
     store_alchemy(kg, store, identifier, store_file, structure_store=structure_store)      
     #finally update project object
