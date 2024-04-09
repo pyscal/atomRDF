@@ -17,13 +17,29 @@ def _check_if_job_is_valid(job):
 
 
 def _add_structures(kg, job):
-    initial_structure = job.structure
-    final_structure = job.get_structure(frame=-1)
+    initial_pyiron_structure = job.structure
+    final_pyiron_structure = job.get_structure(frame=-1)
+    initial_pyscal_structure =  System.read.ase(initial_pyiron_structure)
+
+    initial_sample_id = None
     if 'sample_id' in initial_structure.info.keys():
-        if not initial_structure.info['sample_id'] in kg.samples:
-            kg.add_structure(System.read.ase(initial_structure))
+        if not initial_pyiron_structure.info['sample_id'] in kg.samples:
+            kg.add_structure(initial_pyscal_structure)
+        else:
+            initial_sample_id = initial_pyiron_structure.info['sample_id']
     else:
-        kg.add_structure(System.read.ase(initial_structure))
+        kg.add_structure(initial_pyscal_structure)
+
+    if initial_sample_id is None:
+        initial_sample_id = initial_pyscal_structure.sample
+
+    #add final structure
+    final_pyscal_structure = System.read.ase(final_structure, graph=kg)
+    final_sample_id = final_pyscal_structure.sample
+
+    #now we do rthe transfer
+    wf._get_inherited_properties(kg, initial_sample_id, final_sample_id)
+    wf._get_lattice_properties(kg, initial_sample_id, final_sample_id)
 
 def update_project(pr, kg):
     """
