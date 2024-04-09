@@ -23,20 +23,22 @@ def update_project(pr, kg):
     try:
         from pyiron_base import Creator, PyironFactory
         from pyiron_atomistics.atomistics.structure.atoms import ase_to_pyiron, pyiron_to_ase
+        import pyiron_atomistics.atomistics.structure.factory as sf
     except ImportError:
         raise ImportError('Please install pyiron_base and pyiron_atomistics')
 
-    class StructureFactory(PyironFactory):
+    class AnnotatedStructureFactory:
         def __init__(self, graph):
-            self.graph = graph
-    
+            self._graph = graph
+
         def bulk(self, 
             element,
             repetitions=None, 
             crystalstructure=None,
             a=None,
             covera=None,
-            cubic=True):
+            cubic=True,
+            graph=None):
 
             if crystalstructure is None:
                 crystalstructure = element_dict[element]['structure']
@@ -49,14 +51,13 @@ def update_project(pr, kg):
                 ca_ratio = covera,
                 element = element,
                 primitive = not cubic,
-                graph=self.graph,
+                graph=self._graph,
                 )
             
             ase_structure = struct.write.ase()
             pyiron_structure = ase_to_pyiron(ase_structure)
             pyiron_structure.info['sample_id'] = struct.sample
             return pyiron_structure
-
 
         def grain_boundary(self,
             element,
@@ -78,7 +79,7 @@ def update_project(pr, kg):
                 lattice_constant=a,
                 repetitions=repetitions,
                 overlap=overlap,
-                graph=self.graph)
+                graph=self._graph)
 
             ase_structure = struct.write.ase()
             pyiron_structure = ase_to_pyiron(ase_structure)
@@ -86,13 +87,23 @@ def update_project(pr, kg):
             return pyiron_structure
 
 
+    class StructureFactory(sf.StructureFactory):
+        def __init__(self, graph):
+            super().__init__()
+            self._annotated_structure = AnnotatedStructureFactory(graph)
+
+        @property
+        def annotated_structure(self):
+            return self._annotated_structure
+
+    
     class StructureCreator(Creator):
         def __init__(self, project):
             super().__init__(project)
             self._structure = StructureFactory(project.graph)
-    
+
         @property
-        def annotated_structure(self):
+        def structure(self):
             return self._structure
     
     pr.graph = kg
