@@ -20,16 +20,16 @@ PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
 def annotate_md(graph,
-                                structure,
-                                id = None,
-                                pressure = None,
-                                ensemble = None,
-                                temperature = None,
-                                potential_doi = None,
-                                potential_type = "",
-                                software_id = None,
-                                software = None,
-                                ):
+                structure,
+                id = None,
+                pressure = None,
+                ensemble = None,
+                temperature = None,
+                potential_doi = None,
+                potential_type = "",
+                software_id = None,
+                software = None,
+                ):
     """
     Annotate a given structure with MD simulation details
     """
@@ -129,13 +129,14 @@ def annotate_md(graph,
         if software is not None:
             graph.add((software_agent, RDFS.label, Literal(software)))
 
+
 def annotate_dft(graph,
-                                structure,
-                                id = None,
-                                pressure = None,
-                                software_id = None,
-                                software = None,
-                                ):
+                structure,
+                id = None,
+                pressure = None,
+                software_id = None,
+                software = None,
+                ):
     """
     Annotate a given structure with MD simulation details
     """
