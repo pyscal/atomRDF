@@ -107,6 +107,7 @@ class KnowledgeGraph:
             if store_file is None:
                 raise ValueError("store file is needed if store is not memory")
 
+            self.graph = Graph(store="SQLAlchemy", identifier=identifier)            
             uri = Literal(f"sqlite:///{store_file}")
             self.graph.open(uri, create=True)        
         else:
