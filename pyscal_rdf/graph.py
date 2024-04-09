@@ -102,20 +102,15 @@ class KnowledgeGraph:
             try:
                 import rdflib_sqlalchemy as rsa
             except ImportError:
-                raise RuntimeError('Please install the rdllib-sqlalchemy package')
-
+                raise RuntimeError('Please install the rdllib-sqlalchemy package. The development version is needed, please do pip install git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop')
 
             if store_file is None:
                 raise ValueError("store file is needed if store is not memory")
-            try:
-                self.graph = Graph(store="SQLAlchemy", identifier=identifier)
-            except plugin.PluginException:
-                raise 
 
             uri = Literal(f"sqlite:///{store_file}")
             self.graph.open(uri, create=True)        
         else:
-            raise ValueError("store should be pyiron_project, SQLAlchemy, or Memory")
+            raise ValueError("Memory or SQLAlchemy")
         
         #start the storage
         self.structure_store = _setup_structure_store(self.structure_store)
