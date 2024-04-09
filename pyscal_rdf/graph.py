@@ -109,7 +109,26 @@ class KnowledgeGraph:
 
             self.graph = Graph(store="SQLAlchemy", identifier=identifier)            
             uri = Literal(f"sqlite:///{store_file}")
-            self.graph.open(uri, create=True)        
+            self.graph.open(uri, create=True)
+
+        elif type(store).__name__ == 'Project':
+            self.structure_store = os.path.join(store.path, 'rdf_structure_store')
+            self.structure_store = _setup_structure_store(self.structure_store)
+            try:
+                import sqlalchemy as sa
+            except ImportError:
+                raise RuntimeError('Please install the sqlalchemy package')
+            try:
+                import rdflib_sqlalchemy as rsa
+            except ImportError:
+                raise RuntimeError('Please install the rdllib-sqlalchemy package. The development version is needed, please do pip install git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop')
+
+            store_file = os.path.join(store.path, f'{store.name}.db')
+            self.graph = Graph(store="SQLAlchemy", identifier=identifier)            
+            uri = Literal(f"sqlite:///{store_file}")
+            self.graph.open(uri, create=True)
+
+
         else:
             raise ValueError("Memory or SQLAlchemy")
         
