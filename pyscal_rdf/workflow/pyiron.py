@@ -55,7 +55,8 @@ def update_project(pr):
             
             ase_structure = struct.write.ase()
             pyiron_structure = ase_to_pyiron(ase_structure)
-            pyiron_structure.info['sample_id'] = struct.sample
+            if graph is not None:
+                pyiron_structure.info['sample_id'] = struct.sample
             return pyiron_structure
 
 
@@ -83,7 +84,8 @@ def update_project(pr):
 
             ase_structure = struct.write.ase()
             pyiron_structure = ase_to_pyiron(ase_structure)
-            pyiron_structure.info['sample_id'] = struct.sample
+            if graph is not None:
+                pyiron_structure.info['sample_id'] = struct.sample
             return pyiron_structure
 
 

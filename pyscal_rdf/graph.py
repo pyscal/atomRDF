@@ -5,8 +5,6 @@ object is stored in triplets.
 """
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
-from rdflib.store import NO_STORE, VALID_STORE
-from rdflib import plugin
 
 import os
 import numpy as np
@@ -26,12 +24,10 @@ from pyscal_rdf.network.network import OntologyNetwork
 from pyscal_rdf.network.ontology import read_ontology
 from pyscal_rdf.structure import System
 import pyscal_rdf.properties as prp
+from pyscal_rdf.stores import create_store
+
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
-
-
-#special methods; for supporting workflow envs
-from pyscal_rdf.workflow import update_project
 
 
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
@@ -75,12 +71,6 @@ def _replace_keys(refdict, indict):
                 refdict[key] = val
     return refdict
 
-def _setup_structure_store(structure_store):
-    if structure_store is None:
-        structure_store = os.path.join(os.getcwd(), 'rdf_structure_store')
-    if not os.path.exists(structure_store):
-        os.mkdir(structure_store)
-    return structure_store
 
 class KnowledgeGraph:
     def __init__(self, graph_file=None, 
@@ -90,58 +80,12 @@ class KnowledgeGraph:
         ontology=None,
         structure_store=None):
         
-        self.store_file = store_file
-        self.structure_store = structure_store
 
-
-        if store == "Memory":
-            self.graph = Graph(store="Memory", identifier=identifier)
-
-                
-        elif store=="SQLAlchemy":
-            #check for modules
-            try:
-                import sqlalchemy as sa
-            except ImportError:
-                raise RuntimeError('Please install the sqlalchemy package')
-            try:
-                import rdflib_sqlalchemy as rsa
-            except ImportError:
-                raise RuntimeError('Please install the rdllib-sqlalchemy package. The development version is needed, please do pip install git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop')
-
-            if store_file is None:
-                raise ValueError("store file is needed if store is not memory")
-
-            self.graph = Graph(store="SQLAlchemy", identifier=identifier)            
-            uri = Literal(f"sqlite:///{store_file}")
-            self.graph.open(uri, create=True)
-
-        elif type(store).__name__ == 'Project':
-            self.structure_store = os.path.join(store.path, 'rdf_structure_store')
-            self.structure_store = _setup_structure_store(self.structure_store)
-            try:
-                import sqlalchemy as sa
-            except ImportError:
-                raise RuntimeError('Please install the sqlalchemy package')
-            try:
-                import rdflib_sqlalchemy as rsa
-            except ImportError:
-                raise RuntimeError('Please install the rdllib-sqlalchemy package. The development version is needed, please do pip install git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop')
-
-            store_file = os.path.join(store.path, f'{store.name}.db')
-            self.graph = Graph(store="SQLAlchemy", identifier=identifier)            
-            uri = Literal(f"sqlite:///{store_file}")
-            self.graph.open(uri, create=True)
-
-            #finally update project object
-            update_project(store)
-
-
-        else:
-            raise ValueError("Memory or SQLAlchemy")
+        create_store(self, store, identifier, 
+            store_file=store_file,
+            structure_store=structure_store)
         
         #start the storage
-        self.structure_store = _setup_structure_store(self.structure_store)
 
         #start binding
         self.graph.bind("cmso", CMSO)
