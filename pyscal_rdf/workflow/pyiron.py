@@ -97,5 +97,6 @@ def update_project(pr, kg):
         def annotated_structure(self):
             return self._structure
     
+    pr.graph = kg
     pr._creator = StructureCreator(pr)
-    pr.graph = kg 
+     
