@@ -18,278 +18,227 @@ CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
+class Workflow:
+    def __init__(self, kg, 
+        structure=None, sample=None,
+        parent_structure=None, parent_sample=None,
+        method_dict=None):
+        self.kg = kg
 
-def annotate_md(graph,
-                structure,
-                id = None,
-                pressure = None,
-                ensemble = None,
-                temperature = None,
-                potential_doi = None,
-                potential_type = "",
-                software_id = None,
-                software = None,
-                ):
-    """
-    Annotate a given structure with MD simulation details
-    """
-    main_id = str(uuid.uuid4())
-    if id is not None:
-        main_id = id
+        if (structure is None) and (sample is None):
+            raise ValueError('Either structure or sample should be specified')
+
+        if sample is None:
+            #its not added to graph yet
+            structure.graph = kg
+            structure.to_graph()
+            sample = structure.sample
         
-    sample = structure.sample
-    graph.add((sample, RDF.type, PROV.Entity))
+        if parent_sample is None:
+            #its not added to graph yet
+            parent_structure.graph = kg
+            parent_structure.to_graph()
+            parent_sample = parent_structure.sample
 
-    activity = URIRef(f'activity:{main_id}')
-    graph.add((activity, RDF.type, PROV.Activity))
-    graph.add((activity, RDF.type, ASO.StructureOptimization))
+        self.mdict = method_dict
+        self.parent_sample = parent_sample
+        self.add_structural_relation()
+        self.add_method()
 
-    method = URIRef(f'method:{main_id}')
-    graph.add((method, RDF.type, ASO.MolecularDynamics))
-    graph.add((activity, ASO.hasMethod, method))
-    graph.add((activity, ASO.hasRelaxationDOF, ASO.AtomicPosition))
+    def _add_inherited_properties(self, ):
+        #Here we need to add inherited info: CalculatedProperties will be lost
+        #Defects will be inherited
+        if self.parent_sample is None:
+            return
 
-    if pressure is None:
-        pass
-    elif np.isscalar(pressure):
-        graph.add((activity, ASO.hasRelaxationDOF, ASO.CellVolume))
-    else: 
-        #check if pressure is hydrostatic or not
-        axial_all_alike = None not in pressure[:3] and np.allclose(
-            pressure[:3], pressure[0]
-        )
-        shear_all_none = all(p is None for p in pressure[3:])
-        shear_all_zero = None not in pressure[3:] and np.allclose(pressure[3:], 0)
-        hydrostatic = axial_all_alike and (shear_all_none or shear_all_zero)
-        if hydrostatic:
-            graph.add((activity, ASO.hasRelaxationDOF, ASO.CellVolume))
-        else:
-            graph.add((activity, ASO.hasRelaxationDOF, ASO.CellVolume))
-            graph.add((activity, ASO.hasRelaxationDOF, ASO.CellShape))
+        parent_material = list([k[2] for k in self.kg.graph.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_defects = list([x[2] for x in self.kg.graph.triples((parent_material, CMSO.hasDefect, None))])
+        #now for each defect we copy add this to the final sample
+        material = list([k[2] for k in self.kg.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
 
-    if ensemble is not None:
-        if ensemble == 'NVT':
-            graph.add((method, ASO.hasStatisticalEnsemble, ASO.NVT))
-            if temperature is None:
-                raise ValueError('Temperature cannot be None in NVT')
-            temperature_node = URIRef(f'temperature:{main_id}')
-            graph.add((temperature_node, RDF.type, ASO.InputParameter))
-            graph.add((temperature_node, RDFS.label, Literal('temperature', datatype=XSD.string)))
-            graph.add((activity, ASO.hasInputParameter, temperature_node))
-            graph.add((temperature_node, ASO.hasValue, Literal(temperature, datatype=XSD.float)))
-            graph.add((temperature_node, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
+        for defect in defects:
+            new_defect = URIRef(defect.toPython())
+            self.kg.graph.add((material, CMSO.hasDefect, new_defect))
+            #now fetch all defect based info
+            for triple in self.kg.graph.triples((defect, None, None)):
+                self.kg.graph.add((new_defect, triple[1], triple[2]))
 
-        elif ensemble == 'NPT':
-            graph.add((method, ASO.hasStatisticalEnsemble, ASO.NPT))
-            if temperature is None:
-                raise ValueError('Temperature cannot be None in NPT')
-            temperature_node = URIRef(f'temperature:{main_id}')
-            graph.add((temperature_node, RDF.type, ASO.InputParameter))
-            graph.add((temperature_node, RDFS.label, Literal('temperature', datatype=XSD.string)))
-            graph.add((activity, ASO.hasInputParameter, temperature_node))
-            graph.add((temperature_node, ASO.hasValue, Literal(temperature, datatype=XSD.float)))
-            graph.add((temperature_node, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
-
-            pressure_node = URIRef(f'pressure:{main_id}')
-            graph.add((pressure_node, RDF.type, ASO.InputParameter))
-            graph.add((pressure_node, RDFS.label, Literal('pressure', datatype=XSD.string)))
-            graph.add((activity, ASO.hasInputParameter, pressure_node))
-            graph.add((pressure_node, ASO.hasValue, Literal(pressure, datatype=XSD.float)))
-            graph.add((pressure_node, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
-
-    graph.add((sample, PROV.wasGeneratedBy, activity))
-
-    if potential_doi is None:
-        warnings.warn('potential_doi is None, maybe consider providing it?')
-    else:
-        potential = URIRef(f'potential:{main_id}')
-
-        if 'meam' in potential_type.lower():
-            graph.add((potential, RDF.type, ASO.MEAM))
-        elif 'eam' in potential_type.lower():
-            graph.add((potential, RDF.type, ASO.EAM))
-        elif 'lj' in potential_type.lower():
-            graph.add((potential, RDF.type, ASO.LennardJones))
-        elif 'ace' in potential_type.lower():
-            graph.add((potential, RDF.type, ASO.MLPotential))
-        elif 'snap' in potential_type.lower():
-            graph.add((potential, RDF.type, ASO.MLPotential))
-        elif 'tersoff' in potential_type.lower():
-            graph.add((potential, RDF.type, ASO.Tersoff))
-        else:
-            graph.add((potential, RDF.type, ASO.InteratomicPotential))
-
-        graph.add((potential, ASO.hasReference, Literal(potential_doi)))
-        graph.add((method, ASO.hasInteratomicPotential, potential))
-
-    if software_id is not None:
-        software_agent = URIRef(software_id)
-        graph.add((software_agent, RDF.type, PROV.SoftwareAgent))
-        graph.add((activity, PROV.wasAssociatedWith, software_agent))
-        if software is not None:
-            graph.add((software_agent, RDFS.label, Literal(software)))
-
-
-def annotate_dft(graph,
-                structure,
-                id = None,
-                pressure = None,
-                software_id = None,
-                software = None,
-                ):
-    """
-    Annotate a given structure with MD simulation details
-    """
-    main_id = str(uuid.uuid4())
-    if id is not None:
-        main_id = id
+        #now add the special props for vacancy
+        parent_simcell = kg.graph.value(self.sample, CMSO.hasSimulationCell)
+        simcell = kg.graph.value(self.parent_sample, CMSO.hasSimulationCell) 
         
-    sample = structure.sample
-    graph.add((sample, RDF.type, PROV.Entity))
+        for triple in self.kg.graph.triples((parent_simcell, PODO.hasVacancyConcentration, None)):
+            self.kg.graph.add((simcell, triple[1], triple[2]))
+        for triple in self.kg.graph.triples((parent_simcell, PODO.hasNumberOfVacancies, None)):
+            self.kg.graph.add((simcell, triple[1], triple[2]))
 
-    activity = URIRef(f'activity:{main_id}')
-    graph.add((activity, RDF.type, PROV.Activity))
-    graph.add((activity, RDF.type, ASO.StructureOptimization))
+    def _get_lattice_properties(self, ):
+        if self.parent_sample is None:
+            return
 
-    method = URIRef(f'method:{main_id}')
-    graph.add((method, RDF.type, ASO.DensityFunctionalTheory))
-    graph.add((activity, ASO.hasMethod, method))
-    graph.add((activity, ASO.hasRelaxationDOF, ASO.AtomicPosition))
+        parent_material = list([k[2] for k in self.kg.graph.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_crystal_structure = self.kg.graph.value(parent_material, CMSO.hasStructure)
+        parent_altname = self.kg.graph.value(parent_crystal_structure, CMSO.hasAltName)
 
-    if pressure is None:
-        pass
-    elif np.isscalar(pressure):
-        graph.add((activity, ASO.hasRelaxationDOF, ASO.CellVolume))
-    else: 
-        #check if pressure is hydrostatic or not
-        axial_all_alike = None not in pressure[:3] and np.allclose(
-            pressure[:3], pressure[0]
-        )
-        shear_all_none = all(p is None for p in pressure[3:])
-        shear_all_zero = None not in pressure[3:] and np.allclose(pressure[3:], 0)
-        hydrostatic = axial_all_alike and (shear_all_none or shear_all_zero)
-        if hydrostatic:
-            graph.add((activity, ASO.hasRelaxationDOF, ASO.CellVolume))
+        #add this to new structure
+        material = list([k[2] for k in self.kg.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
+        crystal_structure = self.kg.graph.value(material, CMSO.hasStructure)
+        self.kg.add((crystal_structure, CMSO.hasAltName, parent_altname))
+
+        #space group
+        parent_space_group = self.kg.graph.value(parent_crystal_structure, CMSO.hasSpaceGroup)
+        space_group = self.kg.graph.value(crystal_structure, CMSO.hasSpaceGroup)
+        for triple in self.kg.graph.triples((parent_space_group, None, None)):
+            self.kg.graph.add((space_group, triple[1], triple[2]))
+
+        #unit cell
+        parent_unit_cell = self.kg.graph.value(parent_crystal_structure, CMSO.hasUnitCell)
+        parent_bv = self.kg.graph.value(parent_unit_cell, CMSO.hasBravaisLattice)
+
+        unit_cell = self.kg.graph.value(crystal_structure, CMSO.hasUnitCell)
+        self.kg.graph.add((unit_cell, CMSO.hasBravaisLattice, parent_bv))
+
+        #lattice parameter
+        parent_lattice_parameter = self.kg.graph.value(parent_unit_cell, CMSO.hasLatticeParameter)
+        lattice_parameter = self.kg.graph.value(unit_cell, CMSO.hasLatticeParameter)
+        for triple in self.kg.graph.triples((parent_lattice_parameter, None, None)):
+            self.kg.graph.add((lattice_parameter, triple[1], triple[2]))
+
+        #lattice angle
+        parent_lattice_angle = self.kg.graph.value(parent_unit_cell, CMSO.hasAngle)
+        lattice_angle = self.kg.graph.value(unit_cell, CMSO.hasAngle)
+        for triple in self.kg.graph.triples((parent_lattice_angle, None, None)):
+            self.kg.graph.add((lattice_angle, triple[1], triple[2]))
+
+
+    def add_structural_relation(self, ):
+        self.kg.add((self.sample, RDF.type, PROV.Entity))
+        if self.parent_sample is not None:
+            self.kg.add((self.parent_sample, RDF.type, PROV.Entity))
+            self.kg.add((self.sample, PROV.wasDerivedFrom, self.parent_sample))
+            self._add_inherited_properties()
+            self._get_lattice_properties()
+
+
+    def add_method(self, ):
+        """
+        mdict
+        -----
+        md:
+           method: MolecularStatics
+           temperature: 100
+           pressure: 0
+           dof:
+             - AtomicPositions
+             - CellVolume
+           ensemble: NPT
+           id: 2314
+           potential:
+             uri: https://doi.org/xxx
+             type: eam
+             label: string
+           workflow_manager:
+             uri: xxxx
+             label: pyiron
+           software:
+           - uri: xxxx
+             label: lammps
+           - uri: xxxx
+             label: pyscal
+
+        """
+        if self.mdict is None:
+            return
+
+        if 'md' in self.mdict.keys():
+            method_type = 'md'
+            mdict = self.mdict['md']
+        elif 'dft' in self.mdict.keys():
+            method_type = 'dft'
+            mdict = self.mdict['dft']
         else:
-            graph.add((activity, ASO.hasRelaxationDOF, ASO.CellVolume))
-            graph.add((activity, ASO.hasRelaxationDOF, ASO.CellShape))
+            raise KeyError('method dict keys should be either md or dft')
 
+        
+        #add activity
+        main_id = mdict['id']
+        activity = URIRef(f'activity:{main_id}')
+        self.kg.add((activity, RDF.type, PROV.Activity))
 
-    graph.add((sample, PROV.wasGeneratedBy, activity))
+        #method, this is specific to dft/md
+        if method_type == 'md':
+            method = URIRef(f'method:{main_id}')
+            if mdict['method'] == 'MolecularStatics':
+                self.kg.add((method, RDF.type, ASO.MolecularStatics))
+            elif mdict['method'] == 'MolecularDynamics':
+                self.kg.add((method, RDF.type, ASO.MolecularDynamics))
+        elif method_type == 'dft':
+            method = URIRef(f'method:{main_id}')
+            if mdict['method'] == 'DensityFunctionalTheory':
+                self.kg.add((method, RDF.type, ASO.DensityFunctionalTheory))
+        self.kg.add((activity, ASO.hasMethod, method))
 
-    if software_id is not None:
-        software_agent = URIRef(software_id)
-        graph.add((software_agent, RDF.type, PROV.SoftwareAgent))
-        graph.add((activity, PROV.wasAssociatedWith, software_agent))
-        if software is not None:
-            graph.add((software_agent, RDFS.label, Literal(software)))
+        if len(mdict['dof']) == 0:
+            self.kg.add((activity, RDF.type, ASO.RigidEnergyCalculation))
+        else:
+            self.kg.add((activity, RDF.type, ASO.StructureOptimization))
 
+        for dof in mdict['dof']:
+            self.kg.add((activity, ASO.hasRelaxationDOF, getattr(ASO, dof)))
 
-def _get_inherited_properties(kg, from_sample, to_sample):
-    #Here we need to add inherited info: CalculatedProperties will be lost
-    #Defects will be inherited
-    #add vac stuff
-    material = list([k[2] for k in kg.graph.triples((from_sample, CMSO.hasMaterial, None))])[0]
-    defects = list([x[2] for x in kg.graph.triples((material, CMSO.hasDefect, None))])
-    #now for each defect we copy add this to the final sample
-    final_material = list([k[2] for k in kg.graph.triples((to_sample, CMSO.hasMaterial, None))])[0]
-    
-    for defect in defects:
-        new_defect = URIRef(defect.toPython())
-        kg.graph.add((final_material, CMSO.hasDefect, new_defect))
-        #now fetch all defect based info
-        for triple in kg.graph.triples((defect, None, None)):
-            kg.graph.add((new_defect, triple[1], triple[2]))
-    
-    #now add the special props for vacancy
-    initial_simcell = kg.graph.value(from_sample, CMSO.hasSimulationCell)
-    final_simcell = kg.graph.value(to_sample, CMSO.hasSimulationCell) 
-    for triple in kg.graph.triples((initial_simcell, PODO.hasVacancyConcentration, None)):
-        kg.graph.add((final_simcell, triple[1], triple[2]))
-    for triple in kg.graph.triples((initial_simcell, PODO.hasNumberOfVacancies, None)):
-        kg.graph.add((final_simcell, triple[1], triple[2]))
+        if method_type == 'md':
+            self.kg.add((method, ASO.hasStatisticalEnsemble, getattr(ASO, mdict['ensemble'])))
 
-def _get_lattice_properties(kg, from_sample, to_sample):
-    material = list([k[2] for k in kg.graph.triples((from_sample, CMSO.hasMaterial, None))])[0]
-    crystal_structure = kg.graph.value(material, CMSO.hasStructure)
-    altname = kg.graph.value(crystal_structure, CMSO.hasAltName)
+            #add temperature if needed
+            if mdict['temperature'] is not None:
+                temperature = URIRef(f'temperature:{main_id}')
+                self.kg.add((temperature, RDF.type, ASO.InputParameter))
+                self.kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
+                self.kg.add((activity, ASO.hasInputParameter, temperature))
+                self.kg.add((temperature, ASO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
+                self.kg.add((temperature, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
 
-    #add this to new structure
-    final_material = list([k[2] for k in kg.graph.triples((to_sample, CMSO.hasMaterial, None))])[0]
-    final_crystal_structure = kg.graph.value(final_material, CMSO.hasStructure)
-    kg.add((final_crystal_structure, CMSO.hasAltName, altname))
+            if mdict['pressure'] is not None:
+                pressure = URIRef(f'pressure:{main_id}')
+                self.kg.add((pressure, RDF.type, ASO.InputParameter))
+                self.kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
+                self.kg.add((activity, ASO.hasInputParameter, pressure))
+                self.kg.add((pressure, ASO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
+                self.kg.add((pressure, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
 
-    #space group
-    space_group = kg.graph.value(crystal_structure, CMSO.hasSpaceGroup)
-    final_space_group = kg.graph.value(final_crystal_structure, CMSO.hasSpaceGroup)
-    for triple in kg.graph.triples((space_group, None, None)):
-        kg.graph.add((final_space_group, triple[1], triple[2]))
+            #potentials need to be mapped
+            potential = URIRef(f'potential:{main_id}')
+            if 'meam' in mdict['potential']['type']:
+                self.kg.add((potential, RDF.type, ASO.MEAM))
+            elif 'eam' in mdict['potential']['type']:
+                self.kg.add((potential, RDF.type, ASO.EAM))
+            elif 'lj' in mdict['potential']['type']:
+                self.kg.add((potential, RDF.type, ASO.LennardJones))
+            elif 'ace' in mdict['potential']['type']:
+                self.kg.add((potential, RDF.type, ASO.MLPotential))
+            else:
+                self.kg.add((potential, RDF.type, ASO.InteratomicPotential))
 
-    #unit cell
-    unit_cell = kg.graph.value(crystal_structure, CMSO.hasUnitCell)
-    bv = kg.graph.value(unit_cell, CMSO.hasBravaisLattice)
+            if 'uri' in mdict['potential'].keys():
+                self.kg.add((potential, ASO.hasReference, Literal(mdict['potential']['uri'])))
+            if 'label' in mdict['potential'].keys():
+                self.kg.add((potential, RDFS.label, Literal(mdict['potential']['label'])))
 
-    final_unit_cell = kg.graph.value(final_crystal_structure, CMSO.hasUnitCell)
-    kg.graph.add((final_unit_cell, CMSO.hasBravaisLattice, bv))
+            self.kg.add((method, ASO.hasInteratomicPotential, potential))
 
-    #lattice parameter
-    lattice_parameter = kg.graph.value(unit_cell, CMSO.hasLatticeParameter)
-    final_lattice_parameter = kg.graph.value(final_unit_cell, CMSO.hasLatticeParameter)
-    for triple in kg.graph.triples((lattice_parameter, None, None)):
-        kg.graph.add((final_lattice_parameter, triple[1], triple[2]))
-    
-    #lattice angle
-    lattice_angle = kg.graph.value(unit_cell, CMSO.hasAngle)
-    final_lattice_angle = kg.graph.value(final_unit_cell, CMSO.hasAngle)
-    for triple in kg.graph.triples((lattice_angle, None, None)):
-        kg.graph.add((final_lattice_angle, triple[1], triple[2]))
+        self.kg.add((self.sample, PROV.wasGeneratedBy, activity))
 
+        #finally add software
+        wfagent = None
+        if 'workflow_manager' in mdict.keys():
+            wfagent = URIRef(mdict["workflow_manager"]['uri'])
+            self.kg.add((wfagent, RDF.type, PROV.SoftwareAgent))
+            self.kg.add((wfagent, RDFS.label, Literal(mdict["workflow_manager"]['label'])))
+        
+        for software in mdict['software'].keys():
+            agent = URIRef(software['uri'])
+            self.kg.add((agent, RDF.type, PROV.SoftwareAgent))
+            self.kg.add((agent, RDFS.label, software['label']))
 
-def add_derived_structure(kg, initial_sample, final_sample):
-    _get_inherited_properties(kg, initial_sample, final_sample)
-    _get_lattice_properties(kg, initial_sample, final_sample)
-
-    kg.add((initial_sample, RDF.type, PROV.Entity))
-    kg.add((final_sample, RDF.type, PROV.Entity))
-    kg.add((final_sample, PROV.wasDerivedFrom, initial_sample))
-
-def add_method(kg, mdict):
-    main_id = mdict['id']
-    activity = URIRef(f'activity:{main_id}')
-    kg.add((activity, RDF.type, PROV.Activity))
-
-    if len(mdict['dof']) == 0:
-        kg.add((activity, RDF.type, ASO.RigidEnergyCalculation))
-    else:
-        kg.add((activity, RDF.type, ASO.StructureOptimization))
-
-    method = URIRef(f'method:{main_id}')
-    if mdict['method'] == 'MolecularStatics':
-        kg.add((method, RDF.type, ASO.MolecularStatics))
-    elif mdict['method'] == 'MolecularDynamics':
-        kg.add((method, RDF.type, ASO.MolecularDynamics))
-    kg.add((activity, ASO.hasMethod, method))
-
-    for dof in mdict['dof']:
-        kg.add((activity, ASO.hasRelaxationDOF, getattr(ASO, dof)))
-
-    kg.add((method, ASO.hasStatisticalEnsemble, getattr(ASO, mdict['ensemble'])))
-
-
-    #add temperature if needed
-    if mdict['temperature'] is not None:
-        temperature = URIRef(f'temperature:{main_id}')
-        kg.add((temperature, RDF.type, ASO.InputParameter))
-        kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
-        kg.add((activity, ASO.hasInputParameter, temperature))
-        kg.add((temperature, ASO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
-        kg.add((temperature, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
-
-    if mdict['pressure'] is not None:
-        pressure = URIRef(f'pressure:{main_id}')
-        kg.add((pressure, RDF.type, ASO.InputParameter))
-        kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
-        kg.add((activity, ASO.hasInputParameter, pressure))
-        kg.add((pressure, ASO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
-        kg.add((pressure, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
-
+            if wfagent is not None:
+                self.kg.add((wfagent, PROV.actedOnBehalfOf, agent))

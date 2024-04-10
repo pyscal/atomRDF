@@ -38,7 +38,7 @@ def _add_structures(kg, job):
     final_sample_id = final_pyscal_structure.sample
 
     #now we do rthe transfer
-    wf.add_derived_structure(kg, initial_sample_id, final_sample_id)
+    return final_sample_id
 
 
 def _identify_method(job):
@@ -104,7 +104,16 @@ def _identify_method(job):
 
 def _add_method(kg, job):
     mdict = _identify_method(job)
-    wf.add_method(kg, mdict)
+    activity_id = wf.add_method(kg, mdict)
+    return activity_id
+
+def add_mappings(kg, job):
+    final_sample_id = _add_structures(kg, job)
+    final_sample_id = wf.add_derived_structure(kg, initial_sample_id, final_sample_id)
+
+    activity_id = _add_method(kg, job)
+    
+
 
 def update_project(pr, kg):
     """
