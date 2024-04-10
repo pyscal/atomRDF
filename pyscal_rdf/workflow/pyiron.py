@@ -7,7 +7,7 @@ import pyscal_rdf.workflow.workflow as wf
 from pyscal_rdf.structure import _make_crystal
 from pyscal_rdf.structure import System
 from pyscal3.core import structure_dict, element_dict
-
+import ast
 
 def _check_if_job_is_valid(job):
     valid_jobs = ['Lammps', ]
@@ -23,22 +23,12 @@ def _add_structures(kg, job):
 
     initial_sample_id = None
     if 'sample_id' in initial_pyiron_structure.info.keys():
-        if not initial_pyiron_structure.info['sample_id'] in kg.samples:
-            kg.add_structure(initial_pyscal_structure)
-        else:
-            initial_sample_id = initial_pyiron_structure.info['sample_id']
-    else:
-        kg.add_structure(initial_pyscal_structure)
-
-    if initial_sample_id is None:
-        initial_sample_id = initial_pyscal_structure.sample
-
+        initial_sample_id = initial_pyiron_structure.info['sample_id']
     #add final structure
-    final_pyscal_structure = System.read.ase(final_pyiron_structure, graph=kg)
-    final_sample_id = final_pyscal_structure.sample
-
+    final_pyscal_structure = System.read.ase(final_pyiron_structure)
+    
     #now we do rthe transfer
-    return final_sample_id
+    return initial_pyscal_structure, initial_sample_id, final_pyscal_structure, None
 
 
 def _identify_method(job):
@@ -90,30 +80,53 @@ def _identify_method(job):
         press = float(raw[7])
         ensemble = 'NPT'
 
-
     mdict = {}
-    mdict['method'] = md_method
-    mdict['temperature'] = temp
-    mdict['pressure'] = press
-    mdict['dof'] = dof
-    mdict['ensemble'] = ensemble
-    mdict['id'] = job.id
+    mdict['md'] = {}
+    mdict['md']['method'] = md_method
+    mdict['md']['temperature'] = temp
+    mdict['md']['pressure'] = press
+    mdict['md']['dof'] = dof
+    mdict['md']['ensemble'] = ensemble
+    mdict['md']['id'] = job.id
+
+    #now process potential
+    inpdict = job.input.to_dict()
+    ps = inpdict['potential_inp/data_dict']['Value'][0]
+    name = inpdict['potential_inp/potential/Name']
+    potstr = job.input.to_dict()['potential_inp/potential/Citations']
+    potdict = ast.literal_eval(potstr[1:-1])
+    url = None
+    if 'url' in potdict[list(potdict.keys())[0]].keys():
+        url = potdict[list(potdict.keys())[0]]['url']
+
+    mdict['md']['potential'] = {}
+    mdict['md']['potential']['type'] = ps
+    mdict['md']['potential']['label'] = name
+    if url is not None:
+        mdict['md']['potential']['uri'] = url
+    else:
+        mdict['md']['potential']['uri'] = name
+
+    
+    mdict['md']['workflow_manager'] = {}
+    mdict['md']['workflow_manager']['uri'] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
+    mdict['md']['workflow_manager']['label'] = "pyiron"
+    #and finally code details
+
+    
+    software = {'uri':"http://demo.fiz-karlsruhe.de/matwerk/E447986", 
+    'label':'LAMMPS'}
+    mdict['md']['software'] = [software]
 
     return mdict
 
 
-def _add_method(kg, job):
-    mdict = _identify_method(job)
-    activity_id = wf.add_method(kg, mdict)
-    return activity_id
-
 def add_mappings(kg, job):
-    final_sample_id = _add_structures(kg, job)
-    final_sample_id = wf.add_derived_structure(kg, initial_sample_id, final_sample_id)
-
-    activity_id = _add_method(kg, job)
-    
-
+    initial_structure, initial_sample, final_structure, final_sample = _add_structures(kg, job)
+    mdict = _identify_method(job)
+    workflow = wf.Workflow(kg, structure=final_structure, 
+        sample=final_sample, parent_structure=initial_structure,
+        parent_sample=initial_sample, method_dict=mdict)
 
 def update_project(pr, kg):
     """

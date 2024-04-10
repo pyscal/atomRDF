@@ -40,6 +40,7 @@ class Workflow:
             parent_structure.to_graph()
             parent_sample = parent_structure.sample
 
+        self.sample = sample
         self.mdict = method_dict
         self.parent_sample = parent_sample
         self.add_structural_relation()
@@ -56,7 +57,7 @@ class Workflow:
         #now for each defect we copy add this to the final sample
         material = list([k[2] for k in self.kg.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
 
-        for defect in defects:
+        for defect in parent_defects:
             new_defect = URIRef(defect.toPython())
             self.kg.graph.add((material, CMSO.hasDefect, new_defect))
             #now fetch all defect based info
@@ -64,8 +65,8 @@ class Workflow:
                 self.kg.graph.add((new_defect, triple[1], triple[2]))
 
         #now add the special props for vacancy
-        parent_simcell = kg.graph.value(self.sample, CMSO.hasSimulationCell)
-        simcell = kg.graph.value(self.parent_sample, CMSO.hasSimulationCell) 
+        parent_simcell = self.kg.graph.value(self.sample, CMSO.hasSimulationCell)
+        simcell = self.kg.graph.value(self.parent_sample, CMSO.hasSimulationCell) 
         
         for triple in self.kg.graph.triples((parent_simcell, PODO.hasVacancyConcentration, None)):
             self.kg.graph.add((simcell, triple[1], triple[2]))
@@ -234,11 +235,14 @@ class Workflow:
             wfagent = URIRef(mdict["workflow_manager"]['uri'])
             self.kg.add((wfagent, RDF.type, PROV.SoftwareAgent))
             self.kg.add((wfagent, RDFS.label, Literal(mdict["workflow_manager"]['label'])))
+            self.kg.add((method, PROV.wasAssociatedWith, wfagent))
         
-        for software in mdict['software'].keys():
+        for software in mdict['software']:
             agent = URIRef(software['uri'])
             self.kg.add((agent, RDF.type, PROV.SoftwareAgent))
-            self.kg.add((agent, RDFS.label, software['label']))
+            self.kg.add((agent, RDFS.label, Literal(software['label'])))
 
             if wfagent is not None:
                 self.kg.add((wfagent, PROV.actedOnBehalfOf, agent))
+            else:
+                self.kg.add((method, PROV.wasAssociatedWith, agent))
