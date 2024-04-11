@@ -1,12 +1,21 @@
 """
 Workflows aspects for non-automated annotation of structures.
 
+This consists of a workflow class which implements the necessary methods to serialise triples as needed.
+Custom workflow solutions can be implemented. An example available here is pyiron.
+The custom workflow env should implement the following functions:
+
+_check_if_job_is_valid
+_add_structure
+_identify_method
+extract_calculated_properties
+inform_graph
+
+See pyscal_rdf.workflow.pyiron for more details
 """
 
 from pyscal_rdf.structure import System
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
-
-import pyscal_rdf.workflow.pyiron as pi
 
 import warnings
 import numpy as np
@@ -15,14 +24,29 @@ import copy
 import ast
 import uuid
 
+#Move imports to another file
 PROV = Namespace("http://www.w3.org/ns/prov#")
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
+#custom imports as needed
+import pyscal_rdf.workflow.pyiron as pi
+
+
 class Workflow:
     def __init__(self, kg, 
         environment='pyiron'):
+        """
+        Initialize the workflow environment
+
+        Parameters
+        ----------
+        kg: pyscal-rdf KnowledgeGraph
+        environment: string
+            the workflow environment. This is used to import the necessary functions.
+
+        """
         self.kg = kg
         if environment == 'pyiron':
             self.wenv = pi
@@ -31,7 +55,7 @@ class Workflow:
 
     def _prepare_job(self, workflow_object):
         self.wenv._check_if_job_is_valid(workflow_object)
-        parent_structure, parent_sample, structure, sample = self.wenv._add_structures(self.kg, workflow_object)
+        parent_structure, parent_sample, structure, sample = self.wenv._add_structures(workflow_object)
         method_dict = self.wenv._identify_method(workflow_object)
 
         if (structure is None) and (sample is None):

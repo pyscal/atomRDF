@@ -17,7 +17,7 @@ def _check_if_job_is_valid(job):
         raise TypeError('These type of pyiron Job is not currently supported')
 
 
-def _add_structures(kg, job):
+def _add_structures(job):
     initial_pyiron_structure = job.structure
     final_pyiron_structure = job.get_structure(frame=-1)
     initial_pyscal_structure =  System.read.ase(initial_pyiron_structure)
