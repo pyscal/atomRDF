@@ -99,9 +99,10 @@ def visualize_graph(g,
             #we collapse sample information
             #if cmso.connector is found, only use it is it is cmso.hasCalculated
             #all sub sample props, indicated by sample_x_jsjsj will be ignored.
+            green_list = ["hasCalculatedProperty", "wasCalculatedBy", "hasValue"]
             ssplit = string3.split('.')
             if (len(ssplit) == 2):
-                if (ssplit[0] == 'cmso') and (ssplit[1] != "hasCalculatedProperty"):
+                if (ssplit[0] == 'cmso') and (ssplit[1] not in green_list):
                     plot = False
             if string3 == 'subClassOf':
                 plot = False

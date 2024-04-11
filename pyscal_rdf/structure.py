@@ -42,7 +42,7 @@ def _make_crystal(structure,
     element=None,
     primitive=False,
     graph=None,
-    names=True):
+    names=False):
     
     atoms, box, sdict = pcs.make_crystal(structure, 
         lattice_constant=lattice_constant,
@@ -70,7 +70,7 @@ def _make_general_lattice(positions,
     noise = 0,
     element=None,
     graph=None,
-    names=True):
+    names=False):
 
     atoms, box, sdict = pcs.general_lattice(positions,
         types,
@@ -98,7 +98,7 @@ def _make_grain_boundary(axis,
     repetitions = (1,1,1),
     overlap=0.0,
     graph=None,
-    names=True):
+    names=False):
 
     gb = GrainBoundary()
     gb.create_grain_boundary(axis=axis, sigma=sigma, 
@@ -194,7 +194,7 @@ class System(pc.System):
             species = None,
             source=None,
             graph=None,
-            names=True):
+            names=False):
         
         super().__init__(filename = filename, 
             format = format, 
@@ -543,7 +543,7 @@ class System(pc.System):
         """
         data = self.schema.material.crystal_structure.unit_cell.lattice_parameter()
         lattice_parameter = URIRef(f'{self._name}_LatticeParameter')
-        self.graph.add((self.unit_cell, CMSO.hasLatticeParamter, lattice_parameter))
+        self.graph.add((self.unit_cell, CMSO.hasLatticeParameter, lattice_parameter))
         self.graph.add((lattice_parameter, RDF.type, CMSO.LatticeParameter))
         self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
         self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
