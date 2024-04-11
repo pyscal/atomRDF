@@ -121,14 +121,8 @@ def _identify_method(job):
     return mdict
 
 
-def add_mappings(kg, job):
-    initial_structure, initial_sample, final_structure, final_sample = _add_structures(kg, job)
-    mdict = _identify_method(job)
-    workflow = wf.Workflow(kg, structure=final_structure, 
-        sample=final_sample, parent_structure=initial_structure,
-        parent_sample=initial_sample, method_dict=mdict)
 
-def update_project(pr, kg):
+def inform_graph(pr, kg):
     """
     Update project to add extra creator functions
     """

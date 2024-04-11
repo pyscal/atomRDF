@@ -6,6 +6,8 @@ Workflows aspects for non-automated annotation of structures.
 from pyscal_rdf.structure import System
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
+import pyscal_rdf.workflow.pyiron as pi
+
 import warnings
 import numpy as np
 import os
@@ -20,10 +22,18 @@ ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
 class Workflow:
     def __init__(self, kg, 
-        structure=None, sample=None,
-        parent_structure=None, parent_sample=None,
-        method_dict=None):
+        workflow_object,
+        environment='pyiron'):
         self.kg = kg
+
+        if environment == 'pyiron':
+            self.wenv = pi
+        else:
+            raise ValueError('unknow workflow environment')
+
+        pi._check_if_job_is_valid(workflow_object)
+        parent_structure, parent_sample, structure, sample = pi._add_structures(kg, workflow_object)
+        method_dict = pi._identify_method(workflow_object)
 
         if (structure is None) and (sample is None):
             raise ValueError('Either structure or sample should be specified')
@@ -43,8 +53,7 @@ class Workflow:
         self.sample = sample
         self.mdict = method_dict
         self.parent_sample = parent_sample
-        self.add_structural_relation()
-        self.add_method()
+
 
     def _add_inherited_properties(self, ):
         #Here we need to add inherited info: CalculatedProperties will be lost
@@ -246,3 +255,7 @@ class Workflow:
                 self.kg.add((wfagent, PROV.actedOnBehalfOf, agent))
             else:
                 self.kg.add((method, PROV.wasAssociatedWith, agent))
+
+    def to_graph(self):
+        self.add_structural_relation()
+        self.add_method()
