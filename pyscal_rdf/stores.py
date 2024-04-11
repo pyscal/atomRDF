@@ -44,7 +44,7 @@ def store_pyiron(kg, store, identifier, store_file=None, structure_store=None):
     store_file = os.path.join(store.path, f'{store.name}.db')
     store_alchemy(kg, store, identifier, store_file, structure_store=structure_store)      
     #finally update project object
-    update_project(store, kg)
+    inform_graph(store, kg)
 
 def _check_if_sqlalchemy_is_available():
     try:

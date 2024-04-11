@@ -39,13 +39,13 @@ class Workflow:
 
         if sample is None:
             #its not added to graph yet
-            structure.graph = kg
+            structure.graph = self.kg
             structure.to_graph()
             sample = structure.sample
         
         if parent_sample is None:
             #its not added to graph yet
-            parent_structure.graph = kg
+            parent_structure.graph = self.kg
             parent_structure.to_graph()
             parent_sample = parent_structure.sample
 
