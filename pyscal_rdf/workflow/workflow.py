@@ -22,18 +22,17 @@ ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
 class Workflow:
     def __init__(self, kg, 
-        workflow_object,
         environment='pyiron'):
         self.kg = kg
-
         if environment == 'pyiron':
             self.wenv = pi
         else:
             raise ValueError('unknow workflow environment')
 
-        pi._check_if_job_is_valid(workflow_object)
-        parent_structure, parent_sample, structure, sample = pi._add_structures(kg, workflow_object)
-        method_dict = pi._identify_method(workflow_object)
+    def _prepare_job(self, workflow_object):
+        self.wenv._check_if_job_is_valid(workflow_object)
+        parent_structure, parent_sample, structure, sample = self.wenv._add_structures(kg, workflow_object)
+        method_dict = self.wenv._identify_method(workflow_object)
 
         if (structure is None) and (sample is None):
             raise ValueError('Either structure or sample should be specified')
@@ -53,7 +52,6 @@ class Workflow:
         self.sample = sample
         self.mdict = method_dict
         self.parent_sample = parent_sample
-
 
     def _add_inherited_properties(self, ):
         #Here we need to add inherited info: CalculatedProperties will be lost
@@ -256,6 +254,7 @@ class Workflow:
             else:
                 self.kg.add((method, PROV.wasAssociatedWith, agent))
 
-    def to_graph(self):
+    def to_graph(self, workflow_object):
+        self._prepare_job(workflow_object)
         self.add_structural_relation()
         self.add_method()

@@ -4,7 +4,7 @@ from rdflib import Graph, Literal
 
 import os
 #special methods; for supporting workflow envs
-from pyscal_rdf.workflow import update_project
+from pyscal_rdf.workflow import inform_graph
 
 
 def create_store(kg, store, identifier, 
