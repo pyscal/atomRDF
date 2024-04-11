@@ -2,6 +2,7 @@
 Wrappers for pyiron jobs
 """
 import os
+import numpy as np
 from functools import partial, update_wrapper
 import pyscal_rdf.workflow.workflow as wf
 from pyscal_rdf.structure import _make_crystal
@@ -118,7 +119,28 @@ def _identify_method(job):
     'label':'LAMMPS'}
     mdict['md']['software'] = [software]
 
+    #finally add calculated quantities
+    quantdict = extract_calculated_quantities(job)
+    mdict['md']['outputs'] = quantdict
     return mdict
+
+
+def extract_calculated_quantities(job):
+    aen = np.mean(job.output.energy_tot)
+    avol = np.mean(job.output.volume)
+    outdict = {}
+    outdict['TotalEnergy'] = {}
+    outdict['TotalEnergy']['value'] = np.round(aen, decimals=4)
+    outdict['TotalEnergy']['unit'] = 'EV'
+    outdict['TotalEnergy']['associate_to_sample'] = True
+
+
+    outdict['TotalVolume'] = {}
+    outdict['TotalVolume']['value'] = np.round(avol, decimals=4)
+    outdict['TotalVolume']['unit'] = 'ANGSTROM3'
+    outdict['TotalVolume']['associate_to_sample'] = True 
+
+    return outdict
 
 
 

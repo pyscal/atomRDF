@@ -254,6 +254,19 @@ class Workflow:
             else:
                 self.kg.add((method, PROV.wasAssociatedWith, agent))
 
+        for key, val in mdict['outputs'].items():
+            prop = URIRef(f'{main_id}_{key}')
+            self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
+            self.kg.add((prop, RDFS.label, Literal(key)))
+            self.kg.add((prop, CMSO.hasValue, Literal(val["value"])))
+            if "unit" in val.keys():
+                unit = val['unit']
+                self.kg.add((prop, CMSO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
+
+            self.kg.add((prop, CMSO.wasCalculatedBy, activity))
+            if val['associate_to_sample']:
+                self.kg.add((sample, CMSO.hasCalculatedProperty, prop))
+
     def to_graph(self, workflow_object):
         self._prepare_job(workflow_object)
         self.add_structural_relation()
