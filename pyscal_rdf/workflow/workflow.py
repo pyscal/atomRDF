@@ -31,7 +31,7 @@ class Workflow:
 
     def _prepare_job(self, workflow_object):
         self.wenv._check_if_job_is_valid(workflow_object)
-        parent_structure, parent_sample, structure, sample = self.wenv._add_structures(kg, workflow_object)
+        parent_structure, parent_sample, structure, sample = self.wenv._add_structures(self.kg, workflow_object)
         method_dict = self.wenv._identify_method(workflow_object)
 
         if (structure is None) and (sample is None):
