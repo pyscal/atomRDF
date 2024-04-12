@@ -304,6 +304,23 @@ class System(pc.System):
             json_io.write_file(outfile,  datadict)
 
 
+    def substitute_atoms(self, substitution_element, ids=None, indices=None, condition=None, selection=False):
+        masks = self.atoms._generate_bool_list(ids=ids, indices=indices, condition=condition, selection=selection)
+        delete_list = [masks[self.atoms["head"][x]] for x in range(self.atoms.ntotal)]
+        delete_ids = [x for x in range(self.atoms.ntotal) if delete_list[x]]
+        type_dict = self.atoms._type_dict
+        rtype_dict = {val:key for key,val in type_dict.items()}
+        if substitution_element in rtype_dict.keys():
+            atomtype = rtype_dict[substitution_element]
+        else:
+            maxtype = max(self.atoms['types'])+1
+        
+        for x in delete_ids:
+            self.atoms['species'] = substitution_element
+            self.atoms['types'] = maxtype
+
+
+
     def __delitem__(self, val):
         if isinstance(val, int):
             val = [val]
