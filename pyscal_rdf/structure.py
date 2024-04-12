@@ -304,6 +304,66 @@ class System(pc.System):
             json_io.write_file(outfile,  datadict)
 
 
+    def substitute_atoms(self, substitution_element, ids=None, indices=None, condition=None, selection=False):
+        masks = self.atoms._generate_bool_list(ids=ids, indices=indices, condition=condition, selection=selection)
+        delete_list = [masks[self.atoms["head"][x]] for x in range(self.atoms.ntotal)]
+        delete_ids = [x for x in range(self.atoms.ntotal) if delete_list[x]]
+        type_dict = self.atoms._type_dict
+        rtype_dict = {val:key for key,val in type_dict.items()}
+        if substitution_element in rtype_dict.keys():
+            atomtype = rtype_dict[substitution_element]
+        else:
+            maxtype = max(self.atoms['types'])+1
+        
+        for x in delete_ids:
+            self.atoms['species'][x] = substitution_element
+            self.atoms['types'][x] = maxtype
+
+        #operate on the graph
+        if self.graph is not None:
+            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            #start by cleanly removing elements
+            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+                element = s[2]
+                self.graph.graph.remove((element, None, None))
+            self.graph.graph.remove((chemical_species, None, None))
+            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+            
+            #now recalculate and add it again
+            composition = self.schema.material.element_ratio()
+
+            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
+            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+
+            for e, r in composition.items():
+                if e in element_indetifiers.keys():
+                    element = URIRef(element_indetifiers[e])
+                    self.graph.add((chemical_species, CMSO.hasElement, element))
+                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+
+            #we also have to read in file and clean it up
+            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+
+            #clean up items
+            datadict = {
+                position_identifier:{
+                    "value": self.schema.atom_attribute.position(),
+                    "label": "position", 
+                },
+                species_identifier:{
+                    "value": self.schema.atom_attribute.species(),
+                    "label": "species", 
+                },
+            }
+            outfile = os.path.join(self.graph.structure_store, str(self._name).split(':')[-1])
+            json_io.write_file(outfile,  datadict)
+            
+
     def __delitem__(self, val):
         if isinstance(val, int):
             val = [val]
