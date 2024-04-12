@@ -382,20 +382,27 @@ class System(pc.System):
         -------
         System: 
             system with the added impurities
+
+        Notes
+        -----
+        The validity of the void positions are not checked! This means that temperature, presence of vacancies or other
+        interstitials could affect the addition.
         """
         if None in self.atoms.species:
             raise ValueError('Assign species!')
 
-        element = np.atleast_1d(element)
-        self.find.neighbors(method='voronoi', cutoff=0.1)
-        verts = self.unique_vertices
-        randindex = np.random.randint(0, len(verts), len(element))
-        randpos = np.array(verts)[randindex]
-        sysn = System(source=self.add_atoms({'positions': randpos, 'species':element}))
-        #attach graphs
-        sysn.sample = self.sample
-        sysn.graph = self.graph
-
+        if void_type == 'interstitial':
+            element = np.atleast_1d(element)
+            self.find.neighbors(method='voronoi', cutoff=0.1)
+            verts = self.unique_vertices
+            randindex = np.random.randint(0, len(verts), len(element))
+            randpos = np.array(verts)[randindex]
+            sysn = System(source=self.add_atoms({'positions': randpos, 'species':element}))
+            #attach graphs
+            sysn.sample = self.sample
+            sysn.graph = self.graph
+        else:
+            raise ValueError('void_type can only be tetrahedral')
 
         #now we have to verify the triples correctly and add them in
         if self.graph is not None:
