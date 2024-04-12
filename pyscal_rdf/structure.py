@@ -364,7 +364,7 @@ class System(pc.System):
             json_io.write_file(outfile,  datadict)
     
 
-    def add_interstitial_impurities(self, element, void_type='tetrahedral'):
+    def add_interstitial_impurities(self, element, void_type='tetrahedral', lattice_constant=None, threshold=0.01):
         """
         Add interstitial impurities to the System
 
@@ -391,18 +391,53 @@ class System(pc.System):
         if None in self.atoms.species:
             raise ValueError('Assign species!')
 
-        if void_type == 'interstitial':
+        if void_type == 'tetrahedral':
             element = np.atleast_1d(element)
             self.find.neighbors(method='voronoi', cutoff=0.1)
             verts = self.unique_vertices
             randindex = np.random.randint(0, len(verts), len(element))
             randpos = np.array(verts)[randindex]
-            sysn = System(source=self.add_atoms({'positions': randpos, 'species':element}))
-            #attach graphs
-            sysn.sample = self.sample
-            sysn.graph = self.graph
+
+
+        elif void_type == 'octahedral':
+            if lattice_constant is None:
+                if 'lattice_constant' in self.lattice_properties.keys():
+                    lattice_constant = self.lattice_properties['lattice_constant']
+                else:
+                    raise ValueError('lattice constant is needed for octahedral voids, please provide')
+
+            cutoff = lattice_constant + threshold*2
+            self.find.neighbors(method='cutoff', cutoff=cutoff)
+            octa_pos = []
+            for count, dist in enumerate(self.atoms.neighbors.distance):
+                diffs = np.abs(np.array(dist)-lattice_constant)
+                #print(diffs)
+                indices = np.where(diffs < 1E-2)[0]
+                #index_neighbor = np.array(self.atoms["neighbors"][count])[indices]
+                #real_indices = np.array(self.atoms.neighbors.index[count])[indices]
+                #create a dict
+                #index_dict = {str(x):y for x,y in zip(real_indices, ghost_indices)}
+                vector = np.array(self.atoms["diff"][count])[indices]
+                vector = self.atoms.positions[count] + vector/2
+                for vect in vector:
+                    #vect = self.modify.remap_position_to_box(vect)
+                    #print(vect)
+                    octa_pos.append(vect)
+                
+            randindex = np.random.randint(0, len(octa_pos), len(element))
+            randpos = np.unique(octa_pos, axis=0)[randindex]
+            
+            if not len(randpos) == len(element):
+                raise ValueError('not enough octahedral positions found!')
+
         else:
-            raise ValueError('void_type can only be tetrahedral')
+            raise ValueError('void_type can only be tetrahedral/octahedral')
+
+        #create new system with the atoms added
+        sysn = System(source=self.add_atoms({'positions': randpos, 'species':element}))
+        #attach graphs
+        sysn.sample = self.sample
+        sysn.graph = self.graph
 
         #now we have to verify the triples correctly and add them in
         if self.graph is not None:
