@@ -362,7 +362,133 @@ class System(pc.System):
             }
             outfile = os.path.join(self.graph.structure_store, str(self._name).split(':')[-1])
             json_io.write_file(outfile,  datadict)
+    
+
+    def add_interstitial_impurities(self, element, void_type='tetrahedral', lattice_constant=None, threshold=0.01):
+        """
+        Add interstitial impurities to the System
+
+        Parameters
+        ----------
+        element: string or list
+            Chemical symbol of the elements/elements to be added
+            `element = 'Al'` will add one interstitial while `element = ['Al', 'Al']` or `element = ['Al', 'Li']` will add
+            two impurities
+
+        void_type: string
+            type of void to be added. Currently only `tetrahedral`
+
+        Returns
+        -------
+        System: 
+            system with the added impurities
+
+        Notes
+        -----
+        The validity of the void positions are not checked! This means that temperature, presence of vacancies or other
+        interstitials could affect the addition.
+        """
+        if None in self.atoms.species:
+            raise ValueError('Assign species!')
+
+        if void_type == 'tetrahedral':
+            element = np.atleast_1d(element)
+            self.find.neighbors(method='voronoi', cutoff=0.1)
+            verts = self.unique_vertices
+            randindex = np.random.randint(0, len(verts), len(element))
+            randpos = np.array(verts)[randindex]
+
+
+        elif void_type == 'octahedral':
+            if lattice_constant is None:
+                if 'lattice_constant' in self.lattice_properties.keys():
+                    lattice_constant = self.lattice_properties['lattice_constant']
+                else:
+                    raise ValueError('lattice constant is needed for octahedral voids, please provide')
+
+            cutoff = lattice_constant + threshold*2
+            self.find.neighbors(method='cutoff', cutoff=cutoff)
+            octa_pos = []
+            for count, dist in enumerate(self.atoms.neighbors.distance):
+                diffs = np.abs(np.array(dist)-lattice_constant)
+                #print(diffs)
+                indices = np.where(diffs < 1E-2)[0]
+                #index_neighbor = np.array(self.atoms["neighbors"][count])[indices]
+                #real_indices = np.array(self.atoms.neighbors.index[count])[indices]
+                #create a dict
+                #index_dict = {str(x):y for x,y in zip(real_indices, ghost_indices)}
+                vector = np.array(self.atoms["diff"][count])[indices]
+                vector = self.atoms.positions[count] + vector/2
+                for vect in vector:
+                    vect = self.modify.remap_position_to_box(vect)
+                    #print(vect)
+                    octa_pos.append(vect)
+                
+            randindex = np.random.randint(0, len(octa_pos), len(element))
+            randpos = np.unique(octa_pos, axis=0)[randindex]
             
+            if not len(randpos) == len(element):
+                raise ValueError('not enough octahedral positions found!')
+
+        else:
+            raise ValueError('void_type can only be tetrahedral/octahedral')
+
+        #create new system with the atoms added
+        sysn = System(source=self.add_atoms({'positions': randpos, 'species':element}))
+        #attach graphs
+        sysn.sample = self.sample
+        sysn.graph = self.graph
+
+        #now we have to verify the triples correctly and add them in
+        if self.graph is not None:
+            self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(sysn.natoms, datatype=XSD.integer)))
+            #revamp composition
+            #remove existing chem composution
+            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            #start by cleanly removing elements
+            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+                element = s[2]
+                self.graph.graph.remove((element, None, None))
+            self.graph.graph.remove((chemical_species, None, None))
+            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+            
+            #now recalculate and add it again
+            composition = sysn.schema.material.element_ratio()
+
+            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
+            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+
+            for e, r in composition.items():
+                if e in element_indetifiers.keys():
+                    element = URIRef(element_indetifiers[e])
+                    self.graph.add((chemical_species, CMSO.hasElement, element))
+                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+
+            #we also have to read in file and clean it up
+            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+
+            #clean up items
+            datadict = {
+                position_identifier:{
+                    "value": sysn.schema.atom_attribute.position(),
+                    "label": "position", 
+                },
+                species_identifier:{
+                    "value": sysn.schema.atom_attribute.species(),
+                    "label": "species", 
+                },
+            }
+            outfile = os.path.join(self.graph.structure_store, str(self._name).split(':')[-1])
+            json_io.write_file(outfile,  datadict)
+
+        return sysn 
+
 
     def __delitem__(self, val):
         if isinstance(val, int):
