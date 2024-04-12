@@ -420,7 +420,7 @@ class System(pc.System):
                 vector = np.array(self.atoms["diff"][count])[indices]
                 vector = self.atoms.positions[count] + vector/2
                 for vect in vector:
-                    #vect = self.modify.remap_position_to_box(vect)
+                    vect = self.modify.remap_position_to_box(vect)
                     #print(vect)
                     octa_pos.append(vect)
                 
