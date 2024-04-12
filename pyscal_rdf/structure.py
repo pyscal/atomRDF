@@ -362,7 +362,41 @@ class System(pc.System):
             }
             outfile = os.path.join(self.graph.structure_store, str(self._name).split(':')[-1])
             json_io.write_file(outfile,  datadict)
-            
+    
+
+    def add_interstitial_impurities(self, element, void_type='tetrahedral'):
+        """
+        Add interstitial impurities to the System
+
+        Parameters
+        ----------
+        element: string or list
+            Chemical symbol of the elements/elements to be added
+            `element = 'Al'` will add one interstitial while `element = ['Al', 'Al']` or `element = ['Al', 'Li']` will add
+            two impurities
+
+        void_type: string
+            type of void to be added. Currently only `tetrahedral`
+
+        Returns
+        -------
+        System: 
+            system with the added impurities
+        """
+        if None in self.atoms.species:
+            raise ValueError('Assign species!')
+
+        element = np.atleast_1d(element)
+        self.find.neighbors(method='voronoi', cutoff=0.1)
+        verts = self.unique_vertices
+        randindex = np.random.randint(0, len(verts), len(element))
+        randpos = np.array(verts)[randindex]
+        sysn = System(source=self.add_atoms({'positions': randpos, 'species':element}))
+        #attach graphs
+        sysn.sample = self.sample
+        sysn.graph = self.graph
+        return sysn 
+
 
     def __delitem__(self, val):
         if isinstance(val, int):
