@@ -11,7 +11,7 @@ _identify_method
 extract_calculated_properties
 inform_graph
 
-See pyscal_rdf.workflow.pyiron for more details
+See atomrdf.workflow.pyiron for more details
 """
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
