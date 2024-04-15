@@ -16,8 +16,7 @@ authors:
 date-released: '2024-02-15'
 doi: 10.5281/zenodo.8146527
 url: 'https://atomrdf.pyscal.org'
-license:
-- mit
+license: "MIT"
 repository-code: https://github.com/pyscal/atomRDF
 type: software
 version: 0.4.2
