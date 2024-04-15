@@ -9,8 +9,9 @@ class Namespace(AttrSetter):
     def __init__(self, infile, delimiter='/'):
         AttrSetter.__init__(self)
         self.network = OntologyNetwork(infile, delimiter=delimiter)
-        print(self.network.onto.tree.base_iri)
+        #print(type(self.network.onto.tree.base_iri))
         self.namespace = RDFLibNamespace(self.network.onto.tree.base_iri)
+        #self.namespace = RDFLibNamespace("http://purls.helmholtz-metadaten.de/cmso/")
         self.name = self.network.onto.tree.name
         mapdict = {}
         

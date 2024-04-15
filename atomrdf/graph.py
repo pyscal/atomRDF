@@ -85,8 +85,8 @@ class KnowledgeGraph:
         #start the storage
 
         #start binding
-        self.graph.bind("cmso", CMSO)
-        self.graph.bind("pldo", PLDO)
+        self.graph.bind("cmso", CMSO.namespace)
+        self.graph.bind("pldo", PLDO.namespace)
         
         if graph_file is not None:
             if os.path.exists(graph_file):
@@ -113,7 +113,7 @@ class KnowledgeGraph:
         Force assumes that you are passing rdflib terms, defined with
         RDFLib Namespace
         """
-        if not force:
+        if force:
             if str(triple[2].toPython()) != 'None':
                 self.graph.add(triple)
 
@@ -125,6 +125,7 @@ class KnowledgeGraph:
                     modified_triple.append(term.namespace_object)
                 else:
                     modified_triple.append(term)
+            self.graph.add(tuple(modified_triple))
 
     
     def _initialize_graph(self):
