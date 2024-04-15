@@ -1,5 +1,5 @@
-from pyscal_rdf.network.network import OntologyNetwork
 import os
+from atomrdf.network.network import OntologyNetwork
 
 #prov = OntologyNetwork('pyscal_rdf/data/prov.rdf', delimiter='#')
 def read_ontology():

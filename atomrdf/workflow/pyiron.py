@@ -4,11 +4,12 @@ Wrappers for pyiron jobs
 import os
 import numpy as np
 from functools import partial, update_wrapper
-import pyscal_rdf.workflow.workflow as wf
-from pyscal_rdf.structure import _make_crystal
-from pyscal_rdf.structure import System
-from pyscal3.core import structure_dict, element_dict
 import ast
+from pyscal3.core import structure_dict, element_dict
+
+import atomrdf.workflow.workflow as wf
+from atomrdf.structure import _make_crystal
+from atomrdf.structure import System
 
 def _check_if_job_is_valid(job):
     valid_jobs = ['Lammps', ]

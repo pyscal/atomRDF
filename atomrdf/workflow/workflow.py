@@ -14,7 +14,6 @@ inform_graph
 See pyscal_rdf.workflow.pyiron for more details
 """
 
-from pyscal_rdf.structure import System
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
 import warnings
@@ -23,6 +22,8 @@ import os
 import copy
 import ast
 import uuid
+
+from atomrdf.structure import System
 
 #Move imports to another file
 PROV = Namespace("http://www.w3.org/ns/prov#")

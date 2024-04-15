@@ -9,7 +9,6 @@ dependencies:
   - jupyterlab
   - graphviz
   - python-graphviz
-  - pyyaml
   - ase 
   - networkx
   - pandas

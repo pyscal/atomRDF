@@ -1,6 +1,6 @@
 import json
 import yaml
-from pyscal_rdf.encoder import NumpyArrayEncoder
+from atomrdf.encoder import NumpyArrayEncoder
 
 def write_file(outfile, data):
     """

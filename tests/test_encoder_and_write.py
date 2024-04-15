@@ -1,6 +1,6 @@
 import pytest
-from pyscal_rdf.encoder import NumpyArrayEncoder
-from pyscal_rdf.json_io import write_file
+from atomrdf.encoder import NumpyArrayEncoder
+from atomrdf.json_io import write_file
 import json
 import numpy as np
 import os

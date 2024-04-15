@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import warnings
-from pyscal_rdf.network.parser import OntoParser
-from pyscal_rdf.network.term import OntoTerm, strip_name
 from pyscal3.atoms import AttrSetter
+
+from atomrdf.network.parser import OntoParser
+from atomrdf.network.term import OntoTerm, strip_name
 
 owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
 

@@ -2,14 +2,13 @@ name: rdf
 channels:
   - conda-forge
 dependencies:
-  - python >3.8
-  - pyscal3 >=3.1.5
+  - python >3.8, <3.12
+  - pyscal3 >=3.1.12
   - rdflib
   - pyyaml
   - jupyterlab
   - graphviz
   - python-graphviz
-  - pyyaml
   - ase 
   - networkx
   - pandas
@@ -17,5 +16,4 @@ dependencies:
   - jupyter-book
   - plotly
   - ipywidgets
-  - sphinx
 
