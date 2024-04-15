@@ -785,7 +785,7 @@ class System(pc.System):
 
         if "positions" in self.atoms.keys():
             position = URIRef(f'{self._name}_Position')
-            self.graph.add((self.sample, CMSO.hasAttribute, position))
+            self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, position))
             self.graph.add((position, RDF.type, CMSO.AtomAttribute))
             self.graph.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             self.graph.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
@@ -793,7 +793,7 @@ class System(pc.System):
 
         if "species" in self.atoms.keys():
             species = URIRef(f'{self._name}_Species')
-            self.graph.add((self.sample, CMSO.hasAttribute, species))
+            self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, species))
             self.graph.add((species, RDF.type, CMSO.AtomAttribute))
             self.graph.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             self.graph.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
