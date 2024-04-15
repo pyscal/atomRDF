@@ -4,7 +4,7 @@ as an input and annotates it with the CMSO ontology (PLDO and PODO too as needed
 object is stored in triplets.
 """
 
-from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
+from rdflib import Graph, Literal,  XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
 import os
 import numpy as np
@@ -29,7 +29,7 @@ import atomrdf.properties as prp
 from atomrdf.stores import create_store
 import atomrdf.json_io as json_io
 
-
+from atomrdf.namespace import Namespace
 
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
