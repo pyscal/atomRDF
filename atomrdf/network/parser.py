@@ -1,5 +1,3 @@
-from pyscal_rdf.network.term import OntoTerm, strip_name 
-from pyscal_rdf.network.patch import patch_terms
 
 from owlready2 import get_ontology
 import owlready2
@@ -8,6 +6,9 @@ import os
 import copy
 import numpy as np
 import itertools
+
+from atomrdf.network.term import OntoTerm, strip_name 
+from atomrdf.network.patch import patch_terms
 
 
 class OntoParser:

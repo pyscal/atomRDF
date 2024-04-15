@@ -8,7 +8,7 @@
 
 ## Contributers
 
-Please see the complete list of contributers [here](https://github.com/pyscal/pyscal_rdf/graphs/contributors).
+Please see the complete list of contributers [here](https://github.com/pyscal/atomrdf/graphs/contributors).
 
 
 ## Acknowledgements

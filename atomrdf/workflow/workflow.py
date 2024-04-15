@@ -11,10 +11,9 @@ _identify_method
 extract_calculated_properties
 inform_graph
 
-See pyscal_rdf.workflow.pyiron for more details
+See atomrdf.workflow.pyiron for more details
 """
 
-from pyscal_rdf.structure import System
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
 
 import warnings
@@ -24,6 +23,8 @@ import copy
 import ast
 import uuid
 
+from atomrdf.structure import System
+
 #Move imports to another file
 PROV = Namespace("http://www.w3.org/ns/prov#")
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
@@ -31,7 +32,7 @@ PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
 #custom imports as needed
-import pyscal_rdf.workflow.pyiron as pi
+import atomrdf.workflow.pyiron as pi
 
 
 class Workflow:

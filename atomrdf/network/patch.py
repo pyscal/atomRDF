@@ -1,5 +1,5 @@
 """
-These are patches specifically designed for pyscal-rdf.
+These are patches specifically designed for atomrdf.
 
 These may or may not be implemented in the ontology. As it is implemented; it can be removed
 from the patches

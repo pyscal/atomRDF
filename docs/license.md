@@ -1,6 +1,6 @@
 # License
 
-pyscal-rdf
+atomrdf
 
 Copyright 2022  (c) Sarath Menon $^1$, Abril Azócar Guzmán $^2$  
 $^1$: Max Planck Institut für Eisenforschung, Dusseldorf, Germany   
@@ -10,7 +10,7 @@ pyscal-rdf is published under the MIT license:
 
 MIT License
 
-Copyright (c) 2023 pyscal-rdf
+Copyright (c) 2023 atomrdf
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

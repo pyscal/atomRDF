@@ -1,5 +1,5 @@
 """
-Graph module contains the basic RDFGraph object in pyscal_rdf. This object gets a structure
+Graph module contains the basic RDFGraph object in atomrdf. This object gets a structure
 as an input and annotates it with the CMSO ontology (PLDO and PODO too as needed). The annotated
 object is stored in triplets.
 """
@@ -17,17 +17,18 @@ import uuid
 import json
 import shutil
 import tarfile
-import pyscal_rdf.json_io as json_io
-
-from pyscal_rdf.visualize import visualize_graph
-from pyscal_rdf.network.network import OntologyNetwork
-from pyscal_rdf.network.ontology import read_ontology
-from pyscal_rdf.structure import System
-import pyscal_rdf.properties as prp
-from pyscal_rdf.stores import create_store
 
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
+
+from atomrdf.visualize import visualize_graph
+from atomrdf.network.network import OntologyNetwork
+from atomrdf.network.ontology import read_ontology
+from atomrdf.structure import System
+import atomrdf.properties as prp
+from atomrdf.stores import create_store
+import atomrdf.json_io as json_io
+
 
 
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")

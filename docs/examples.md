@@ -1,6 +1,6 @@
 # Examples
 
-The gallery of examples below cover different ways in which pyscal-rdf can be used.
+The gallery of examples below cover different ways in which atomrdf can be used.
 
 ::::{grid} 1 1 2 3
 :class-container: text-center
@@ -10,7 +10,7 @@ The gallery of examples below cover different ways in which pyscal-rdf can be us
 :link: ../examples/01_getting_started
 :link-type: doc
 :class-header: bg-light
-Getting started with pyscal-rdf
+Getting started with atomrdf
 ^^^
 Learn the very basis, including the concepts of creating structures, and querying them.
 :::

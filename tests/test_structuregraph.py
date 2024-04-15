@@ -1,5 +1,5 @@
 import pytest
-from pyscal_rdf import KnowledgeGraph, System
+from atomrdf import KnowledgeGraph, System
 
 def test_structuregraph():
 	s = KnowledgeGraph()
