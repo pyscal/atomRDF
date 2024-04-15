@@ -1,5 +1,6 @@
 import os
-from rdflib import Namespace, Literal, URIRef
+from rdflib import Literal, URIRef
+from rdflib import Namespace as RDFLibNamespace
 from pyscal3.atoms import AttrSetter
 
 from atomrdf.network.network import OntologyNetwork
@@ -8,7 +9,8 @@ class Namespace(AttrSetter):
     def __init__(self, infile, delimiter='/'):
         AttrSetter.__init__(self)
         self.network = OntologyNetwork(infile, delimiter=delimiter)
-        self.namespace = Namespace(self.network.onto.tree.base_iri)
+        print(self.network.onto.tree.base_iri)
+        self.namespace = RDFLibNamespace(self.network.onto.tree.base_iri)
         self.name = self.network.onto.tree.name
         mapdict = {}
         
@@ -22,10 +24,9 @@ class Namespace(AttrSetter):
         self._add_attribute(mapdict)
 
 
-file_location = os.path.dirname(__file__).split('/')
-file_location = "/".join(file_location[:-1])
+file_location = os.path.dirname(__file__)
 
-CMSO = OntologyNetwork(os.path.join(file_location,  'data/cmso.owl'))
-PLDO = OntologyNetwork(os.path.join(file_location,  'data/pldo.owl'))
-PODO = OntologyNetwork(os.path.join(file_location,  'data/podo.owl'))
-ASMO = OntologyNetwork(os.path.join(file_location,  'data/asmo.owl'))
+CMSO = Namespace(os.path.join(file_location,  'data/cmso.owl'))
+PLDO = Namespace(os.path.join(file_location,  'data/pldo.owl'))
+PODO = Namespace(os.path.join(file_location,  'data/podo.owl'))
+ASMO = Namespace(os.path.join(file_location,  'data/asmo.owl'))

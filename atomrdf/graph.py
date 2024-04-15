@@ -29,11 +29,7 @@ import atomrdf.properties as prp
 from atomrdf.stores import create_store
 import atomrdf.json_io as json_io
 
-from atomrdf.namespace import Namespace
-
-CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
-PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
-PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
+from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO
 
 #read element data file
 file_location = os.path.dirname(__file__).split('/')
@@ -112,7 +108,7 @@ class KnowledgeGraph:
         structure.graph = self
         structure.to_graph()
 
-    def add(triple, force=False):
+    def add(self, triple, force=False):
         """
         Force assumes that you are passing rdflib terms, defined with
         RDFLib Namespace
@@ -123,7 +119,7 @@ class KnowledgeGraph:
 
         else:
             modified_triple = []
-
+            print(triple)
             for term in triple:
                 if type(term).__name__ == 'OntoTerm':
                     modified_triple.append(term.namespace_object)
