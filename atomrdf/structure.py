@@ -277,7 +277,7 @@ class System(pc.System):
                 if e in element_indetifiers.keys():
                     element = URIRef(element_indetifiers[e])
                     self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                     self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
@@ -337,7 +337,7 @@ class System(pc.System):
                 if e in element_indetifiers.keys():
                     element = URIRef(element_indetifiers[e])
                     self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                     self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
@@ -461,7 +461,7 @@ class System(pc.System):
                 if e in element_indetifiers.keys():
                     element = URIRef(element_indetifiers[e])
                     self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                     self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
@@ -563,7 +563,7 @@ class System(pc.System):
             if e in element_indetifiers.keys():
                 element = URIRef(element_indetifiers[e])
                 self.graph.add((chemical_species, CMSO.hasElement, element))
-                self.graph.add((element, RDF.type, CMSO.Element))
+                self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                 self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
                 self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
