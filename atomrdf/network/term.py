@@ -142,6 +142,9 @@ class OntoTerm:
             return self.name_without_prefix + "value"
         return self.name_without_prefix
 
+    def toPython(self):
+        return self.uri
+
     def __repr__(self):
         return str(self.name)
 

@@ -112,10 +112,24 @@ class KnowledgeGraph:
         structure.graph = self
         structure.to_graph()
 
-    def add(self, triple):
-        if str(triple[2].toPython()) != 'None':
-            self.graph.add(triple)
-        
+    def add(triple, force=False):
+        """
+        Force assumes that you are passing rdflib terms, defined with
+        RDFLib Namespace
+        """
+        if not force:
+            if str(triple[2].toPython()) != 'None':
+                self.graph.add(triple)
+
+        else:
+            modified_triple = []
+
+            for term in triple:
+                if type(term).__name__ == 'OntoTerm':
+                    modified_triple.append(term.namespace_object)
+                else:
+                    modified_triple.append(term)
+
     
     def _initialize_graph(self):
         """
