@@ -26,10 +26,7 @@ import uuid
 from atomrdf.structure import System
 
 #Move imports to another file
-PROV = Namespace("http://www.w3.org/ns/prov#")
-CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
-PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
-ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO
 
 #custom imports as needed
 import atomrdf.workflow.pyiron as pi
@@ -202,62 +199,62 @@ class Workflow:
         if method_type == 'md':
             method = URIRef(f'method:{main_id}')
             if mdict['method'] == 'MolecularStatics':
-                self.kg.add((method, RDF.type, ASO.MolecularStatics))
+                self.kg.add((method, RDF.type, ASMO.MolecularStatics))
             elif mdict['method'] == 'MolecularDynamics':
-                self.kg.add((method, RDF.type, ASO.MolecularDynamics))
+                self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
         elif method_type == 'dft':
             method = URIRef(f'method:{main_id}')
             if mdict['method'] == 'DensityFunctionalTheory':
-                self.kg.add((method, RDF.type, ASO.DensityFunctionalTheory))
-        self.kg.add((activity, ASO.hasMethod, method))
+                self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
+        self.kg.add((activity, ASMO.hasMethod, method))
 
         if len(mdict['dof']) == 0:
-            self.kg.add((activity, RDF.type, ASO.RigidEnergyCalculation))
+            self.kg.add((activity, RDF.type, ASMO.RigidEnergyCalculation))
         else:
-            self.kg.add((activity, RDF.type, ASO.StructureOptimization))
+            self.kg.add((activity, RDF.type, ASMO.StructureOptimization))
 
         for dof in mdict['dof']:
-            self.kg.add((activity, ASO.hasRelaxationDOF, getattr(ASO, dof)))
+            self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
 
         if method_type == 'md':
-            self.kg.add((method, ASO.hasStatisticalEnsemble, getattr(ASO, mdict['ensemble'])))
+            self.kg.add((method, ASMO.hasStatisticalEnsemble, getattr(ASMO, mdict['ensemble'])))
 
             #add temperature if needed
             if mdict['temperature'] is not None:
                 temperature = URIRef(f'temperature:{main_id}')
-                self.kg.add((temperature, RDF.type, ASO.InputParameter))
+                self.kg.add((temperature, RDF.type, ASMO.InputParameter))
                 self.kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
-                self.kg.add((activity, ASO.hasInputParameter, temperature))
-                self.kg.add((temperature, ASO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
-                self.kg.add((temperature, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
+                self.kg.add((activity, ASMO.hasInputParameter, temperature))
+                self.kg.add((temperature, ASMO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
+                self.kg.add((temperature, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
 
             if mdict['pressure'] is not None:
                 pressure = URIRef(f'pressure:{main_id}')
-                self.kg.add((pressure, RDF.type, ASO.InputParameter))
+                self.kg.add((pressure, RDF.type, ASMO.InputParameter))
                 self.kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
-                self.kg.add((activity, ASO.hasInputParameter, pressure))
-                self.kg.add((pressure, ASO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
-                self.kg.add((pressure, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
+                self.kg.add((activity, ASMO.hasInputParameter, pressure))
+                self.kg.add((pressure, ASMO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
+                self.kg.add((pressure, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
 
             #potentials need to be mapped
             potential = URIRef(f'potential:{main_id}')
             if 'meam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.MEAM))
+                self.kg.add((potential, RDF.type, ASMO.MEAM))
             elif 'eam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.EAM))
+                self.kg.add((potential, RDF.type, ASMO.EAM))
             elif 'lj' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.LennardJones))
+                self.kg.add((potential, RDF.type, ASMO.LennardJones))
             elif 'ace' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.MLPotential))
+                self.kg.add((potential, RDF.type, ASMO.MLPotential))
             else:
-                self.kg.add((potential, RDF.type, ASO.InteratomicPotential))
+                self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
 
             if 'uri' in mdict['potential'].keys():
-                self.kg.add((potential, ASO.hasReference, Literal(mdict['potential']['uri'])))
+                self.kg.add((potential, ASMO.hasReference, Literal(mdict['potential']['uri'])))
             if 'label' in mdict['potential'].keys():
                 self.kg.add((potential, RDFS.label, Literal(mdict['potential']['label'])))
 
-            self.kg.add((method, ASO.hasInteratomicPotential, potential))
+            self.kg.add((method, ASMO.hasInteratomicPotential, potential))
 
         self.kg.add((self.sample, PROV.wasGeneratedBy, activity))
 
@@ -283,10 +280,10 @@ class Workflow:
             prop = URIRef(f'{main_id}_{key}')
             self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
             self.kg.add((prop, RDFS.label, Literal(key)))
-            self.kg.add((prop, ASO.hasValue, Literal(val["value"])))
+            self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
             if "unit" in val.keys():
                 unit = val['unit']
-                self.kg.add((prop, ASO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
+                self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
             self.kg.add((prop, CMSO.wasCalculatedBy, activity))
             if val['associate_to_sample']:
                 self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))

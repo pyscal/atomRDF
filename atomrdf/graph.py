@@ -4,7 +4,7 @@ as an input and annotates it with the CMSO ontology (PLDO and PODO too as needed
 object is stored in triplets.
 """
 
-from rdflib import Graph, Literal,  XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
+from rdflib import Graph, Literal,  XSD, RDF, RDFS, BNode, URIRef
 
 import os
 import numpy as np

@@ -21,11 +21,8 @@ from pyscal3.core import structure_dict, element_dict
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 
-from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
-
-CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
-PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
-PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
+from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
+from atomrdf.namespace import CMSO, PLDO, PODO
 
 #read element data file
 file_location = os.path.dirname(__file__).split('/')
