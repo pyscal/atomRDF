@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: pyscal-rdf, python tool for ontology-based creation, manipulation, and quering of atomic structures.
+title: atomRDF, python tool for ontology-based creation, manipulation, and quering of atomic structures.
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
@@ -15,9 +15,9 @@ authors:
   orcid: 'https://orcid.org/0000-0001-7564-7990'
 date-released: '2024-02-15'
 doi: 10.5281/zenodo.8146527
-url: 'https://rdf.pyscal.org'
+url: 'https://atomrdf.pyscal.org'
 license:
 - mit
-repository-code: https://github.com/pyscal/pyscal_rdf
+repository-code: https://github.com/pyscal/atomRDF
 type: software
 version: 0.4.1
