@@ -709,7 +709,7 @@ class System(pc.System):
         bv = self.schema.material.crystal_structure.unit_cell.bravais_lattice()
         if bv is not None:
             bv = URIRef(bv)
-            self.graph.add((self.unit_cell, CMSO.hasBravaisLattice, bv))
+            self.graph.add((self.unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, bv))
         
     def _add_lattice_properties(self):
         """
