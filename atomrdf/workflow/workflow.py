@@ -32,7 +32,7 @@ PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
 ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
 
 #custom imports as needed
-import pyscal_rdf.workflow.pyiron as pi
+import atomrdf.workflow.pyiron as pi
 
 
 class Workflow:
