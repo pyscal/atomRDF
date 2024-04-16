@@ -176,7 +176,7 @@ class KnowledgeGraph:
             #check if type was provided
             found = True
             dm = None
-
+            
             if type(triple[0]).__name__ == 'URIRef': 
                 found, dm = self._check_domain_if_uriref(triple)
 
@@ -192,11 +192,17 @@ class KnowledgeGraph:
     def _check_range_if_uriref(self, triple):
         found = True
         rn = self.value(triple[2], RDF.type)
+
         if rn is not None:
             #we need to check
             rang = triple[1].range                
             if len(rang) > 0:
                 if 'owl:Thing' not in rang:
+                    if triple[1].namespace_with_prefix not in rn:
+                        #cross ontology term
+                        self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {rn}')
+                        return True, None
+
                     found = False
                     for r in rang:
                         if r.split(':')[-1] in rn:
@@ -209,6 +215,11 @@ class KnowledgeGraph:
         rang = triple[1].range
         if len(rang) > 0:
             if 'owl:Thing' not in rang:
+                if triple[1].namespace != triple[2].namespace:
+                    #cross ontology term
+                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[2].namespace}')
+                    return True, None
+                    
                 found = False
                 if triple[2].name in rang:
                     found = True
