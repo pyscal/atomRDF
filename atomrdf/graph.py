@@ -17,6 +17,7 @@ import uuid
 import json
 import shutil
 import tarfile
+import logging
 
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -68,6 +69,19 @@ def _replace_keys(refdict, indict):
                 refdict[key] = val
     return refdict
 
+def _dummy_log(str):
+    pass
+
+def _prepare_log(file):
+    logger = logging.getLogger(__name__)
+    handler = logging.FileHandler(file)
+    formatter = logging.Formatter("%(asctime)s %(name)-12s %(levelname)-8s %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    return logger
+
 
 class KnowledgeGraph:
     def __init__(self, graph_file=None, 
@@ -75,14 +89,20 @@ class KnowledgeGraph:
         store_file=None,
         identifier="http://default_graph",
         ontology=None,
-        structure_store=None):
+        structure_store=None,
+        enable_log=False):
         
 
         create_store(self, store, identifier, 
             store_file=store_file,
             structure_store=structure_store)
         
-        #start the storage
+        #enable logging
+        if enable_log:
+            logger = _prepare_log(os.path.join(os.getcwd(), 'atomrdf.log'))
+            self.log = logger.info
+        else:
+            self.log = _dummy_log
 
         #start binding
         self.graph.bind("cmso", CMSO)
