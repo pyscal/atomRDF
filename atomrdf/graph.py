@@ -237,6 +237,9 @@ class KnowledgeGraph:
 
     def _check_range_if_literal(self, triple):
         found = True
+        if triple[2].datatype is None:
+            return True, None
+            
         destination_range = triple[2].datatype.toPython().split('#')[-1]
         
         if destination_range == 'string':
