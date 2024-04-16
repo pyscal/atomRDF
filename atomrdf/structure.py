@@ -276,12 +276,12 @@ class System(pc.System):
                     break
 
             if valid:
-                chemical_species = self.graph.add_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
                 self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
 
                 for e, r in composition.items():
                     if e in element_indetifiers.keys():
-                        element = self.graph.add_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
                         self.graph.add((chemical_species, CMSO.hasElement, element))
                         self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                         self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
@@ -339,12 +339,12 @@ class System(pc.System):
                     break
 
             if valid:
-                chemical_species = self.graph.add_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
                 self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
 
                 for e, r in composition.items():
                     if e in element_indetifiers.keys():
-                        element = self.graph.add_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
                         self.graph.add((chemical_species, CMSO.hasElement, element))
                         self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                         self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
@@ -466,12 +466,12 @@ class System(pc.System):
                     break
 
             if valid:
-                chemical_species = self.graph.add_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
                 self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
 
                 for e, r in composition.items():
                     if e in element_indetifiers.keys():
-                        element = self.graph.add_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
                         self.graph.add((chemical_species, CMSO.hasElement, element))
                         self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                         self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
@@ -671,7 +671,7 @@ class System(pc.System):
         valid = self.graph._is_valid(targets)
 
         if valid:
-            crystal_structure = self.graph.add_node(f'{self._name}_CrystalStructure', CMSO.CrystalStructure)
+            crystal_structure = self.graph.create_node(f'{self._name}_CrystalStructure', CMSO.CrystalStructure)
             self.graph.add((self.material, CMSO.hasStructure, crystal_structure))
             self.graph.add((crystal_structure, CMSO.hasAltName, 
                 Literal(targets[0], 
@@ -725,7 +725,7 @@ class System(pc.System):
         -------
         """
 
-        unit_cell = self.graph.add_node(f'{self._name}_UnitCell', CMSO.UnitCell)
+        unit_cell = self.graph.create_node(f'{self._name}_UnitCell', CMSO.UnitCell)
         self.graph.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell))
         self.unit_cell = unit_cell
         
@@ -748,13 +748,13 @@ class System(pc.System):
         Returns
         -------
         """
-        lattice_parameter = self.graph.add_node(f'{self._name}_LatticeParameter', CMSO.LatticeParameter)
+        lattice_parameter = self.graph.create_node(f'{self._name}_LatticeParameter', CMSO.LatticeParameter)
         self.graph.add((self.unit_cell, CMSO.hasLatticeParameter, lattice_parameter))
         self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(lattice_parameter_value[0], datatype=XSD.float)))
         self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(lattice_parameter_value[1], datatype=XSD.float)))
         self.graph.add((lattice_parameter, CMSO.hasLength_z, Literal(lattice_parameter_value[2], datatype=XSD.float)))
         
-        lattice_angle = self.graph.add_node(f'{self._name}_LatticeAngle', CMSO.LatticeAngle)
+        lattice_angle = self.graph.create_node(f'{self._name}_LatticeAngle', CMSO.LatticeAngle)
         self.graph.add((self.unit_cell, CMSO.hasAngle, lattice_angle))
         self.graph.add((lattice_angle, CMSO.hasAngle_alpha, Literal(lattice_angle_value[0], datatype=XSD.float)))
         self.graph.add((lattice_angle, CMSO.hasAngle_beta, Literal(lattice_angle_value[1], datatype=XSD.float)))
@@ -804,14 +804,14 @@ class System(pc.System):
         outfile = self._save_atom_attributes(position_identifier, species_identifier)
 
         if "positions" in self.atoms.keys():
-            position = self.graph.add_node(f'{self._name}_Position', CMSO.AtomAttribute)
+            position = self.graph.create_node(f'{self._name}_Position', CMSO.AtomAttribute)
             self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, position))
             self.graph.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             self.graph.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
             self.graph.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         if "species" in self.atoms.keys():
-            species = self.graph.add_node(f'{self._name}_Species', CMSO.AtomAttribute)
+            species = self.graph.create_node(f'{self._name}_Species', CMSO.AtomAttribute)
             self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, species))
             self.graph.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             self.graph.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
@@ -858,7 +858,7 @@ class System(pc.System):
         if self.graph is None:
             return
 
-        vacancy = self.graph.add_node(f'{self._name}_Vacancy', PODO.Vacancy)
+        vacancy = self.graph.create_node(f'{self._name}_Vacancy', PODO.Vacancy)
         self.graph.add((self.material, CMSO.hasDefect, vacancy))
         self.graph.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
@@ -885,19 +885,19 @@ class System(pc.System):
             return
                     
         if gb_dict["GBType"] is None:
-            plane_defect = self.graph.add_node(f'{self._name}_GrainBoundary')
+            plane_defect = self.graph.create_node(f'{self._name}_GrainBoundary')
         
         elif gb_dict["GBType"] == "Twist":
-            plane_defect = self.graph.add_node(f'{self._name}_TwistGrainBoundary', PLDO.TwistGrainBoundary)
+            plane_defect = self.graph.create_node(f'{self._name}_TwistGrainBoundary', PLDO.TwistGrainBoundary)
         
         elif gb_dict["GBType"] == "Tilt":
-            plane_defect = self.graph.add_node(f'{self._name}_TiltGrainBoundary', PLDO.TiltGrainBoundary)
+            plane_defect = self.graph.create_node(f'{self._name}_TiltGrainBoundary', PLDO.TiltGrainBoundary)
         
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            plane_defect = self.graph.add_node(f'{self._name}_SymmetricalTiltGrainBoundary', PLDO.SymmetricalTiltGrainBoundary)
+            plane_defect = self.graph.create_node(f'{self._name}_SymmetricalTiltGrainBoundary', PLDO.SymmetricalTiltGrainBoundary)
         
         elif gb_dict["GBType"] == "Mixed":
-            plane_defect = self.graph.add_node(f'{self._name}_MixedGrainBoundary', PLDO.MixedGrainBoundary)
+            plane_defect = self.graph.create_node(f'{self._name}_MixedGrainBoundary', PLDO.MixedGrainBoundary)
         
         self.graph.add((self.material, CMSO.hasDefect, plane_defect))
         self.graph.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
