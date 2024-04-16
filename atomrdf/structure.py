@@ -582,9 +582,8 @@ class System(pc.System):
         -------
         """
 
-        simulation_cell = URIRef(f'{self._name}_SimulationCell')
+        simulation_cell = self.graph.create_node(f'SimulationCell', CMSO.SimulationCell)
         self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
-        self.graph.add((simulation_cell, RDF.type, CMSO.SimulationCell))
         self.graph.add((simulation_cell, CMSO.hasVolume, 
             Literal(np.round(self.schema.simulation_cell.volume(), decimals=2), 
                 datatype=XSD.float)))
@@ -607,40 +606,35 @@ class System(pc.System):
         Returns
         -------
         """
-        simulation_cell_length = URIRef(f'{self._name}_SimulationCellLength')
+        simulation_cell_length = self.graph.create_node(f'SimulationCellLength', CMSO.SimulationCellLength)
         self.graph.add((self.simulation_cell, CMSO.hasLength, simulation_cell_length))
         data = self.schema.simulation_cell.length()
-        self.graph.add((simulation_cell_length, RDF.type, CMSO.SimulationCellLength))
         self.graph.add((simulation_cell_length, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
         self.graph.add((simulation_cell_length, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
         self.graph.add((simulation_cell_length, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
         
-        simulation_cell_vector_01 = URIRef(f'{self._name}_SimulationCellVector_1')
+        simulation_cell_vector_01 = self.graph.create_node(f'SimulationCellVector_1', CMSO.SimulationCellVector)
         data = self.schema.simulation_cell.vector()
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
-        self.graph.add((simulation_cell_vector_01, RDF.type, CMSO.SimulationCellVector))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_x, Literal(data[0][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_y, Literal(data[0][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_z, Literal(data[0][2], datatype=XSD.float)))
         
-        simulation_cell_vector_02 = URIRef(f'{self._name}_SimulationCellVector_2')
+        simulation_cell_vector_02 = self.graph.create_node(f'SimulationCellVector_2', CMSO.SimulationCellVector)
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
-        self.graph.add((simulation_cell_vector_02, RDF.type, CMSO.SimulationCellVector))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_x, Literal(data[1][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_y, Literal(data[1][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_z, Literal(data[1][2], datatype=XSD.float)))
         
-        simulation_cell_vector_03 = URIRef(f'{self._name}_SimulationCellVector_3')
+        simulation_cell_vector_03 = self.graph.create_node(f'SimulationCellVector_3', CMSO.SimulationCellVector)
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
-        self.graph.add((simulation_cell_vector_03, RDF.type, CMSO.SimulationCellVector))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_x, Literal(data[2][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_y, Literal(data[2][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_z, Literal(data[2][2], datatype=XSD.float)))
         
-        simulation_cell_angle = URIRef(f'{self._name}_SimulationCellAngle')
+        simulation_cell_angle = self.graph.create_node(f'SimulationCellAngle', CMSO.SimulationCellAngle)
         data = self.schema.simulation_cell.angle()
         self.graph.add((self.simulation_cell, CMSO.hasAngle, simulation_cell_angle))
-        self.graph.add((simulation_cell_angle, RDF.type, CMSO.SimulationCellAngle))
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))
