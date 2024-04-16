@@ -847,9 +847,8 @@ class System(pc.System):
         if self.graph is None:
             return
 
-        vacancy = URIRef(f'{self._name}_Vacancy')
+        vacancy = self.graph.add_node(f'{self._name}_Vacancy', PODO.Vacancy)
         self.graph.add((self.material, CMSO.hasDefect, vacancy))
-        self.graph.add((vacancy, RDF.type, PODO.Vacancy))
         self.graph.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
             self.graph.add((self.simulation_cell, PODO.hasNumberOfVacancies, Literal(number, datatype=XSD.integer)))
@@ -875,24 +874,19 @@ class System(pc.System):
             return
                     
         if gb_dict["GBType"] is None:
-            plane_defect = URIRef(f'{self._name}_GrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.GrainBoundary))
+            plane_defect = self.graph.add_node(f'{self._name}_GrainBoundary')
         
         elif gb_dict["GBType"] == "Twist":
-            plane_defect = URIRef(f'{self._name}_TwistGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.TwistGrainBoundary))
+            plane_defect = self.graph.add_node(f'{self._name}_TwistGrainBoundary', PLDO.TwistGrainBoundary)
         
         elif gb_dict["GBType"] == "Tilt":
-            plane_defect = URIRef(f'{self._name}_TiltGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.TiltGrainBoundary))
+            plane_defect = self.graph.add_node(f'{self._name}_TiltGrainBoundary', PLDO.TiltGrainBoundary)
         
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            plane_defect = URIRef(f'{self._name}_SymmetricalTiltGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
+            plane_defect = self.graph.add_node(f'{self._name}_SymmetricalTiltGrainBoundary', PLDO.SymmetricalTiltGrainBoundary)
         
         elif gb_dict["GBType"] == "Mixed":
-            plane_defect = URIRef(f'{self._name}_MixedGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.MixedGrainBoundary))
+            plane_defect = self.graph.add_node(f'{self._name}_MixedGrainBoundary', PLDO.MixedGrainBoundary)
         
         self.graph.add((self.material, CMSO.hasDefect, plane_defect))
         self.graph.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
