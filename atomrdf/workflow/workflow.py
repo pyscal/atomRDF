@@ -250,7 +250,7 @@ class Workflow:
                 self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
 
             if 'uri' in mdict['potential'].keys():
-                self.kg.add((potential, CMSO.hasReference, Literal(mdict['potential']['uri'])))
+                self.kg.add((potential, CMSO.hasReference, Literal(mdict['potential']['uri'], datatype=XSD.string)))
             if 'label' in mdict['potential'].keys():
                 self.kg.add((potential, RDFS.label, Literal(mdict['potential']['label'])))
 
