@@ -91,7 +91,10 @@ class OntoTerm:
     
     @property
     def name_without_prefix(self):
-        return _get_name(self.uri, self.delimiter)
+        name = _get_name(self.uri, self.delimiter)
+        name = name.replace('–', '')
+        name = name.replace('-', '')
+        return name
 
     @property
     def name(self):
@@ -141,6 +144,9 @@ class OntoTerm:
         if self.node_type == "data_property":
             return self.name_without_prefix + "value"
         return self.name_without_prefix
+
+    def toPython(self):
+        return self.uri
 
     def __repr__(self):
         return str(self.name)

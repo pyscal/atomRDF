@@ -21,11 +21,8 @@ from pyscal3.core import structure_dict, element_dict
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 
-from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
-
-CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
-PLDO = Namespace("http://purls.helmholtz-metadaten.de/pldo/")
-PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
+from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
+from atomrdf.namespace import CMSO, PLDO, PODO
 
 #read element data file
 file_location = os.path.dirname(__file__).split('/')
@@ -257,37 +254,37 @@ class System(pc.System):
             c = (val/self.natoms)
             self.add_vacancy(c, number=val)
             #now we need to re-add atoms, so at to remove
-            self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
+            self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+            self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
-            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
-            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.graph.remove((element, None, None))
-            self.graph.graph.remove((chemical_species, None, None))
-            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+                self.graph.remove((element, None, None))
+            self.graph.remove((chemical_species, None, None))
+            self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
             #now recalculate and add it again
             composition = self.schema.material.element_ratio()
 
             chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
 
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
                     element = URIRef(element_indetifiers[e])
                     self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                     self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
-            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
-            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
-            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+            filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
 
             #clean up items
             datadict = {
@@ -321,33 +318,33 @@ class System(pc.System):
 
         #operate on the graph
         if self.graph is not None:
-            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
-            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.graph.remove((element, None, None))
-            self.graph.graph.remove((chemical_species, None, None))
-            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+                self.graph.remove((element, None, None))
+            self.graph.remove((chemical_species, None, None))
+            self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
             #now recalculate and add it again
             composition = self.schema.material.element_ratio()
 
             chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
 
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
                     element = URIRef(element_indetifiers[e])
                     self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                     self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
-            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
-            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
-            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+            filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
 
             #clean up items
             datadict = {
@@ -441,37 +438,37 @@ class System(pc.System):
 
         #now we have to verify the triples correctly and add them in
         if self.graph is not None:
-            self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(sysn.natoms, datatype=XSD.integer)))
+            self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+            self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(sysn.natoms, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
-            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
-            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.graph.remove((element, None, None))
-            self.graph.graph.remove((chemical_species, None, None))
-            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+                self.graph.remove((element, None, None))
+            self.graph.remove((chemical_species, None, None))
+            self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
             #now recalculate and add it again
             composition = sysn.schema.material.element_ratio()
 
             chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
 
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
                     element = URIRef(element_indetifiers[e])
                     self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.Element))
+                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                     self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
-            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
-            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
-            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+            filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
 
             #clean up items
             datadict = {
@@ -566,7 +563,7 @@ class System(pc.System):
             if e in element_indetifiers.keys():
                 element = URIRef(element_indetifiers[e])
                 self.graph.add((chemical_species, CMSO.hasElement, element))
-                self.graph.add((element, RDF.type, CMSO.Element))
+                self.graph.add((element, RDF.type, CMSO.ChemicalElement))
                 self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
                 self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
@@ -712,7 +709,7 @@ class System(pc.System):
         bv = self.schema.material.crystal_structure.unit_cell.bravais_lattice()
         if bv is not None:
             bv = URIRef(bv)
-            self.graph.add((self.unit_cell, CMSO.hasBravaisLattice, bv))
+            self.graph.add((self.unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, bv))
         
     def _add_lattice_properties(self):
         """
@@ -788,7 +785,7 @@ class System(pc.System):
 
         if "positions" in self.atoms.keys():
             position = URIRef(f'{self._name}_Position')
-            self.graph.add((self.sample, CMSO.hasAttribute, position))
+            self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, position))
             self.graph.add((position, RDF.type, CMSO.AtomAttribute))
             self.graph.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             self.graph.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
@@ -796,7 +793,7 @@ class System(pc.System):
 
         if "species" in self.atoms.keys():
             species = URIRef(f'{self._name}_Species')
-            self.graph.add((self.sample, CMSO.hasAttribute, species))
+            self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, species))
             self.graph.add((species, RDF.type, CMSO.AtomAttribute))
             self.graph.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             self.graph.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
@@ -892,7 +889,7 @@ class System(pc.System):
         
         self.graph.add((self.material, CMSO.hasDefect, plane_defect))
         self.graph.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
-        self.graph.add((plane_defect, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
+        self.graph.add((plane_defect, PLDO.hasGBplane, Literal(gb_dict["GBPlane"], 
                                                              datatype=XSD.string)))
         self.graph.add((plane_defect, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
                                                              datatype=XSD.string)))

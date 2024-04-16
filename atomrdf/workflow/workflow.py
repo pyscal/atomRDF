@@ -26,10 +26,7 @@ import uuid
 from atomrdf.structure import System
 
 #Move imports to another file
-PROV = Namespace("http://www.w3.org/ns/prov#")
-CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
-PODO = Namespace("http://purls.helmholtz-metadaten.de/podo/")
-ASO = Namespace("http://purls.helmholtz-metadaten.de/aso/")
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO
 
 #custom imports as needed
 import atomrdf.workflow.pyiron as pi
@@ -84,63 +81,63 @@ class Workflow:
         if self.parent_sample is None:
             return
 
-        parent_material = list([k[2] for k in self.kg.graph.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_defects = list([x[2] for x in self.kg.graph.triples((parent_material, CMSO.hasDefect, None))])
+        parent_material = list([k[2] for k in self.kg.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_defects = list([x[2] for x in self.kg.triples((parent_material, CMSO.hasDefect, None))])
         #now for each defect we copy add this to the final sample
-        material = list([k[2] for k in self.kg.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
+        material = list([k[2] for k in self.kg.triples((self.sample, CMSO.hasMaterial, None))])[0]
 
         for defect in parent_defects:
             new_defect = URIRef(defect.toPython())
             self.kg.graph.add((material, CMSO.hasDefect, new_defect))
             #now fetch all defect based info
-            for triple in self.kg.graph.triples((defect, None, None)):
+            for triple in self.kg.triples((defect, None, None)):
                 self.kg.graph.add((new_defect, triple[1], triple[2]))
 
         #now add the special props for vacancy
-        parent_simcell = self.kg.graph.value(self.sample, CMSO.hasSimulationCell)
-        simcell = self.kg.graph.value(self.parent_sample, CMSO.hasSimulationCell) 
+        parent_simcell = self.kg.value(self.sample, CMSO.hasSimulationCell)
+        simcell = self.kg.value(self.parent_sample, CMSO.hasSimulationCell) 
         
-        for triple in self.kg.graph.triples((parent_simcell, PODO.hasVacancyConcentration, None)):
+        for triple in self.kg.triples((parent_simcell, PODO.hasVacancyConcentration, None)):
             self.kg.graph.add((simcell, triple[1], triple[2]))
-        for triple in self.kg.graph.triples((parent_simcell, PODO.hasNumberOfVacancies, None)):
+        for triple in self.kg.triples((parent_simcell, PODO.hasNumberOfVacancies, None)):
             self.kg.graph.add((simcell, triple[1], triple[2]))
 
     def _get_lattice_properties(self, ):
         if self.parent_sample is None:
             return
 
-        parent_material = list([k[2] for k in self.kg.graph.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_crystal_structure = self.kg.graph.value(parent_material, CMSO.hasStructure)
-        parent_altname = self.kg.graph.value(parent_crystal_structure, CMSO.hasAltName)
+        parent_material = list([k[2] for k in self.kg.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_crystal_structure = self.kg.value(parent_material, CMSO.hasStructure)
+        parent_altname = self.kg.value(parent_crystal_structure, CMSO.hasAltName)
 
         #add this to new structure
-        material = list([k[2] for k in self.kg.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
-        crystal_structure = self.kg.graph.value(material, CMSO.hasStructure)
+        material = list([k[2] for k in self.kg.triples((self.sample, CMSO.hasMaterial, None))])[0]
+        crystal_structure = self.kg.value(material, CMSO.hasStructure)
         self.kg.add((crystal_structure, CMSO.hasAltName, parent_altname))
 
         #space group
-        parent_space_group = self.kg.graph.value(parent_crystal_structure, CMSO.hasSpaceGroup)
-        space_group = self.kg.graph.value(crystal_structure, CMSO.hasSpaceGroup)
-        for triple in self.kg.graph.triples((parent_space_group, None, None)):
+        parent_space_group = self.kg.value(parent_crystal_structure, CMSO.hasSpaceGroup)
+        space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
+        for triple in self.kg.triples((parent_space_group, None, None)):
             self.kg.graph.add((space_group, triple[1], triple[2]))
 
         #unit cell
-        parent_unit_cell = self.kg.graph.value(parent_crystal_structure, CMSO.hasUnitCell)
-        parent_bv = self.kg.graph.value(parent_unit_cell, CMSO.hasBravaisLattice)
+        parent_unit_cell = self.kg.value(parent_crystal_structure, CMSO.hasUnitCell)
+        parent_bv = self.kg.value(parent_unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice)
 
-        unit_cell = self.kg.graph.value(crystal_structure, CMSO.hasUnitCell)
-        self.kg.graph.add((unit_cell, CMSO.hasBravaisLattice, parent_bv))
+        unit_cell = self.kg.value(crystal_structure, CMSO.hasUnitCell)
+        self.kg.graph.add((unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, parent_bv))
 
         #lattice parameter
-        parent_lattice_parameter = self.kg.graph.value(parent_unit_cell, CMSO.hasLatticeParameter)
-        lattice_parameter = self.kg.graph.value(unit_cell, CMSO.hasLatticeParameter)
-        for triple in self.kg.graph.triples((parent_lattice_parameter, None, None)):
+        parent_lattice_parameter = self.kg.value(parent_unit_cell, CMSO.hasLatticeParameter)
+        lattice_parameter = self.kg.value(unit_cell, CMSO.hasLatticeParameter)
+        for triple in self.kg.triples((parent_lattice_parameter, None, None)):
             self.kg.graph.add((lattice_parameter, triple[1], triple[2]))
 
         #lattice angle
-        parent_lattice_angle = self.kg.graph.value(parent_unit_cell, CMSO.hasAngle)
-        lattice_angle = self.kg.graph.value(unit_cell, CMSO.hasAngle)
-        for triple in self.kg.graph.triples((parent_lattice_angle, None, None)):
+        parent_lattice_angle = self.kg.value(parent_unit_cell, CMSO.hasAngle)
+        lattice_angle = self.kg.value(unit_cell, CMSO.hasAngle)
+        for triple in self.kg.triples((parent_lattice_angle, None, None)):
             self.kg.graph.add((lattice_angle, triple[1], triple[2]))
 
 
@@ -202,62 +199,62 @@ class Workflow:
         if method_type == 'md':
             method = URIRef(f'method:{main_id}')
             if mdict['method'] == 'MolecularStatics':
-                self.kg.add((method, RDF.type, ASO.MolecularStatics))
+                self.kg.add((method, RDF.type, ASMO.MolecularStatics))
             elif mdict['method'] == 'MolecularDynamics':
-                self.kg.add((method, RDF.type, ASO.MolecularDynamics))
+                self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
         elif method_type == 'dft':
             method = URIRef(f'method:{main_id}')
             if mdict['method'] == 'DensityFunctionalTheory':
-                self.kg.add((method, RDF.type, ASO.DensityFunctionalTheory))
-        self.kg.add((activity, ASO.hasMethod, method))
+                self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
+        self.kg.add((activity, ASMO.hasComputationalMethod, method))
 
         if len(mdict['dof']) == 0:
-            self.kg.add((activity, RDF.type, ASO.RigidEnergyCalculation))
+            self.kg.add((activity, RDF.type, ASMO.RigidEnergyCalculation))
         else:
-            self.kg.add((activity, RDF.type, ASO.StructureOptimization))
+            self.kg.add((activity, RDF.type, ASMO.StructureOptimization))
 
         for dof in mdict['dof']:
-            self.kg.add((activity, ASO.hasRelaxationDOF, getattr(ASO, dof)))
+            self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
 
         if method_type == 'md':
-            self.kg.add((method, ASO.hasStatisticalEnsemble, getattr(ASO, mdict['ensemble'])))
+            self.kg.add((method, ASMO.hasStatisticalEnsemble, getattr(ASMO, mdict['ensemble'])))
 
             #add temperature if needed
             if mdict['temperature'] is not None:
                 temperature = URIRef(f'temperature:{main_id}')
-                self.kg.add((temperature, RDF.type, ASO.InputParameter))
+                self.kg.add((temperature, RDF.type, ASMO.InputParameter))
                 self.kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
-                self.kg.add((activity, ASO.hasInputParameter, temperature))
-                self.kg.add((temperature, ASO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
-                self.kg.add((temperature, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
+                self.kg.add((activity, ASMO.hasInputParameter, temperature))
+                self.kg.add((temperature, ASMO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
+                self.kg.add((temperature, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
 
             if mdict['pressure'] is not None:
                 pressure = URIRef(f'pressure:{main_id}')
-                self.kg.add((pressure, RDF.type, ASO.InputParameter))
+                self.kg.add((pressure, RDF.type, ASMO.InputParameter))
                 self.kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
-                self.kg.add((activity, ASO.hasInputParameter, pressure))
-                self.kg.add((pressure, ASO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
-                self.kg.add((pressure, ASO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
+                self.kg.add((activity, ASMO.hasInputParameter, pressure))
+                self.kg.add((pressure, ASMO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
+                self.kg.add((pressure, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
 
             #potentials need to be mapped
             potential = URIRef(f'potential:{main_id}')
             if 'meam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.MEAM))
+                self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
             elif 'eam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.EAM))
+                self.kg.add((potential, RDF.type, ASMO.EmbeddedAtomModel))
             elif 'lj' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.LennardJones))
+                self.kg.add((potential, RDF.type, ASMO.LennardJonesPotential))
             elif 'ace' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASO.MLPotential))
+                self.kg.add((potential, RDF.type, ASMO.MachineLearningPotential))
             else:
-                self.kg.add((potential, RDF.type, ASO.InteratomicPotential))
+                self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
 
             if 'uri' in mdict['potential'].keys():
-                self.kg.add((potential, ASO.hasReference, Literal(mdict['potential']['uri'])))
+                self.kg.add((potential, CMSO.hasReference, Literal(mdict['potential']['uri'])))
             if 'label' in mdict['potential'].keys():
                 self.kg.add((potential, RDFS.label, Literal(mdict['potential']['label'])))
 
-            self.kg.add((method, ASO.hasInteratomicPotential, potential))
+            self.kg.add((method, ASMO.hasInteratomicPotential, potential))
 
         self.kg.add((self.sample, PROV.wasGeneratedBy, activity))
 
@@ -283,11 +280,11 @@ class Workflow:
             prop = URIRef(f'{main_id}_{key}')
             self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
             self.kg.add((prop, RDFS.label, Literal(key)))
-            self.kg.add((prop, ASO.hasValue, Literal(val["value"])))
+            self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
             if "unit" in val.keys():
                 unit = val['unit']
-                self.kg.add((prop, ASO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
-            self.kg.add((prop, CMSO.wasCalculatedBy, activity))
+                self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
+            self.kg.add((prop, ASMO.wasCalculatedBy, activity))
             if val['associate_to_sample']:
                 self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))
 
