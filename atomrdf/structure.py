@@ -504,11 +504,7 @@ class System(pc.System):
         self._add_simulation_cell()
         self._add_simulation_cell_properties()
         self._add_crystal_structure()
-        self._add_space_group()
-        self._add_unit_cell()
-        self._add_lattice_properties()
         self._add_atoms()
-
 
 
     def _generate_name(self, name_index=None):
@@ -653,15 +649,39 @@ class System(pc.System):
         -------
         """
 
-        crystal_structure = URIRef(f'{self._name}_CrystalStructure')
-        self.graph.add((self.material, CMSO.hasStructure, crystal_structure))
-        self.graph.add((crystal_structure, RDF.type, CMSO.CrystalStructure))    
-        self.graph.add((crystal_structure, CMSO.hasAltName, 
-            Literal(self.schema.material.crystal_structure.name(), 
-                datatype=XSD.string)))
-        self.crystal_structure = crystal_structure
+        targets = [self.schema.material.crystal_structure.name(),
+        self.schema.material.crystal_structure.spacegroup_symbol(),
+        self.schema.material.crystal_structure.spacegroup_number(),
+        self.schema.material.crystal_structure.unit_cell.bravais_lattice(),
+        self.schema.material.crystal_structure.unit_cell.lattice_parameter(),
+        self.schema.material.crystal_structure.unit_cell.angle()
+        ]
+
+        valid = self.graph._is_valid(targets)
+
+        if valid:
+            crystal_structure = self.graph.add_node(f'{self._name}_CrystalStructure', CMSO.CrystalStructure)
+            self.graph.add((self.material, CMSO.hasStructure, crystal_structure))
+            self.graph.add((crystal_structure, CMSO.hasAltName, 
+                Literal(targets[0], 
+                    datatype=XSD.string)))
+            self.crystal_structure = crystal_structure
+
+            if targets[1] is not None:
+                self._add_space_group(targets[1], targets[2])
+
+            #now see if unit cell needs to be added
+            valid = self.graph._is_valid(targets[3:])
+            if valid:
+                self._add_unit_cell()
+                if targets[3] is not None:
+                    self._add_bravais_lattice(targets[3])
+                if targets[4] is not None:
+                    self._add_lattice_properties(targets[4], targets[5])
+
+
         
-    def _add_space_group(self):
+    def _add_space_group(self, spacegroup_symbol, spacegroup_number):
         """
         Add a CMSO Space Group
 
@@ -676,11 +696,9 @@ class System(pc.System):
         space_group = URIRef(f'{self._name}_SpaceGroup')
         self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
         self.graph.add((space_group, CMSO.hasSpaceGroupSymbol, 
-            Literal(self.schema.material.crystal_structure.spacegroup_symbol(), 
-                datatype=XSD.string)))
+            Literal(spacegroup_symbol, datatype=XSD.string)))
         self.graph.add((space_group, CMSO.hasSpaceGroupNumber, 
-            Literal(self.schema.material.crystal_structure.spacegroup_number(), 
-                datatype=XSD.integer)))
+            Literal(spacegroup_number, datatype=XSD.integer)))
     
             
     def _add_unit_cell(self):
@@ -696,18 +714,17 @@ class System(pc.System):
         -------
         """
 
-        unit_cell = URIRef(f'{self._name}_UnitCell')
+        unit_cell = self.graph.add_node(f'{self._name}_UnitCell', CMSO.UnitCell)
         self.graph.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell))
-        self.graph.add((unit_cell, RDF.type, CMSO.UnitCell))
         self.unit_cell = unit_cell
         
+    
+    def _add_bravais_lattice(self, bv):
         #add bravais lattice
-        bv = self.schema.material.crystal_structure.unit_cell.bravais_lattice()
-        if bv is not None:
-            bv = URIRef(bv)
-            self.graph.add((self.unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, bv))
+        bv = URIRef(bv)
+        self.graph.add((self.unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, bv))
         
-    def _add_lattice_properties(self):
+    def _add_lattice_properties(self, lattice_parameter_value, lattice_angle_value):
         """
         Add CMSO lattice properties such as Lattice Parameter,
         and its lengths and angles. 
@@ -720,21 +737,17 @@ class System(pc.System):
         Returns
         -------
         """
-        data = self.schema.material.crystal_structure.unit_cell.lattice_parameter()
-        lattice_parameter = URIRef(f'{self._name}_LatticeParameter')
+        lattice_parameter = self.graph.add_node(f'{self._name}_LatticeParameter', CMSO.LatticeParameter)
         self.graph.add((self.unit_cell, CMSO.hasLatticeParameter, lattice_parameter))
-        self.graph.add((lattice_parameter, RDF.type, CMSO.LatticeParameter))
-        self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
-        self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
-        self.graph.add((lattice_parameter, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(lattice_parameter_value[0], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(lattice_parameter_value[1], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_z, Literal(lattice_parameter_value[2], datatype=XSD.float)))
         
-        lattice_angle = URIRef(f'{self._name}_LatticeAngle')
-        data = self.schema.material.crystal_structure.unit_cell.angle()
+        lattice_angle = self.graph.add_node(f'{self._name}_LatticeAngle', CMSO.LatticeAngle)
         self.graph.add((self.unit_cell, CMSO.hasAngle, lattice_angle))
-        self.graph.add((lattice_angle, RDF.type, CMSO.LatticeAngle))
-        self.graph.add((lattice_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
-        self.graph.add((lattice_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
-        self.graph.add((lattice_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))        
+        self.graph.add((lattice_angle, CMSO.hasAngle_alpha, Literal(lattice_angle_value[0], datatype=XSD.float)))
+        self.graph.add((lattice_angle, CMSO.hasAngle_beta, Literal(lattice_angle_value[1], datatype=XSD.float)))
+        self.graph.add((lattice_angle, CMSO.hasAngle_gamma, Literal(lattice_angle_value[2], datatype=XSD.float)))        
 
 
     def _save_atom_attributes(self, position_identifier, species_identifier):
@@ -780,17 +793,15 @@ class System(pc.System):
         outfile = self._save_atom_attributes(position_identifier, species_identifier)
 
         if "positions" in self.atoms.keys():
-            position = URIRef(f'{self._name}_Position')
+            position = self.graph.add_node(f'{self._name}_Position', CMSO.AtomAttribute)
             self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, position))
-            self.graph.add((position, RDF.type, CMSO.AtomAttribute))
             self.graph.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             self.graph.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
             self.graph.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         if "species" in self.atoms.keys():
-            species = URIRef(f'{self._name}_Species')
+            species = self.graph.add_node(f'{self._name}_Species', CMSO.AtomAttribute)
             self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, species))
-            self.graph.add((species, RDF.type, CMSO.AtomAttribute))
             self.graph.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             self.graph.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
             self.graph.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))

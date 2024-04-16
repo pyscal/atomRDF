@@ -134,6 +134,14 @@ class KnowledgeGraph:
         structure.graph = self
         structure.to_graph()
 
+    def _is_valid(self, input_list):
+        valid = False
+        for x in input_list:
+            if x is not None:
+                valid = True
+                break
+        return valid
+
     def _is_ontoterm(self, term):
         return type(term).__name__ == 'OntoTerm'
 
