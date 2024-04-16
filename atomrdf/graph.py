@@ -22,6 +22,7 @@ import json
 import shutil
 import tarfile
 import logging
+import warnings
 
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -238,8 +239,10 @@ class KnowledgeGraph:
     def _check_range_if_literal(self, triple):
         found = True
         if triple[2].datatype is None:
+            self.log(f'WARNING: {triple[1].name} has a range with unspecified datatype!')
+            warnings.warn(f'{triple[1].name} has a range with unspecified datatype!'))
             return True, None
-            
+
         destination_range = triple[2].datatype.toPython().split('#')[-1]
         
         if destination_range == 'string':
