@@ -258,6 +258,7 @@ class System(pc.System):
             self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
+            
             chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
             for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
@@ -268,18 +269,22 @@ class System(pc.System):
             
             #now recalculate and add it again
             composition = self.schema.material.element_ratio()
-
-            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+            valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
-                    element = URIRef(element_indetifiers[e])
-                    self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                    valid = True
+                    break
+
+            if valid:
+                chemical_species = self.graph.add_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+                for e, r in composition.items():
+                    if e in element_indetifiers.keys():
+                        element = self.graph.add_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        self.graph.add((chemical_species, CMSO.hasElement, element))
+                        self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                        self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
             filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
@@ -326,20 +331,23 @@ class System(pc.System):
             self.graph.remove((chemical_species, None, None))
             self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
-            #now recalculate and add it again
             composition = self.schema.material.element_ratio()
-
-            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+            valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
-                    element = URIRef(element_indetifiers[e])
-                    self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                    valid = True
+                    break
+
+            if valid:
+                chemical_species = self.graph.add_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+                for e, r in composition.items():
+                    if e in element_indetifiers.keys():
+                        element = self.graph.add_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        self.graph.add((chemical_species, CMSO.hasElement, element))
+                        self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                        self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
             filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
@@ -450,20 +458,23 @@ class System(pc.System):
             self.graph.remove((chemical_species, None, None))
             self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
-            #now recalculate and add it again
-            composition = sysn.schema.material.element_ratio()
-
-            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+            composition = self.schema.material.element_ratio()
+            valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
-                    element = URIRef(element_indetifiers[e])
-                    self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                    valid = True
+                    break
+
+            if valid:
+                chemical_species = self.graph.add_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+                for e, r in composition.items():
+                    if e in element_indetifiers.keys():
+                        element = self.graph.add_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        self.graph.add((chemical_species, CMSO.hasElement, element))
+                        self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                        self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
             filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
