@@ -91,7 +91,10 @@ class OntoTerm:
     
     @property
     def name_without_prefix(self):
-        return _get_name(self.uri, self.delimiter)
+        name = _get_name(self.uri, self.delimiter)
+        name = name.replace('–', '')
+        name = name.replace('-', '')
+        return name
 
     @property
     def name(self):

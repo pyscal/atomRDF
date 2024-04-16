@@ -239,13 +239,13 @@ class Workflow:
             #potentials need to be mapped
             potential = URIRef(f'potential:{main_id}')
             if 'meam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.MEAM))
+                self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
             elif 'eam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.EAM))
+                self.kg.add((potential, RDF.type, ASMO.EmbeddedAtomModel))
             elif 'lj' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.LennardJones))
+                self.kg.add((potential, RDF.type, ASMO.LennardJonesPotential))
             elif 'ace' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.MLPotential))
+                self.kg.add((potential, RDF.type, ASMO.MachineLearningPotential))
             else:
                 self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
 

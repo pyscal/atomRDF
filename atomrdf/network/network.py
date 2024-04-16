@@ -38,7 +38,7 @@ class OntologyNetwork:
         #now iterate over all attributes
         for k1 in ['class', 'object_property', 'data_property']:
             for k2, val in self.onto.attributes[k1].items():
-                mapdict[val.namespace][val.name_without_prefix.replace('-', '')] = val
+                mapdict[val.namespace][val.name_without_prefix] = val
         
 
         self.terms._add_attribute(mapdict) 
