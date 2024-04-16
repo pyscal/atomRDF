@@ -5,12 +5,13 @@ from pyscal3.atoms import AttrSetter
 
 from atomrdf.network.network import OntologyNetwork
 
-class Namespace(AttrSetter):
+class Namespace(AttrSetter, RDFLibNamespace):
     def __init__(self, infile, delimiter='/'):
         AttrSetter.__init__(self)
         self.network = OntologyNetwork(infile, delimiter=delimiter)
         #print(type(self.network.onto.tree.base_iri))
-        self.namespace = RDFLibNamespace(self.network.onto.tree.base_iri)
+        #self.namespace = RDFLibNamespace(self.network.onto.tree.base_iri)
+        RDFLibNamespace.__init__(self.network.onto.tree.base_iri)
         #self.namespace = RDFLibNamespace("http://purls.helmholtz-metadaten.de/cmso/")
         self.name = self.network.onto.tree.name
         mapdict = {}

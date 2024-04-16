@@ -258,9 +258,9 @@ class System(pc.System):
             self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
-            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
-            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
                 self.graph.graph.remove((element, None, None))
             self.graph.graph.remove((chemical_species, None, None))
@@ -282,9 +282,9 @@ class System(pc.System):
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
-            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
-            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
-            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+            filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
 
             #clean up items
             datadict = {
@@ -318,9 +318,9 @@ class System(pc.System):
 
         #operate on the graph
         if self.graph is not None:
-            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
-            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
                 self.graph.graph.remove((element, None, None))
             self.graph.graph.remove((chemical_species, None, None))
@@ -342,9 +342,9 @@ class System(pc.System):
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
-            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
-            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
-            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+            filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
 
             #clean up items
             datadict = {
@@ -442,9 +442,9 @@ class System(pc.System):
             self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(sysn.natoms, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
-            chemical_species = self.graph.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
-            for s in self.graph.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
                 self.graph.graph.remove((element, None, None))
             self.graph.graph.remove((chemical_species, None, None))
@@ -466,9 +466,9 @@ class System(pc.System):
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
-            filepath = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
-            position_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
-            species_identifier = self.graph.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
+            filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
+            position_identifier = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasIdentifier).toPython()
+            species_identifier = self.graph.value(URIRef(f'{self.sample}_Species'), CMSO.hasIdentifier).toPython()
 
             #clean up items
             datadict = {

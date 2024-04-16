@@ -81,63 +81,63 @@ class Workflow:
         if self.parent_sample is None:
             return
 
-        parent_material = list([k[2] for k in self.kg.graph.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_defects = list([x[2] for x in self.kg.graph.triples((parent_material, CMSO.hasDefect, None))])
+        parent_material = list([k[2] for k in self.kg.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_defects = list([x[2] for x in self.kg.triples((parent_material, CMSO.hasDefect, None))])
         #now for each defect we copy add this to the final sample
-        material = list([k[2] for k in self.kg.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
+        material = list([k[2] for k in self.kg.triples((self.sample, CMSO.hasMaterial, None))])[0]
 
         for defect in parent_defects:
             new_defect = URIRef(defect.toPython())
             self.kg.graph.add((material, CMSO.hasDefect, new_defect))
             #now fetch all defect based info
-            for triple in self.kg.graph.triples((defect, None, None)):
+            for triple in self.kg.triples((defect, None, None)):
                 self.kg.graph.add((new_defect, triple[1], triple[2]))
 
         #now add the special props for vacancy
-        parent_simcell = self.kg.graph.value(self.sample, CMSO.hasSimulationCell)
-        simcell = self.kg.graph.value(self.parent_sample, CMSO.hasSimulationCell) 
+        parent_simcell = self.kg.value(self.sample, CMSO.hasSimulationCell)
+        simcell = self.kg.value(self.parent_sample, CMSO.hasSimulationCell) 
         
-        for triple in self.kg.graph.triples((parent_simcell, PODO.hasVacancyConcentration, None)):
+        for triple in self.kg.triples((parent_simcell, PODO.hasVacancyConcentration, None)):
             self.kg.graph.add((simcell, triple[1], triple[2]))
-        for triple in self.kg.graph.triples((parent_simcell, PODO.hasNumberOfVacancies, None)):
+        for triple in self.kg.triples((parent_simcell, PODO.hasNumberOfVacancies, None)):
             self.kg.graph.add((simcell, triple[1], triple[2]))
 
     def _get_lattice_properties(self, ):
         if self.parent_sample is None:
             return
 
-        parent_material = list([k[2] for k in self.kg.graph.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_crystal_structure = self.kg.graph.value(parent_material, CMSO.hasStructure)
-        parent_altname = self.kg.graph.value(parent_crystal_structure, CMSO.hasAltName)
+        parent_material = list([k[2] for k in self.kg.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_crystal_structure = self.kg.value(parent_material, CMSO.hasStructure)
+        parent_altname = self.kg.value(parent_crystal_structure, CMSO.hasAltName)
 
         #add this to new structure
-        material = list([k[2] for k in self.kg.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
-        crystal_structure = self.kg.graph.value(material, CMSO.hasStructure)
+        material = list([k[2] for k in self.kg.triples((self.sample, CMSO.hasMaterial, None))])[0]
+        crystal_structure = self.kg.value(material, CMSO.hasStructure)
         self.kg.add((crystal_structure, CMSO.hasAltName, parent_altname))
 
         #space group
-        parent_space_group = self.kg.graph.value(parent_crystal_structure, CMSO.hasSpaceGroup)
-        space_group = self.kg.graph.value(crystal_structure, CMSO.hasSpaceGroup)
-        for triple in self.kg.graph.triples((parent_space_group, None, None)):
+        parent_space_group = self.kg.value(parent_crystal_structure, CMSO.hasSpaceGroup)
+        space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
+        for triple in self.kg.triples((parent_space_group, None, None)):
             self.kg.graph.add((space_group, triple[1], triple[2]))
 
         #unit cell
-        parent_unit_cell = self.kg.graph.value(parent_crystal_structure, CMSO.hasUnitCell)
-        parent_bv = self.kg.graph.value(parent_unit_cell, CMSO.hasBravaisLattice)
+        parent_unit_cell = self.kg.value(parent_crystal_structure, CMSO.hasUnitCell)
+        parent_bv = self.kg.value(parent_unit_cell, CMSO.hasBravaisLattice)
 
-        unit_cell = self.kg.graph.value(crystal_structure, CMSO.hasUnitCell)
+        unit_cell = self.kg.value(crystal_structure, CMSO.hasUnitCell)
         self.kg.graph.add((unit_cell, CMSO.hasBravaisLattice, parent_bv))
 
         #lattice parameter
-        parent_lattice_parameter = self.kg.graph.value(parent_unit_cell, CMSO.hasLatticeParameter)
-        lattice_parameter = self.kg.graph.value(unit_cell, CMSO.hasLatticeParameter)
-        for triple in self.kg.graph.triples((parent_lattice_parameter, None, None)):
+        parent_lattice_parameter = self.kg.value(parent_unit_cell, CMSO.hasLatticeParameter)
+        lattice_parameter = self.kg.value(unit_cell, CMSO.hasLatticeParameter)
+        for triple in self.kg.triples((parent_lattice_parameter, None, None)):
             self.kg.graph.add((lattice_parameter, triple[1], triple[2]))
 
         #lattice angle
-        parent_lattice_angle = self.kg.graph.value(parent_unit_cell, CMSO.hasAngle)
-        lattice_angle = self.kg.graph.value(unit_cell, CMSO.hasAngle)
-        for triple in self.kg.graph.triples((parent_lattice_angle, None, None)):
+        parent_lattice_angle = self.kg.value(parent_unit_cell, CMSO.hasAngle)
+        lattice_angle = self.kg.value(unit_cell, CMSO.hasAngle)
+        for triple in self.kg.triples((parent_lattice_angle, None, None)):
             self.kg.graph.add((lattice_angle, triple[1], triple[2]))
 
 

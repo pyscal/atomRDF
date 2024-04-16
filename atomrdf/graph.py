@@ -85,8 +85,8 @@ class KnowledgeGraph:
         #start the storage
 
         #start binding
-        self.graph.bind("cmso", CMSO.namespace)
-        self.graph.bind("pldo", PLDO.namespace)
+        self.graph.bind("cmso", CMSO)
+        self.graph.bind("pldo", PLDO)
         
         if graph_file is not None:
             if os.path.exists(graph_file):
@@ -108,22 +108,34 @@ class KnowledgeGraph:
         structure.graph = self
         structure.to_graph()
 
-    def add(self, triple):
-        """
-        Force assumes that you are passing rdflib terms, defined with
-        RDFLib Namespace
-        """
+    def _modify_triple(self, triple):
         modified_triple = []
-        print(triple)
         for term in triple:
             if type(term).__name__ == 'OntoTerm':
                 modified_triple.append(term.namespace_object)
             else:
                 modified_triple.append(term)
+        return tuple(modified_triple)
+
+    def add(self, triple):
+        """
+        Force assumes that you are passing rdflib terms, defined with
+        RDFLib Namespace
+        """
+        modified_triple = self._modify_triple(triple)
         if str(modified_triple[2].toPython()) != 'None':
-            self.graph.add(tuple(modified_triple))
+            self.graph.add(modified_triple)
 
     
+    def triples(self, triple):
+        modified_triple = self._modify_triple(triple)
+        return self.graph.triples(modified_triple)
+
+    def value(self, arg1, arg2):
+        modified_double = self._modify_triple((arg1, arg2))
+        return self.graph.value(modified_double[0], modified_double[1])
+
+
     def _initialize_graph(self):
         """
         Create the RDF Graph from the data stored
@@ -166,19 +178,19 @@ class KnowledgeGraph:
 
 
     def inspect_sample(self):
-        natoms = self.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
-        material = list([k[2] for k in self.graph.triples((sample, CMSO.hasMaterial, None))])[0]
-        defects = list([k[2] for k in self.graph.triples((material, CMSO.hasDefect, None))])
-        composition = list([k[2].toPython() for k in self.graph.triples((material, CMSO.hasElementRatio, None))])
-        crystalstructure = self.graph.value(material, CMSO.hasStructure)
-        spacegroupsymbol = self.graph.value(crystalstructure, CMSO.hasSpaceGroupSymbol).toPython()
+        natoms = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
+        material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
+        defects = list([k[2] for k in self.triples((material, CMSO.hasDefect, None))])
+        composition = list([k[2].toPython() for k in self.triples((material, CMSO.hasElementRatio, None))])
+        crystalstructure = self.value(material, CMSO.hasStructure)
+        spacegroupsymbol = self.value(crystalstructure, CMSO.hasSpaceGroupSymbol).toPython()
 
-        lattice = self.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
-        defect_types = list([self.graph.value(d, RDF.type).toPython() for d in defects])
-        prop_nodes = list([k[2] for k in self.graph.triples((sample, CMSO.hasCalculatedProperty, None))])
-        props = list([self.graph.value(prop_node, RDFS.label) for prop_node in prop_nodes])
-        propvals = list([self.graph.value(d, CMSO.hasValue).toPython() for d in prop_nodes])
-        units = list([self.graph.value(d, CMSO.hasUnit).toPython() for d in prop_nodes])
+        lattice = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
+        defect_types = list([self.value(d, RDF.type).toPython() for d in defects])
+        prop_nodes = list([k[2] for k in self.triples((sample, CMSO.hasCalculatedProperty, None))])
+        props = list([self.value(prop_node, RDFS.label) for prop_node in prop_nodes])
+        propvals = list([self.value(d, CMSO.hasValue).toPython() for d in prop_nodes])
+        units = list([self.value(d, CMSO.hasUnit).toPython() for d in prop_nodes])
         st = []
         st.append(f'Sample with {natoms} atoms.\n')
         st.append("Material:\n")
@@ -337,7 +349,7 @@ class KnowledgeGraph:
 
         #now go through each sample, and copy the file, at the same time fix the paths
         for sample in self.samples:
-            filepath = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
+            filepath = self.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
             shutil.copy(filepath, structure_store)
             
             #now we have to remove the old path, and fix new
@@ -435,7 +447,7 @@ class KnowledgeGraph:
         Number of samples in the Graph
         """
 
-        return len([x for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))])
+        return len([x for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))])
     
     @property
     def samples(self):
@@ -443,12 +455,12 @@ class KnowledgeGraph:
         Returns a list of all Samples in the graph
         """
 
-        return [x[0] for x in self.graph.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+        return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
         
     def iterate_graph(self, item, create_new_graph=False):
         if create_new_graph:
             self.sgraph = KnowledgeGraph()
-        triples = list(self.graph.triples((item, None, None)))
+        triples = list(self.triples((item, None, None)))
         for triple in triples:
             self.sgraph.graph.add(triple)
             self.iterate_graph(triple[2])
@@ -474,7 +486,7 @@ class KnowledgeGraph:
 
         self.iterate_graph(sample, create_new_graph=True)
         if no_atoms:
-            na = self.sgraph.graph.value(sample, CMSO.hasNumberOfAtoms).toPython()
+            na = self.sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
             return self.sgraph, na
         return self.sgraph
         
@@ -493,18 +505,18 @@ class KnowledgeGraph:
             corresponding system
         """
 
-        simcell = self.graph.value(sample, CMSO.hasSimulationCell)
+        simcell = self.value(sample, CMSO.hasSimulationCell)
         cell_vectors = [[], [], []]
 
-        for s in self.graph.triples((simcell, CMSO.hasVector, None)):
-            cell_vectors[0].append(self.graph.value(s[2], CMSO.hasComponent_x).toPython())
-            cell_vectors[1].append(self.graph.value(s[2], CMSO.hasComponent_y).toPython())
-            cell_vectors[2].append(self.graph.value(s[2], CMSO.hasComponent_z).toPython())
+        for s in self.triples((simcell, CMSO.hasVector, None)):
+            cell_vectors[0].append(self.value(s[2], CMSO.hasComponent_x).toPython())
+            cell_vectors[1].append(self.value(s[2], CMSO.hasComponent_y).toPython())
+            cell_vectors[2].append(self.value(s[2], CMSO.hasComponent_z).toPython())
         
         #cell_vectors
-        filepath = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
-        position_identifier = self.graph.value(URIRef(f'{sample}_Position'), CMSO.hasIdentifier).toPython()
-        species_identifier = self.graph.value(URIRef(f'{sample}_Species'), CMSO.hasIdentifier).toPython()
+        filepath = self.value(URIRef(f'{sample}_Position'), CMSO.hasPath).toPython()
+        position_identifier = self.value(URIRef(f'{sample}_Position'), CMSO.hasIdentifier).toPython()
+        species_identifier = self.value(URIRef(f'{sample}_Species'), CMSO.hasIdentifier).toPython()
 
         #open the file for reading
         with open(filepath, 'r') as fin:
