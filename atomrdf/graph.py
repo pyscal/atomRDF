@@ -122,6 +122,7 @@ class KnowledgeGraph:
         self.terms = self.ontology.terms
         self._atom_ids = None
         self.store = store
+        self._n_triples = 0
 
     
     def add_structure(self, structure):
@@ -167,22 +168,33 @@ class KnowledgeGraph:
             if not found:
                 raise ValueError(f'{dm} not in domain {domain} of {triple[1].name}')
             
-            print(f'checked {triple[1].name} against domain {dm}')
+            self.log(f'checked {triple[1].name} against domain {dm}')
 
     def add(self, triple, validate=True):
         """
         Force assumes that you are passing rdflib terms, defined with
         RDFLib Namespace
         """
+
         modified_triple = self._modify_triple(triple)
 
+        self.log(f'attempting to add triple: {self._n_triples}')
+        self.log(f'- {modified_triple[0].toPython()}')
+        self.log(f'- {modified_triple[1].toPython()}')
+        self.log(f'- {modified_triple[2].toPython()}')
         #now we should validate if needed
         #check domain
         if validate:
             self._check_domain(triple)
 
-        if str(modified_triple[2].toPython()) != 'None':
-            self.graph.add(modified_triple)
+        if str(modified_triple[2].toPython()) == 'None':
+            self.log(f'rejecting None valued triple')
+            return
+
+        self.graph.add(modified_triple)
+        self._n_triples += 1
+
+        self.log('added')
 
     
     def triples(self, triple):
