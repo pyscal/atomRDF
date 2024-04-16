@@ -133,19 +133,21 @@ class KnowledgeGraph:
                         if d.split(':')[-1] in dm:
                             found = True
                             break
-        return found
+        return found, dm
     
     def _check_domain(self, triple):
         if self._is_ontoterm(triple[1]):
             #check if type was provided
-            found = True            
+            found = True
+            dm = None
+
             if type(triple[0]).__name__ == 'URIRef': 
-                found = self._check_domain_if_uriref(triple)
+                found, dm = self._check_domain_if_uriref(triple)
 
             if not found:
                 raise ValueError(f'{dm} not in domain {domain} of {triple[1].name}')
             
-            print(f'checked {triple[1].name}/{dm}')
+            print(f'checked {triple[1].name} against domain {dm}')
 
     def add(self, triple, validate=True):
         """
