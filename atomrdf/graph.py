@@ -121,11 +121,24 @@ class KnowledgeGraph:
         return tuple(modified_triple)
 
     def _check_domain(self, triple):
-        if self._is_ontoterm(triple[0]) and self._is_ontoterm(triple[1]):
-            domain = triple[1].domain
-            if len(domain) > 0:
-                if triple[0].name not in domain:
-                    raise ValueError(f'{triple[0].name} not in domain {domain} of {triple[1].name}')
+        if self._is_ontoterm(triple[1]):
+            #check if type was provided
+            found = True
+            
+            if type(triple[0]).__name__ == 'URIRef':    
+                dm = self.value(triple[0], RDF.type)
+                if dm is not None:
+                    #we need to check
+                    domain = triple[1].domain                
+                    if len(domain) > 0:
+                        found = False
+                        for d in domain:
+                            if d.split(':')[-1] in dm:
+                                found = True
+                                break
+            if not found:
+                raise ValueError(f'{dm} not in domain {domain} of {triple[1].name}')
+            print(f'checked {triple[1].name}/{dm}')
 
     def add(self, triple, validate=True):
         """
@@ -138,7 +151,7 @@ class KnowledgeGraph:
         #check domain
         if validate:
             self._check_domain(triple)
-            
+
         if str(modified_triple[2].toPython()) != 'None':
             self.graph.add(modified_triple)
 
