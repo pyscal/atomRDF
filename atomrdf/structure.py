@@ -520,8 +520,7 @@ class System(pc.System):
             self._name = f'sample:{str(uuid.uuid4())}'
 
     def _add_sample(self):
-        sample = URIRef(f'{self._name}')
-        self.graph.add((sample, RDF.type, CMSO.AtomicScaleSample))
+        sample = self.graph.create_node("", CMSO.AtomicScaleSample)
         self.sample = sample
 
     def _add_material(self):
@@ -536,9 +535,8 @@ class System(pc.System):
         Returns
         -------
         """
-        material = URIRef(f'{self._name}_Material')
+        material = self.graph.create_node(f'Material', CMSO.CrystallineMaterial)
         self.graph.add((self.sample, CMSO.hasMaterial, material))
-        self.graph.add((material, RDF.type, CMSO.CrystallineMaterial))        
         self.material = material
 
     def _add_chemical_composition(self):
@@ -554,18 +552,22 @@ class System(pc.System):
         -------
         """
         composition = self.schema.material.element_ratio()
-
-        chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-        self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-        self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+        valid = False
         for e, r in composition.items():
             if e in element_indetifiers.keys():
-                element = URIRef(element_indetifiers[e])
-                self.graph.add((chemical_species, CMSO.hasElement, element))
-                self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
-                self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                valid = True
+                break
+
+        if valid:
+            chemical_species = self.graph.create_node(f'ChemicalSpecies', CMSO.ChemicalSpecies)
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+            for e, r in composition.items():
+                if e in element_indetifiers.keys():
+                    element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement, add_prefix=False)
+                    self.graph.add((chemical_species, CMSO.hasElement, element))
+                    self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
+                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
     def _add_simulation_cell(self):
         """
