@@ -254,17 +254,17 @@ class System(pc.System):
             c = (val/self.natoms)
             self.add_vacancy(c, number=val)
             #now we need to re-add atoms, so at to remove
-            self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
+            self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+            self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
             chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
             for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.graph.remove((element, None, None))
-            self.graph.graph.remove((chemical_species, None, None))
-            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+                self.graph.remove((element, None, None))
+            self.graph.remove((chemical_species, None, None))
+            self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
             #now recalculate and add it again
             composition = self.schema.material.element_ratio()
@@ -322,16 +322,16 @@ class System(pc.System):
             #start by cleanly removing elements
             for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.graph.remove((element, None, None))
-            self.graph.graph.remove((chemical_species, None, None))
-            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+                self.graph.remove((element, None, None))
+            self.graph.remove((chemical_species, None, None))
+            self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
             #now recalculate and add it again
             composition = self.schema.material.element_ratio()
 
             chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
 
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
@@ -438,24 +438,24 @@ class System(pc.System):
 
         #now we have to verify the triples correctly and add them in
         if self.graph is not None:
-            self.graph.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(sysn.natoms, datatype=XSD.integer)))
+            self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+            self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(sysn.natoms, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
             chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
             for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.graph.remove((element, None, None))
-            self.graph.graph.remove((chemical_species, None, None))
-            self.graph.graph.remove((self.sample, CMSO.hasSpecies, None))
+                self.graph.remove((element, None, None))
+            self.graph.remove((chemical_species, None, None))
+            self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
             #now recalculate and add it again
             composition = sysn.schema.material.element_ratio()
 
             chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
 
             for e, r in composition.items():
                 if e in element_indetifiers.keys():

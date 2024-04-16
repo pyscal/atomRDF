@@ -135,6 +135,10 @@ class KnowledgeGraph:
         modified_double = self._modify_triple((arg1, arg2))
         return self.graph.value(modified_double[0], modified_double[1])
 
+    def remove(self, triple):
+        modified_triple = self._modify_triple(triple)
+        return self.graph.remove(modified_triple)
+
 
     def _initialize_graph(self):
         """
@@ -354,7 +358,7 @@ class KnowledgeGraph:
             
             #now we have to remove the old path, and fix new
             for val in ['Position', 'Species']:
-                self.graph.remove((URIRef(f'{sample}_{val}'), CMSO.hasPath, None))
+                self.remove((URIRef(f'{sample}_{val}'), CMSO.hasPath, None))
             
                 #assign corrected path
                 new_relpath = "/".join(['rdf_structure_store', filepath.split('/')[-1]])
