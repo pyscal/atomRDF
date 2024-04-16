@@ -317,15 +317,8 @@ class KnowledgeGraph:
         return self.graph.remove(modified_triple)
 
 
-    def create_node(self, namestring, classtype, add_prefix=True):
-        
-        if add_prefix:
-            if namestring != "":
-                namestring = '_' + namestring
-            item = URIRef(f'{self._name}{namestring}')
-        else:
-            item = URIRef(namestring)
-            
+    def create_node(self, namestring, classtype):
+        item = URIRef(namestring)
         self.add((item, RDF.type, classtype))
         return item
 

@@ -520,7 +520,7 @@ class System(pc.System):
             self._name = f'sample:{str(uuid.uuid4())}'
 
     def _add_sample(self):
-        sample = self.graph.create_node("", CMSO.AtomicScaleSample)
+        sample = self.graph.create_node(self._name, CMSO.AtomicScaleSample)
         self.sample = sample
 
     def _add_material(self):
@@ -535,7 +535,7 @@ class System(pc.System):
         Returns
         -------
         """
-        material = self.graph.create_node(f'Material', CMSO.CrystallineMaterial)
+        material = self.graph.create_node(f'{self._name}_Material', CMSO.CrystallineMaterial)
         self.graph.add((self.sample, CMSO.hasMaterial, material))
         self.material = material
 
@@ -559,7 +559,7 @@ class System(pc.System):
                 break
 
         if valid:
-            chemical_species = self.graph.create_node(f'ChemicalSpecies', CMSO.ChemicalSpecies)
+            chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
             self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
 
             for e, r in composition.items():
@@ -582,7 +582,7 @@ class System(pc.System):
         -------
         """
 
-        simulation_cell = self.graph.create_node(f'SimulationCell', CMSO.SimulationCell)
+        simulation_cell = self.graph.create_node(f'{self._name}_SimulationCell', CMSO.SimulationCell)
         self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
         self.graph.add((simulation_cell, CMSO.hasVolume, 
             Literal(np.round(self.schema.simulation_cell.volume(), decimals=2), 
@@ -606,33 +606,33 @@ class System(pc.System):
         Returns
         -------
         """
-        simulation_cell_length = self.graph.create_node(f'SimulationCellLength', CMSO.SimulationCellLength)
+        simulation_cell_length = self.graph.create_node(f'{self._name}_SimulationCellLength', CMSO.SimulationCellLength)
         self.graph.add((self.simulation_cell, CMSO.hasLength, simulation_cell_length))
         data = self.schema.simulation_cell.length()
         self.graph.add((simulation_cell_length, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
         self.graph.add((simulation_cell_length, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
         self.graph.add((simulation_cell_length, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
         
-        simulation_cell_vector_01 = self.graph.create_node(f'SimulationCellVector_1', CMSO.SimulationCellVector)
+        simulation_cell_vector_01 = self.graph.create_node(f'{self._name}_SimulationCellVector_1', CMSO.SimulationCellVector)
         data = self.schema.simulation_cell.vector()
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_x, Literal(data[0][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_y, Literal(data[0][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_z, Literal(data[0][2], datatype=XSD.float)))
         
-        simulation_cell_vector_02 = self.graph.create_node(f'SimulationCellVector_2', CMSO.SimulationCellVector)
+        simulation_cell_vector_02 = self.graph.create_node(f'{self._name}_SimulationCellVector_2', CMSO.SimulationCellVector)
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_x, Literal(data[1][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_y, Literal(data[1][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_z, Literal(data[1][2], datatype=XSD.float)))
         
-        simulation_cell_vector_03 = self.graph.create_node(f'SimulationCellVector_3', CMSO.SimulationCellVector)
+        simulation_cell_vector_03 = self.graph.create_node(f'{self._name}_SimulationCellVector_3', CMSO.SimulationCellVector)
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_x, Literal(data[2][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_y, Literal(data[2][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_z, Literal(data[2][2], datatype=XSD.float)))
         
-        simulation_cell_angle = self.graph.create_node(f'SimulationCellAngle', CMSO.SimulationCellAngle)
+        simulation_cell_angle = self.graph.create_node(f'{self._name}_SimulationCellAngle', CMSO.SimulationCellAngle)
         data = self.schema.simulation_cell.angle()
         self.graph.add((self.simulation_cell, CMSO.hasAngle, simulation_cell_angle))
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
