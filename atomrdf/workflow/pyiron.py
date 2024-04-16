@@ -51,13 +51,13 @@ def _identify_method(job):
         if int(input_dict['run']) == 0:
             method = 'static'
             md_method = 'MolecularStatics'
-            ensemble = 'NVE'
+            ensemble = 'MicrocanonicalEnsemble'
 
         elif int(input_dict['run']) > 0:
             method = 'md_nve'
             dof.append('AtomicPosition')
             md_method = 'MolecularDynamics'
-            ensemble = 'NVE'
+            ensemble = 'MicrocanonicalEnsemble'
 
 
     elif 'nvt' in input_dict['fix___ensemble']:
@@ -66,7 +66,7 @@ def _identify_method(job):
         temp = float(raw[3])
         dof.append('AtomicPosition')
         md_method = 'MolecularDynamics'
-        ensemble = 'NVT'
+        ensemble = 'CanonicalEnsemble'
 
     elif 'npt' in input_dict['fix___ensemble']:
         dof.append('AtomicPosition')
@@ -80,7 +80,7 @@ def _identify_method(job):
         raw = input_dict['fix___ensemble'].split()
         temp = float(raw[3])
         press = float(raw[7])
-        ensemble = 'NPT'
+        ensemble = 'IsothermalisobaricEnsemble'
 
     mdict = {}
     mdict['md'] = {}
