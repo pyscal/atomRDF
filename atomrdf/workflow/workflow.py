@@ -123,10 +123,10 @@ class Workflow:
 
         #unit cell
         parent_unit_cell = self.kg.value(parent_crystal_structure, CMSO.hasUnitCell)
-        parent_bv = self.kg.value(parent_unit_cell, CMSO.hasBravaisLattice)
+        parent_bv = self.kg.value(parent_unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice)
 
         unit_cell = self.kg.value(crystal_structure, CMSO.hasUnitCell)
-        self.kg.graph.add((unit_cell, CMSO.hasBravaisLattice, parent_bv))
+        self.kg.graph.add((unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, parent_bv))
 
         #lattice parameter
         parent_lattice_parameter = self.kg.value(parent_unit_cell, CMSO.hasLatticeParameter)
@@ -206,7 +206,7 @@ class Workflow:
             method = URIRef(f'method:{main_id}')
             if mdict['method'] == 'DensityFunctionalTheory':
                 self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
-        self.kg.add((activity, ASMO.hasMethod, method))
+        self.kg.add((activity, ASMO.hasComputationalMethod, method))
 
         if len(mdict['dof']) == 0:
             self.kg.add((activity, RDF.type, ASMO.RigidEnergyCalculation))
