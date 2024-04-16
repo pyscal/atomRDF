@@ -153,6 +153,11 @@ class KnowledgeGraph:
             domain = triple[1].domain                
             if len(domain) > 0:
                 if 'owl:Thing' not in domain:
+                    if triple[1].namespace_with_prefix not in dm:
+                        #cross ontology term
+                        self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {dm}')
+                        return True, None
+
                     found = False
                     for d in domain:
                         if d.split(':')[-1] in dm:
@@ -165,6 +170,10 @@ class KnowledgeGraph:
         domain = triple[0].domain
         if len(domain) > 0:
             if 'owl:Thing' not in domain:
+                if triple[1].namespace != triple[0].namespace:
+                    #cross ontology term
+                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[0].namespace}')
+                    return True, None
                 found = False
                 if triple[1].name in domain:
                     found = True
@@ -219,7 +228,7 @@ class KnowledgeGraph:
                     #cross ontology term
                     self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[2].namespace}')
                     return True, None
-                    
+
                 found = False
                 if triple[2].name in rang:
                     found = True
