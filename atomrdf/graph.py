@@ -256,6 +256,7 @@ class KnowledgeGraph:
 
         if validate:
             self._check_domain(triple)
+            self._check_range(triple)
 
         if str(modified_triple[2].toPython()) == 'None':
             self.log(f'rejecting None valued triple')
