@@ -2,6 +2,10 @@
 Graph module contains the basic RDFGraph object in atomrdf. This object gets a structure
 as an input and annotates it with the CMSO ontology (PLDO and PODO too as needed). The annotated
 object is stored in triplets.
+
+NOTES
+-----
+- To ensure domain and range checking works as expected, always add type before adding further properties!
 """
 
 from rdflib import Graph, Literal,  XSD, RDF, RDFS, BNode, URIRef
@@ -217,6 +221,8 @@ class KnowledgeGraph:
         
         if destination_range == 'string':
             destination_range = 'str'
+        elif destination_range == 'integer':
+            destination_range = 'int'
 
         rang = triple[1].range
         if len(rang) > 0:
