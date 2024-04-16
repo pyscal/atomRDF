@@ -2,6 +2,10 @@
 Graph module contains the basic RDFGraph object in atomrdf. This object gets a structure
 as an input and annotates it with the CMSO ontology (PLDO and PODO too as needed). The annotated
 object is stored in triplets.
+
+NOTES
+-----
+- To ensure domain and range checking works as expected, always add type before adding further properties!
 """
 
 from rdflib import Graph, Literal,  XSD, RDF, RDFS, BNode, URIRef
@@ -17,6 +21,8 @@ import uuid
 import json
 import shutil
 import tarfile
+import logging
+import warnings
 
 #from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -68,6 +74,19 @@ def _replace_keys(refdict, indict):
                 refdict[key] = val
     return refdict
 
+def _dummy_log(str):
+    pass
+
+def _prepare_log(file):
+    logger = logging.getLogger(__name__)
+    handler = logging.FileHandler(file)
+    formatter = logging.Formatter("%(asctime)s %(name)-12s %(levelname)-8s %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    return logger
+
 
 class KnowledgeGraph:
     def __init__(self, graph_file=None, 
@@ -75,14 +94,20 @@ class KnowledgeGraph:
         store_file=None,
         identifier="http://default_graph",
         ontology=None,
-        structure_store=None):
+        structure_store=None,
+        enable_log=False):
         
 
         create_store(self, store, identifier, 
             store_file=store_file,
             structure_store=structure_store)
         
-        #start the storage
+        #enable logging
+        if enable_log:
+            logger = _prepare_log(os.path.join(os.getcwd(), 'atomrdf.log'))
+            self.log = logger.info
+        else:
+            self.log = _dummy_log
 
         #start binding
         self.graph.bind("cmso", CMSO)
@@ -102,29 +127,181 @@ class KnowledgeGraph:
         self.terms = self.ontology.terms
         self._atom_ids = None
         self.store = store
+        self._n_triples = 0
 
     
     def add_structure(self, structure):
         structure.graph = self
         structure.to_graph()
 
+    def _is_ontoterm(self, term):
+        return type(term).__name__ == 'OntoTerm'
+
     def _modify_triple(self, triple):
         modified_triple = []
         for term in triple:
-            if type(term).__name__ == 'OntoTerm':
+            if self._is_ontoterm(term):
                 modified_triple.append(term.namespace_object)
             else:
                 modified_triple.append(term)
         return tuple(modified_triple)
 
-    def add(self, triple):
+    def _check_domain_if_uriref(self, triple):
+        found = True
+        dm = self.value(triple[0], RDF.type)
+        if dm is not None:
+            #we need to check
+            domain = triple[1].domain                
+            if len(domain) > 0:
+                if 'owl:Thing' not in domain:
+                    if triple[1].namespace_with_prefix not in dm:
+                        #cross ontology term
+                        self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {dm}')
+                        return True, None
+
+                    found = False
+                    for d in domain:
+                        if d.split(':')[-1] in dm:
+                            found = True
+                            break
+        return found, dm
+
+    def _check_domain_if_ontoterm(self, triple):
+        found = True
+        domain = triple[0].domain
+        if len(domain) > 0:
+            if 'owl:Thing' not in domain:
+                if triple[1].namespace != triple[0].namespace:
+                    #cross ontology term
+                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[0].namespace}')
+                    return True, None
+                found = False
+                if triple[1].name in domain:
+                    found = True
+        return found, triple[0].name
+        
+    
+    def _check_domain(self, triple):
+        if self._is_ontoterm(triple[1]):
+            #check if type was provided
+            found = True
+            dm = None
+            
+            if type(triple[0]).__name__ == 'URIRef': 
+                found, dm = self._check_domain_if_uriref(triple)
+
+            elif self._is_ontoterm(triple[0]):
+                found, dm = self._check_domain_if_ontoterm(triple)
+
+            if not found:
+                raise ValueError(f'{dm} not in domain of {triple[1].name}')
+            
+            self.log(f'checked {triple[1].name} against domain {dm}')
+
+
+    def _check_range_if_uriref(self, triple):
+        found = True
+        rn = self.value(triple[2], RDF.type)
+
+        if rn is not None:
+            #we need to check
+            rang = triple[1].range                
+            if len(rang) > 0:
+                if 'owl:Thing' not in rang:
+                    if triple[1].namespace_with_prefix not in rn:
+                        #cross ontology term
+                        self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {rn}')
+                        return True, None
+
+                    found = False
+                    for r in rang:
+                        if r.split(':')[-1] in rn:
+                            found = True
+                            break
+        return found, rn
+
+    def _check_range_if_ontoterm(self, triple):
+        found = True
+        rang = triple[1].range
+        if len(rang) > 0:
+            if 'owl:Thing' not in rang:
+                if triple[1].namespace != triple[2].namespace:
+                    #cross ontology term
+                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[2].namespace}')
+                    return True, None
+
+                found = False
+                if triple[2].name in rang:
+                    found = True
+        return found, triple[2].name
+
+
+    def _check_range_if_literal(self, triple):
+        found = True
+        if triple[2].datatype is None:
+            self.log(f'WARNING: {triple[1].name} has a range with unspecified datatype!')
+            warnings.warn(f'{triple[1].name} has a range with unspecified datatype!')
+            return True, None
+
+        destination_range = triple[2].datatype.toPython().split('#')[-1]
+        
+        if destination_range == 'string':
+            destination_range = 'str'
+        elif destination_range == 'integer':
+            destination_range = 'int'
+
+        rang = triple[1].range
+        if len(rang) > 0:
+            found = False
+            if destination_range in rang:
+                found = True
+        return found, destination_range
+
+    def _check_range(self, triple):
+        if self._is_ontoterm(triple[1]):
+            #check if type was provided
+            found = True
+            dm = None
+
+            if type(triple[2]).__name__ == 'URIRef': 
+                found, dm = self._check_range_if_uriref(triple)
+
+            elif self._is_ontoterm(triple[2]):
+                found, dm = self._check_range_if_ontoterm(triple)
+
+            elif type(triple[2]).__name__ == 'Literal':
+                found, dm = self._check_range_if_literal(triple)
+
+            if not found:
+                raise ValueError(f'{dm} not in range of {triple[1].name}')
+            
+            self.log(f'checked {triple[1].name} against range {dm}')
+
+
+    def add(self, triple, validate=True):
         """
         Force assumes that you are passing rdflib terms, defined with
         RDFLib Namespace
         """
         modified_triple = self._modify_triple(triple)
-        if str(modified_triple[2].toPython()) != 'None':
-            self.graph.add(modified_triple)
+
+        self.log(f'attempting to add triple: {self._n_triples}')
+        self.log(f'- {modified_triple[0].toPython()}')
+        self.log(f'- {modified_triple[1].toPython()}')
+        self.log(f'- {modified_triple[2].toPython()}')
+
+        if validate:
+            self._check_domain(triple)
+            self._check_range(triple)
+
+        if str(modified_triple[2].toPython()) == 'None':
+            self.log(f'rejecting None valued triple')
+            return
+
+        self.graph.add(modified_triple)
+        self._n_triples += 1
+
+        self.log('added')
 
     
     def triples(self, triple):
