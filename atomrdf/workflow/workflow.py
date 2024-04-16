@@ -284,7 +284,7 @@ class Workflow:
             if "unit" in val.keys():
                 unit = val['unit']
                 self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
-            self.kg.add((prop, CMSO.wasCalculatedBy, activity))
+            self.kg.add((prop, ASMO.wasCalculatedBy, activity))
             if val['associate_to_sample']:
                 self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))
 
