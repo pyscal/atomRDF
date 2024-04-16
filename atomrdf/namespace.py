@@ -20,7 +20,7 @@ class Namespace(AttrSetter, RDFLibNamespace):
         for k1 in ['class', 'object_property', 'data_property']:
             for k2, val in self.network.onto.attributes[k1].items():
                 if val.namespace == self.name:
-                    mapdict[val.name_without_prefix] = val
+                    mapdict[val.name_without_prefix.replace('-', '')] = val
         
         #add attributes
         self._add_attribute(mapdict)
