@@ -647,7 +647,7 @@ class System(pc.System):
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))
         
     
-    def _add_crystal_structure(self):
+    def _add_crystal_structure(self, targets=None):
         """
         Add a CMSO Crystal Structure
 
@@ -659,14 +659,14 @@ class System(pc.System):
         Returns
         -------
         """
-
-        targets = [self.schema.material.crystal_structure.name(),
-        self.schema.material.crystal_structure.spacegroup_symbol(),
-        self.schema.material.crystal_structure.spacegroup_number(),
-        self.schema.material.crystal_structure.unit_cell.bravais_lattice(),
-        self.schema.material.crystal_structure.unit_cell.lattice_parameter(),
-        self.schema.material.crystal_structure.unit_cell.angle()
-        ]
+        if targets is None:
+            targets = [self.schema.material.crystal_structure.name(),
+            self.schema.material.crystal_structure.spacegroup_symbol(),
+            self.schema.material.crystal_structure.spacegroup_number(),
+            self.schema.material.crystal_structure.unit_cell.bravais_lattice(),
+            self.schema.material.crystal_structure.unit_cell.lattice_parameter(),
+            self.schema.material.crystal_structure.unit_cell.angle()
+            ]
 
         valid = self.graph._is_valid(targets)
 
