@@ -102,7 +102,7 @@ class Workflow:
         lattice_angle_y = self.kg.value(lattice_angle, CMSO.hasAngle_beta)
         lattice_angle_z = self.kg.value(lattice_angle, CMSO.hasAngle_gamma)
 
-        targets = [altname, spacegroup_symbol, spacegroup_number, blattice,
+        targets = [altname, space_group_symbol, space_group_number, blattice,
         [lattice_parameter_x, lattice_parameter_y, lattice_parameter_z],
         [lattice_angle_x, lattice_angle_y, lattice_angle_z]]
 
