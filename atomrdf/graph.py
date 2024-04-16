@@ -117,12 +117,20 @@ class KnowledgeGraph:
                 modified_triple.append(term)
         return tuple(modified_triple)
 
-    def add(self, triple):
+    def add(self, triple, validate=True):
         """
         Force assumes that you are passing rdflib terms, defined with
         RDFLib Namespace
         """
         modified_triple = self._modify_triple(triple)
+
+        #now we should validate if needed
+        #check domain
+        domain = modified_triple[2].domain
+        if len(domain) > 0:
+            if modified_triple[1].name not in domain:
+                raise ValueError(f'{modified_triple[1].name} not in domain {domain} of {modified_triple[2].name}')
+
         if str(modified_triple[2].toPython()) != 'None':
             self.graph.add(modified_triple)
 
