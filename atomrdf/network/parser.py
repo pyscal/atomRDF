@@ -118,13 +118,14 @@ class OntoParser:
             #print(iri, rn)
             #print(iri, dm)
             term = OntoTerm(iri, delimiter=self.delimiter)
+            dm = [x.replace('07:owl#Thing', 'owl:Thing') for x in dm]
             term.domain = dm
             term.range = rn
             term.node_type = 'data_property'
             self.attributes['data_property'][term.name] = term
             #assign this data
             for d in dm:
-                if d!='07:owl#Thing':
+                if d!='owl:Thing':
                     self.attributes['class'][d].is_range_of.append(term.name)
 
 

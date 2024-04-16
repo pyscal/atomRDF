@@ -131,6 +131,8 @@ class KnowledgeGraph:
                     #we need to check
                     domain = triple[1].domain                
                     if len(domain) > 0:
+                        if 'owl:Thing' in domain:
+                            break
                         found = False
                         for d in domain:
                             if d.split(':')[-1] in dm:
