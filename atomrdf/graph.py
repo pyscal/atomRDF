@@ -108,14 +108,24 @@ class KnowledgeGraph:
         structure.graph = self
         structure.to_graph()
 
+    def _is_ontoterm(self, term):
+        return type(term).__name__ == 'OntoTerm'
+
     def _modify_triple(self, triple):
         modified_triple = []
         for term in triple:
-            if type(term).__name__ == 'OntoTerm':
+            if self._is_ontoterm(term):
                 modified_triple.append(term.namespace_object)
             else:
                 modified_triple.append(term)
         return tuple(modified_triple)
+
+    def _check_domain(self, triple):
+        if self._is_ontoterm(triple[0]) and self._is_ontoterm(triple[1]):
+            domain = triple[1].domain
+            if len(domain) > 0:
+                if triple[0].name not in domain:
+                    raise ValueError(f'{triple[0].name} not in domain {domain} of {triple[1].name}')
 
     def add(self, triple, validate=True):
         """
@@ -126,11 +136,9 @@ class KnowledgeGraph:
 
         #now we should validate if needed
         #check domain
-        domain = modified_triple[2].domain
-        if len(domain) > 0:
-            if modified_triple[1].name not in domain:
-                raise ValueError(f'{modified_triple[1].name} not in domain {domain} of {modified_triple[2].name}')
-
+        if validate:
+            self._check_domain(triple)
+            
         if str(modified_triple[2].toPython()) != 'None':
             self.graph.add(modified_triple)
 
