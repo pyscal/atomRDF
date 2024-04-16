@@ -564,7 +564,7 @@ class System(pc.System):
 
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
-                    element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement, add_prefix=False)
+                    element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
                     self.graph.add((chemical_species, CMSO.hasElement, element))
                     self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
                     self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
