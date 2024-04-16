@@ -317,6 +317,11 @@ class KnowledgeGraph:
         return self.graph.remove(modified_triple)
 
 
+    def create_node(self, namestring, classtype):
+        item = URIRef(f'{self._name}_{namestring}')
+        self.add((item, RDF.type, classtype))
+        return item
+
     def _initialize_graph(self):
         """
         Create the RDF Graph from the data stored
@@ -349,9 +354,8 @@ class KnowledgeGraph:
         
 
     def add_calculated_quantity(self, sample, propertyname, value, unit=None):
-        prop = URIRef(f'{self._name}_{propertyname}')
+        prop = self.create_node(propertyname, CMSO.CalculatedProperty)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
-        self.add((prop, RDF.type, CMSO.CalculatedProperty))
         self.add((prop, RDFS.label, Literal(propertyname)))
         self.add((prop, CMSO.hasValue, Literal(value)))
         if unit is not None:
