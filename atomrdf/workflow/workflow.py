@@ -106,7 +106,7 @@ class Workflow:
         [lattice_parameter_x, lattice_parameter_y, lattice_parameter_z],
         [lattice_angle_x, lattice_angle_y, lattice_angle_z]]
 
-        structure._add_crystal_structure(targets=targets)
+        self.structure._add_crystal_structure(targets=targets)
 
 
     def _add_inherited_properties(self, ):
