@@ -889,7 +889,7 @@ class System(pc.System):
         
         self.graph.add((self.material, CMSO.hasDefect, plane_defect))
         self.graph.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))
-        self.graph.add((plane_defect, PLDO.hasGBPlane, Literal(gb_dict["GBPlane"], 
+        self.graph.add((plane_defect, PLDO.hasGBplane, Literal(gb_dict["GBPlane"], 
                                                              datatype=XSD.string)))
         self.graph.add((plane_defect, PLDO.hasRotationAxis, Literal(gb_dict["RotationAxis"], 
                                                              datatype=XSD.string)))
