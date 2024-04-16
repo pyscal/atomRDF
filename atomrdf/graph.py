@@ -240,7 +240,7 @@ class KnowledgeGraph:
         found = True
         if triple[2].datatype is None:
             self.log(f'WARNING: {triple[1].name} has a range with unspecified datatype!')
-            warnings.warn(f'{triple[1].name} has a range with unspecified datatype!'))
+            warnings.warn(f'{triple[1].name} has a range with unspecified datatype!')
             return True, None
 
         destination_range = triple[2].datatype.toPython().split('#')[-1]
