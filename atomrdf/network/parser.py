@@ -181,19 +181,33 @@ class OntoParser:
             iri = c.iri
             #print(iri)
             #print(iri)
-            try:
-                subclasses = self.tree.search(subclass_of=getattr(self.tree, c.name))
-                for sb in subclasses:
-                    term = OntoTerm(sb.iri, delimiter=self.delimiter)
-                    term.node_type ='class'
-                    self.attributes['class'][term.name] = term
-                subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
-                classes.append(subclasses)
-            except:
-                term = OntoTerm(c.iri, delimiter=self.delimiter)
+            #CHILDREN
+            children = self.tree.get_children_of(c)
+            named_instances = self.tree.get_instances_of(c)
+            equiv_classes = c.equivalent_to
+            subclasses = [*children, *named_instances, *equiv_classes]
+            subclasses.append(c)
+            for sb in subclasses:
+                term = OntoTerm(sb.iri, delimiter=self.delimiter)
                 term.node_type ='class'
-                self.attributes['class'][term.name] = term                
-                classes.append([strip_name(c.iri, self.delimiter)])
+                self.attributes['class'][term.name] = term
+            subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
+            classes.append(subclasses)
+
+
+            #try:
+            #    subclasses = self.tree.search(subclass_of=getattr(self.tree, c.name))
+            #    for sb in subclasses:
+            #        term = OntoTerm(sb.iri, delimiter=self.delimiter)
+            #        term.node_type ='class'
+            #        self.attributes['class'][term.name] = term
+            #    subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
+            #    classes.append(subclasses)
+            #except:
+            #    term = OntoTerm(c.iri, delimiter=self.delimiter)
+            #    term.node_type ='class'
+            #    self.attributes['class'][term.name] = term                
+            #    classes.append([strip_name(c.iri, self.delimiter)])
         return classes
     
     def _aggregate_keys(self, dd):
