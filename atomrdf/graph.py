@@ -155,6 +155,18 @@ class KnowledgeGraph:
                             found = True
                             break
         return found, dm
+
+    def _check_domain_if_ontoterm(self, triple):
+        found = True
+        domain = triple[0].domain
+        if len(domain) > 0:
+            if 'owl:Thing' not in domain:
+                found = False
+                if triple[1].name in domain:
+                    found = True
+                    break
+        return found, triple[0].name
+        
     
     def _check_domain(self, triple):
         if self._is_ontoterm(triple[1]):
@@ -164,6 +176,9 @@ class KnowledgeGraph:
 
             if type(triple[0]).__name__ == 'URIRef': 
                 found, dm = self._check_domain_if_uriref(triple)
+
+            elif self._is_ontoterm(triple[0]):
+                found, dm = self._check_domain_if_ontoterm(triple)
 
             if not found:
                 raise ValueError(f'{dm} not in domain {domain} of {triple[1].name}')
@@ -175,17 +190,15 @@ class KnowledgeGraph:
         Force assumes that you are passing rdflib terms, defined with
         RDFLib Namespace
         """
-
-        modified_triple = self._modify_triple(triple)
-
         self.log(f'attempting to add triple: {self._n_triples}')
         self.log(f'- {modified_triple[0].toPython()}')
         self.log(f'- {modified_triple[1].toPython()}')
         self.log(f'- {modified_triple[2].toPython()}')
-        #now we should validate if needed
-        #check domain
+
         if validate:
             self._check_domain(triple)
+
+        modified_triple = self._modify_triple(triple)
 
         if str(modified_triple[2].toPython()) == 'None':
             self.log(f'rejecting None valued triple')
