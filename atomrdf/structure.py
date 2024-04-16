@@ -270,8 +270,8 @@ class System(pc.System):
             composition = self.schema.material.element_ratio()
 
             chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
 
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
