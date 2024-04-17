@@ -16,4 +16,5 @@ dependencies:
   - jupyter-book
   - plotly
   - ipywidgets
+  - atomman
 

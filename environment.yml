@@ -15,6 +15,7 @@ dependencies:
   - owlready2
   - plotly
   - ipywidgets
+  - atomman
   - sqlalchemy
   - pip:
     - "git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"
