@@ -11,6 +11,7 @@ import uuid
 import json
 import shutil
 import tarfile
+import warnings
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
@@ -149,7 +150,7 @@ def _read_structure(filename,
         datadict['positions'] = basis_positions
 
     s = System(filename, format=format, species=species, 
-        graph=graph, names=names)
+        graph=graph, names=names, warn_read_in=False)
     s.lattice_properties = datadict
     s.to_graph()
     return s   
@@ -191,8 +192,12 @@ class System(pc.System):
             species = None,
             source=None,
             graph=None,
-            names=False):
+            names=False,
+            warn_read_in=True):
         
+        if (filename is not None) and warn_read_in:
+            warnings.warn('To provide additional information, use the System.read.file method')
+
         super().__init__(filename = filename, 
             format = format, 
             compressed = compressed, 
