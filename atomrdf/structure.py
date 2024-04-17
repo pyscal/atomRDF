@@ -15,7 +15,7 @@ import warnings
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
-from pyscal3.atoms import AttrSetter
+from pyscal3.atoms import AttrSetter, Atoms
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
 
@@ -119,8 +119,8 @@ def _make_dislocation(burgers_vector,
                       primitive=primitive)
     elif element is not None:
         if element in element_dict.keys():
-            structure = element_dict[key]['structure']
-            lattice_constant=element_dict[key]['lattice_constant']
+            structure = element_dict[element]['structure']
+            lattice_constant=element_dict[element]['lattice_constant']
         else:
             raise ValueError('Please provide structure')            
         input_structure = _make_crystal(structure, 
@@ -167,19 +167,22 @@ def _make_dislocation(burgers_vector,
 
     box = [disl_system.box.avect, disl_system.box.bvect, disl_system.box.cvect]
     atom_df = disl_system.atoms_df()
-    types = atom_df.atype.values
+    types = [int(x) for x in atom_df.atype.values]
     if element is not None:
         species = []
         for t in types:
-            species.append(element[t-1])
+            species.append(element[int(t)-1])
     else:
         species = [None for x in range(len(types))]
 
     positions = np.column_stack((atom_df['pos[0]'].values, atom_df['pos[1]'].values, atom_df['pos[2]'].values))
     atom_dict = {'positions': positions, 'types':types, 'species': species}
+    atom_obj = Atoms()
+    atom_obj.from_dict(atom_dict)
     output_structure = System()
     output_structure.box = box
-    output_structure.atoms = atomdict
+    output_structure.atoms = atom_obj
+    output_structure = output_structure.modify.remap_to_box()
     return output_structure
 
 def _make_grain_boundary(axis, 
