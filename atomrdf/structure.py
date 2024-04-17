@@ -308,6 +308,7 @@ class System(pc.System):
 
     mapdict["defect"] = {}
     mapdict["defect"]["grain_boundary"] = _make_grain_boundary
+    mapdict["defect"]["dislocation"] = _make_dislocation
     create._add_attribute(mapdict)
 
     read = AttrSetter()
