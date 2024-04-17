@@ -136,7 +136,13 @@ class KnowledgeGraph:
 
     def _is_valid(self, input_list):
         valid = False
+        flat_list = []
         for x in input_list:
+            if isinstance(x,list):
+                flat_list.extend(x)
+            else:
+                flat_list.append(x)
+        for x in flat_list:
             if x is not None:
                 valid = True
                 break
