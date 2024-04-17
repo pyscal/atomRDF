@@ -559,7 +559,7 @@ class KnowledgeGraph:
             
                 #assign corrected path
                 new_relpath = "/".join(['rdf_structure_store', filepath.split('/')[-1]])
-                self.graph.add((URIRef(f'{sample}_{val}'), CMSO.hasPath, Literal(new_relpath, datatype=XSD.string)))
+                self.add((URIRef(f'{sample}_{val}'), CMSO.hasPath, Literal(new_relpath, datatype=XSD.string)))
 
         triple_file = os.path.join(package_name, 'triples')
         self.write(triple_file, format=format)
@@ -733,7 +733,7 @@ class KnowledgeGraph:
         sys.atoms = at       
         return sys
 
-    def to_file(self, sample, filename=None, format="lammps-dump"):
+    def to_file(self, sample, filename=None, format="poscar"):
         """
         Save a given sample to a file
 
