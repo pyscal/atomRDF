@@ -134,6 +134,14 @@ class KnowledgeGraph:
         structure.graph = self
         structure.to_graph()
 
+    def _is_valid(self, input_list):
+        valid = False
+        for x in input_list:
+            if x is not None:
+                valid = True
+                break
+        return valid
+
     def _is_ontoterm(self, term):
         return type(term).__name__ == 'OntoTerm'
 
@@ -317,6 +325,11 @@ class KnowledgeGraph:
         return self.graph.remove(modified_triple)
 
 
+    def create_node(self, namestring, classtype):
+        item = URIRef(namestring)
+        self.add((item, RDF.type, classtype))
+        return item
+
     def _initialize_graph(self):
         """
         Create the RDF Graph from the data stored
@@ -349,9 +362,8 @@ class KnowledgeGraph:
         
 
     def add_calculated_quantity(self, sample, propertyname, value, unit=None):
-        prop = URIRef(f'{self._name}_{propertyname}')
+        prop = self.create_node(propertyname, CMSO.CalculatedProperty)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
-        self.add((prop, RDF.type, CMSO.CalculatedProperty))
         self.add((prop, RDFS.label, Literal(propertyname)))
         self.add((prop, CMSO.hasValue, Literal(value)))
         if unit is not None:

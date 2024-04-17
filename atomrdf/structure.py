@@ -258,6 +258,7 @@ class System(pc.System):
             self.graph.add((self.sample, CMSO.hasNumberOfAtoms, Literal(actual_natoms-val, datatype=XSD.integer)))
             #revamp composition
             #remove existing chem composution
+            
             chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
             #start by cleanly removing elements
             for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
@@ -268,18 +269,22 @@ class System(pc.System):
             
             #now recalculate and add it again
             composition = self.schema.material.element_ratio()
-
-            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+            valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
-                    element = URIRef(element_indetifiers[e])
-                    self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                    valid = True
+                    break
+
+            if valid:
+                chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+                for e, r in composition.items():
+                    if e in element_indetifiers.keys():
+                        element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        self.graph.add((chemical_species, CMSO.hasElement, element))
+                        self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                        self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
             filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
@@ -326,20 +331,23 @@ class System(pc.System):
             self.graph.remove((chemical_species, None, None))
             self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
-            #now recalculate and add it again
             composition = self.schema.material.element_ratio()
-
-            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+            valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
-                    element = URIRef(element_indetifiers[e])
-                    self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                    valid = True
+                    break
+
+            if valid:
+                chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+                for e, r in composition.items():
+                    if e in element_indetifiers.keys():
+                        element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        self.graph.add((chemical_species, CMSO.hasElement, element))
+                        self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                        self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
             filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
@@ -450,20 +458,23 @@ class System(pc.System):
             self.graph.remove((chemical_species, None, None))
             self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
-            #now recalculate and add it again
-            composition = sysn.schema.material.element_ratio()
-
-            chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-            self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+            composition = self.schema.material.element_ratio()
+            valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
-                    element = URIRef(element_indetifiers[e])
-                    self.graph.add((chemical_species, CMSO.hasElement, element))
-                    self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                    self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
-                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                    valid = True
+                    break
+
+            if valid:
+                chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+                for e, r in composition.items():
+                    if e in element_indetifiers.keys():
+                        element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
+                        self.graph.add((chemical_species, CMSO.hasElement, element))
+                        self.graph.add((element, CMSO.hasSymbol, Literal(e, datatype=XSD.string)))
+                        self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
             #we also have to read in file and clean it up
             filepath = self.graph.value(URIRef(f'{self.sample}_Position'), CMSO.hasPath).toPython()
@@ -504,11 +515,7 @@ class System(pc.System):
         self._add_simulation_cell()
         self._add_simulation_cell_properties()
         self._add_crystal_structure()
-        self._add_space_group()
-        self._add_unit_cell()
-        self._add_lattice_properties()
         self._add_atoms()
-
 
 
     def _generate_name(self, name_index=None):
@@ -520,8 +527,7 @@ class System(pc.System):
             self._name = f'sample:{str(uuid.uuid4())}'
 
     def _add_sample(self):
-        sample = URIRef(f'{self._name}')
-        self.graph.add((sample, RDF.type, CMSO.AtomicScaleSample))
+        sample = self.graph.create_node(self._name, CMSO.AtomicScaleSample)
         self.sample = sample
 
     def _add_material(self):
@@ -536,9 +542,8 @@ class System(pc.System):
         Returns
         -------
         """
-        material = URIRef(f'{self._name}_Material')
+        material = self.graph.create_node(f'{self._name}_Material', CMSO.CrystallineMaterial)
         self.graph.add((self.sample, CMSO.hasMaterial, material))
-        self.graph.add((material, RDF.type, CMSO.CrystallineMaterial))        
         self.material = material
 
     def _add_chemical_composition(self):
@@ -554,18 +559,22 @@ class System(pc.System):
         -------
         """
         composition = self.schema.material.element_ratio()
-
-        chemical_species = URIRef(f'{self._name}_ChemicalSpecies')
-        self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
-        self.graph.add((chemical_species, RDF.type, CMSO.ChemicalSpecies))
-
+        valid = False
         for e, r in composition.items():
             if e in element_indetifiers.keys():
-                element = URIRef(element_indetifiers[e])
-                self.graph.add((chemical_species, CMSO.hasElement, element))
-                self.graph.add((element, RDF.type, CMSO.ChemicalElement))
-                self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
-                self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
+                valid = True
+                break
+
+        if valid:
+            chemical_species = self.graph.create_node(f'{self._name}_ChemicalSpecies', CMSO.ChemicalSpecies)
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+            for e, r in composition.items():
+                if e in element_indetifiers.keys():
+                    element = self.graph.create_node(element_indetifiers[e], CMSO.ChemicalElement)
+                    self.graph.add((chemical_species, CMSO.hasElement, element))
+                    self.graph.add((element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string)))
+                    self.graph.add((element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float)))
 
     def _add_simulation_cell(self):
         """
@@ -580,9 +589,8 @@ class System(pc.System):
         -------
         """
 
-        simulation_cell = URIRef(f'{self._name}_SimulationCell')
+        simulation_cell = self.graph.create_node(f'{self._name}_SimulationCell', CMSO.SimulationCell)
         self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
-        self.graph.add((simulation_cell, RDF.type, CMSO.SimulationCell))
         self.graph.add((simulation_cell, CMSO.hasVolume, 
             Literal(np.round(self.schema.simulation_cell.volume(), decimals=2), 
                 datatype=XSD.float)))
@@ -605,46 +613,41 @@ class System(pc.System):
         Returns
         -------
         """
-        simulation_cell_length = URIRef(f'{self._name}_SimulationCellLength')
+        simulation_cell_length = self.graph.create_node(f'{self._name}_SimulationCellLength', CMSO.SimulationCellLength)
         self.graph.add((self.simulation_cell, CMSO.hasLength, simulation_cell_length))
         data = self.schema.simulation_cell.length()
-        self.graph.add((simulation_cell_length, RDF.type, CMSO.SimulationCellLength))
         self.graph.add((simulation_cell_length, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
         self.graph.add((simulation_cell_length, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
         self.graph.add((simulation_cell_length, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
         
-        simulation_cell_vector_01 = URIRef(f'{self._name}_SimulationCellVector_1')
+        simulation_cell_vector_01 = self.graph.create_node(f'{self._name}_SimulationCellVector_1', CMSO.SimulationCellVector)
         data = self.schema.simulation_cell.vector()
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
-        self.graph.add((simulation_cell_vector_01, RDF.type, CMSO.SimulationCellVector))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_x, Literal(data[0][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_y, Literal(data[0][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_01, CMSO.hasComponent_z, Literal(data[0][2], datatype=XSD.float)))
         
-        simulation_cell_vector_02 = URIRef(f'{self._name}_SimulationCellVector_2')
+        simulation_cell_vector_02 = self.graph.create_node(f'{self._name}_SimulationCellVector_2', CMSO.SimulationCellVector)
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
-        self.graph.add((simulation_cell_vector_02, RDF.type, CMSO.SimulationCellVector))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_x, Literal(data[1][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_y, Literal(data[1][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_02, CMSO.hasComponent_z, Literal(data[1][2], datatype=XSD.float)))
         
-        simulation_cell_vector_03 = URIRef(f'{self._name}_SimulationCellVector_3')
+        simulation_cell_vector_03 = self.graph.create_node(f'{self._name}_SimulationCellVector_3', CMSO.SimulationCellVector)
         self.graph.add((self.simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
-        self.graph.add((simulation_cell_vector_03, RDF.type, CMSO.SimulationCellVector))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_x, Literal(data[2][0], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_y, Literal(data[2][1], datatype=XSD.float)))
         self.graph.add((simulation_cell_vector_03, CMSO.hasComponent_z, Literal(data[2][2], datatype=XSD.float)))
         
-        simulation_cell_angle = URIRef(f'{self._name}_SimulationCellAngle')
+        simulation_cell_angle = self.graph.create_node(f'{self._name}_SimulationCellAngle', CMSO.SimulationCellAngle)
         data = self.schema.simulation_cell.angle()
         self.graph.add((self.simulation_cell, CMSO.hasAngle, simulation_cell_angle))
-        self.graph.add((simulation_cell_angle, RDF.type, CMSO.SimulationCellAngle))
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
         self.graph.add((simulation_cell_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))
         
     
-    def _add_crystal_structure(self):
+    def _add_crystal_structure(self, targets=None):
         """
         Add a CMSO Crystal Structure
 
@@ -656,16 +659,40 @@ class System(pc.System):
         Returns
         -------
         """
+        if targets is None:
+            targets = [self.schema.material.crystal_structure.name(),
+            self.schema.material.crystal_structure.spacegroup_symbol(),
+            self.schema.material.crystal_structure.spacegroup_number(),
+            self.schema.material.crystal_structure.unit_cell.bravais_lattice(),
+            self.schema.material.crystal_structure.unit_cell.lattice_parameter(),
+            self.schema.material.crystal_structure.unit_cell.angle()
+            ]
 
-        crystal_structure = URIRef(f'{self._name}_CrystalStructure')
-        self.graph.add((self.material, CMSO.hasStructure, crystal_structure))
-        self.graph.add((crystal_structure, RDF.type, CMSO.CrystalStructure))    
-        self.graph.add((crystal_structure, CMSO.hasAltName, 
-            Literal(self.schema.material.crystal_structure.name(), 
-                datatype=XSD.string)))
-        self.crystal_structure = crystal_structure
+        valid = self.graph._is_valid(targets)
+
+        if valid:
+            crystal_structure = self.graph.create_node(f'{self._name}_CrystalStructure', CMSO.CrystalStructure)
+            self.graph.add((self.material, CMSO.hasStructure, crystal_structure))
+            self.graph.add((crystal_structure, CMSO.hasAltName, 
+                Literal(targets[0], 
+                    datatype=XSD.string)))
+            self.crystal_structure = crystal_structure
+
+            if targets[1] is not None:
+                self._add_space_group(targets[1], targets[2])
+
+            #now see if unit cell needs to be added
+            valid = self.graph._is_valid(targets[3:])
+            if valid:
+                self._add_unit_cell()
+                if targets[3] is not None:
+                    self._add_bravais_lattice(targets[3])
+                if targets[4] is not None:
+                    self._add_lattice_properties(targets[4], targets[5])
+
+
         
-    def _add_space_group(self):
+    def _add_space_group(self, spacegroup_symbol, spacegroup_number):
         """
         Add a CMSO Space Group
 
@@ -680,11 +707,9 @@ class System(pc.System):
         space_group = URIRef(f'{self._name}_SpaceGroup')
         self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
         self.graph.add((space_group, CMSO.hasSpaceGroupSymbol, 
-            Literal(self.schema.material.crystal_structure.spacegroup_symbol(), 
-                datatype=XSD.string)))
+            Literal(spacegroup_symbol, datatype=XSD.string)))
         self.graph.add((space_group, CMSO.hasSpaceGroupNumber, 
-            Literal(self.schema.material.crystal_structure.spacegroup_number(), 
-                datatype=XSD.integer)))
+            Literal(spacegroup_number, datatype=XSD.integer)))
     
             
     def _add_unit_cell(self):
@@ -700,18 +725,17 @@ class System(pc.System):
         -------
         """
 
-        unit_cell = URIRef(f'{self._name}_UnitCell')
+        unit_cell = self.graph.create_node(f'{self._name}_UnitCell', CMSO.UnitCell)
         self.graph.add((self.crystal_structure, CMSO.hasUnitCell, unit_cell))
-        self.graph.add((unit_cell, RDF.type, CMSO.UnitCell))
         self.unit_cell = unit_cell
         
+    
+    def _add_bravais_lattice(self, bv):
         #add bravais lattice
-        bv = self.schema.material.crystal_structure.unit_cell.bravais_lattice()
-        if bv is not None:
-            bv = URIRef(bv)
-            self.graph.add((self.unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, bv))
+        bv = URIRef(bv)
+        self.graph.add((self.unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, bv))
         
-    def _add_lattice_properties(self):
+    def _add_lattice_properties(self, lattice_parameter_value, lattice_angle_value):
         """
         Add CMSO lattice properties such as Lattice Parameter,
         and its lengths and angles. 
@@ -724,21 +748,17 @@ class System(pc.System):
         Returns
         -------
         """
-        data = self.schema.material.crystal_structure.unit_cell.lattice_parameter()
-        lattice_parameter = URIRef(f'{self._name}_LatticeParameter')
+        lattice_parameter = self.graph.create_node(f'{self._name}_LatticeParameter', CMSO.LatticeParameter)
         self.graph.add((self.unit_cell, CMSO.hasLatticeParameter, lattice_parameter))
-        self.graph.add((lattice_parameter, RDF.type, CMSO.LatticeParameter))
-        self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(data[0], datatype=XSD.float)))
-        self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(data[1], datatype=XSD.float)))
-        self.graph.add((lattice_parameter, CMSO.hasLength_z, Literal(data[2], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_x, Literal(lattice_parameter_value[0], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_y, Literal(lattice_parameter_value[1], datatype=XSD.float)))
+        self.graph.add((lattice_parameter, CMSO.hasLength_z, Literal(lattice_parameter_value[2], datatype=XSD.float)))
         
-        lattice_angle = URIRef(f'{self._name}_LatticeAngle')
-        data = self.schema.material.crystal_structure.unit_cell.angle()
+        lattice_angle = self.graph.create_node(f'{self._name}_LatticeAngle', CMSO.LatticeAngle)
         self.graph.add((self.unit_cell, CMSO.hasAngle, lattice_angle))
-        self.graph.add((lattice_angle, RDF.type, CMSO.LatticeAngle))
-        self.graph.add((lattice_angle, CMSO.hasAngle_alpha, Literal(data[0], datatype=XSD.float)))
-        self.graph.add((lattice_angle, CMSO.hasAngle_beta, Literal(data[1], datatype=XSD.float)))
-        self.graph.add((lattice_angle, CMSO.hasAngle_gamma, Literal(data[2], datatype=XSD.float)))        
+        self.graph.add((lattice_angle, CMSO.hasAngle_alpha, Literal(lattice_angle_value[0], datatype=XSD.float)))
+        self.graph.add((lattice_angle, CMSO.hasAngle_beta, Literal(lattice_angle_value[1], datatype=XSD.float)))
+        self.graph.add((lattice_angle, CMSO.hasAngle_gamma, Literal(lattice_angle_value[2], datatype=XSD.float)))        
 
 
     def _save_atom_attributes(self, position_identifier, species_identifier):
@@ -784,17 +804,15 @@ class System(pc.System):
         outfile = self._save_atom_attributes(position_identifier, species_identifier)
 
         if "positions" in self.atoms.keys():
-            position = URIRef(f'{self._name}_Position')
+            position = self.graph.create_node(f'{self._name}_Position', CMSO.AtomAttribute)
             self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, position))
-            self.graph.add((position, RDF.type, CMSO.AtomAttribute))
             self.graph.add((position, CMSO.hasName, Literal('Position', datatype=XSD.string)))
             self.graph.add((position, CMSO.hasIdentifier, Literal(position_identifier, datatype=XSD.string)))            
             self.graph.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         if "species" in self.atoms.keys():
-            species = URIRef(f'{self._name}_Species')
+            species = self.graph.create_node(f'{self._name}_Species', CMSO.AtomAttribute)
             self.graph.add((self.sample, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasAttribute, species))
-            self.graph.add((species, RDF.type, CMSO.AtomAttribute))
             self.graph.add((species, CMSO.hasName, Literal('Species', datatype=XSD.string)))
             self.graph.add((species, CMSO.hasIdentifier, Literal(species_identifier, datatype=XSD.string)))            
             self.graph.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
@@ -840,9 +858,8 @@ class System(pc.System):
         if self.graph is None:
             return
 
-        vacancy = URIRef(f'{self._name}_Vacancy')
+        vacancy = self.graph.create_node(f'{self._name}_Vacancy', PODO.Vacancy)
         self.graph.add((self.material, CMSO.hasDefect, vacancy))
-        self.graph.add((vacancy, RDF.type, PODO.Vacancy))
         self.graph.add((self.simulation_cell, PODO.hasVacancyConcentration, Literal(concentration, datatype=XSD.float)))
         if number is not None:
             self.graph.add((self.simulation_cell, PODO.hasNumberOfVacancies, Literal(number, datatype=XSD.integer)))
@@ -868,24 +885,19 @@ class System(pc.System):
             return
                     
         if gb_dict["GBType"] is None:
-            plane_defect = URIRef(f'{self._name}_GrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.GrainBoundary))
+            plane_defect = self.graph.create_node(f'{self._name}_GrainBoundary')
         
         elif gb_dict["GBType"] == "Twist":
-            plane_defect = URIRef(f'{self._name}_TwistGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.TwistGrainBoundary))
+            plane_defect = self.graph.create_node(f'{self._name}_TwistGrainBoundary', PLDO.TwistGrainBoundary)
         
         elif gb_dict["GBType"] == "Tilt":
-            plane_defect = URIRef(f'{self._name}_TiltGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.TiltGrainBoundary))
+            plane_defect = self.graph.create_node(f'{self._name}_TiltGrainBoundary', PLDO.TiltGrainBoundary)
         
         elif gb_dict["GBType"] == "Symmetric Tilt":
-            plane_defect = URIRef(f'{self._name}_SymmetricalTiltGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.SymmetricalTiltGrainBoundary))
+            plane_defect = self.graph.create_node(f'{self._name}_SymmetricalTiltGrainBoundary', PLDO.SymmetricalTiltGrainBoundary)
         
         elif gb_dict["GBType"] == "Mixed":
-            plane_defect = URIRef(f'{self._name}_MixedGrainBoundary')
-            self.graph.add((plane_defect, RDF.type, PLDO.MixedGrainBoundary))
+            plane_defect = self.graph.create_node(f'{self._name}_MixedGrainBoundary', PLDO.MixedGrainBoundary)
         
         self.graph.add((self.material, CMSO.hasDefect, plane_defect))
         self.graph.add((plane_defect, PLDO.hasSigmaValue, Literal(gb_dict["sigma"], datatype=XSD.integer)))

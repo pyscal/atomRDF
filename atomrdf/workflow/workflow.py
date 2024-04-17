@@ -71,9 +71,43 @@ class Workflow:
             parent_structure.to_graph()
             parent_sample = parent_structure.sample
 
+        self.structure = structure
         self.sample = sample
         self.mdict = method_dict
         self.parent_sample = parent_sample
+
+    def _get_lattice_properties(self, ):
+        if self.parent_sample is None:
+            return
+        
+        material = list([k[2] for k in self.kg.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
+        crystal_structure = self.kg.value(material, CMSO.hasStructure)
+        
+        altname = self.kg.value(crystal_structure, CMSO.hasAltName)
+        
+        space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
+        space_group_symbol = self.kg.value(space_group, CMSO.hasSpaceGroupSymbol)
+        space_group_number = self.kg.value(space_group, CMSO.hasSpaceGroupNumber)
+
+        unit_cell = self.kg.value(crystal_structure, CMSO.hasUnitCell)
+        blattice = self.kg.value(unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice)
+
+        lattice_parameter = self.kg.value(unit_cell, CMSO.hasLatticeParameter)
+        lattice_parameter_x = self.kg.value(lattice_parameter, CMSO.hasLength_x)
+        lattice_parameter_y = self.kg.value(lattice_parameter, CMSO.hasLength_y)
+        lattice_parameter_z = self.kg.value(lattice_parameter, CMSO.hasLength_z)
+
+        lattice_angle = self.kg.value(unit_cell, CMSO.hasAngle)
+        lattice_angle_x = self.kg.value(lattice_angle, CMSO.hasAngle_alpha)
+        lattice_angle_y = self.kg.value(lattice_angle, CMSO.hasAngle_beta)
+        lattice_angle_z = self.kg.value(lattice_angle, CMSO.hasAngle_gamma)
+
+        targets = [altname, space_group_symbol, space_group_number, blattice,
+        [lattice_parameter_x, lattice_parameter_y, lattice_parameter_z],
+        [lattice_angle_x, lattice_angle_y, lattice_angle_z]]
+
+        self.structure._add_crystal_structure(targets=targets)
+
 
     def _add_inherited_properties(self, ):
         #Here we need to add inherited info: CalculatedProperties will be lost
@@ -102,43 +136,6 @@ class Workflow:
         for triple in self.kg.triples((parent_simcell, PODO.hasNumberOfVacancies, None)):
             self.kg.graph.add((simcell, triple[1], triple[2]))
 
-    def _get_lattice_properties(self, ):
-        if self.parent_sample is None:
-            return
-
-        parent_material = list([k[2] for k in self.kg.triples((self.parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_crystal_structure = self.kg.value(parent_material, CMSO.hasStructure)
-        parent_altname = self.kg.value(parent_crystal_structure, CMSO.hasAltName)
-
-        #add this to new structure
-        material = list([k[2] for k in self.kg.triples((self.sample, CMSO.hasMaterial, None))])[0]
-        crystal_structure = self.kg.value(material, CMSO.hasStructure)
-        self.kg.add((crystal_structure, CMSO.hasAltName, parent_altname))
-
-        #space group
-        parent_space_group = self.kg.value(parent_crystal_structure, CMSO.hasSpaceGroup)
-        space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
-        for triple in self.kg.triples((parent_space_group, None, None)):
-            self.kg.graph.add((space_group, triple[1], triple[2]))
-
-        #unit cell
-        parent_unit_cell = self.kg.value(parent_crystal_structure, CMSO.hasUnitCell)
-        parent_bv = self.kg.value(parent_unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice)
-
-        unit_cell = self.kg.value(crystal_structure, CMSO.hasUnitCell)
-        self.kg.graph.add((unit_cell, Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice, parent_bv))
-
-        #lattice parameter
-        parent_lattice_parameter = self.kg.value(parent_unit_cell, CMSO.hasLatticeParameter)
-        lattice_parameter = self.kg.value(unit_cell, CMSO.hasLatticeParameter)
-        for triple in self.kg.triples((parent_lattice_parameter, None, None)):
-            self.kg.graph.add((lattice_parameter, triple[1], triple[2]))
-
-        #lattice angle
-        parent_lattice_angle = self.kg.value(parent_unit_cell, CMSO.hasAngle)
-        lattice_angle = self.kg.value(unit_cell, CMSO.hasAngle)
-        for triple in self.kg.triples((parent_lattice_angle, None, None)):
-            self.kg.graph.add((lattice_angle, triple[1], triple[2]))
 
 
     def add_structural_relation(self, ):
@@ -146,8 +143,8 @@ class Workflow:
         if self.parent_sample is not None:
             self.kg.add((self.parent_sample, RDF.type, PROV.Entity))
             self.kg.add((self.sample, PROV.wasDerivedFrom, self.parent_sample))
-            self._add_inherited_properties()
             self._get_lattice_properties()
+            self._add_inherited_properties()
 
 
     def add_method(self, ):
