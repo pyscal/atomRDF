@@ -15,7 +15,7 @@ import warnings
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
-from pyscal3.atoms import AttrSetter
+from pyscal3.atoms import AttrSetter, Atoms
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
 
@@ -87,6 +87,103 @@ def _make_general_lattice(positions,
     s.to_graph()
 
     return s
+
+def _make_dislocation(burgers_vector,
+    slip_vector,
+    dislocation_line,
+    elastic_constant_dict,
+    dislocation_type='monopole',
+    structure=None, 
+    element=None,
+    lattice_constant = 1.00, 
+    repetitions = None, 
+    ca_ratio = 1.633, 
+    noise = 0, 
+    primitive=False,
+    graph=None,
+    names=False
+    ):
+    
+    from atomman.defect.Dislocation import Dislocation
+    import atomman as am
+    import atomman.unitconvert as uc
+    
+    if structure is not None:
+        #create a structure with the info
+        input_structure = _make_crystal(structure, 
+                      lattice_constant = lattice_constant, 
+                      repetitions = repetitions, 
+                      ca_ratio = ca_ratio, 
+                      noise = noise, 
+                      element=element,
+                      primitive=primitive)
+    elif element is not None:
+        if element in element_dict.keys():
+            structure = element_dict[element]['structure']
+            lattice_constant=element_dict[element]['lattice_constant']
+        else:
+            raise ValueError('Please provide structure')            
+        input_structure = _make_crystal(structure, 
+                      lattice_constant = lattice_constant, 
+                      repetitions = repetitions, 
+                      ca_ratio = ca_ratio, 
+                      noise = noise, 
+                      element=element,
+                      primitive=primitive)
+    else:
+        raise ValueError('Provide either structure or element')
+
+    #create the elastic constant object
+    #possible_keys = ["C11", "C12", "C13", "C14", "C15", "C16",
+    #                 "C22", "C23", "C24", "C25", "C26",
+    #                 "C33", "C34", "C35", "C36",
+    #                 "C44", "C45", "C46",
+    #                 "C55", "C56",
+    #                 "C66"]
+    for key, val in elastic_constant_dict.items():
+        elastic_constant_dict[key] = uc.set_in_units(val, 'GPa')
+    C = am.ElasticConstants(**elastic_constant_dict)
+
+    box = am.Box(avect=input_structure.box[0], 
+                 bvect=input_structure.box[1], 
+                 cvect=input_structure.box[2])
+    atoms = am.Atoms(atype=input_structure.atoms.types, 
+                     pos=input_structure.atoms.positions)
+    system = am.System(atoms=atoms, 
+                       box=box, 
+                       pbc=[True, True, True], 
+                       symbols=element, 
+                       scale=False)
+
+    disc = Dislocation(system,
+                 C,
+                 burgers_vector,
+                 dislocation_line,
+                 slip_vector,)
+    if dislocation_type == 'monopole':
+        disl_system = disc.monopole()
+    elif dislocation_type == 'periodicarray':
+        disl_system = disc.periodicarray()
+
+    box = [disl_system.box.avect, disl_system.box.bvect, disl_system.box.cvect]
+    atom_df = disl_system.atoms_df()
+    types = [int(x) for x in atom_df.atype.values]
+    if element is not None:
+        species = []
+        for t in types:
+            species.append(element[int(t)-1])
+    else:
+        species = [None for x in range(len(types))]
+
+    positions = np.column_stack((atom_df['pos[0]'].values, atom_df['pos[1]'].values, atom_df['pos[2]'].values))
+    atom_dict = {'positions': positions, 'types':types, 'species': species}
+    atom_obj = Atoms()
+    atom_obj.from_dict(atom_dict)
+    output_structure = System()
+    output_structure.box = box
+    output_structure.atoms = atom_obj
+    output_structure = output_structure.modify.remap_to_box()
+    return output_structure
 
 def _make_grain_boundary(axis, 
     sigma, gb_plane,
@@ -194,8 +291,6 @@ def _read_structure(filename,
     s.to_graph()
     return s   
 
-
-
 class System(pc.System):
 
     create = AttrSetter()
@@ -216,6 +311,7 @@ class System(pc.System):
 
     mapdict["defect"] = {}
     mapdict["defect"]["grain_boundary"] = _make_grain_boundary
+    mapdict["defect"]["dislocation"] = _make_dislocation
     create._add_attribute(mapdict)
 
     read = AttrSetter()

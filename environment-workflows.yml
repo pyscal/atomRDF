@@ -16,6 +16,7 @@ dependencies:
   - owlready2
   - plotly
   - ipywidgets
+  - atomman
   #workflow packages
   - pyiron_base
   - pyiron_atomistics
