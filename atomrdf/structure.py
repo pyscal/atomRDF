@@ -11,6 +11,7 @@ import uuid
 import json
 import shutil
 import tarfile
+import warnings
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
@@ -136,6 +137,45 @@ def _read_structure(filename,
                   basis_box=None,
                   basis_positions=None,
                   ):
+    """
+    Read in structure from file or ase object
+
+    Parameters
+    ----------
+    filename: string
+        name of file
+
+    format: optional, string
+        format of the file
+
+    graph: optional
+        if provided, the structure will be added to the graph
+
+    names: bool, optional
+        if True, human readable names instead of random ids will be created.
+
+    species: list, optional
+        if provided lammps types will be matched to species. For example, if types 1 and 2 exist
+        in the input file, and species = ['Li', 'Al'] is given, type 1 will be matched to 'Li' and
+        type 2 will be matched to 'Al'
+
+    lattice: str, optional
+        currently supported lattices are {simple_cubic, bcc, fcc, hcp, dhcp, diamond, a15, l12, b2}
+        if provided, information such as the unit cell, basis positions, space groups, etc are automatically added
+
+    lattice_constant: float, optional
+        specify the lattice constant of the system
+
+    basis_box: 3x3 list, optional
+        specify the basis unit cell. Not required if lattice is provided
+
+    basis_positions: nX3 list, optional
+        specify the relative positions of atoms in the unit cell. Not required if lattice is provided
+    
+    Returns
+    -------
+    Structure
+    """
     datadict = {}
     if lattice is not None:
         if lattice in structure_dict.keys():
@@ -149,7 +189,7 @@ def _read_structure(filename,
         datadict['positions'] = basis_positions
 
     s = System(filename, format=format, species=species, 
-        graph=graph, names=names)
+        graph=graph, names=names, warn_read_in=False)
     s.lattice_properties = datadict
     s.to_graph()
     return s   
@@ -191,8 +231,12 @@ class System(pc.System):
             species = None,
             source=None,
             graph=None,
-            names=False):
+            names=False,
+            warn_read_in=True):
         
+        if (filename is not None) and warn_read_in:
+            warnings.warn('To provide additional information, use the System.read.file method')
+
         super().__init__(filename = filename, 
             format = format, 
             compressed = compressed, 
