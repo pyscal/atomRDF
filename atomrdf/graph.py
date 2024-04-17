@@ -128,6 +128,7 @@ class KnowledgeGraph:
         self._atom_ids = None
         self.store = store
         self._n_triples = 0
+        self._initialize_graph()
 
     
     def add_structure(self, structure):
@@ -180,19 +181,19 @@ class KnowledgeGraph:
                             break
         return found, dm
 
-    def _check_domain_if_ontoterm(self, triple):
-        found = True
-        domain = triple[0].domain
-        if len(domain) > 0:
-            if 'owl:Thing' not in domain:
-                if triple[1].namespace != triple[0].namespace:
-                    #cross ontology term
-                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[0].namespace}')
-                    return True, None
-                found = False
-                if triple[1].name in domain:
-                    found = True
-        return found, triple[0].name
+#    def _check_domain_if_ontoterm(self, triple):
+#        found = True
+#        domain = triple[0].domain
+#        if len(domain) > 0:
+#            if 'owl:Thing' not in domain:
+#                if triple[1].namespace != triple[0].namespace:
+#                    #cross ontology term
+#                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[0].namespace}')
+#                    return True, None
+#                found = False
+#                if triple[1].name in domain:
+#                    found = True
+#        return found, triple[0].name
         
     
     def _check_domain(self, triple):
@@ -204,8 +205,8 @@ class KnowledgeGraph:
             if type(triple[0]).__name__ == 'URIRef': 
                 found, dm = self._check_domain_if_uriref(triple)
 
-            elif self._is_ontoterm(triple[0]):
-                found, dm = self._check_domain_if_ontoterm(triple)
+            #elif self._is_ontoterm(triple[0]):
+            #    found, dm = self._check_domain_if_ontoterm(triple)
 
             if not found:
                 raise ValueError(f'{dm} not in domain of {triple[1].name}')
@@ -234,20 +235,20 @@ class KnowledgeGraph:
                             break
         return found, rn
 
-    def _check_range_if_ontoterm(self, triple):
-        found = True
-        rang = triple[1].range
-        if len(rang) > 0:
-            if 'owl:Thing' not in rang:
-                if triple[1].namespace != triple[2].namespace:
-                    #cross ontology term
-                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[2].namespace}')
-                    return True, None
-
-                found = False
-                if triple[2].name in rang:
-                    found = True
-        return found, triple[2].name
+#    def _check_range_if_ontoterm(self, triple):
+#        found = True
+#        rang = triple[1].range
+#        if len(rang) > 0:
+#            if 'owl:Thing' not in rang:
+#                if triple[1].namespace != triple[2].namespace:
+#                    #cross ontology term
+#                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[2].namespace}')
+#                    return True, None
+#
+#                found = False
+#                if triple[2].name in rang:
+#                    found = True
+#        return found, triple[2].name
 
 
     def _check_range_if_literal(self, triple):
@@ -280,8 +281,8 @@ class KnowledgeGraph:
             if type(triple[2]).__name__ == 'URIRef': 
                 found, dm = self._check_range_if_uriref(triple)
 
-            elif self._is_ontoterm(triple[2]):
-                found, dm = self._check_range_if_ontoterm(triple)
+            #elif self._is_ontoterm(triple[2]):
+            #    found, dm = self._check_range_if_ontoterm(triple)
 
             elif type(triple[2]).__name__ == 'Literal':
                 found, dm = self._check_range_if_literal(triple)
@@ -363,7 +364,7 @@ class KnowledgeGraph:
         
         self.add((CMSO.LatticeVector, RDFS.subClassOf, CMSO.Vector))
         self.add((CMSO.SimulationCellVector, RDFS.subClassOf, CMSO.Vector))
-        self.add((CMSO.PositionVector, RDFS.subClassOf, CMSO.Vector))
+        #self.add((CMSO.PositionVector, RDFS.subClassOf, CMSO.Vector))
         self.add((CMSO.Vector, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/ANGSTROM")))
         
 
@@ -376,13 +377,14 @@ class KnowledgeGraph:
             self.add((prop, CMSO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
 
 
-    def inspect_sample(self):
+    def inspect_sample(self, sample):
         natoms = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
         defects = list([k[2] for k in self.triples((material, CMSO.hasDefect, None))])
         composition = list([k[2].toPython() for k in self.triples((material, CMSO.hasElementRatio, None))])
         crystalstructure = self.value(material, CMSO.hasStructure)
-        spacegroupsymbol = self.value(crystalstructure, CMSO.hasSpaceGroupSymbol).toPython()
+        spacegroup = self.value(crystalstructure, CMSO.hasSpaceGroup)
+        spacegroupsymbol = self.value(spacegroup, CMSO.hasSpaceGroupSymbol).toPython()
 
         lattice = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
         defect_types = list([self.value(d, RDF.type).toPython() for d in defects])
