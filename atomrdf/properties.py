@@ -80,19 +80,19 @@ def get_basis_positions(system):
         return system._structure_dict["positions"]
     return None
 
-def get_basis_occupancy(system):
-    if system._structure_dict is None:
-        return None
+#def get_basis_occupancy(system):
+#    if system._structure_dict is None:
+#        return None
 
-    if "species" in system._structure_dict.keys():
-        occ_numbers = system._structure_dict['species']
-        tdict = system.atoms._type_dict
-        vals = [val for key, val in tdict.items()]
+#    if "species" in system._structure_dict.keys():
+#        occ_numbers = system._structure_dict['species']
+#        tdict = system.atoms._type_dict
+#        vals = [val for key, val in tdict.items()]
         
-        if vals[0] is not None:
-            occ_numbers = [tdict[x] for x in occ_numbers]
-        return occ_numbers
-    return None
+#        if vals[0] is not None:
+#            occ_numbers = [tdict[x] for x in occ_numbers]
+#        return occ_numbers
+#    return None
 
 def get_lattice_vector(system):
     if system._structure_dict is None:
