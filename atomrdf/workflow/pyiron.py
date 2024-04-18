@@ -83,13 +83,12 @@ def _identify_method(job):
         ensemble = 'IsothermalisobaricEnsemble'
 
     mdict = {}
-    mdict['md'] = {}
-    mdict['md']['method'] = md_method
-    mdict['md']['temperature'] = temp
-    mdict['md']['pressure'] = press
-    mdict['md']['dof'] = dof
-    mdict['md']['ensemble'] = ensemble
-    mdict['md']['id'] = job.id
+    mdict['method'] = md_method
+    mdict['temperature'] = temp
+    mdict['pressure'] = press
+    mdict['dof'] = dof
+    mdict['ensemble'] = ensemble
+    mdict['id'] = job.id
 
     #now process potential
     inpdict = job.input.to_dict()
@@ -101,28 +100,28 @@ def _identify_method(job):
     if 'url' in potdict[list(potdict.keys())[0]].keys():
         url = potdict[list(potdict.keys())[0]]['url']
 
-    mdict['md']['potential'] = {}
-    mdict['md']['potential']['type'] = ps
-    mdict['md']['potential']['label'] = name
+    mdict['potential'] = {}
+    mdict['potential']['type'] = ps
+    mdict['potential']['label'] = name
     if url is not None:
-        mdict['md']['potential']['uri'] = url
+        mdict['potential']['uri'] = url
     else:
-        mdict['md']['potential']['uri'] = name
+        mdict['potential']['uri'] = name
 
     
-    mdict['md']['workflow_manager'] = {}
-    mdict['md']['workflow_manager']['uri'] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
-    mdict['md']['workflow_manager']['label'] = "pyiron"
+    mdict['workflow_manager'] = {}
+    mdict['workflow_manager']['uri'] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
+    mdict['workflow_manager']['label'] = "pyiron"
     #and finally code details
 
     
     software = {'uri':"http://demo.fiz-karlsruhe.de/matwerk/E447986", 
     'label':'LAMMPS'}
-    mdict['md']['software'] = [software]
+    mdict['software'] = [software]
 
     #finally add calculated quantities
     quantdict = extract_calculated_quantities(job)
-    mdict['md']['outputs'] = quantdict
+    mdict['outputs'] = quantdict
     return mdict
 
 

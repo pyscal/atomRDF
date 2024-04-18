@@ -14,7 +14,7 @@ inform_graph
 See atomrdf.workflow.pyiron for more details
 """
 
-from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef, FOAF, SKOS, DCTERMS
+from rdflib import Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
 
 import warnings
 import numpy as np
@@ -72,10 +72,11 @@ class Workflow:
                 parent_structure.graph = self.kg
                 parent_structure.to_graph()
                 parent_sample = parent_structure.sample
-            
+
         self.structure = structure
         self.sample = sample
         self.mdict = method_dict
+        self.main_id = method_dict['id']
         self.parent_sample = parent_sample
 
     def _get_lattice_properties(self, ):
@@ -154,140 +155,137 @@ class Workflow:
         mdict
         -----
         md:
-           method: MolecularStatics
-           temperature: 100
-           pressure: 0
-           dof:
-             - AtomicPositions
-             - CellVolume
-           ensemble: NPT
-           id: 2314
-           potential:
-             uri: https://doi.org/xxx
-             type: eam
-             label: string
-           workflow_manager:
-             uri: xxxx
-             label: pyiron
-           software:
-           - uri: xxxx
-             label: lammps
-           - uri: xxxx
-             label: pyscal
 
         """
         if self.mdict is None:
             return
-
-        if 'md' in self.mdict.keys():
-            method_type = 'md'
-            mdict = self.mdict['md']
-        elif 'dft' in self.mdict.keys():
-            method_type = 'dft'
-            mdict = self.mdict['dft']
-        else:
-            raise KeyError('method dict keys should be either md or dft')
-
         
         #add activity
-        main_id = mdict['id']
-        activity = URIRef(f'activity:{main_id}')
+        #----------------------------------------------------------
+        activity = URIRef(f'activity_{self.main_id}')
         self.kg.add((activity, RDF.type, PROV.Activity))
 
-        #method, this is specific to dft/md
-        if method_type == 'md':
-            method = URIRef(f'method:{main_id}')
-            if mdict['method'] == 'MolecularStatics':
-                self.kg.add((method, RDF.type, ASMO.MolecularStatics))
-            elif mdict['method'] == 'MolecularDynamics':
-                self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
-        elif method_type == 'dft':
-            method = URIRef(f'method:{main_id}')
-            if mdict['method'] == 'DensityFunctionalTheory':
-                self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
+        #add method
+        #----------------------------------------------------------
+        method = URIRef(f'method_{self.main_id}')
+        if self.mdict['method'] == 'MolecularStatics':
+            self.kg.add((method, RDF.type, ASMO.MolecularStatics))
+        elif self.mdict['method'] == 'MolecularDynamics':
+            self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
+        elif self.mdict['method'] == 'DensityFunctionalTheory':
+            self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
         self.kg.add((activity, ASMO.hasComputationalMethod, method))
 
-        if len(mdict['dof']) == 0:
-            self.kg.add((activity, RDF.type, ASMO.RigidEnergyCalculation))
+        #choose if its rigid energy or structure optimisation
+        #----------------------------------------------------------        
+        if len(self.mdict['dof']) == 0:
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").RigidEnergyCalculation))
         else:
             self.kg.add((activity, RDF.type, ASMO.StructureOptimization))
-
-        for dof in mdict['dof']:
+        #add DOFs
+        for dof in self.mdict['dof']:
             self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
 
-        if method_type == 'md':
-            self.kg.add((method, ASMO.hasStatisticalEnsemble, getattr(ASMO, mdict['ensemble'])))
+        #add method specific items
+        if self.mdict['method'] in ['MolecularStatics', 'MolecularDynamics']:
+            self._add_md(method, activity)
+        elif self.mdict['method'] in ['DensityFunctionalTheory']:
+            self._add_dft(method, activity)
 
-            #add temperature if needed
-            if mdict['temperature'] is not None:
-                temperature = URIRef(f'temperature:{main_id}')
-                self.kg.add((temperature, RDF.type, ASMO.InputParameter))
-                self.kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
-                self.kg.add((activity, ASMO.hasInputParameter, temperature))
-                self.kg.add((temperature, ASMO.hasValue, Literal(mdict['temperature'], datatype=XSD.float)))
-                self.kg.add((temperature, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
-
-            if mdict['pressure'] is not None:
-                pressure = URIRef(f'pressure:{main_id}')
-                self.kg.add((pressure, RDF.type, ASMO.InputParameter))
-                self.kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
-                self.kg.add((activity, ASMO.hasInputParameter, pressure))
-                self.kg.add((pressure, ASMO.hasValue, Literal(mdict['pressure'], datatype=XSD.float)))
-                self.kg.add((pressure, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
-
-            #potentials need to be mapped
-            potential = URIRef(f'potential:{main_id}')
-            if 'meam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
-            elif 'eam' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.EmbeddedAtomModel))
-            elif 'lj' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.LennardJonesPotential))
-            elif 'ace' in mdict['potential']['type']:
-                self.kg.add((potential, RDF.type, ASMO.MachineLearningPotential))
-            else:
-                self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
-
-            if 'uri' in mdict['potential'].keys():
-                self.kg.add((potential, CMSO.hasReference, Literal(mdict['potential']['uri'], datatype=XSD.string)))
-            if 'label' in mdict['potential'].keys():
-                self.kg.add((potential, RDFS.label, Literal(mdict['potential']['label'])))
-
-            self.kg.add((method, ASMO.hasInteratomicPotential, potential))
-
+        #add that structure was generated
         self.kg.add((self.sample, PROV.wasGeneratedBy, activity))
+        self._add_inputs(activity)
+        self._add_outputs(activity)
+        self._add_software(method)     
 
-        #finally add software
-        wfagent = None
-        if 'workflow_manager' in mdict.keys():
-            wfagent = URIRef(mdict["workflow_manager"]['uri'])
-            self.kg.add((wfagent, RDF.type, PROV.SoftwareAgent))
-            self.kg.add((wfagent, RDFS.label, Literal(mdict["workflow_manager"]['label'])))
-            self.kg.add((method, PROV.wasAssociatedWith, wfagent))
-        
-        for software in mdict['software']:
-            agent = URIRef(software['uri'])
-            self.kg.add((agent, RDF.type, PROV.SoftwareAgent))
-            self.kg.add((agent, RDFS.label, Literal(software['label'])))
-
-            if wfagent is not None:
-                self.kg.add((wfagent, PROV.actedOnBehalfOf, agent))
-            else:
-                self.kg.add((method, PROV.wasAssociatedWith, agent))
-
-        for key, val in mdict['outputs'].items():
-            prop = URIRef(f'{main_id}_{key}')
-            self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
-            self.kg.add((prop, RDFS.label, Literal(key)))
-            self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
-            if "unit" in val.keys():
-                unit = val['unit']
-                self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
-            self.kg.add((prop, ASMO.wasCalculatedBy, activity))
-            if val['associate_to_sample']:
-                self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))
 
     def to_graph(self, workflow_object):
         self._prepare_job(workflow_object)
         self.add_structural_relation()
         self.add_method()
+
+    
+    def _add_outputs(self, activity):
+        if 'outputs' in self.mdict.keys():
+            for key, val in self.mdict['outputs'].items():
+                prop = URIRef(f'{self.main_id}_{key}')
+                self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
+                self.kg.add((prop, RDFS.label, Literal(key)))
+                self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
+                if "unit" in val.keys():
+                    unit = val['unit']
+                    self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
+                self.kg.add((prop, ASMO.wasCalculatedBy, activity))
+                if val['associate_to_sample']:
+                    self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))
+
+    def _add_inputs(self, activity):
+        if 'inputs' in self.mdict.keys():
+            for key, val in self.mdict['inputs'].items():
+                prop = URIRef(f'{self.main_id}_{key}')
+                self.kg.add((prop, RDF.type, CMSO.InputParameter))
+                self.kg.add((prop, RDFS.label, Literal(key)))
+                self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
+                if "unit" in val.keys():
+                    unit = val['unit']
+                    self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
+                self.kg.add((activity, ASMO.hasInputParameter, prop))
+
+    def _add_software(self, method):
+        #finally add software
+        wfagent = None
+        if 'workflow_manager' in self.mdict.keys():
+            wfagent = URIRef(self.mdict["workflow_manager"]['uri'])
+            self.kg.add((wfagent, RDF.type, PROV.SoftwareAgent))
+            self.kg.add((wfagent, RDFS.label, Literal(self.mdict["workflow_manager"]['label'])))
+            self.kg.add((method, PROV.wasAssociatedWith, wfagent))
+
+        for software in self.mdict['software']:
+            agent = URIRef(software['uri'])
+            self.kg.add((agent, RDF.type, PROV.SoftwareAgent))
+            self.kg.add((agent, RDFS.label, Literal(software['label'])))
+            if wfagent is not None:
+                self.kg.add((wfagent, PROV.actedOnBehalfOf, agent))
+            else:
+                self.kg.add((method, PROV.wasAssociatedWith, agent))
+
+
+    def _add_md(self, method, activity):
+        self.kg.add((method, ASMO.hasStatisticalEnsemble, getattr(ASMO, self.mdict['ensemble'])))
+
+        #add temperature if needed
+        if self.mdict['temperature'] is not None:
+            temperature = URIRef(f'temperature_{self.main_id}')
+            self.kg.add((temperature, RDF.type, ASMO.InputParameter))
+            self.kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
+            self.kg.add((activity, ASMO.hasInputParameter, temperature))
+            self.kg.add((temperature, ASMO.hasValue, Literal(self.mdict['temperature'], datatype=XSD.float)))
+            self.kg.add((temperature, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
+
+        if self.mdict['pressure'] is not None:
+            pressure = URIRef(f'pressure_{self.main_id}')
+            self.kg.add((pressure, RDF.type, ASMO.InputParameter))
+            self.kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
+            self.kg.add((activity, ASMO.hasInputParameter, pressure))
+            self.kg.add((pressure, ASMO.hasValue, Literal(self.mdict['pressure'], datatype=XSD.float)))
+            self.kg.add((pressure, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
+
+        #potentials need to be mapped
+        potential = URIRef(f'potential_{self.main_id}')
+        if 'meam' in self.mdict['potential']['type']:
+            self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
+        elif 'eam' in self.mdict['potential']['type']:
+            self.kg.add((potential, RDF.type, ASMO.EmbeddedAtomModel))
+        elif 'lj' in self.mdict['potential']['type']:
+            self.kg.add((potential, RDF.type, ASMO.LennardJonesPotential))
+        elif 'ace' in self.mdict['potential']['type']:
+            self.kg.add((potential, RDF.type, ASMO.MachineLearningPotential))
+        else:
+            self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
+
+        if 'uri' in self.mdict['potential'].keys():
+            self.kg.add((potential, CMSO.hasReference, Literal(self.mdict['potential']['uri'], datatype=XSD.string)))
+        if 'label' in self.mdict['potential'].keys():
+            self.kg.add((potential, RDFS.label, Literal(self.mdict['potential']['label'])))
+
+        self.kg.add((method, ASMO.hasInteratomicPotential, potential))
