@@ -35,11 +35,7 @@ def get_string_from_URI(x):
     #just a normal url split now
     rawsplit = raw.split("/")
     if len(rawsplit) > 1:
-        return ".".join(rawsplit[-2:]), "URIRef"
-
-    rawsplit = raw.split(':')
-    if len(rawsplit) == 2:
-        return "_".join(rawsplit), "BNode"        
+        return ".".join(rawsplit[-2:]), "URIRef"  
 
     #none of the conditions, worked, which means its a hex string
     return raw, "BNode"

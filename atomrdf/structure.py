@@ -598,7 +598,7 @@ class System(pc.System):
             self.graph.remove((chemical_species, None, None))
             self.graph.remove((self.sample, CMSO.hasSpecies, None))
             
-            composition = self.schema.material.element_ratio()
+            composition = sysn.schema.material.element_ratio()
             valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():

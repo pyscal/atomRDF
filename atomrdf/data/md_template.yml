@@ -1,0 +1,34 @@
+method: MolecularStatics
+temperature: 100
+pressure: 0
+dof:
+- AtomicPositions
+- CellVolume
+ensemble: NPT
+id: 2314
+potential:
+  uri: https://doi.org/xxx
+  type: eam
+  label: string
+workflow_manager:
+  uri: xxxx
+  label: pyiron
+software:
+- uri: xxxx
+  label: lammps
+- uri: xxxx
+  label: pyscal
+outputs:
+- label: TotalEnergy
+  value: 2.301
+  unit: EV
+  associate_to_sample: True
+- label: TotalVolume
+  value: 23.01
+  unit: ANGSTROM3
+  associate_to_sample: True
+inputs:
+- label: AnotherInput
+  value: 0.1
+  unit: None
+

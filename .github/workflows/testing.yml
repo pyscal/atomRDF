@@ -28,5 +28,11 @@ jobs:
         pip install -e .
         pip install pytest
         pip install pytest-cov
-        pytest tests/
-        #pytest --cov-report=xml --cov=pyscal tests/    
+        #pytest tests/
+        pytest --cov-report=xml --cov=atomrdf tests/    
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: pyscal/atomRDF
