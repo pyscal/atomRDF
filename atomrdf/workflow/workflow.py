@@ -49,9 +49,10 @@ class Workflow:
         if environment == 'pyiron':
             self.wenv = pi
         else:
-            raise ValueError('unknow workflow environment')
+            raise ValueError('unknown workflow environment')
 
     def _prepare_job(self, workflow_object):
+
         self.wenv._check_if_job_is_valid(workflow_object)
         parent_structure, parent_sample, structure, sample = self.wenv._add_structures(workflow_object)
         method_dict = self.wenv._identify_method(workflow_object)
@@ -67,10 +68,11 @@ class Workflow:
         
         if parent_sample is None:
             #its not added to graph yet
-            parent_structure.graph = self.kg
-            parent_structure.to_graph()
-            parent_sample = parent_structure.sample
-
+            if parent_structure is not None:
+                parent_structure.graph = self.kg
+                parent_structure.to_graph()
+                parent_sample = parent_structure.sample
+            
         self.structure = structure
         self.sample = sample
         self.mdict = method_dict
