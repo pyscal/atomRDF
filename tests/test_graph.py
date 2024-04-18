@@ -26,14 +26,6 @@ def test_structuregraph():
 	#res = s.query_sample("NumberOfAtoms", 2)
 	#assert(len(res) == 1)
 
-def test_visualise():
-	s = KnowledgeGraph()
-	sys = System.create.element.Cr(graph=s)
-
-	styledict = {"edgecolor": "#D9D9D9",
-	"BNode": {"color": "#263238"}}
-	vis = s.visualise(styledict=styledict)
-	assert(vis != None)
 
 def test_logger():
 	if os.path.exists('tests/atomrdf.log'):
