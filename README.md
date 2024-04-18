@@ -7,7 +7,6 @@
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/atomrdf.svg)](https://anaconda.org/conda-forge/atomrdf)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/atomrdf?label=pypi&link=https%3A%2F%2Fpypi.org%2Fproject%2Fatomrdf%2F)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10973374.svg)](https://doi.org/10.5281/zenodo.10973374)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8817/badge)](https://www.bestpractices.dev/projects/8817)
 
 `atomRDF` is a python tool for ontology-based creation, manipulation, and quering of structures. `atomRDF` uses the [Computational Material Sample Ontology (CMSO)](https://github.com/Materials-Data-Science-and-Informatics/cmso-ontology). 
 
