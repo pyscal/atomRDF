@@ -208,8 +208,7 @@ class Workflow:
     def _add_outputs(self, activity):
         if 'outputs' in self.mdict.keys():
             for out in self.mdict['outputs']:
-                prop = URIRef(f'{self.main_id}_{out["label"]}')
-                self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
+                prop = self.kg.create_node(f'{self.main_id}_{out["label"]}', CMSO.CalculatedProperty)
                 self.kg.add((prop, RDFS.label, Literal(out['label'])))
                 self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
                 if "unit" in out.keys():
@@ -222,8 +221,7 @@ class Workflow:
     def _add_inputs(self, activity):
         if 'inputs' in self.mdict.keys():
             for inp in self.mdict['inputs']:
-                prop = URIRef(f'{self.main_id}_{inp["label"]}')
-                self.kg.add((prop, RDF.type, ASMO.InputParameter))
+                prop = self.kg.create_node(f'{self.main_id}_{inp["label"]}', ASMO.InputParameter)
                 self.kg.add((prop, RDFS.label, Literal(inp['label'])))
                 self.kg.add((prop, ASMO.hasValue, Literal(inp["value"])))
                 if "unit" in inp.keys():
@@ -235,14 +233,12 @@ class Workflow:
         #finally add software
         wfagent = None
         if 'workflow_manager' in self.mdict.keys():
-            wfagent = URIRef(self.mdict["workflow_manager"]['uri'])
-            self.kg.add((wfagent, RDF.type, PROV.SoftwareAgent))
+            wfagent = self.kg.create_node(self.mdict["workflow_manager"]['uri'], PROV.SoftwareAgent)
             self.kg.add((wfagent, RDFS.label, Literal(self.mdict["workflow_manager"]['label'])))
             self.kg.add((method, PROV.wasAssociatedWith, wfagent))
 
         for software in self.mdict['software']:
-            agent = URIRef(software['uri'])
-            self.kg.add((agent, RDF.type, PROV.SoftwareAgent))
+            agent = self.kg.create_node(software['uri'], PROV.SoftwareAgent)
             self.kg.add((agent, RDFS.label, Literal(software['label'])))
             if wfagent is not None:
                 self.kg.add((wfagent, PROV.actedOnBehalfOf, agent))
@@ -255,16 +251,14 @@ class Workflow:
 
         #add temperature if needed
         if self.mdict['temperature'] is not None:
-            temperature = URIRef(f'temperature_{self.main_id}')
-            self.kg.add((temperature, RDF.type, ASMO.InputParameter))
+            temperature = self.kg.create_node(f'temperature_{self.main_id}', ASMO.InputParameter)
             self.kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
             self.kg.add((activity, ASMO.hasInputParameter, temperature))
             self.kg.add((temperature, ASMO.hasValue, Literal(self.mdict['temperature'], datatype=XSD.float)))
             self.kg.add((temperature, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
 
         if self.mdict['pressure'] is not None:
-            pressure = URIRef(f'pressure_{self.main_id}')
-            self.kg.add((pressure, RDF.type, ASMO.InputParameter))
+            pressure = self.kg.create_node(f'pressure_{self.main_id}', ASMO.InputParameter)
             self.kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
             self.kg.add((activity, ASMO.hasInputParameter, pressure))
             self.kg.add((pressure, ASMO.hasValue, Literal(self.mdict['pressure'], datatype=XSD.float)))
