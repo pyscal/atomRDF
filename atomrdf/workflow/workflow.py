@@ -162,7 +162,7 @@ class Workflow:
         
         #add activity
         #----------------------------------------------------------
-        activity = URIRef(f'activity_{main_id}')
+        activity = URIRef(f'activity_{self.main_id}')
         self.kg.add((activity, RDF.type, PROV.Activity))
 
         #add method
@@ -188,15 +188,15 @@ class Workflow:
 
         #add method specific items
         if self.mdict['method'] in ['MolecularStatics', 'MolecularDynamics']:
-            self._add_md()
+            self._add_md(method, activity)
         elif self.mdict['method'] in ['DensityFunctionalTheory']:
-            self._add_dft()
+            self._add_dft(method, activity)
 
         #add that structure was generated
         self.kg.add((self.sample, PROV.wasGeneratedBy, activity))
         self._add_inputs(activity)
         self._add_outputs(activity)
-        self._add_software(method, activity)     
+        self._add_software(method)     
 
 
     def to_graph(self, workflow_object):
@@ -206,28 +206,30 @@ class Workflow:
 
     
     def _add_outputs(self, activity):
-        for key, val in self.mdict['outputs'].items():
-            prop = URIRef(f'{self.main_id}_{key}')
-            self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
-            self.kg.add((prop, RDFS.label, Literal(key)))
-            self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
-            if "unit" in val.keys():
-                unit = val['unit']
-                self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
-            self.kg.add((prop, ASMO.wasCalculatedBy, activity))
-            if val['associate_to_sample']:
-                self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))
+        if 'outputs' in self.mdict.keys():
+            for key, val in self.mdict['outputs'].items():
+                prop = URIRef(f'{self.main_id}_{key}')
+                self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
+                self.kg.add((prop, RDFS.label, Literal(key)))
+                self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
+                if "unit" in val.keys():
+                    unit = val['unit']
+                    self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
+                self.kg.add((prop, ASMO.wasCalculatedBy, activity))
+                if val['associate_to_sample']:
+                    self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))
 
     def _add_inputs(self, activity):
-        for key, val in self.mdict['inputs'].items():
-            prop = URIRef(f'{self.main_id}_{key}')
-            self.kg.add((prop, RDF.type, CMSO.InputParameter))
-            self.kg.add((prop, RDFS.label, Literal(key)))
-            self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
-            if "unit" in val.keys():
-                unit = val['unit']
-                self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
-            self.kg.add((activity, ASMO.hasInputParameter, prop))
+        if 'inputs' in self.mdict.keys():
+            for key, val in self.mdict['inputs'].items():
+                prop = URIRef(f'{self.main_id}_{key}')
+                self.kg.add((prop, RDF.type, CMSO.InputParameter))
+                self.kg.add((prop, RDFS.label, Literal(key)))
+                self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
+                if "unit" in val.keys():
+                    unit = val['unit']
+                    self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
+                self.kg.add((activity, ASMO.hasInputParameter, prop))
 
     def _add_software(self, method):
         #finally add software
@@ -253,15 +255,15 @@ class Workflow:
 
         #add temperature if needed
         if self.mdict['temperature'] is not None:
-            temperature = URIRef(f'temperature:{self.main_id}')
+            temperature = URIRef(f'temperature_{self.main_id}')
             self.kg.add((temperature, RDF.type, ASMO.InputParameter))
             self.kg.add((temperature, RDFS.label, Literal('temperature', datatype=XSD.string)))
             self.kg.add((activity, ASMO.hasInputParameter, temperature))
             self.kg.add((temperature, ASMO.hasValue, Literal(self.mdict['temperature'], datatype=XSD.float)))
             self.kg.add((temperature, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/K')))
 
-        if mdict['pressure'] is not None:
-            pressure = URIRef(f'pressure:{self.main_id}')
+        if self.mdict['pressure'] is not None:
+            pressure = URIRef(f'pressure_{self.main_id}')
             self.kg.add((pressure, RDF.type, ASMO.InputParameter))
             self.kg.add((pressure, RDFS.label, Literal('pressure', datatype=XSD.string)))
             self.kg.add((activity, ASMO.hasInputParameter, pressure))
@@ -269,7 +271,7 @@ class Workflow:
             self.kg.add((pressure, ASMO.hasUnit, URIRef('http://qudt.org/vocab/unit/GigaPA')))
 
         #potentials need to be mapped
-        potential = URIRef(f'potential:{self.main_id}')
+        potential = URIRef(f'potential_{self.main_id}')
         if 'meam' in self.mdict['potential']['type']:
             self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
         elif 'eam' in self.mdict['potential']['type']:
@@ -282,8 +284,8 @@ class Workflow:
             self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
 
         if 'uri' in self.mdict['potential'].keys():
-            self.kg.add((potential, CMSO.hasReference, Literal(mdict['potential']['uri'], datatype=XSD.string)))
+            self.kg.add((potential, CMSO.hasReference, Literal(self.mdict['potential']['uri'], datatype=XSD.string)))
         if 'label' in self.mdict['potential'].keys():
-            self.kg.add((potential, RDFS.label, Literal(mdict['potential']['label'])))
+            self.kg.add((potential, RDFS.label, Literal(self.mdict['potential']['label'])))
 
         self.kg.add((method, ASMO.hasInteratomicPotential, potential))
