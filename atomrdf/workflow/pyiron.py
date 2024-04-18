@@ -128,19 +128,16 @@ def _identify_method(job):
 def extract_calculated_quantities(job):
     aen = np.mean(job.output.energy_tot)
     avol = np.mean(job.output.volume)
-    outdict = {}
-    outdict['TotalEnergy'] = {}
-    outdict['TotalEnergy']['value'] = np.round(aen, decimals=4)
-    outdict['TotalEnergy']['unit'] = 'EV'
-    outdict['TotalEnergy']['associate_to_sample'] = True
-
-
-    outdict['TotalVolume'] = {}
-    outdict['TotalVolume']['value'] = np.round(avol, decimals=4)
-    outdict['TotalVolume']['unit'] = 'ANGSTROM3'
-    outdict['TotalVolume']['associate_to_sample'] = True 
-
-    return outdict
+    outputs = []
+    outputs.append({'label': 'TotalEnergy', 
+        'value': np.round(aen, decimals=4), 
+        'unit': 'EV',
+        'associate_to_sample': True})
+    outputs.append({'label': 'TotalVolume', 
+        'value': np.round(avol, decimals=4), 
+        'unit': 'ANGSTROM3',
+        'associate_to_sample': True})
+    return outputs
 
 
 

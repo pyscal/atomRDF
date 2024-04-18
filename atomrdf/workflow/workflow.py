@@ -125,19 +125,19 @@ class Workflow:
 
         for defect in parent_defects:
             new_defect = URIRef(defect.toPython())
-            self.kg.graph.add((material, CMSO.hasDefect, new_defect))
+            self.kg.add((material, CMSO.hasDefect, new_defect))
             #now fetch all defect based info
             for triple in self.kg.triples((defect, None, None)):
-                self.kg.graph.add((new_defect, triple[1], triple[2]))
+                self.kg.add((new_defect, triple[1], triple[2]))
 
         #now add the special props for vacancy
         parent_simcell = self.kg.value(self.sample, CMSO.hasSimulationCell)
         simcell = self.kg.value(self.parent_sample, CMSO.hasSimulationCell) 
         
         for triple in self.kg.triples((parent_simcell, PODO.hasVacancyConcentration, None)):
-            self.kg.graph.add((simcell, triple[1], triple[2]))
+            self.kg.add((simcell, triple[1], triple[2]))
         for triple in self.kg.triples((parent_simcell, PODO.hasNumberOfVacancies, None)):
-            self.kg.graph.add((simcell, triple[1], triple[2]))
+            self.kg.add((simcell, triple[1], triple[2]))
 
 
 
@@ -207,27 +207,27 @@ class Workflow:
     
     def _add_outputs(self, activity):
         if 'outputs' in self.mdict.keys():
-            for key, val in self.mdict['outputs'].items():
-                prop = URIRef(f'{self.main_id}_{key}')
+            for out in self.mdict['outputs']:
+                prop = URIRef(f'{self.main_id}_{out["label"]}')
                 self.kg.add((prop, RDF.type, CMSO.CalculatedProperty))
-                self.kg.add((prop, RDFS.label, Literal(key)))
-                self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
-                if "unit" in val.keys():
-                    unit = val['unit']
+                self.kg.add((prop, RDFS.label, Literal(out['label'])))
+                self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
+                if "unit" in out.keys():
+                    unit = out['unit']
                     self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
                 self.kg.add((prop, ASMO.wasCalculatedBy, activity))
-                if val['associate_to_sample']:
+                if out['associate_to_sample']:
                     self.kg.add((self.sample, CMSO.hasCalculatedProperty, prop))
 
     def _add_inputs(self, activity):
         if 'inputs' in self.mdict.keys():
-            for key, val in self.mdict['inputs'].items():
-                prop = URIRef(f'{self.main_id}_{key}')
-                self.kg.add((prop, RDF.type, CMSO.InputParameter))
-                self.kg.add((prop, RDFS.label, Literal(key)))
-                self.kg.add((prop, ASMO.hasValue, Literal(val["value"])))
-                if "unit" in val.keys():
-                    unit = val['unit']
+            for inp in self.mdict['inputs']:
+                prop = URIRef(f'{self.main_id}_{inp["label"]}')
+                self.kg.add((prop, RDF.type, ASMO.InputParameter))
+                self.kg.add((prop, RDFS.label, Literal(inp['label'])))
+                self.kg.add((prop, ASMO.hasValue, Literal(inp["value"])))
+                if "unit" in inp.keys():
+                    unit = inp['unit']
                     self.kg.add((prop, ASMO.hasUnit, URIRef(f'http://qudt.org/vocab/unit/{unit}')))
                 self.kg.add((activity, ASMO.hasInputParameter, prop))
 
