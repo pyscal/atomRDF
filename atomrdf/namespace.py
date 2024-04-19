@@ -1,3 +1,14 @@
+"""
+This module provides the Namespace class for managing namespaces in the AtomRDF library.
+
+The Namespace class extends the rdflib.Namespace class and provides additional functionality for working with namespaces.
+
+Classes
+-------
+Namespace
+    A class representing a namespace in the AtomRDF library.
+"""
+
 import os
 from rdflib import Literal, URIRef
 from rdflib import Namespace as RDFLibNamespace
@@ -7,13 +18,39 @@ from atomrdf.network.network import OntologyNetwork
 
 
 class Namespace(AttrSetter, RDFLibNamespace):
+    """A class representing a namespace in the AtomRDF library.
+
+    This class extends the `rdflib.Namespace` classes.
+
+    Parameters
+    ----------
+    infile : str
+        The input file path.
+    delimiter : str, optional
+        The delimiter used in the input file. Defaults to "/".
+
+    Attributes
+    ----------
+    network : OntologyNetwork
+        The ontology network associated with the namespace.
+    name : str
+        The name of the namespace.
+    """
+
     def __init__(self, infile, delimiter="/"):
+        """
+        Initialize the Namespace class.
+
+        Parameters
+        ----------
+        infile : str
+            The input file path.
+        delimiter : str, optional
+            The delimiter used in the input file. Defaults to "/".
+        """
         AttrSetter.__init__(self)
         self.network = OntologyNetwork(infile, delimiter=delimiter)
-        # print(type(self.network.onto.tree.base_iri))
-        # self.namespace = RDFLibNamespace(self.network.onto.tree.base_iri)
         RDFLibNamespace.__init__(self.network.onto.tree.base_iri)
-        # self.namespace = RDFLibNamespace("http://purls.helmholtz-metadaten.de/cmso/")
         self.name = self.network.onto.tree.name
         mapdict = {}
 

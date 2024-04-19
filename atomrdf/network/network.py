@@ -1,3 +1,5 @@
+
+
 import networkx as nx
 import graphviz
 import matplotlib.pyplot as plt
@@ -81,6 +83,26 @@ class OntologyNetwork:
         return self.__add__(ontonetwork)
 
     def get_shortest_path(self, source, target, triples=False):
+        """
+        Compute the shortest path between two nodes in the graph.
+
+        Parameters:
+        -----------
+        source : node
+            The starting node for the path.
+        target : node
+            The target node for the path.
+        triples : bool, optional
+            If True, returns the path as a list of triples. Each triple consists of three consecutive nodes in the path.
+            If False, returns the path as a list of nodes.
+
+        Returns:
+        --------
+        path : list
+            The shortest path between the source and target nodes. If `triples` is True, the path is returned as a list of triples.
+            If `triples` is False, the path is returned as a list of nodes.
+
+        """
         path = nx.shortest_path(self.g, source=source, target=target)
         if triples:
             triple_list = []
@@ -115,7 +137,20 @@ class OntologyNetwork:
 
     def add_namespace(self, namespace_name, namespace_iri):
         """
-        Add a new namespace
+        Add a new namespace.
+
+        Parameters
+        ----------
+        namespace_name : str
+            The name of the namespace to add.
+        namespace_iri : str
+            The IRI of the namespace.
+
+        Raises
+        ------
+        KeyError
+            If the namespace already exists.
+
         """
         if namespace_name not in self.onto.namespaces.keys():
             self.onto.namespaces[namespace_name] = namespace_iri
@@ -127,17 +162,40 @@ class OntologyNetwork:
         uri,
         node_type,
         namespace=None,
-        dm=[],
-        rn=[],
+        dm=(),
+        rn=(),
         data_type=None,
         node_id=None,
         delimiter="/",
     ):
         """
-        Add a node
+        Add a node.
+
+        Parameters
+        ----------
+        uri : str
+            The URI of the node.
+        node_type : str
+            The type of the node.
+        namespace : str, optional
+            The namespace of the node.
+        dm : list, optional
+            The domain metadata of the node.
+        rn : list, optional
+            The range metadata of the node.
+        data_type : str, optional
+            The data type of the node.
+        node_id : str, optional
+            The ID of the node.
+        delimiter : str, optional
+            The delimiter used for parsing the URI.
+
+        Raises
+        ------
+        ValueError
+            If the namespace is not found.
+
         """
-        # namespace = strip_name(uri, delimiter, get_what="namespace")
-        # name = strip_name(uri, delimiter, get_what="name")
         term = OntoTerm(
             uri,
             namespace=namespace,
@@ -155,11 +213,24 @@ class OntologyNetwork:
 
     def add_path(self, triple):
         """
-        Add a triple as path. Note that all attributes of the triple should already
-        exist in the graph. The ontology itself is not modified. Only the graph
-        representation of it is.
-        The expected use is to bridge between two(or more) different ontologies.
+        Add a triple as path.
+
+        Note that all attributes of the triple should already exist in the graph.
+        The ontology itself is not modified. Only the graph representation of it is.
+        The expected use is to bridge between two (or more) different ontologies.
         Therefore, mapping can only be between classes.
+
+        Parameters
+        ----------
+        triple : tuple
+        A tuple representing the triple to be added. The tuple should contain three elements:
+        subject, predicate, and object.
+
+        Raises
+        ------
+        ValueError
+        If the subject or object of the triple is not found in the attributes of the ontology.
+
         """
         sub = triple[0]
         pred = triple[1]
@@ -190,15 +261,38 @@ class OntologyNetwork:
         else:
             raise ValueError(f"{pred} not found in self.attributes")
 
-    def draw(
-        self,
+    def draw(self, 
         styledict={
             "class": {"shape": "box"},
             "object_property": {"shape": "ellipse"},
             "data_property": {"shape": "ellipse"},
             "literal": {"shape": "parallelogram"},
-        },
-    ):
+        },):
+        """
+        Draw the network graph using graphviz.
+
+        Parameters
+        ----------
+        styledict : dict, optional
+            A dictionary specifying the styles for different node types.
+            The keys of the dictionary are the node types, and the values are dictionaries
+            specifying the shape for each node type. Defaults to None.
+
+        Returns
+        -------
+        graphviz.Digraph
+            The graph object representing the network graph.
+
+        Example
+        -------
+        styledict = {
+            "class": {"shape": "box"},
+            "object_property": {"shape": "ellipse"},
+            "data_property": {"shape": "ellipse"},
+            "literal": {"shape": "parallelogram"},
+        }
+        network.draw(styledict)
+        """
         dot = graphviz.Digraph()
         node_list = list(self.g.nodes(data="node_type"))
         edge_list = list(self.g.edges)
@@ -212,6 +306,19 @@ class OntologyNetwork:
         return dot
 
     def get_path_from_sample(self, target):
+        """
+        Get the shortest path from the 'cmso:ComputationalSample' node to the target node.
+
+        Parameters
+        ----------
+        target : OntoTerm
+            The target node to find the shortest path to.
+
+        Returns
+        -------
+        list
+            A list of triples representing the shortest path from 'cmso:ComputationalSample' to the target node.
+        """
         path = self.get_shortest_path(
             source="cmso:ComputationalSample", target=target, triples=True
         )
@@ -219,7 +326,24 @@ class OntologyNetwork:
 
     def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
-        values is a dict with keys value, operation
+        Create a SPARQL query string based on the given source, destinations, condition, and enforce_types.
+
+        Parameters
+        ----------
+        source : Node
+            The source node from which the query starts.
+        destinations : list or Node
+            The destination node(s) to which the query should reach. If a single node is provided, it will be converted to a list.
+        condition : Condition, optional
+            The condition to be applied in the query. Defaults to None.
+        enforce_types : bool, optional
+            Whether to enforce the types of the source and destination nodes in the query. Defaults to True.
+
+        Returns
+        -------
+        str
+            The generated SPARQL query string.
+
         """
         if not isinstance(destinations, list):
             destinations = [destinations]

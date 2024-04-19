@@ -11,9 +11,19 @@ def get_title_from_BNode(x):
 
 def get_string_from_URI(x):
     """
-    Extract a presentable string from URI
+    Extract a presentable string from URI.
 
-    Also differentiate between fixed notes and URIs, and assign color
+    Parameters
+    ----------
+    x : rdflib.term.URIRef
+        The URI object to extract the string from.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the presentable string representation of the URI and its type.
+        The string representation is the last part of the URI after splitting by '#' or '/'.
+        The type can be either "URIRef" or "BNode".
     """
     raw = x.toPython()
     # first try splitting by #
@@ -38,11 +48,25 @@ def get_string_from_URI(x):
     if len(rawsplit) > 1:
         return ".".join(rawsplit[-2:]), "URIRef"
 
-    # none of the conditions, worked, which means its a hex string
+    # none of the conditions worked, which means it's a hex string
     return raw, "BNode"
 
 
 def parse_object(x):
+    """
+    Parse the given object and return its title and type.
+
+    Parameters
+    ----------
+    x : RDF term
+        The RDF term to parse.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the title of the object and its type.
+
+    """
     if isinstance(x, BNode):
         return get_title_from_BNode(x), "BNode"
     elif isinstance(x, URIRef):
@@ -81,7 +105,31 @@ def visualize_graph(
     size=None,
     layout="dot",
 ):
+    """
+    Visualizes a graph using Graphviz.
 
+    Parameters
+    ----------
+    g : dict
+        The graph to visualize.
+    styledict : dict, optional
+        A dictionary containing styles for different types of nodes and edges. Default is `styledict`.
+    rankdir : str, optional
+        The direction of the graph layout. Default is "TB" (top to bottom).
+    hide_types : bool, optional
+        Whether to hide nodes with the "type" attribute. Default is False.
+    workflow_view : bool, optional
+        Whether to enable the workflow view. Default is False.
+    size : str, optional
+        The size of the graph. Default is None.
+    layout : str, optional
+        The layout algorithm to use. Default is "dot".
+
+    Returns
+    -------
+    dot : graphviz.Digraph
+        The graph visualization.
+    """
     dot = graphviz.Digraph()
 
     dot.attr(
