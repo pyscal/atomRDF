@@ -12,4 +12,5 @@ chapters:
   - file: docs/extending.md
   - file: docs/license.md
   - file: docs/acknowledgements.md
+  - file: docs/api.rst
 
