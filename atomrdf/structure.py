@@ -1,6 +1,9 @@
 """
-StructureGraph is the central object in atomrdf which combines all the functionality
-of :py:class:`atomrdf.graph.RDFGraph` along with easy structural creation routines.
+This module provides functions for creating and manipulating atomic structures. It includes functions for creating crystals, 
+general lattices, dislocations, grain boundaries, and reading structures from files. The module also provides functionality for 
+adding interstitial impurities, substituting atoms, deleting atoms, and adding vacancies. 
+The structures can be converted to RDF graphs using the atomrdf library. 
+The main object in this module is the System class, which extends the functionality of the pyscal3.core.System class and provides additional methods for working with atomic structures.
 """
 
 import numpy as np
@@ -45,7 +48,36 @@ def _make_crystal(
     graph=None,
     names=False,
 ):
+    """
+    Create a crystal structure using the specified parameters.
 
+    Parameters:
+    -----------
+    structure : str
+        The crystal structure to create.
+    lattice_constant : float, optional
+        The lattice constant of the crystal. Default is 1.00.
+    repetitions : tuple or None, optional
+        The number of repetitions of the crystal structure in each direction. Default is None.
+    ca_ratio : float, optional
+        The c/a ratio of the crystal. Default is 1.633.
+    noise : float, optional
+        The amount of noise to add to each atom position. Default is 0.
+    element : str or None, optional
+        The element to use for the crystal. Default is None.
+    primitive : bool, optional
+        Whether to create a primitive cell. Default is False.
+    graph : atomrdf.KnowledgeGraph, optional
+        The graph object to use for the crystal. Default is None.
+        The structure is added to the KnowledgeGraph only if this option is provided.
+    names : bool, optional
+        If provided, human-readable names will be assigned to each property. If False, random IDs will be used. Default is False.
+
+    Returns:
+    --------
+    s : object
+        The atomrdf.Structure object representing the generated crystal structure.
+    """
     atoms, box, sdict = pcs.make_crystal(
         structure,
         lattice_constant=lattice_constant,
@@ -78,7 +110,37 @@ def _make_general_lattice(
     graph=None,
     names=False,
 ):
+    """
+    Generate a general lattice structure.
 
+    Parameters:
+    -----------
+    positions : array_like
+        The atomic positions in the lattice.
+    types : array_like
+        The atomic types corresponding to the positions.
+    box : array_like
+        The box dimensions of the lattice.
+    lattice_constant : float, optional
+        The lattice constant, defaults to 1.00.
+    repetitions : array_like, optional
+        The number of repetitions of the lattice in each direction.
+    noise : float, optional
+        The amount of noise to add to the lattice positions, defaults to 0.
+    element : str, optional
+        The chemical elements associated with the atoms. Should be equal to the number of unique types.
+    graph : atomrdf.KnowledgeGraph, optional
+        The graph object to store the lattice structure, defaults to None.
+        The structure is added to the KnowledgeGraph only if this option is provided.
+    names : bool, optional
+        If True, human readable names instead of random ids will be created. Default is False.
+
+    Returns:
+    --------
+    s : object
+        The atomrdf.Structure object representing the generated lattice structure.
+
+    """
     atoms, box, sdict = pcs.general_lattice(
         positions,
         types,
@@ -116,7 +178,62 @@ def _make_dislocation(
     graph=None,
     names=False,
 ):
+    """
+    Generate a dislocation structure. Wraps the atomman.defect.Dislocation class.
 
+    Parameters
+    ----------
+    burgers_vector : numpy array of length 3
+        The Burgers vector of the dislocation.
+    slip_vector : numpy array of length 3
+        The slip vector of the dislocation.
+    dislocation_line : numpy array of length 3
+        The dislocation line direction.
+    elastic_constant_dict : dict
+        Dictionary of elastic constants.
+    dislocation_type : str, optional
+        The type of dislocation to generate. Default is "monopole".
+    structure : crystal lattice to be used
+        The crystal structure to use to create the bulk system. Either structure or element must be given.
+    element : str, optional
+        The atomic symbol according to which the bulk structure is to be created. Either structure or element must be given.
+    lattice_constant : float, optional
+        The lattice constant to use for the generated crystal structure. Default is 1.00.
+    repetitions : tuple, optional
+        The number of times to repeat the unit cell in each of the three Cartesian directions. Default is None.
+    ca_ratio : float, optional
+        The c/a ratio to use for the generated crystal structure. Default is 1.633. Used only if structure is hcp.
+    noise : float, optional
+        Magnitude of random noise to add to the atomic positions. Default is 0.
+    primitive : bool, optional
+        If True, the generated crystal structure will be converted to a primitive cell. Default is False.
+    graph :atomrdf.KnowledgeGraph, optional
+        A graph object representing the crystal structure. Default is None.
+    names : bool, optional
+        If True, the returned System will have atom names assigned based on the element and index. Default is False.
+
+    Returns
+    -------
+    output_structure : atomrdf.System
+        The generated dislocation structure.
+
+    Raises
+    ------
+    ValueError
+        If neither structure nor element is provided.
+
+    Notes
+    -----
+    This function requires the atomman Python package to be installed.
+
+    The elastic_constant_dict parameter should be a dictionary of elastic constants with keys corresponding to the
+    following Voigt notation: "C11", "C12", "C13", "C14", "C15", "C16", "C22", "C23", "C24", "C25", "C26", "C33", "C34",
+    "C35", "C36", "C44", "C45", "C46", "C55", "C56", "C66". The values should be given in GPa.
+
+    The dislocation_type parameter can be set to "monopole" or "periodicarray". If set to "monopole", a single dislocation
+    will be generated. If set to "periodicarray", a periodic array of dislocations will be generated.
+
+    """
     from atomman.defect.Dislocation import Dislocation
     import atomman as am
     import atomman.unitconvert as uc
@@ -150,13 +267,6 @@ def _make_dislocation(
     else:
         raise ValueError("Provide either structure or element")
 
-    # create the elastic constant object
-    # possible_keys = ["C11", "C12", "C13", "C14", "C15", "C16",
-    #                 "C22", "C23", "C24", "C25", "C26",
-    #                 "C33", "C34", "C35", "C36",
-    #                 "C44", "C45", "C46",
-    #                 "C55", "C56",
-    #                 "C66"]
     for key, val in elastic_constant_dict.items():
         elastic_constant_dict[key] = uc.set_in_units(val, "GPa")
     C = am.ElasticConstants(**elastic_constant_dict)
@@ -220,7 +330,39 @@ def _make_grain_boundary(
     graph=None,
     names=False,
 ):
+    """
+    Create a grain boundary system.
 
+    Parameters:
+    -----------
+    axis : tuple or list
+        The rotation axis of the grain boundary.
+    sigma : int
+        The sigma value of the grain boundary.
+    gb_plane : tuple or list
+        The Miller indices of the grain boundary plane.
+    structure : the lattice structure to be used to create the GB, optional
+        The lattice structure to populate the grain boundary with.
+    element : str, optional
+        The element symbol to populate the grain boundary with.
+    lattice_constant : float, optional
+        The lattice constant of the structure.
+    repetitions : tuple or list, optional
+        The number of repetitions of the grain boundary structure in each direction.
+    overlap : float, optional
+        The overlap between adjacent grain boundaries.
+    graph : atomrdf.KnowledgeGraph, optional
+        The graph object to store the system.
+        The system is only added to the KnowledgeGraph  if this option is provided.
+    names : bool, optional
+        If True human readable names will be assigned to each property. If False random ids will be used. Default is False.
+
+    Returns:
+    --------
+    atomrdf.System
+        The grain boundary system.
+
+    """
     gb = GrainBoundary()
     gb.create_grain_boundary(axis=axis, sigma=sigma, gb_plane=gb_plane)
 
@@ -272,10 +414,10 @@ def _read_structure(
     filename: string
         name of file
 
-    format: optional, string
+    format: string, optional
         format of the file
 
-    graph: optional
+    graph: atomrdf.KnowledgeGraph, optional
         if provided, the structure will be added to the graph
 
     names: bool, optional
@@ -301,7 +443,7 @@ def _read_structure(
 
     Returns
     -------
-    Structure
+    atomrdf.System    
     """
     datadict = {}
     if lattice is not None:
@@ -433,7 +575,29 @@ class System(pc.System):
         self.schema._add_attribute(mapdict)
 
     def delete(self, ids=None, indices=None, condition=None, selection=False):
+        """
+        Delete atoms from the structure.
 
+        Parameters
+        ----------
+        ids : list, optional
+            A list of atom IDs to delete. Default is None.
+        indices : list, optional
+            A list of atom indices to delete. Default is None.
+        condition : str, optional
+            A condition to select atoms to delete. Default is None.
+        selection : bool, optional
+            If True, delete atoms based on the current selection. Default is False.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        Deletes atoms from the structure based on the provided IDs, indices, condition, or selection.
+        If the structure has a graph associated with it, the graph will be updated accordingly.
+        """
         masks = self.atoms._generate_bool_list(
             ids=ids, indices=indices, condition=condition, selection=selection
         )
@@ -533,6 +697,39 @@ class System(pc.System):
         condition=None,
         selection=False,
     ):
+        """
+        Substitute atoms in the structure with a given element.
+
+        Parameters
+        ----------
+        substitution_element : str
+            The element to substitute the atoms with.
+        ids : list, optional
+            A list of atom IDs to consider for substitution. Defaults to None.
+        indices : list, optional
+            A list of atom indices to consider for substitution. Defaults to None.
+        condition : callable, optional
+            A callable that takes an atom as input and returns a boolean indicating whether the atom should be considered for substitution. Defaults to None.
+        selection : bool, optional
+            If True, only selected atoms will be considered for substitution. Defaults to False.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        - This method substitutes atoms in the structure with a given element.
+        - The substitution is performed based on the provided IDs, indices, condition, and selection parameters.
+        - The substituted atoms will have their species and types updated accordingly.
+        - If the graph is not None, the method also operates on the graph by removing existing elements and adding new ones based on the composition of the substituted atoms.
+        - The method also cleans up items in the file associated with the graph.
+
+        Examples
+        --------
+        # Substitute selected atoms with nitrogen
+        structure.substitute_atoms("N", ids=[1, 3, 5])
+        """
         masks = self.atoms._generate_bool_list(
             ids=ids, indices=indices, condition=condition, selection=selection
         )
@@ -630,7 +827,7 @@ class System(pc.System):
             two impurities
 
         void_type: string
-            type of void to be added. Currently only `tetrahedral`
+            type of void to be added.  {`tetrahedral`, `octahedral`}
 
         Returns
         -------
@@ -774,12 +971,33 @@ class System(pc.System):
         return sysn
 
     def __delitem__(self, val):
+        """
+        Delete item(s) from the structure.
+
+        Parameters
+        ----------
+        val : int or list of int
+            The index(es) of the item(s) to be deleted.
+
+        Notes
+        -----
+        If `val` is an integer, it is converted to a list with a single element.
+        The graph is then updated accordingly based on the deleted indices.
+
+        """
         if isinstance(val, int):
             val = [val]
         # now the graph has to be updated accordingly
         self.delete(indices=list(val))
 
     def to_graph(self):
+        """
+        Converts the structure object to a graph representation.
+
+        Returns
+        -------
+        None
+        """
         if self.graph is None:
             return
 
@@ -1151,14 +1369,20 @@ class System(pc.System):
         self.unit_cell = unit_cell
 
     def _add_bravais_lattice(self, bv):
-        # add bravais lattice
+        """
+        Add a Bravais lattice to the unit cell.
+
+        Parameters:
+            bv (str): The URI of the Bravais lattice.
+
+        Returns:
+            None
+        """
         bv = URIRef(bv)
         self.graph.add(
             (
                 self.unit_cell,
-                Namespace(
-                    "http://purls.helmholtz-metadaten.de/cmso/"
-                ).hasBravaisLattice,
+                Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice,
                 bv,
             )
         )
@@ -1229,10 +1453,29 @@ class System(pc.System):
         )
 
     def _save_atom_attributes(self, position_identifier, species_identifier):
-        # if self.store == 'pyiron':
-        #    pass
-        # else:
-        #    #this is the file based store system
+        """
+        Save the atom attributes to a file.
+
+        Parameters
+        ----------
+        position_identifier : str
+            The identifier for the position attribute.
+        species_identifier : str
+            The identifier for the species attribute.
+
+        Returns
+        -------
+        str
+            The relative path to the saved file.
+
+        Notes
+        -----
+        This method saves the atom attributes to a file in the file-based store system.
+        The attributes are stored in a dictionary with the position identifier and species identifier as keys.
+        The dictionary is then written to a JSON file using the `json_io.write_file` function.
+        The file is saved in the structure store directory with the name of the structure as the filename.
+        The method returns the relative path to the saved file.
+        """
         datadict = {
             position_identifier: {
                 "value": self.schema.atom_attribute.position(),
@@ -1255,11 +1498,11 @@ class System(pc.System):
 
         Parameters
         ----------
-        name
-            if provided, the name will be used instead of random identifier
+        None
 
         Returns
         -------
+        None
 
         Notes
         -----
@@ -1353,11 +1596,12 @@ class System(pc.System):
         concentration: float
             vacancy concentration, value should be between 0-1
 
-        name
-            if provided, the name will be used instead of random identifier
+        number: int
+            Number of atoms that were deleted, optional
 
         Returns
         -------
+        None
         """
         if self.graph is None:
             return
@@ -1386,16 +1630,24 @@ class System(pc.System):
 
         Parameters
         ----------
-        gb_dict: dict
-            dict containing details about the grain boundary
-
-        name
-            if provided, the name will be used instead of random identifier
+        gb_dict : dict
+            A dictionary containing details about the grain boundary.
+            It should have the following keys:
+            - "GBType" (str): The type of grain boundary. Possible values are "Twist", "Tilt", "Symmetric Tilt", and "Mixed".
+            - "sigma" (int): The sigma value of the grain boundary.
+            - "GBPlane" (str): The plane of the grain boundary.
+            - "RotationAxis" (list): The rotation axis of the grain boundary.
+            - "MisorientationAngle" (float): The misorientation angle of the grain boundary.
 
         Returns
         -------
-        """
+        None
 
+        Notes
+        -----
+        This method adds grain boundary details to the structure and annotates it using PLDO ontology.
+        The grain boundary type, sigma value, GB plane, rotation axis, and misorientation angle are stored as attributes of the grain boundary node in the graph.
+        """
         # mark that the structure has a defect
         if self.graph is None:
             return

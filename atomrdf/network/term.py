@@ -55,18 +55,7 @@ class OntoTerm:
         node_id=None,
         delimiter="/",
     ):
-        """
-        This is class that represents an ontology element.
 
-        Parameters
-        -----------
-        uri: string
-            uri of the ontology term
-
-        namespace: string, optional
-            if provided this will be used as namespace
-
-        """
         self.uri = uri
         # type: can be object property, data property, or class
         self.node_type = node_type
@@ -89,6 +78,14 @@ class OntoTerm:
 
     @property
     def uri(self):
+        """
+        Get the URI of the ontology term.
+
+        Returns
+        -------
+        str
+            The URI of the ontology term.
+        """
         return self._uri
 
     @uri.setter
@@ -97,6 +94,14 @@ class OntoTerm:
 
     @property
     def name_without_prefix(self):
+        """
+        Get the name without the namespace prefix.
+
+        Returns
+        -------
+        str
+            The name of the term without the namespace prefix.
+        """
         name = _get_name(self.uri, self.delimiter)
         name = name.replace("–", "")
         name = name.replace("-", "")
@@ -104,12 +109,28 @@ class OntoTerm:
 
     @property
     def name(self):
+        """
+        Get the name of the term.
+
+        Returns
+        -------
+        str
+            The name of the term.
+        """
         return strip_name(
             self.uri, self.delimiter, namespace=self._namespace, get_what="name"
         )
 
     @property
     def namespace(self):
+        """
+        Get the namespace of the term.
+
+        Returns
+        -------
+        str
+            The namespace of the term.
+        """
         if self._namespace is not None:
             return self._namespace
         else:
@@ -117,6 +138,14 @@ class OntoTerm:
 
     @property
     def namespace_with_prefix(self):
+        """
+        Get the namespace of the term with the prefix.
+
+        Returns
+        -------
+        str
+            The namespace of the term with the prefix.
+        """
         uri_split = self.uri.split(self.delimiter)
         if len(uri_split) > 1:
             namespace = self.delimiter.join(uri_split[:-1]) + self.delimiter
@@ -126,6 +155,15 @@ class OntoTerm:
 
     @property
     def namespace_object(self):
+        """
+        Get the namespace object for the term.
+
+        Returns
+        -------
+        object
+            The namespace object for the term.
+
+        """
         uri_split = self.uri.split(self.delimiter)
         if len(uri_split) > 1:
             namespace = self.delimiter.join(uri_split[:-1]) + self.delimiter
@@ -137,7 +175,17 @@ class OntoTerm:
     @property
     def query_name(self):
         """
-        What it is called in a sparql query
+        Get the name of the term as it appears in a SPARQL query.
+
+        Returns
+        -------
+        str
+            The name of the term in a SPARQL query.
+
+        Notes
+        -----
+        If the term is a data property, the name will be appended with "value".
+
         """
         if self.node_type == "data_property":
             return self.name + "value"
@@ -146,7 +194,16 @@ class OntoTerm:
     @property
     def query_name_without_prefix(self):
         """
-        What it is called in a sparql query
+        Get the name of the term as it appears in a SPARQL query without prefix.
+
+        Returns
+        -------
+        str
+            The name of the term in a SPARQL query.
+
+        Notes
+        -----
+        If the term is a data property, the name will be suffixed with "value".
         """
         if self.node_type == "data_property":
             return self.name_without_prefix + "value"

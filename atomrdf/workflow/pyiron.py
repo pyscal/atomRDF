@@ -132,8 +132,21 @@ def _identify_method(job):
     mdict["outputs"] = quantdict
     return mdict
 
-
 def extract_calculated_quantities(job):
+    """
+    Extracts calculated quantities from a job.
+
+    Parameters
+    ----------
+    job : pyiron.Job
+        The job object containing the calculated quantities.
+
+    Returns
+    -------
+    list
+        A list of dictionaries, each containing the label, value, unit, and associate_to_sample of a calculated quantity.
+
+    """
     aen = np.mean(job.output.energy_tot)
     avol = np.mean(job.output.volume)
     outputs = []

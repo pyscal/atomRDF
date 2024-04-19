@@ -9,7 +9,28 @@ from atomrdf.workflow import inform_graph
 
 
 def create_store(kg, store, identifier, store_file=None, structure_store=None):
+    """
+    Create a store based on the given parameters.
 
+    Parameters:
+    -----------
+    kg : KnowledgeGraph
+        The knowledge graph object.
+    store : str or Project
+        The type of store to create. It can be either "Memory", "SQLAlchemy", or a pyiron Project object.
+    identifier : str
+        The identifier for the store.
+    store_file : str, optional
+        The file path to store the data (only applicable for certain store types).
+    structure_store : str, optional
+        The structure store to use (only applicable for certain store types).
+
+    Raises:
+    -------
+    ValueError
+        If an unknown store type is provided.
+
+    """
     kg.store_file = store_file
     if store == "Memory":
         store_memory(
@@ -40,12 +61,57 @@ def create_store(kg, store, identifier, store_file=None, structure_store=None):
 
 
 def store_memory(kg, store, identifier, store_file=None, structure_store=None):
+    """
+    Store the knowledge graph in memory.
+
+    Parameters
+    ----------
+    kg : KnowledgeGraph
+        The knowledge graph to be stored.
+    store : str
+        The type of store to use for storing the graph.
+    identifier : str
+        The identifier for the graph.
+    store_file : str, optional
+        The file to store the graph in. Defaults to None.
+    structure_store : str, optional
+        The structure store to use. Defaults to None.
+
+    Returns
+    -------
+    None
+    """
     graph = Graph(store="Memory", identifier=identifier)
     kg.graph = graph
     kg.structure_store = _setup_structure_store(structure_store=structure_store)
 
 
 def store_alchemy(kg, store, identifier, store_file=None, structure_store=None):
+    """
+    Store the knowledge graph using SQLAlchemy.
+
+    Parameters
+    ----------
+    kg : KnowledgeGraph
+        The knowledge graph to be stored.
+    store : str
+        The type of store to be used.
+    identifier : str
+        The identifier for the graph.
+    store_file : str, optional
+        The file path for the store. Required if store is not 'memory'.
+    structure_store : str, optional
+        The structure store to be used.
+
+    Raises
+    ------
+    ValueError
+        If store_file is None and store is not 'memory'.
+
+    Returns
+    -------
+    None
+    """
     _check_if_sqlalchemy_is_available()
     if store_file is None:
         raise ValueError("store file is needed if store is not memory")
@@ -57,6 +123,27 @@ def store_alchemy(kg, store, identifier, store_file=None, structure_store=None):
 
 
 def store_pyiron(kg, store, identifier, store_file=None, structure_store=None):
+    """
+    Store the pyiron knowledge graph in a database.
+
+    Parameters
+    ----------
+    kg : pyiron.atomistics.structure.pyiron_atomistics.structure.AtomisticStructure
+        The pyiron knowledge graph to be stored.
+    store : pyiron.atomistics.structure.pyiron_atomistics.structure.AtomisticStructure
+        The store object where the knowledge graph will be stored.
+    identifier : str
+        The identifier for the knowledge graph.
+    store_file : str, optional
+        The path to the store file. If not provided, a default path will be used.
+    structure_store : str, optional
+        The path to the structure store. If not provided, a default path will be used.
+
+    Returns
+    -------
+    None
+
+    """
     structure_store = os.path.join(store.path, "rdf_structure_store")
     kg.structure_store = _setup_structure_store(structure_store=structure_store)
     store_file = os.path.join(store.path, f"{store.name}.db")

@@ -6,7 +6,17 @@ object is stored in triplets.
 NOTES
 -----
 - To ensure domain and range checking works as expected, always add type before adding further properties!
+
+Classes
+-------
+- KnowledgeGraph: Represents a knowledge graph that stores and annotates structure objects.
+
+Attributes
+----------
+- defstyledict: A dictionary containing default styles for visualizing the graph.
+
 """
+
 
 from rdflib import Graph, Literal, XSD, RDF, RDFS, BNode, URIRef
 
@@ -95,8 +105,51 @@ def _prepare_log(file):
     logger.propagate = False
     return logger
 
-
 class KnowledgeGraph:
+    """
+    Represents a knowledge graph.
+
+    Parameters
+    ----------
+    graph_file : str, optional
+        The path to the graph file to be parsed. Default is None.
+    store : str, optional
+        The type of store to use. Default is "Memory".
+    store_file : str, optional
+        The path to the store file. Default is None.
+    identifier : str, optional
+        The identifier for the graph. Default is "http://default_graph".
+    ontology : Ontology, optional
+        The ontology object to be used. Default is None.
+    structure_store : StructureStore, optional
+        The structure store object to be used. Default is None.
+    enable_log : bool, optional
+        Whether to enable logging. Default is False.
+        If true, a log file named atomrdf.log will be created in the current working directory.
+
+    Attributes
+    ----------
+    graph : rdflib.Graph
+        The RDF graph.
+    sgraph : rdflib.Graph
+        The structure graph for a single chosen sample
+    ontology : Ontology
+        The ontology object.
+    terms : dict
+        The dictionary of ontology terms.
+    store : str
+        The type of store used.
+
+    Methods
+    -------
+    add_structure(structure)
+        Add a structure to the knowledge graph.
+    add(triple, validate=True)
+        Add a triple to the knowledge graph.
+    triples(triple)
+        Return the triples in the knowledge graph that match the given triple pattern.
+    """
+
     def __init__(
         self,
         graph_file=None,
@@ -107,6 +160,26 @@ class KnowledgeGraph:
         structure_store=None,
         enable_log=False,
     ):
+        """
+        Initialize the KnowledgeGraph object.
+
+        Parameters
+        ----------
+        graph_file : str, optional
+            The path to the graph file to be parsed. Default is None.
+        store : str, optional
+            The type of store to use. Default is "Memory".
+        store_file : str, optional
+            The path to the store file. Default is None.
+        identifier : str, optional
+            The identifier for the graph. Default is "http://default_graph".
+        ontology : Ontology, optional
+            The ontology object to be used. Default is None.
+        structure_store : StructureStore, optional
+            The structure store object to be used. Default is None.
+        enable_log : bool, optional
+            Whether to enable logging. Default is False.
+        """
 
         create_store(
             self,
@@ -131,20 +204,33 @@ class KnowledgeGraph:
             if os.path.exists(graph_file):
                 self.graph.parse(graph_file)
 
-        self.sample = None
-        self.material = None
-        self.sysdict = None
         self.sgraph = None
         if ontology is None:
             ontology = read_ontology()
         self.ontology = ontology
         self.terms = self.ontology.terms
-        self._atom_ids = None
         self.store = store
         self._n_triples = 0
         self._initialize_graph()
 
     def add_structure(self, structure):
+        """
+        Add a structure to the knowledge graph.
+
+        Parameters
+        ----------
+        structure : Structure
+            The structure object to be added.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This method adds a structure object to the knowledge graph. The structure object should be an instance of the Structure class.
+        The structure object is assigned to the graph and converted to RDF format.
+        """
         structure.graph = self
         structure.to_graph()
 
@@ -310,8 +396,29 @@ class KnowledgeGraph:
 
     def add(self, triple, validate=True):
         """
-        Force assumes that you are passing rdflib terms, defined with
-        RDFLib Namespace
+        Add a triple to the knowledge graph.
+
+        Parameters
+        ----------
+        triple : tuple
+            The triple to be added in the form (subject, predicate, object).
+        validate : bool, optional
+            Whether to validate the triple against the domain and range. Default is True.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This method adds a triple to the knowledge graph. The triple should be provided as a tuple in the form (subject, predicate, object).
+        By default, the triple is validated against the domain and range. If the `validate` parameter is set to False, the validation is skipped.
+
+        Examples
+        --------
+        >>> graph = Graph()
+        >>> graph.add(("Alice", "likes", "Bob"))
+        >>> graph.add(("Bob", "age", 25), validate=False)
         """
         modified_triple = self._modify_triple(triple)
 
@@ -334,18 +441,108 @@ class KnowledgeGraph:
         self.log("added")
 
     def triples(self, triple):
+        """
+        Return the triples in the knowledge graph that match the given triple pattern.
+
+        Parameters
+        ----------
+        triple : tuple
+            The triple pattern to match in the form (subject, predicate, object).
+
+        Returns
+        -------
+        generator
+            A generator that yields the matching triples.
+
+        Examples
+        --------
+        >>> graph = KnowledgeGraph()
+        >>> graph.add(("Alice", "likes", "Bob"))
+        >>> graph.add(("Alice", "dislikes", "Charlie"))
+        >>> graph.add(("Bob", "likes", "Alice"))
+        >>> for triple in graph.triples(("Alice", None, None)):
+        ...     print(triple)
+        ('Alice', 'likes', 'Bob')
+        ('Alice', 'dislikes', 'Charlie')
+        """
         modified_triple = self._modify_triple(triple)
         return self.graph.triples(modified_triple)
 
     def value(self, arg1, arg2):
+        """
+        Get the value of a triple in the knowledge graph.
+
+        Parameters
+        ----------
+        arg1 : object
+            The subject of the triple.
+        arg2 : object
+            The predicate of the triple.
+
+        Returns
+        -------
+        object or None
+            The value of the triple if it exists, otherwise None.
+
+        Notes
+        -----
+        This method retrieves the value of a triple in the knowledge graph. The triple is specified by providing the subject and predicate as arguments. 
+        If the triple exists in the graph, the corresponding value is returned. If the triple does not exist, None is returned.
+
+        Examples
+        --------
+        >>> graph = KnowledgeGraph()
+        >>> graph.add(("Alice", "likes", "Bob"))
+        >>> value = graph.value("Alice", "likes")
+        >>> print(value)
+        Bob
+        """
         modified_double = self._modify_triple((arg1, arg2))
         return self.graph.value(modified_double[0], modified_double[1])
 
     def remove(self, triple):
+        """
+        Remove a triple from the knowledge graph.
+
+        Parameters
+        ----------
+        triple : tuple
+            The triple to be removed in the form (subject, predicate, object).
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This method removes a triple from the knowledge graph. The triple should be provided as a tuple in the form (subject, predicate, object).
+
+        Examples
+        --------
+        >>> graph = KnowledgeGraph()
+        >>> graph.add(("Alice", "likes", "Bob"))
+        >>> graph.remove(("Alice", "likes", "Bob"))
+        """
         modified_triple = self._modify_triple(triple)
         return self.graph.remove(modified_triple)
 
     def create_node(self, namestring, classtype):
+        """
+        Create a new node in the graph.
+
+        Parameters
+        ----------
+        namestring : str
+            The name of the node.
+        classtype : Object from a given ontology
+            The class type of the node.
+
+        Returns
+        -------
+        URIRef
+            The newly created node.
+
+        """
         item = URIRef(namestring)
         self.add((item, RDF.type, classtype))
         return item
@@ -385,6 +582,35 @@ class KnowledgeGraph:
         )
 
     def add_calculated_quantity(self, sample, propertyname, value, unit=None):
+        """
+        Add a calculated quantity to a sample.
+
+        Parameters
+        ----------
+        sample : URIRef
+            The URIRef of the sample to which the calculated quantity is being added.
+        propertyname : str
+            The name of the calculated property.
+        value : str
+            The value of the calculated property.
+        unit : str, optional
+            The unit of the calculated property. Default is None.
+            The unit should be from QUDT. See http://qudt.org/vocab/unit/
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This method adds a calculated quantity to a sample in the knowledge graph. The calculated quantity is represented as a triple with the sample as the subject, the calculated property as the predicate, and the value as the object. The calculated property is created as a node in the graph with the given name and value. If a unit is provided, it is also added as a property of the calculated property node.
+
+        Examples
+        --------
+        >>> graph = KnowledgeGraph()
+        >>> sample = graph.create_node("Sample1", CMSO.Sample)
+        >>> graph.add_calculated_quantity(sample, "energy", "10.5", "eV")
+        """
         prop = self.create_node(propertyname, CMSO.CalculatedProperty)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDFS.label, Literal(propertyname)))
@@ -393,6 +619,19 @@ class KnowledgeGraph:
             self.add((prop, CMSO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{unit}")))
 
     def inspect_sample(self, sample):
+        """
+        Inspects a sample and retrieves information about its atoms, material, defects, composition,
+        crystal structure, space group, calculated properties, and units.
+
+        Parameters
+        ----------
+        sample: The sample to inspect.
+
+        Returns
+        -------
+        string: A string containing the information about the sample.
+
+        """
         natoms = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[
             0
@@ -437,45 +676,18 @@ class KnowledgeGraph:
 
     def visualize(self, *args, **kwargs):
         """
-        Vosualise the RDF tree of the Graph
+        Visualizes the graph using the specified arguments.
+
+        This method is a wrapper around the `visualise` method and passes the same arguments to it.
 
         Parameters
         ----------
-        backend: string, {'ipycytoscape', 'graphviz'}
-            Chooses the backend with which the graph will be plotted. ipycytoscape provides an interactive,
-            but slow visualisation, whereas graphviz provides a non-interactive fast visualisation.
-
-        edge_color: string
-            Edge color of the boxes
-
-        styledict: dict
-            If provided, allows customisation of color and other properties.
-
-        graph_attr: dict
-            further attributes that allow customisation of graphs
-
-        layoutname: string
-            name of the layout for graph
+        *args: Variable length argument list.
+        **kwargs: Arbitrary keyword arguments.
 
         Returns
         -------
-
-        Notes
-        -----
-        styledict has the following options. Refer to graphviz and ipycytoscape
-        documentation for more details
-        BNode:
-          color:
-          shape:
-          style:
-        URIRef:
-          color:
-          shape:
-          style:
-        Literal:
-          color:
-          shape:
-          style:
+        dot: The visualization of the RDF tree.
         """
         self.visualise(*args, **kwargs)
 
@@ -489,41 +701,56 @@ class KnowledgeGraph:
         layout="neato",
     ):
         """
-        Vosualise the RDF tree of the Graph
+        Visualize the RDF tree of the Graph.
 
         Parameters
         ----------
-        edge_color: string
-            Edge color of the boxes
-
-        styledict: dict
-            If provided, allows customisation of color and other properties.
-
-        graph_attr: dict
-            further attributes that allow customisation of graphs
-
-        layoutname: string
-            name of the layout for graph
+        styledict : dict, optional
+            If provided, allows customization of color and other properties.
+        rankdir : str, optional
+            The direction of the graph layout. Default is "BT" (bottom to top).
+        hide_types : bool, optional
+            Whether to hide the types in the visualization. Default is False.
+        workflow_view : bool, optional
+            Whether to enable the workflow view. Default is False.
+        size : tuple, optional
+            The size of the visualization. Default is None.
+        layout : str, optional
+            The name of the layout algorithm for the graph. Default is "neato".
 
         Returns
         -------
+        graphviz.dot.Digraph
+            The visualization of the RDF tree.
 
         Notes
         -----
-        styledict has the following options. Refer to graphviz and ipycytoscape
-        documentation for more details
+        The `styledict` parameter allows customization of the visualization style.
+        It has the following options:
+
         BNode:
-          color:
-          shape:
-          style:
+            color : str
+                The color of the BNode boxes.
+            shape : str
+                The shape of the BNode boxes.
+            style : str
+                The style of the BNode boxes.
+
         URIRef:
-          color:
-          shape:
-          style:
+            color : str
+                The color of the URIRef boxes.
+            shape : str
+                The shape of the URIRef boxes.
+            style : str
+                The style of the URIRef boxes.
+
         Literal:
-          color:
-          shape:
-          style:
+            color : str
+                The color of the Literal boxes.
+            shape : str
+                The shape of the Literal boxes.
+            style : str
+                The style of the Literal boxes.
         """
         if size is not None:
             size = f"{size[0]},{size[1]}"
@@ -564,7 +791,39 @@ class KnowledgeGraph:
 
     def archive(self, package_name, format="turtle", compress=True):
         """
-        Publish a dataset from graph including per atom quantities
+        Publish a dataset from graph including per atom quantities.
+
+        Parameters:
+        -----------
+        package_name : str
+            The name of the package to be created.
+        format : str, optional
+            The format in which the dataset should be written. Default is "turtle".
+        compress : bool, optional
+            Whether to compress the package into a tarball. Default is True.
+
+        Raises:
+        -------
+        ValueError
+            If the package_name already exists or if the tarball already exists.
+
+        Notes:
+        ------
+        This method creates a package containing a dataset from the graph, including per atom quantities.
+        The package consists of a folder named package_name, which contains the dataset and related files.
+        If compress is True, the package is compressed into a tarball.
+
+        The method performs the following steps:
+        1. Checks if the package_name already exists. If it does, raises a ValueError.
+        2. If compress is True, checks if the tarball already exists. If it does, raises a ValueError.
+        3. Creates a folder named package_name.
+        4. Creates a subfolder named rdf_structure_store within the package folder.
+        5. Copies the files associated with each sample to the rdf_structure_store folder, while fixing the paths.
+        6. Updates the paths in the graph to point to the copied files.
+        7. Writes the dataset to a file named "triples" within the package folder.
+        8. If compress is True, compresses the package folder into a tarball.
+        9. Removes the package folder.
+
         """
         # first step make a folder
         if os.path.exists(package_name):
@@ -614,6 +873,37 @@ class KnowledgeGraph:
         identifier="http://default_graph",
         ontology=None,
     ):
+        """
+        Unarchives a package and returns an instance of the Graph class.
+
+        Parameters
+        ----------
+        package_name : str
+            The name of the package to unarchive.
+        compress : bool, optional
+            Whether to compress the package. Defaults to True.
+        store : str, optional
+            The type of store to use. Defaults to "Memory".
+        store_file : str, optional
+            The file to use for the store. Defaults to None.
+        identifier : str, optional
+            The identifier for the graph. Defaults to "http://default_graph".
+        ontology : str, optional
+            The ontology to use. Defaults to None.
+
+        Returns
+        -------
+        Graph
+            An instance of the Graph class.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the package file is not found.
+        tarfile.TarError
+            If there is an error while extracting the package.
+
+        """
         if compress:
             package_base_name = ".".join(package_name.split(".")[:-2])
             with tarfile.open(package_name) as fin:
@@ -661,7 +951,28 @@ class KnowledgeGraph:
         return_query=False,
         enforce_types=None,
     ):
+        """
+        Automatically generates and executes a query based on the provided parameters.
 
+        Parameters
+        ----------
+        source : OntoTerm
+            The source of the query.
+        destination : OntoTerm
+            The destination of the query.
+        condition :str, optional
+            The condition to be applied in the query. Defaults to None.
+        return_query : bool, optional
+            If True, returns the generated query instead of executing it. Defaults to False.
+        enforce_types : bool, optional
+            If provided, enforces the specified type for the query. Defaults to None.
+
+        Returns
+        -------
+        pandas DataFrame or str
+            The result of the query execution. If `return_query` is True, returns the generated query as a string.
+            Otherwise, returns the result of the query execution as a pandas DataFrame.
+        """
         if enforce_types is None:
             for val in [True, False]:
                 query = self.ontology.create_query(
@@ -688,6 +999,26 @@ class KnowledgeGraph:
     def query_sample(
         self, destination, condition=None, return_query=False, enforce_types=None
     ):
+        """
+        Query the knowledge graph for atomic scale samples.
+
+        Parameters
+        ----------
+        destination : OntoTerm
+            The destination of the query.
+        condition : str, optional
+            The condition to be applied in the query. Defaults to None.
+        return_query : bool, optional
+            If True, returns the generated query instead of executing it. Defaults to False.
+        enforce_types : bool, optional
+            If provided, enforces the specified type for the query. Defaults to None.
+
+        Returns
+        -------
+        pandas DataFrame or str
+            The result of the query execution. If `return_query` is True, returns the generated query as a string. Otherwise, returns the result of the query execution as a pandas DataFrame.
+
+        """
         return self.auto_query(
             self.ontology.terms.cmso.AtomicScaleSample,
             destination,
@@ -713,6 +1044,21 @@ class KnowledgeGraph:
         return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
 
     def iterate_graph(self, item, create_new_graph=False):
+        """
+        Iterate through the graph starting from the given item.
+
+        Parameters
+        ----------
+        item : object
+            The item to start the iteration from.
+        create_new_graph : bool, optional
+            If True, create a new KnowledgeGraph object to store the iteration results.
+            Default is False. The results are stored in `self.sgraph`.
+
+        Returns
+        -------
+        None
+        """
         if create_new_graph:
             self.sgraph = KnowledgeGraph()
         triples = list(self.triples((item, None, None)))
@@ -722,7 +1068,7 @@ class KnowledgeGraph:
 
     def get_sample(self, sample, no_atoms=False):
         """
-        Get the Sample as an RDFGraph
+        Get the Sample as a KnowledgeGraph
 
         Parameters
         ----------
@@ -736,6 +1082,8 @@ class KnowledgeGraph:
         -------
         sgraph: :py:class:`RDFGraph`
             the RDFGraph of the queried sample
+        
+        na: int, only retured if no_atoms is True
 
         """
 
@@ -747,7 +1095,7 @@ class KnowledgeGraph:
 
     def get_system_from_sample(self, sample):
         """
-        Get a pyscal :py:class:`pyscal.core.System` from the selected sample
+        Get a pyscal :py:class:`atomrdf.structure.System` from the selected sample
 
         Parameters
         ----------
@@ -756,7 +1104,7 @@ class KnowledgeGraph:
 
         Returns
         -------
-        system: :py:class:`pyscal.core.System`
+        system: :py:class:`atomrdf.structure.System`
             corresponding system
         """
 
@@ -804,6 +1152,7 @@ class KnowledgeGraph:
             name of output file
 
         format: string, {"lammps-dump","lammps-data", "poscar"}
+            or any format supported by ase
 
         Returns
         -------

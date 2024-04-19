@@ -172,6 +172,20 @@ class Workflow:
     def add_structural_relation(
         self,
     ):
+        """
+        Add structural relation between samples.
+
+        This method adds the structural relation between the current sample and its parent sample.
+        It also retrieves lattice properties and adds inherited properties, such as defect information.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         self.kg.add((self.sample, RDF.type, PROV.Entity))
         if self.parent_sample is not None:
             self.kg.add((self.parent_sample, RDF.type, PROV.Entity))
@@ -180,12 +194,27 @@ class Workflow:
             self._add_inherited_properties()
 
     def add_method(
-        self,
-    ):
+            self,
+        ):
         """
-        mdict
+        Add the computational method and related information to the knowledge graph.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Notes
         -----
-        md:
+        This method adds the computational method and related information to the knowledge graph.
+        It creates an activity node representing the method and adds it to the graph.
+        The method is associated with the main activity using the `ASMO.hasComputationalMethod` property.
+        The type of the method is determined based on the value of the `method` key in the `mdict` dictionary.
+        The method-specific items are added to the graph based on the method type.
+        The structure generation information is also added to the graph.
 
         """
         if self.mdict is None:
@@ -238,6 +267,15 @@ class Workflow:
         self._add_software(method)
 
     def to_graph(self, workflow_object):
+        """
+        Converts a workflow object to a graph representation.
+
+        Parameters:
+        - workflow_object: The workflow object to convert.
+
+        Returns:
+        - None
+        """
         self._prepare_job(workflow_object)
         self.add_structural_relation()
         self.add_method()
