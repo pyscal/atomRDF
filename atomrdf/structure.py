@@ -1294,6 +1294,10 @@ class System(pc.System):
                 self.schema.material.crystal_structure.unit_cell.angle(),
             ]
 
+        #fix for lattice angle of HCP
+        if targets[0] == 'hcp':
+            targets[5] = [90.0, 90.0, 120.0]
+            
         valid = self.graph._is_valid(targets)
 
         if valid:
