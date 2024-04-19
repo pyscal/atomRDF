@@ -1137,6 +1137,8 @@ class KnowledgeGraph:
         sys = System()
         sys.box = cell_vectors
         sys.atoms = at
+        sys.sample = sample
+        sys.graph = self
         return sys
 
     def to_file(self, sample, filename=None, format="poscar"):

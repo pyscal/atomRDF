@@ -117,6 +117,7 @@ def test_extract_sample():
 
 	struct = kg.get_system_from_sample(struct_Fe.sample)
 	assert len(struct.atoms.positions) == 2
+	assert struct.graph is not None
 
 	kg.to_file(struct_Fe.sample, filename='POSCAR')
 	assert os.path.exists('POSCAR')
