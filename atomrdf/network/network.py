@@ -382,7 +382,6 @@ class OntologyNetwork:
         # now add corresponding triples
         for destination in destination_names:
             for triple in all_triplets[destination]:
-                # print(triple)
                 query.append(
                     "    ?%s %s ?%s ."
                     % (
