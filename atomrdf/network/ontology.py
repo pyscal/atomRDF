@@ -60,7 +60,6 @@ def read_ontology():
 
     # General fixes
     combo.add_path(("cmso:CrystalStructure", "cmso:hasAltName", "string"))
-    combo.add_path(("cmso:ChemicalElement", "cmso:hasSymbol", "string"))
 
     # interontology paths
     combo.add_path(("cmso:Material", "cmso:hasDefect", "pldo:PlanarDefect"))
@@ -82,6 +81,19 @@ def read_ontology():
             "asmo:StructureOptimization",
         )
     )
+    
+    combo.add_path("cmso:CalculatedProperty", "asmo:hasValue", "string")
+    combo.add_path("cmso:CalculatedProperty", "rdfs:label", "string")
+    #how to handle units?
+
+    #input parameters for ASMO
+    combo.add_path("asmo:InputParameter", "rdfs:label", "string")
+    combo.add_path("asmo:InputParameter", "asmo:hasValue", "string")
+
+    #software agent
+    combo.add_path("prov:SoftwareAgent", "rdfs:label", "string")
+    combo.add_path("asmo:InteratomicPotential", "cmso:hasReference", "string")
+    combo.add_path("asmo:InteratomicPotential", "rdfs:label", "string")
 
     # return
     return combo
