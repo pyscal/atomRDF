@@ -70,6 +70,7 @@ def read_ontology():
         ("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample")
     )
     combo.add_path(("cmso:ComputationalSample", "rdf:type", "prov:Entity"))
+    combo.add_path(("cmso:AtomicScaleSample", "prov:wasGeneratedBy", "prov:Activity"))
     combo.add_path(("asmo:StructureOptimization", "rdf:type", "prov:Activity"))
     combo.add_path(
         ("asmo:StructureOptimization", "prov:wasAssociatedWith", "prov:SoftwareAgent")
@@ -82,18 +83,18 @@ def read_ontology():
         )
     )
     
-    combo.add_path("cmso:CalculatedProperty", "asmo:hasValue", "string")
-    combo.add_path("cmso:CalculatedProperty", "rdfs:label", "string")
+    combo.add_path(("cmso:CalculatedProperty", "asmo:hasValue", "float"))
+    combo.add_path(("cmso:CalculatedProperty", "rdfs:label", "string"))
     #how to handle units?
 
     #input parameters for ASMO
-    combo.add_path("asmo:InputParameter", "rdfs:label", "string")
-    combo.add_path("asmo:InputParameter", "asmo:hasValue", "string")
+    combo.add_path(("asmo:InputParameter", "rdfs:label", "string"))
+    combo.add_path(("asmo:InputParameter", "asmo:hasValue", "float"))
 
     #software agent
-    combo.add_path("prov:SoftwareAgent", "rdfs:label", "string")
-    combo.add_path("asmo:InteratomicPotential", "cmso:hasReference", "string")
-    combo.add_path("asmo:InteratomicPotential", "rdfs:label", "string")
+    combo.add_path(("prov:SoftwareAgent", "rdfs:label", "string"))
+    combo.add_path(("asmo:InteratomicPotential", "cmso:hasReference", "string"))
+    combo.add_path(("asmo:InteratomicPotential", "rdfs:label", "string"))
 
     # return
     return combo

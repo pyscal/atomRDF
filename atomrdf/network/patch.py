@@ -25,4 +25,13 @@ def patch_terms(iri, rn):
     elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasValue":
         rn = ["float"]
 
+    elif iri == "http://purls.helmholtz-metadaten.de/asmo/hasValue":
+        rn = ["float"]
+
+    elif iri == "http://www.w3.org/2000/01/rdf-schema#label":
+        rn = ["string"]
+
+    elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasReference":
+        rn = ["string"]
+
     return rn
