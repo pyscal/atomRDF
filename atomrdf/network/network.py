@@ -324,6 +324,16 @@ class OntologyNetwork:
         )
         return path
 
+    def create_stepped_query(self, source, destinations):
+        #create triples in a stepped manner
+        complete_list = [source, *destinations]
+        for x in range(1, len(complete_list)):
+            temp_source = complete_list[x-1]
+            temp_dest = complete_list[x]
+            path = self.get_shortest_path(temp_source, temp_dest, triples=True)
+            for triple in path:
+                print(triple)
+
     def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
         Create a SPARQL query string based on the given source, destinations, condition, and enforce_types.
