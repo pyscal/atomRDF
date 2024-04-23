@@ -75,6 +75,7 @@ class OntoTerm:
         self._namespace = namespace
         # name of the class
         self._name = None
+        self._parents = []
 
     @property
     def uri(self):
@@ -244,6 +245,8 @@ class OntoTerm:
             raise TypeError(
                 "This operation can only be performed with a data property!"
             )
+    
+
 
     def _create_condition_string(self, condition, val):
         return f'(?{self.query_name_without_prefix}{condition}"{val}"^^xsd:{self._clean_datatype(self.range[0])})'
@@ -313,3 +316,7 @@ class OntoTerm:
 
     def or_(self, term):
         self.__or__(term)
+
+    def __rshift__(self, term):
+        term._parents.append(self)
+        return term
