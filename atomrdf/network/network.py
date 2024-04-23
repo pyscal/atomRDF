@@ -348,12 +348,14 @@ class OntologyNetwork:
         complete_list = [source, *destinations]
         if len(complete_list) < 3:
             raise ValueError("Need at least 3 nodes to create a stepped query")
-
+        triples = []
         for x in range(1, len(complete_list)):
             temp_source = complete_list[x-1]
             temp_dest = complete_list[x]
             path = self.get_shortest_path(temp_source, temp_dest, triples=True)
-        return path
+            for p in path:
+                triples.append(p)
+        return triples
 
     def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
@@ -380,17 +382,25 @@ class OntologyNetwork:
             destinations = [destinations]
 
         source_name = source.query_name
-        destination_names = [destination.query_name for destination in destinations]
+        destination_names = []
+        for destination in destinations:
+            if isinstance(destination, list):
+                #this is a list, we need a stepped query
+                destination = [d.query_name for d in destination]
+                destination_names.append(destination)
+            else:
+                destination_names.append([destination.query_name])
 
         # if condition is specified, and is not there, add it
         if condition is not None:
             if condition.query_name not in destination_names:
-                destination_names.append(condition.query_name)
+                destination_names.append([condition.query_name])
 
         # add source if not available
         if source_name not in destination_names:
-            destination_names.append(source_name)
+            destination_names.append([source_name])
 
+        #all names are now collected, in a list of lists
         # start prefix of query
         query = []
         for key, val in self.namespaces.items():
@@ -401,7 +411,10 @@ class OntologyNetwork:
         # now for each destination, start adding the paths in the query
         all_triplets = {}
         for destination in destination_names:
-            triplets = self.get_shortest_path(source_name, destination, triples=True)
+            if len(destination) == 1:
+                triplets = self.get_shortest_path(source_name, destination[0], triples=True)
+            else:
+                triplets = self.create_stepped_query(source_name, destination)
             all_triplets[destination] = triplets
 
         select_destinations = [
