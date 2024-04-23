@@ -393,10 +393,11 @@ class OntologyNetwork:
             if len(destination._parents) > 0:
                 #this is a list, we need a stepped query
                 destination_list = []
-                destination_list.append(destination.query_name)
                 for parent in destination._parents:
                     destination_list.append(parent.query_name)
-                destination._parent = []
+                destination_list.append(destination.query_name)
+                destination_names.append(destination_list)        
+                destination._parents = []
             else:
                 destination_names.append([destination.query_name])
 
