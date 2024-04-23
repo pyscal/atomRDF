@@ -29,9 +29,9 @@ def patch_terms(iri, rn):
         rn = ["float"]
 
     elif iri == "http://www.w3.org/2000/01/rdf-schema#label":
-        rn = ["string"]
+        rn = ["str"]
 
     elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasReference":
-        rn = ["string"]
+        rn = ["str"]
 
     return rn
