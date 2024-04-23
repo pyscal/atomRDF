@@ -910,6 +910,8 @@ class KnowledgeGraph:
                 fin.extractall(".")
             # os.remove(package_name)
             # copy things out
+        else:
+            package_base_name = package_name
 
         return cls(
             store=store,
