@@ -410,12 +410,12 @@ class OntologyNetwork:
 
         # now for each destination, start adding the paths in the query
         all_triplets = {}
-        for destination in destination_names:
+        for count, destination in enumerate(destination_names):
             if len(destination) == 1:
                 triplets = self.get_shortest_path(source_name, destination[0], triples=True)
             else:
                 triplets = self.create_stepped_query(source_name, destination)
-            all_triplets[destination] = triplets
+            all_triplets[str(count)] = triplets
 
         select_destinations = [
             f"?{self.strip_name(destination)}" for destination in destination_names
@@ -424,8 +424,8 @@ class OntologyNetwork:
         query.append("WHERE {")
 
         # now add corresponding triples
-        for destination in destination_names:
-            for triple in all_triplets[destination]:
+        for count, destination in enumerate(destination_names):
+            for triple in all_triplets[str(count)]:
                 query.append(
                     "    ?%s %s ?%s ."
                     % (
