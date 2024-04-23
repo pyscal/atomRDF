@@ -378,16 +378,26 @@ class OntologyNetwork:
             The generated SPARQL query string.
 
         """
+        #if not list, convert to list
         if not isinstance(destinations, list):
             destinations = [destinations]
 
+        #query name is how its called in SPARQL query
         source_name = source.query_name
+
+        #same way we have to get destination names
+        #here a trick is applied: if it is a data property, we have to add "value" to the end, which is done in the query_name property
+        #now if it is an object property, the query has to end in the target class.
         destination_names = []
         for destination in destinations:
-            if isinstance(destination, list):
+            if len(destination._parents) > 0:
                 #this is a list, we need a stepped query
-                destination = [d.query_name for d in destination]
-                destination_names.append(destination)
+                destination_list = []
+                for parent in destination._parents:
+                    destination_list.append(parent.query_name)
+                destination_list.append(destination.query_name)
+                destination_names.append(destination_list)        
+                destination._parents = []
             else:
                 destination_names.append([destination.query_name])
 
@@ -437,14 +447,13 @@ class OntologyNetwork:
         # now add corresponding triples
         for count, destination in enumerate(destination_names):
             for triple in all_triplets[str(count)]:
-                query.append(
-                    "    ?%s %s ?%s ."
-                    % (
-                        self.strip_name(triple[0]),
+                #print(triple)
+                line_text =  "    ?%s %s ?%s ."% ( self.strip_name(triple[0]),
                         triple[1],
                         self.strip_name(triple[2]),
                     )
-                )
+                if line_text not in query:
+                    query.append(line_text)
 
         # we enforce types of the source and destination
         if enforce_types:

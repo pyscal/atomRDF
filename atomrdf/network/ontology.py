@@ -48,6 +48,7 @@ def read_ontology():
         "data_property",
         delimiter="#",
         namespace="rdfs",
+        rn = ['str']
     )
     combo.add_term(
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
