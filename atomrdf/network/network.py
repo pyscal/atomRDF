@@ -418,8 +418,9 @@ class OntologyNetwork:
             all_triplets[str(count)] = triplets
 
         select_destinations = [
-            f"?{self.strip_name(destination)}" for destination in destination_names
+            f"?{self.strip_name(destination[-1])}" for destination in destination_names
         ]
+        #note that the -1 index above picks the end product for stepped queries
         query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
         query.append("WHERE {")
 
@@ -443,12 +444,15 @@ class OntologyNetwork:
                     % (self.strip_name(source.query_name), source.query_name)
                 )
             for destination in destinations:
-                if destination.node_type == "class":
+                node_type = np.atleast_1d(destination)[-1].node_type
+                query_name = np.atleast_1d(destination)[-1].query_name
+
+                if node_type == "class":
                     query.append(
                         "    ?%s rdf:type %s ."
                         % (
-                            self.strip_name(destination.query_name),
-                            destination.query_name,
+                            self.strip_name(query_name),
+                            query_name,
                         )
                     )
         # now we have to add filters
