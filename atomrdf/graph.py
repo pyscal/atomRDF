@@ -922,7 +922,7 @@ class KnowledgeGraph:
             ontology=ontology,
         )
 
-    def query(self, inquery):
+    def query(self, inquery, return_df=True):
         """
         Query the graph using SPARQL
 
@@ -931,6 +931,8 @@ class KnowledgeGraph:
         inquery: string
             SPARQL query to be executed
 
+        return_df: bool, optional
+            if True, returns the results as a pandas DataFrame. Default is True.
         Returns
         -------
         res: pandas DataFrame
@@ -938,11 +940,14 @@ class KnowledgeGraph:
         """
         res = self.graph.query(inquery)
         if res is not None:
-            for line in inquery.split("\n"):
-                if "SELECT DISTINCT" in line:
-                    break
-            labels = [x[1:] for x in line.split()[2:]]
-            return pd.DataFrame(res, columns=labels)
+            if return_df:
+                for line in inquery.split("\n"):
+                    if "SELECT DISTINCT" in line:
+                        break
+                labels = [x[1:] for x in line.split()[2:]]
+                return pd.DataFrame(res, columns=labels)
+            else:
+                return res
         raise ValueError("SPARQL query returned None")
 
     def auto_query(
@@ -952,6 +957,7 @@ class KnowledgeGraph:
         condition=None,
         return_query=False,
         enforce_types=None,
+        return_df=True,
     ):
         """
         Automatically generates and executes a query based on the provided parameters.
@@ -968,6 +974,8 @@ class KnowledgeGraph:
             If True, returns the generated query instead of executing it. Defaults to False.
         enforce_types : bool, optional
             If provided, enforces the specified type for the query. Defaults to None.
+        return_df: bool, optional
+            if True, returns the results as a pandas DataFrame. Default is True.
 
         Returns
         -------
@@ -982,7 +990,7 @@ class KnowledgeGraph:
                 )
                 if return_query:
                     return query
-                res = self.query(query)
+                res = self.query(query, return_df=return_df)
                 if len(res) != 0:
                     return res
         else:
@@ -991,7 +999,7 @@ class KnowledgeGraph:
             )
             if return_query:
                 return query
-            res = self.query(query)
+            res = self.query(query, return_df=return_df)
 
         return res
 
