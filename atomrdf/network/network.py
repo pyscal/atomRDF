@@ -218,7 +218,6 @@ class OntologyNetwork:
         Note that all attributes of the triple should already exist in the graph.
         The ontology itself is not modified. Only the graph representation of it is.
         The expected use is to bridge between two (or more) different ontologies.
-        Therefore, mapping can only be between classes.
 
         Parameters
         ----------
@@ -324,6 +323,40 @@ class OntologyNetwork:
         )
         return path
 
+    def create_stepped_query(self, source, destinations):
+        """
+        Create a stepped query by creating triples in a stepped manner.
+
+        Parameters
+        ----------
+        source : str
+            The source node for the query.
+        destinations : list
+            A list of destination nodes for the query.
+
+        Returns
+        -------
+        list
+            A list of triples representing the stepped query path.
+
+        Raises
+        ------
+        ValueError
+            If there are less than 3 nodes in the `complete_list`.
+
+        """
+        complete_list = [source, *destinations]
+        if len(complete_list) < 3:
+            raise ValueError("Need at least 3 nodes to create a stepped query")
+        triples = []
+        for x in range(1, len(complete_list)):
+            temp_source = complete_list[x-1]
+            temp_dest = complete_list[x]
+            path = self.get_shortest_path(temp_source, temp_dest, triples=True)
+            for p in path:
+                triples.append(p)
+        return triples
+
     def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
         Create a SPARQL query string based on the given source, destinations, condition, and enforce_types.
@@ -349,17 +382,35 @@ class OntologyNetwork:
             destinations = [destinations]
 
         source_name = source.query_name
-        destination_names = [destination.query_name for destination in destinations]
+        destination_names = []
+        for destination in destinations:
+            if isinstance(destination, list):
+                #this is a list, we need a stepped query
+                destination = [d.query_name for d in destination]
+                destination_names.append(destination)
+            else:
+                destination_names.append([destination.query_name])
 
         # if condition is specified, and is not there, add it
         if condition is not None:
-            if condition.query_name not in destination_names:
-                destination_names.append(condition.query_name)
+            found = False
+            for destination in destination_names:
+                if condition.query_name in destination:
+                    found = True
+                    break
+            if not found:
+                destination_names.append([condition.query_name])
 
         # add source if not available
-        if source_name not in destination_names:
-            destination_names.append(source_name)
+        found = False
+        for destination in destination_names:
+            if source_name in destination:
+                found = True
+                break
+        if not found:
+            destination_names.append([source_name])
 
+        #all names are now collected, in a list of lists
         # start prefix of query
         query = []
         for key, val in self.namespaces.items():
@@ -369,20 +420,23 @@ class OntologyNetwork:
 
         # now for each destination, start adding the paths in the query
         all_triplets = {}
-        for destination in destination_names:
-            triplets = self.get_shortest_path(source_name, destination, triples=True)
-            all_triplets[destination] = triplets
+        for count, destination in enumerate(destination_names):
+            if len(destination) == 1:
+                triplets = self.get_shortest_path(source_name, destination[0], triples=True)
+            else:
+                triplets = self.create_stepped_query(source_name, destination)
+            all_triplets[str(count)] = triplets
 
         select_destinations = [
-            f"?{self.strip_name(destination)}" for destination in destination_names
+            f"?{self.strip_name(destination[-1])}" for destination in destination_names
         ]
+        #note that the -1 index above picks the end product for stepped queries
         query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
         query.append("WHERE {")
 
         # now add corresponding triples
-        for destination in destination_names:
-            for triple in all_triplets[destination]:
-                # print(triple)
+        for count, destination in enumerate(destination_names):
+            for triple in all_triplets[str(count)]:
                 query.append(
                     "    ?%s %s ?%s ."
                     % (
@@ -400,12 +454,15 @@ class OntologyNetwork:
                     % (self.strip_name(source.query_name), source.query_name)
                 )
             for destination in destinations:
-                if destination.node_type == "class":
+                node_type = np.atleast_1d(destination)[-1].node_type
+                query_name = np.atleast_1d(destination)[-1].query_name
+
+                if node_type == "class":
                     query.append(
                         "    ?%s rdf:type %s ."
                         % (
-                            self.strip_name(destination.query_name),
-                            destination.query_name,
+                            self.strip_name(query_name),
+                            query_name,
                         )
                     )
         # now we have to add filters
