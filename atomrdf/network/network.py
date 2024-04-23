@@ -448,14 +448,12 @@ class OntologyNetwork:
         for count, destination in enumerate(destination_names):
             for triple in all_triplets[str(count)]:
                 #print(triple)
-                query.append(
-                    "    ?%s %s ?%s ."
-                    % (
-                        self.strip_name(triple[0]),
+                line_text =  "    ?%s %s ?%s ."% ( self.strip_name(triple[0]),
                         triple[1],
                         self.strip_name(triple[2]),
                     )
-                )
+                if line_text not in query:
+                    query.append(line_text)
 
         # we enforce types of the source and destination
         if enforce_types:
