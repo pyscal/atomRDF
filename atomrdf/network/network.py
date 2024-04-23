@@ -393,7 +393,12 @@ class OntologyNetwork:
 
         # if condition is specified, and is not there, add it
         if condition is not None:
-            if condition.query_name not in destination_names:
+            found = False
+            for destination in destination_names:
+                if condition.query_name in destination:
+                    found = True
+                    break
+            if not found:
                 destination_names.append([condition.query_name])
 
         # add source if not available
