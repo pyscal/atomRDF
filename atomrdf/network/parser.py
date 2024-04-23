@@ -124,7 +124,10 @@ class OntoParser:
             # assign this data
             for d in dm:
                 if d != "owl:Thing":
-                    self.attributes["class"][d].is_range_of.append(term.name)
+                    self.attributes["class"][d].is_domain_of.append(term.name)
+            for r in rn:
+                if r != "owl:Thing":
+                    self.attributes["class"][r].is_range_of.append(term.name)
 
             # subproperties should be treated the same
 
