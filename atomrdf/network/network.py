@@ -397,7 +397,12 @@ class OntologyNetwork:
                 destination_names.append([condition.query_name])
 
         # add source if not available
-        if source_name not in destination_names:
+        found = False
+        for destination in destination_names:
+            if source_name in destination:
+                found = True
+                break
+        if not found:
             destination_names.append([source_name])
 
         #all names are now collected, in a list of lists
