@@ -378,10 +378,16 @@ class OntologyNetwork:
             The generated SPARQL query string.
 
         """
+        #if not list, convert to list
         if not isinstance(destinations, list):
             destinations = [destinations]
 
+        #query name is how its called in SPARQL query
         source_name = source.query_name
+
+        #same way we have to get destination names
+        #here a trick is applied: if it is a data property, we have to add "value" to the end, which is done in the query_name property
+        #now if it is an object property, the query has to end in the target class.
         destination_names = []
         for destination in destinations:
             if isinstance(destination, list):
@@ -437,6 +443,7 @@ class OntologyNetwork:
         # now add corresponding triples
         for count, destination in enumerate(destination_names):
             for triple in all_triplets[str(count)]:
+                print(triple)
                 query.append(
                     "    ?%s %s ?%s ."
                     % (

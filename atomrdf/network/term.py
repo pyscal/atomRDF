@@ -189,6 +189,10 @@ class OntoTerm:
         """
         if self.node_type == "data_property":
             return self.name + "value"
+        elif self.node_type == "object_property":
+            if len(self.range) > 0:
+                #this has a domain
+                return self.range[0]
         return self.name
 
     @property
