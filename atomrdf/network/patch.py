@@ -23,10 +23,10 @@ def patch_terms(iri, rn):
     # Reason: Range is Literal(); however here we use this for number values, hence we can fix this.
     # See fn: `add_calculated_property`
     elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasValue":
-        rn = ["float"]
+        rn = ["float", "double", "int", "str"]
 
     elif iri == "http://purls.helmholtz-metadaten.de/asmo/hasValue":
-        rn = ["float"]
+        rn = ["float", "double", "int", "str"]
 
     elif iri == "http://www.w3.org/2000/01/rdf-schema#label":
         rn = ["str"]
