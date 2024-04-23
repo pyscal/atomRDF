@@ -218,7 +218,6 @@ class OntologyNetwork:
         Note that all attributes of the triple should already exist in the graph.
         The ontology itself is not modified. Only the graph representation of it is.
         The expected use is to bridge between two (or more) different ontologies.
-        Therefore, mapping can only be between classes.
 
         Parameters
         ----------
@@ -325,14 +324,36 @@ class OntologyNetwork:
         return path
 
     def create_stepped_query(self, source, destinations):
-        #create triples in a stepped manner
+        """
+        Create a stepped query by creating triples in a stepped manner.
+
+        Parameters
+        ----------
+        source : str
+            The source node for the query.
+        destinations : list
+            A list of destination nodes for the query.
+
+        Returns
+        -------
+        list
+            A list of triples representing the stepped query path.
+
+        Raises
+        ------
+        ValueError
+            If there are less than 3 nodes in the `complete_list`.
+
+        """
         complete_list = [source, *destinations]
+        if len(complete_list) < 3:
+            raise ValueError("Need at least 3 nodes to create a stepped query")
+
         for x in range(1, len(complete_list)):
             temp_source = complete_list[x-1]
             temp_dest = complete_list[x]
             path = self.get_shortest_path(temp_source, temp_dest, triples=True)
-            for triple in path:
-                print(triple)
+        return path
 
     def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
