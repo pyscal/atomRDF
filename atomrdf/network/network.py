@@ -82,35 +82,6 @@ class OntologyNetwork:
     def __radd__(self, ontonetwork):
         return self.__add__(ontonetwork)
 
-    def get_shortest_path(self, source, target, triples=False):
-        """
-        Compute the shortest path between two nodes in the graph.
-
-        Parameters:
-        -----------
-        source : node
-            The starting node for the path.
-        target : node
-            The target node for the path.
-        triples : bool, optional
-            If True, returns the path as a list of triples. Each triple consists of three consecutive nodes in the path.
-            If False, returns the path as a list of nodes.
-
-        Returns:
-        --------
-        path : list
-            The shortest path between the source and target nodes. If `triples` is True, the path is returned as a list of triples.
-            If `triples` is False, the path is returned as a list of nodes.
-
-        """
-        path = nx.shortest_path(self.g, source=source, target=target)
-        if triples:
-            triple_list = []
-            for x in range(len(path) // 2):
-                triple_list.append(path[2 * x : 2 * x + 3])
-            return triple_list
-        return path
-
     def _add_class_nodes(self):
         for key, val in self.onto.attributes["class"].items():
             self.g.add_node(val.name, node_type="class")
@@ -304,6 +275,36 @@ class OntologyNetwork:
             dot.edge(_replace_name(edge[0]), _replace_name(edge[1]))
         return dot
 
+    def get_shortest_path(self, source, target, triples=False):
+        """
+        Compute the shortest path between two nodes in the graph.
+
+        Parameters:
+        -----------
+        source : node
+            The starting node for the path.
+        target : node
+            The target node for the path.
+        triples : bool, optional
+            If True, returns the path as a list of triples. Each triple consists of three consecutive nodes in the path.
+            If False, returns the path as a list of nodes.
+
+        Returns:
+        --------
+        path : list
+            The shortest path between the source and target nodes. If `triples` is True, the path is returned as a list of triples.
+            If `triples` is False, the path is returned as a list of nodes.
+
+        """
+        #this function will be modified to take OntoTerms direcl as input; and use their names. 
+        path = nx.shortest_path(self.g, source=source, target=target)
+        if triples:
+            triple_list = []
+            for x in range(len(path) // 2):
+                triple_list.append(path[2 * x : 2 * x + 3])
+            return triple_list
+        return path
+    
     def get_path_from_sample(self, target):
         """
         Get the shortest path from the 'cmso:ComputationalSample' node to the target node.

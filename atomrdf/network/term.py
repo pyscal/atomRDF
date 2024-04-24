@@ -197,6 +197,26 @@ class OntoTerm:
         return self.name
 
     @property
+    def variable_name(self):
+        """
+        Get the name of the term to use as a variable in a SPARQL query.
+
+        Returns
+        -------
+        str
+            The name of the term in a SPARQL query.
+
+        """
+        name_list = [x.name_without_prefix for x in self._parents]
+        name_list.append(self.name_without_prefix)
+        name =  "_".join(name_list) 
+        
+        if self.node_type == "data_property":
+            return name + "value"
+        
+        return name
+
+    @property
     def query_name_without_prefix(self):
         """
         Get the name of the term as it appears in a SPARQL query without prefix.
