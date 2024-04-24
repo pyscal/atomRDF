@@ -275,6 +275,14 @@ class OntologyNetwork:
             dot.edge(_replace_name(edge[0]), _replace_name(edge[1]))
         return dot
 
+    def _get_shortest_path(self, source, target):
+        #this function will be modified to take OntoTerms direcl as input; and use their names. 
+        path = nx.shortest_path(self.g, source=source.query_name, target=target.query_name)
+        #replace the start and end with thier corresponding variable names
+        path[0] = source.variable_name
+        path[-1] = target.variable_name
+        return path
+
     def get_shortest_path(self, source, target, triples=False):
         """
         Compute the shortest path between two nodes in the graph.
@@ -296,13 +304,25 @@ class OntologyNetwork:
             If `triples` is False, the path is returned as a list of nodes.
 
         """
-        #this function will be modified to take OntoTerms direcl as input; and use their names. 
-        path = nx.shortest_path(self.g, source=source, target=target)
+        #this function should also check for stepped queries
+        path = []
+        if len(target._parents) > 0:
+            #this needs a stepped query
+            complete_list = [source, *target._parents, target]
+            for x in range(1, len(complete_list)):
+                temp_source = complete_list[x-1]
+                temp_dest = complete_list[x]
+                temp_path = self._get_shortest_path(temp_source, temp_dest)
+                path.extend(temp_path)                
+        else:
+            path = self._get_shortest_path(source, target)
+
         if triples:
             triple_list = []
             for x in range(len(path) // 2):
                 triple_list.append(path[2 * x : 2 * x + 3])
             return triple_list
+        
         return path
     
     def get_path_from_sample(self, target):
@@ -319,44 +339,11 @@ class OntologyNetwork:
         list
             A list of triples representing the shortest path from 'cmso:ComputationalSample' to the target node.
         """
+        #get the path
         path = self.get_shortest_path(
-            source="cmso:ComputationalSample", target=target, triples=True
+            source=self.terms.cmso.AtomicScaleSample, target=target, triples=True
         )
         return path
-
-    def create_stepped_query(self, source, destinations):
-        """
-        Create a stepped query by creating triples in a stepped manner.
-
-        Parameters
-        ----------
-        source : str
-            The source node for the query.
-        destinations : list
-            A list of destination nodes for the query.
-
-        Returns
-        -------
-        list
-            A list of triples representing the stepped query path.
-
-        Raises
-        ------
-        ValueError
-            If there are less than 3 nodes in the `complete_list`.
-
-        """
-        complete_list = [source, *destinations]
-        if len(complete_list) < 3:
-            raise ValueError("Need at least 3 nodes to create a stepped query")
-        triples = []
-        for x in range(1, len(complete_list)):
-            temp_source = complete_list[x-1]
-            temp_dest = complete_list[x]
-            path = self.get_shortest_path(temp_source, temp_dest, triples=True)
-            for p in path:
-                triples.append(p)
-        return triples
 
     def create_query(self, source, destinations, condition=None, enforce_types=True):
         """
@@ -383,43 +370,14 @@ class OntologyNetwork:
         if not isinstance(destinations, list):
             destinations = [destinations]
 
-        #query name is how its called in SPARQL query
-        source_name = source.query_name
-
-        #same way we have to get destination names
-        #here a trick is applied: if it is a data property, we have to add "value" to the end, which is done in the query_name property
-        #now if it is an object property, the query has to end in the target class.
-        destination_names = []
-        for destination in destinations:
-            if len(destination._parents) > 0:
-                #this is a list, we need a stepped query
-                destination_list = []
-                for parent in destination._parents:
-                    destination_list.append(parent.query_name)
-                destination_list.append(destination.query_name)
-                destination_names.append(destination_list)        
-                destination._parents = []
-            else:
-                destination_names.append([destination.query_name])
-
         # if condition is specified, and is not there, add it
         if condition is not None:
-            found = False
-            for destination in destination_names:
-                if condition.query_name in destination:
-                    found = True
-                    break
-            if not found:
-                destination_names.append([condition.query_name])
+            if condition not in destinations:
+                destinations.append(condition)
 
         # add source if not available
-        found = False
-        for destination in destination_names:
-            if source_name in destination:
-                found = True
-                break
-        if not found:
-            destination_names.append([source_name])
+        #if source not in destinations:
+        #    destinations = [source] + destinations
 
         #all names are now collected, in a list of lists
         # start prefix of query
@@ -429,50 +387,43 @@ class OntologyNetwork:
         for key, val in self.extra_namespaces.items():
             query.append(f"PREFIX {key}: <{val}>")
 
-        # now for each destination, start adding the paths in the query
-        all_triplets = {}
-        for count, destination in enumerate(destination_names):
-            if len(destination) == 1:
-                triplets = self.get_shortest_path(source_name, destination[0], triples=True)
-            else:
-                triplets = self.create_stepped_query(source_name, destination)
-            all_triplets[str(count)] = triplets
-
+        #add select commands
         select_destinations = [
-            f"?{self.strip_name(destination[-1])}" for destination in destination_names
+            destination.variable_name for destination in destinations
         ]
-        #note that the -1 index above picks the end product for stepped queries
+        select_destinations = [source.variable_name] + select_destinations
         query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
         query.append("WHERE {")
-
-        # now add corresponding triples
-        for count, destination in enumerate(destination_names):
-            for triple in all_triplets[str(count)]:
-                #print(triple)
-                line_text =  "    ?%s %s ?%s ."% ( self.strip_name(triple[0]),
+        
+        # now for each destination, start adding the paths in the query
+        all_triplets = {}
+        for count, destination in enumerate(destinations):
+            triplets = self.get_shortest_path(source, destination, triples=True)
+            for triple in triplets:
+                print(triple)
+                line_text =  "    ?%s %s ?%s ."% ( triple[0].replace(":", "_"),
                         triple[1],
-                        self.strip_name(triple[2]),
+                        triple[2].replace(":", "_"),
                     )
                 if line_text not in query:
-                    query.append(line_text)
+                    query.append(line_text)                
+
 
         # we enforce types of the source and destination
         if enforce_types:
             if source.node_type == "class":
                 query.append(
                     "    ?%s rdf:type %s ."
-                    % (self.strip_name(source.query_name), source.query_name)
+                    % (self.strip_name(source.variable_name), source.query_name)
                 )
+            
             for destination in destinations:
-                node_type = np.atleast_1d(destination)[-1].node_type
-                query_name = np.atleast_1d(destination)[-1].query_name
-
-                if node_type == "class":
+                if destination.node_type == "class":
                     query.append(
                         "    ?%s rdf:type %s ."
                         % (
-                            self.strip_name(query_name),
-                            query_name,
+                            destination.variable_name,
+                            destination.query_name,
                         )
                     )
         # now we have to add filters
