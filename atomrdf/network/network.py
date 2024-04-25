@@ -309,11 +309,13 @@ class OntologyNetwork:
         if len(target._parents) > 0:
             #this needs a stepped query
             complete_list = [source, *target._parents, target]
-            for x in range(1, len(complete_list)):
+            #get path for first two terms
+            path = self._get_shortest_path(complete_list[0], complete_list[1])
+            for x in range(2, len(complete_list)):
                 temp_source = complete_list[x-1]
                 temp_dest = complete_list[x]
                 temp_path = self._get_shortest_path(temp_source, temp_dest)
-                path.extend(temp_path)                
+                path.extend(temp_path[1:])                
         else:
             path = self._get_shortest_path(source, target)
 
@@ -398,9 +400,10 @@ class OntologyNetwork:
         # now for each destination, start adding the paths in the query
         all_triplets = {}
         for count, destination in enumerate(destinations):
+            #print(source, destination)
             triplets = self.get_shortest_path(source, destination, triples=True)
             for triple in triplets:
-                print(triple)
+                #print(triple)
                 line_text =  "    ?%s %s ?%s ."% ( triple[0].replace(":", "_"),
                         triple[1],
                         triple[2].replace(":", "_"),
@@ -434,6 +437,9 @@ class OntologyNetwork:
         if condition is not None:
             if condition._condition is not None:
                 filter_text = condition._condition
+                print('heeaa')
+                print(condition.variable_name)
+                filter_text.replace(condition.query_name, condition.variable_name)
 
         if filter_text != "":
             query.append(f"FILTER {filter_text}")
