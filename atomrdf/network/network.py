@@ -447,7 +447,7 @@ class OntologyNetwork:
         filter_text = ""
 
         # make filters; get all the unique filters from all the classes in destinations
-        if destination in destinations:
+        for destination in destinations:
             if destination._condition is not None:
                 filter_text = destination._condition
                 break
