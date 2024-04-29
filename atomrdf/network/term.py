@@ -326,7 +326,8 @@ class OntoTerm:
         self._condition = f"({self._condition})"
         self._condition_parents.append(term)
         #and clean up the inbound term
-        term.refresh_condition()
+        if self.name != term.name:
+            term.refresh_condition()
         return self
 
     def and_(self, term):
@@ -342,7 +343,8 @@ class OntoTerm:
         self._condition = f"({self._condition})"
         self._condition_parents.append(term)
         #and clean up the inbound term
-        term.refresh_condition()
+        if self.name != term.name:
+            term.refresh_condition()
         return self
 
     def or_(self, term):
