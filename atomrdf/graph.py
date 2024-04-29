@@ -954,7 +954,6 @@ class KnowledgeGraph:
         self,
         source,
         destination,
-        condition=None,
         return_query=False,
         enforce_types=None,
         return_df=True,
@@ -968,8 +967,6 @@ class KnowledgeGraph:
             The source of the query.
         destination : OntoTerm
             The destination of the query.
-        condition :str, optional
-            The condition to be applied in the query. Defaults to None.
         return_query : bool, optional
             If True, returns the generated query instead of executing it. Defaults to False.
         enforce_types : bool, optional
@@ -986,7 +983,7 @@ class KnowledgeGraph:
         if enforce_types is None:
             for val in [True, False]:
                 query = self.ontology.create_query(
-                    source, destination, condition=condition, enforce_types=val
+                    source, destination, enforce_types=val
                 )
                 if return_query:
                     return query
@@ -995,7 +992,7 @@ class KnowledgeGraph:
                     return res
         else:
             query = self.ontology.create_query(
-                source, destination, condition=condition, enforce_types=enforce_types
+                source, destination, enforce_types=enforce_types
             )
             if return_query:
                 return query
@@ -1007,7 +1004,7 @@ class KnowledgeGraph:
     # Methods to interact with sample
     #################################
     def query_sample(
-        self, destination, condition=None, return_query=False, enforce_types=None
+        self, destination, return_query=False, enforce_types=None
     ):
         """
         Query the knowledge graph for atomic scale samples.
@@ -1016,8 +1013,6 @@ class KnowledgeGraph:
         ----------
         destination : OntoTerm
             The destination of the query.
-        condition : str, optional
-            The condition to be applied in the query. Defaults to None.
         return_query : bool, optional
             If True, returns the generated query instead of executing it. Defaults to False.
         enforce_types : bool, optional
@@ -1032,7 +1027,6 @@ class KnowledgeGraph:
         return self.auto_query(
             self.ontology.terms.cmso.AtomicScaleSample,
             destination,
-            condition=condition,
             return_query=return_query,
             enforce_types=enforce_types,
         )
