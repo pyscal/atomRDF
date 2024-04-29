@@ -99,12 +99,10 @@ def test_sparql_query():
 	res = kg.query(query)
 	assert res.symbol.values[0].toPython() == 'Pm-3m'
 
-	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName, 
-	             condition=(kg.ontology.terms.cmso.hasAltName=='bcc'))
+	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName=='bcc')
 	assert res.hasAltNamevalue.values[0].toPython() == 'bcc'
 
-	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName, 
-	             condition=(kg.ontology.terms.cmso.hasAltName=='bcc'),
+	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName=='bcc',
 	             enforce_types=True)
 	assert res.hasAltNamevalue.values[0].toPython() == 'bcc'
 
