@@ -396,10 +396,10 @@ class OntologyNetwork:
         #add source `variable_name`
         #iterate over destinations, add their `variable_name`
         select_destinations = [
-            destination.variable_name for destination in destinations
+            "?"+destination.variable_name for destination in destinations
         ]
-        select_destinations = [source.variable_name] + select_destinations
-        query.append(f'SELECT DISTINCT {" ?".join(select_destinations)}')
+        select_destinations = ["?"+source.variable_name] + select_destinations
+        query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
         query.append("WHERE {")
         
         #constructing the spaql query path triples, by iterating over destinations
