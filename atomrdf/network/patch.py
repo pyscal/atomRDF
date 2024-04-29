@@ -34,4 +34,7 @@ def patch_terms(iri, rn):
     elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasReference":
         rn = ["str"]
 
+    elif iri == 'http://purls.helmholtz-metadaten.de/cmso/hasSpaceGroupSymbol':
+        rn = ["str"]
+
     return rn

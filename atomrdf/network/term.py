@@ -75,7 +75,12 @@ class OntoTerm:
         self._namespace = namespace
         # name of the class
         self._name = None
+        #parents for the class; these are accumulated
+        #when using the >> operator
         self._parents = []
+        #condition parents are the parents that have conditions
+        #these are accumulated when using the & or || operators
+        self._condition_parents = []
 
     @property
     def uri(self):
@@ -197,6 +202,26 @@ class OntoTerm:
         return self.name
 
     @property
+    def variable_name(self):
+        """
+        Get the name of the term to use as a variable in a SPARQL query.
+
+        Returns
+        -------
+        str
+            The name of the term in a SPARQL query.
+
+        """
+        name_list = [x.name_without_prefix for x in self._parents]
+        name_list.append(self.name_without_prefix)
+        name =  "_".join(name_list) 
+        
+        if self.node_type == "data_property":
+            return name + "value"
+        
+        return name
+
+    @property
     def query_name_without_prefix(self):
         """
         Get the name of the term as it appears in a SPARQL query without prefix.
@@ -249,7 +274,7 @@ class OntoTerm:
 
 
     def _create_condition_string(self, condition, val):
-        return f'(?{self.query_name_without_prefix}{condition}"{val}"^^xsd:{self._clean_datatype(self.range[0])})'
+        return f'(?{self.query_name}{condition}"{val}"^^xsd:{self._clean_datatype(self.range[0])})'
 
     # overloading operators
     def __eq__(self, val):
@@ -299,6 +324,10 @@ class OntoTerm:
         term._ensure_condition_exists()
         self._condition = "&&".join([self._condition, term._condition])
         self._condition = f"({self._condition})"
+        self._condition_parents.append(term)
+        #and clean up the inbound term
+        if self.name != term.name:
+            term.refresh_condition()
         return self
 
     def and_(self, term):
@@ -312,6 +341,10 @@ class OntoTerm:
         term._ensure_condition_exists()
         self._condition = "||".join([self._condition, term._condition])
         self._condition = f"({self._condition})"
+        self._condition_parents.append(term)
+        #and clean up the inbound term
+        if self.name != term.name:
+            term.refresh_condition()
         return self
 
     def or_(self, term):
@@ -320,3 +353,13 @@ class OntoTerm:
     def __rshift__(self, term):
         term._parents.append(self)
         return term
+    
+    def refresh_condition(self):
+        self._condition = None
+        self._condition_parents = []
+
+    def refresh(self):
+        self._condition = None
+        self._parents = []
+        self._condition_parents = []
+
