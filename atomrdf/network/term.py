@@ -75,7 +75,12 @@ class OntoTerm:
         self._namespace = namespace
         # name of the class
         self._name = None
+        #parents for the class; these are accumulated
+        #when using the >> operator
         self._parents = []
+        #condition parents are the parents that have conditions
+        #these are accumulated when using the & or || operators
+        self._condition_parents = []
 
     @property
     def uri(self):
@@ -319,6 +324,9 @@ class OntoTerm:
         term._ensure_condition_exists()
         self._condition = "&&".join([self._condition, term._condition])
         self._condition = f"({self._condition})"
+        self._condition_parents.append(term)
+        #and clean up the inbound term
+        term.refresh_condition()
         return self
 
     def and_(self, term):
@@ -332,6 +340,9 @@ class OntoTerm:
         term._ensure_condition_exists()
         self._condition = "||".join([self._condition, term._condition])
         self._condition = f"({self._condition})"
+        self._condition_parents.append(term)
+        #and clean up the inbound term
+        term.refresh_condition()
         return self
 
     def or_(self, term):
@@ -340,3 +351,13 @@ class OntoTerm:
     def __rshift__(self, term):
         term._parents.append(self)
         return term
+    
+    def refresh_condition(self):
+        self._condition = None
+        self._condition_parents = []
+
+    def refresh(self):
+        self._condition = None
+        self._parents = []
+        self._condition_parents = []
+

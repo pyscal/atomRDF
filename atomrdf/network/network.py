@@ -347,7 +347,7 @@ class OntologyNetwork:
         )
         return path
 
-    def create_query(self, source, destinations, condition=None, enforce_types=True):
+    def create_query(self, source, destinations, enforce_types=True):
         """
         Create a SPARQL query string based on the given source, destinations, condition, and enforce_types.
 
@@ -357,8 +357,6 @@ class OntologyNetwork:
             The source node from which the query starts.
         destinations : list or Node
             The destination node(s) to which the query should reach. If a single node is provided, it will be converted to a list.
-        condition : Condition, optional
-            The condition to be applied in the query. Defaults to None.
         enforce_types : bool, optional
             Whether to enforce the types of the source and destination nodes in the query. Defaults to True.
 
@@ -372,14 +370,19 @@ class OntologyNetwork:
         if not isinstance(destinations, list):
             destinations = [destinations]
 
-        # if condition is specified, and is not there, add it
-        if condition is not None:
-            if condition not in destinations:
-                destinations.append(condition)
-
-        # add source if not available
-        #if source not in destinations:
-        #    destinations = [source] + destinations
+        # check if more than one of them have an associated condition -> if so throw error
+        no_of_conditions = 0
+        for destination in destinations:
+            if destination._condition is not None:
+                no_of_conditions += 1
+        if no_of_conditions > 1:
+            raise ValueError("Only one condition is allowed")
+        
+        #iterate through the list, if they have condition parents, add them explicitely
+        for destination in destinations:
+            for parent in destination._condition_parents:
+                if parent not in destinations:
+                    destinations.append(parent)
 
         #all names are now collected, in a list of lists
         # start prefix of query
@@ -389,7 +392,9 @@ class OntologyNetwork:
         for key, val in self.extra_namespaces.items():
             query.append(f"PREFIX {key}: <{val}>")
 
-        #add select commands
+        #construct the select distinct command:
+        #add source `variable_name`
+        #iterate over destinations, add their `variable_name`
         select_destinations = [
             destination.variable_name for destination in destinations
         ]
@@ -397,7 +402,13 @@ class OntologyNetwork:
         query.append(f'SELECT DISTINCT {" ".join(select_destinations)}')
         query.append("WHERE {")
         
-        # now for each destination, start adding the paths in the query
+        #constructing the spaql query path triples, by iterating over destinations
+        #for each destination:
+        #    - check if it has  parent by looking at `._parents`
+        #    - if it has `_parents`, called step path method
+        #    - else just get the path
+        #    - replace the ends of the path with `variable_name`
+        #    - if it deosnt exist in the collection of lines, add the lines
         all_triplets = {}
         for count, destination in enumerate(destinations):
             #print(source, destination)
@@ -429,19 +440,28 @@ class OntologyNetwork:
                             destination.query_name,
                         )
                     )
-        # now we have to add filters
-        # filters are only needed if it is a dataproperty
+        #- formulate the condition, given by the `FILTER` command:
+        #    - extract the filter text from the term
+        #    - loop over destinations:
+        #        - call `replace(destination.query_name, destination.variable_name)`
         filter_text = ""
 
         # make filters; get all the unique filters from all the classes in destinations
         if condition is not None:
             if condition._condition is not None:
                 filter_text = condition._condition
-                print('heeaa')
-                print(condition.variable_name)
-                filter_text.replace(condition.query_name, condition.variable_name)
-
+        
+        #replace the query_name with variable_name
         if filter_text != "":
+            for destination in destinations:
+                filter_text = filter_text.replace(
+                    destination.query_name, destination.variable_name
+                )
             query.append(f"FILTER {filter_text}")
         query.append("}")
+
+        #finished, clean up the terms; 
+        for destination in destinations:
+            destination.refresh()
+            
         return "\n".join(query)
