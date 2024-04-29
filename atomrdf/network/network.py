@@ -447,9 +447,10 @@ class OntologyNetwork:
         filter_text = ""
 
         # make filters; get all the unique filters from all the classes in destinations
-        if condition is not None:
-            if condition._condition is not None:
-                filter_text = condition._condition
+        if destination in destinations:
+            if destination._condition is not None:
+                filter_text = destination._condition
+                break
         
         #replace the query_name with variable_name
         if filter_text != "":
