@@ -56,6 +56,13 @@ class Workflow:
         parent_structure, parent_sample, structure, sample = self.wenv._add_structures(
             workflow_object
         )
+
+        #ensure these are not strings
+        if isinstance(parent_sample, str):
+            parent_sample = URIRef(parent_sample)
+        if isinstance(sample, str):
+            sample = URIRef(sample)
+
         method_dict = self.wenv._identify_method(workflow_object)
 
         if (structure is None) and (sample is None):
@@ -187,6 +194,7 @@ class Workflow:
         None
         """
         self.kg.add((self.sample, RDF.type, PROV.Entity))
+        
         if self.parent_sample is not None:
             self.kg.add((self.parent_sample, RDF.type, PROV.Entity))
             self.kg.add((self.sample, PROV.wasDerivedFrom, self.parent_sample))
