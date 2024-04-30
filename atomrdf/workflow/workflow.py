@@ -237,7 +237,8 @@ class Workflow:
         # ----------------------------------------------------------
         method = URIRef(f"method_{self.main_id}")
         if self.mdict["method"] == "MolecularStatics":
-            self.kg.add((method, RDF.type, ASMO.MolecularStatics))
+            #TODO: Replace with ASMO.MolecularStatics
+            self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
         elif self.mdict["method"] == "MolecularDynamics":
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
         elif self.mdict["method"] == "DensityFunctionalTheory":
@@ -349,9 +350,11 @@ class Workflow:
                 self.kg.add((method, PROV.wasAssociatedWith, agent))
 
     def _add_md(self, method, activity):
-        self.kg.add(
-            (method, ASMO.hasStatisticalEnsemble, getattr(ASMO, self.mdict["ensemble"]))
-        )
+        
+        if self.mdict["ensemble"] is not None:
+            self.kg.add(
+                (method, ASMO.hasStatisticalEnsemble, getattr(ASMO, self.mdict["ensemble"]))
+            )
 
         # add temperature if needed
         if self.mdict["temperature"] is not None:
