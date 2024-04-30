@@ -102,6 +102,7 @@ def visualize_graph(
     rankdir="TB",
     hide_types=False,
     workflow_view=False,
+    sample_view=False,
     size=None,
     layout="dot",
 ):
@@ -120,6 +121,8 @@ def visualize_graph(
         Whether to hide nodes with the "type" attribute. Default is False.
     workflow_view : bool, optional
         Whether to enable the workflow view. Default is False.
+    sample_view : bool, optional
+        Whether to enable the sample view. Default is False.
     size : str, optional
         The size of the graph. Default is None.
     layout : str, optional
@@ -173,6 +176,12 @@ def visualize_graph(
                         fontname=styledict[istype1]["fontname"],
                     )
                     plot = False
+        
+        elif sample_view:
+            green_list = ['wasDerivedFrom', 'wasGeneratedBy']
+            if string3 not in green_list:
+                plot = False
+            
 
         if hide_types and (string3 == "type"):
             plot = False

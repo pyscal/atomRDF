@@ -697,6 +697,7 @@ class KnowledgeGraph:
         rankdir="BT",
         hide_types=False,
         workflow_view=False,
+        sample_view=False,
         size=None,
         layout="neato",
     ):
@@ -713,6 +714,8 @@ class KnowledgeGraph:
             Whether to hide the types in the visualization. Default is False.
         workflow_view : bool, optional
             Whether to enable the workflow view. Default is False.
+        sample_view : bool, optional
+            Whether to enable the sample view. Default is False.
         size : tuple, optional
             The size of the visualization. Default is None.
         layout : str, optional
@@ -765,6 +768,7 @@ class KnowledgeGraph:
             rankdir=rankdir,
             hide_types=hide_types,
             workflow_view=workflow_view,
+            sample_view=sample_view,
             size=size,
             layout=layout,
         )
