@@ -689,6 +689,43 @@ class System(pc.System):
             )
             json_io.write_file(outfile, datadict)
 
+    def add_vacancy(self, concentration, number=None):
+        """
+        Add Vacancy details which will be annotated by PODO
+
+        Parameters
+        ----------
+        concentration: float
+            vacancy concentration, value should be between 0-1
+
+        number: int
+            Number of atoms that were deleted, optional
+
+        Returns
+        -------
+        None
+        """
+        if self.graph is None:
+            return
+
+        vacancy = self.graph.create_node(f"{self._name}_Vacancy", PODO.Vacancy)
+        self.graph.add((self.material, CMSO.hasDefect, vacancy))
+        self.graph.add(
+            (
+                self.simulation_cell,
+                PODO.hasVacancyConcentration,
+                Literal(concentration, datatype=XSD.float),
+            )
+        )
+        if number is not None:
+            self.graph.add(
+                (
+                    self.simulation_cell,
+                    PODO.hasNumberOfVacancies,
+                    Literal(number, datatype=XSD.integer),
+                )
+            )
+
     def substitute_atoms(
         self,
         substitution_element,
@@ -812,9 +849,16 @@ class System(pc.System):
                 self.graph.structure_store, str(self._name).split(":")[-1]
             )
             json_io.write_file(outfile, datadict)
+            self.add_triples_for_substitutional_impurities()
+
+    def add_triples_for_substitutional_impurities(self):
+        defect = self.graph.create_node(f"{self._name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity)
+        self.graph.add((self.material, CMSO.hasDefect, defect))
 
     def add_interstitial_impurities(
-        self, element, void_type="tetrahedral", lattice_constant=None, threshold=0.01
+        self, element, void_type="tetrahedral", 
+        lattice_constant=None, 
+        threshold=0.01
     ):
         """
         Add interstitial impurities to the System
@@ -829,6 +873,12 @@ class System(pc.System):
         void_type: string
             type of void to be added.  {`tetrahedral`, `octahedral`}
 
+        lattice_constant: float, optional
+            lattice constant of the system. Required only for octahedral voids
+        
+        threshold: float, optional
+            threshold for the distance from the lattice constant for octahedral voids to account for fluctuations in atomic positions
+        
         Returns
         -------
         System:
@@ -968,7 +1018,13 @@ class System(pc.System):
             )
             json_io.write_file(outfile, datadict)
 
+            self.add_triples_for_interstitial_impurities()
         return sysn
+
+    def add_triples_for_interstitial_impurities(self):
+        defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity)
+        self.graph.add((self.material, CMSO.hasDefect, defect))
+
 
     def __delitem__(self, val):
         """
@@ -1590,43 +1646,6 @@ class System(pc.System):
         #    self.add((force, CMSO.hasName, Literal('Force', data_type=XSD.string)))
         #    force_identifier = uuid.uuid4()
         #    self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))
-
-    def add_vacancy(self, concentration, number=None):
-        """
-        Add Vacancy details which will be annotated by PODO
-
-        Parameters
-        ----------
-        concentration: float
-            vacancy concentration, value should be between 0-1
-
-        number: int
-            Number of atoms that were deleted, optional
-
-        Returns
-        -------
-        None
-        """
-        if self.graph is None:
-            return
-
-        vacancy = self.graph.create_node(f"{self._name}_Vacancy", PODO.Vacancy)
-        self.graph.add((self.material, CMSO.hasDefect, vacancy))
-        self.graph.add(
-            (
-                self.simulation_cell,
-                PODO.hasVacancyConcentration,
-                Literal(concentration, datatype=XSD.float),
-            )
-        )
-        if number is not None:
-            self.graph.add(
-                (
-                    self.simulation_cell,
-                    PODO.hasNumberOfVacancies,
-                    Literal(number, datatype=XSD.integer),
-                )
-            )
 
     def add_gb(self, gb_dict):
         """
