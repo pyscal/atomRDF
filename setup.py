@@ -6,7 +6,7 @@ with open('README.md') as readme_file:
 
 setup(
     name='atomrdf',
-    version='0.6.5',
+    version='0.6.6',
     author='Abril Azocar Guzman, Sarath Menon',
     author_email='sarath.menon@pyscal.org',
     description='Ontology based structural manipulation and quering',
