@@ -12,118 +12,115 @@ import atomrdf.workflow.workflow as wf
 from atomrdf.structure import _make_crystal
 from atomrdf.structure import System
 
-class WorkflowExtractor:
+
+def process_job(job):
     """
-    A class to wrap pyiron jobs, which provide data in the format that can be stored in the knowledge graph.
+    Checkes if the job is valid and creates the necessary output dict
+    for the job.
+
+    Parameters
+    ----------
+    job : pyiron.Job
+        The pyiron job object to check.
+    
+    Raises
+    ------
+    TypeError
+        If the job is not a valid pyiron job.
     """
-    def process_job(self, job):
-        """
-        Checkes if the job is valid and creates the necessary output dict
-        for the job.
+    valid_jobs = [
+        "Lammps",
+    ]
 
-        Parameters
-        ----------
-        job : pyiron.Job
-            The pyiron job object to check.
-        
-        Raises
-        ------
-        TypeError
-            If the job is not a valid pyiron job.
-        """
-        valid_jobs = [
-            "Lammps",
-        ]
+    if type(job).__name__ == 'Lammps':
+        return process_lammps_job
+    else:
+        raise TypeError("These type of pyiron Job is not currently supported")
+    
+    
 
-        if not type(job).__name__ == 'Lammps':
-            self.process_job = process_lammps_job
-        else:
-            raise TypeError("These type of pyiron Job is not currently supported")
-        
-        
+def inform_graph(pr, kg):
+    """
+    this function in general can be used to do extra methods to set up things as needed
+    for the workflow environment. 
 
-    def inform_graph(self, pr, kg):
-        """
-        this function in general can be used to do extra methods to set up things as needed
-        for the workflow environment. 
+    For example, for pyiron, this updates the project object to have the graph and creator objects
+    """
 
-        For example, for pyiron, this updates the project object to have the graph and creator objects
-        """
+    try:
+        from pyiron_base import Creator, PyironFactory
+        from pyiron_atomistics.atomistics.structure.atoms import (
+            ase_to_pyiron,
+            pyiron_to_ase,
+        )
+        import pyiron_atomistics.atomistics.structure.factory as sf
+    except ImportError:
+        raise ImportError("Please install pyiron_base and pyiron_atomistics")
 
-        try:
-            from pyiron_base import Creator, PyironFactory
-            from pyiron_atomistics.atomistics.structure.atoms import (
-                ase_to_pyiron,
-                pyiron_to_ase,
+    class AnnotatedStructureFactory:
+        def __init__(self, graph):
+            self._graph = graph
+
+        def bulk(
+            self,
+            element,
+            repetitions=None,
+            crystalstructure=None,
+            a=None,
+            covera=None,
+            cubic=True,
+            graph=None,
+        ):
+
+            if crystalstructure is None:
+                crystalstructure = element_dict[element]["structure"]
+                if a is None:
+                    a = element_dict[element]["lattice_constant"]
+
+            struct = _make_crystal(
+                crystalstructure,
+                repetitions=repetitions,
+                lattice_constant=a,
+                ca_ratio=covera,
+                element=element,
+                primitive=not cubic,
+                graph=self._graph,
             )
-            import pyiron_atomistics.atomistics.structure.factory as sf
-        except ImportError:
-            raise ImportError("Please install pyiron_base and pyiron_atomistics")
 
-        class AnnotatedStructureFactory:
-            def __init__(self, graph):
-                self._graph = graph
+            ase_structure = struct.write.ase()
+            pyiron_structure = ase_to_pyiron(ase_structure)
+            pyiron_structure.info["sample_id"] = struct.sample
+            return pyiron_structure
 
-            def bulk(
-                self,
-                element,
-                repetitions=None,
-                crystalstructure=None,
-                a=None,
-                covera=None,
-                cubic=True,
-                graph=None,
-            ):
+        def grain_boundary(
+            self,
+            element,
+            axis,
+            sigma,
+            gb_plane,
+            repetitions=(1, 1, 1),
+            crystalstructure=None,
+            a=1,
+            overlap=0.0,
+            graph=None,
+        ):
 
-                if crystalstructure is None:
-                    crystalstructure = element_dict[element]["structure"]
-                    if a is None:
-                        a = element_dict[element]["lattice_constant"]
-
-                struct = _make_crystal(
-                    crystalstructure,
-                    repetitions=repetitions,
-                    lattice_constant=a,
-                    ca_ratio=covera,
-                    element=element,
-                    primitive=not cubic,
-                    graph=self._graph,
-                )
-
-                ase_structure = struct.write.ase()
-                pyiron_structure = ase_to_pyiron(ase_structure)
-                pyiron_structure.info["sample_id"] = struct.sample
-                return pyiron_structure
-
-            def grain_boundary(
-                self,
-                element,
+            struct = self._graph._annotated_make_grain_boundary(
                 axis,
                 sigma,
                 gb_plane,
-                repetitions=(1, 1, 1),
-                crystalstructure=None,
-                a=1,
-                overlap=0.0,
-                graph=None,
-            ):
+                structure=crystalstructure,
+                element=element,
+                lattice_constant=a,
+                repetitions=repetitions,
+                overlap=overlap,
+                graph=self._graph,
+            )
 
-                struct = self._graph._annotated_make_grain_boundary(
-                    axis,
-                    sigma,
-                    gb_plane,
-                    structure=crystalstructure,
-                    element=element,
-                    lattice_constant=a,
-                    repetitions=repetitions,
-                    overlap=overlap,
-                    graph=self._graph,
-                )
-
-                ase_structure = struct.write.ase()
-                pyiron_structure = ase_to_pyiron(ase_structure)
-                pyiron_structure.info["sample_id"] = struct.sample
-                return pyiron_structure
+            ase_structure = struct.write.ase()
+            pyiron_structure = ase_to_pyiron(ase_structure)
+            pyiron_structure.info["sample_id"] = struct.sample
+            return pyiron_structure
 
         class StructureFactory(sf.StructureFactory):
             def __init__(self, graph):
