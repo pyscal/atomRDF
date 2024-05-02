@@ -29,10 +29,6 @@ from atomrdf.structure import System
 # Move imports to another file
 from atomrdf.namespace import PROV, CMSO, PODO, ASMO
 
-# custom imports as needed
-import atomrdf.workflow.pyiron as pi
-
-
 class Workflow:
     def __init__(self, kg):
         """
