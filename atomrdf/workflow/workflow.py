@@ -51,17 +51,18 @@ class Workflow:
             workflow_module.inform_graph(pr, self.kg)
         
 
-    def to_graph(self, job, job_type=None, job_module=None, job_dict=None):
+    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dict=None):
 
-        if job_type is not None:
-            job_module = importlib.import_module(f"atomrdf.workflow.{job_type}")
-            job_dict = job_module.process_job(job)
-        elif job_module is not None:
-            job_dict = job_module.process_job(job)
+        if workflow_environment is not None:
+            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
+            job_dict = workflow_module.process_job(job)
+        elif workflow_module is not None:
+            job_dict = workflow_module.process_job(job)
         
         if job_dict is None:
             raise ValueError("Job dict could not be calculated!")
         
+        #print(job_dict)
         #now we call the functions in order
         job_dict = self._add_structure(job_dict)
         self._add_structural_relation(job_dict)
@@ -337,7 +338,7 @@ class Workflow:
     def _add_software(self, job_dict, method):
         # finally add software
         wfagent = None
-        if "workflow_manager" in self.mdict.keys():
+        if "workflow_manager" in job_dict.keys():
             wfagent = self.kg.create_node(
                 job_dict["workflow_manager"]["uri"], PROV.SoftwareAgent
             )

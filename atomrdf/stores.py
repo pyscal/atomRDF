@@ -29,7 +29,7 @@ def create_store(kg, store, identifier, store_file=None, structure_store=None):
 
     """
     kg.store_file = store_file
-    if store == "Memory":
+    if store in ["Memory", "memory"]:
         store_memory(
             kg,
             store,
@@ -37,7 +37,7 @@ def create_store(kg, store, identifier, store_file=None, structure_store=None):
             store_file=store_file,
             structure_store=structure_store,
         )
-    elif store == "SQLAlchemy":
+    elif store in ["SQLAlchemy", "db", "database", "sqlalchemy"]:
         store_alchemy(
             kg,
             store,

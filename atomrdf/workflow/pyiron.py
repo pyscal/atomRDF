@@ -33,7 +33,7 @@ def process_job(job):
     ]
 
     if type(job).__name__ == 'Lammps':
-        return process_lammps_job
+        return process_lammps_job(job)
     else:
         raise TypeError("These type of pyiron Job is not currently supported")
     
@@ -121,27 +121,27 @@ def inform_graph(pr, kg):
             pyiron_structure = ase_to_pyiron(ase_structure)
             pyiron_structure.info["sample_id"] = struct.sample
             return pyiron_structure
+        
+    class StructureFactory(sf.StructureFactory):
+        def __init__(self, graph):
+            super().__init__()
+            self._annotated_structure = AnnotatedStructureFactory(graph)
 
-        class StructureFactory(sf.StructureFactory):
-            def __init__(self, graph):
-                super().__init__()
-                self._annotated_structure = AnnotatedStructureFactory(graph)
+        @property
+        def annotated_structure(self):
+            return self._annotated_structure
 
-            @property
-            def annotated_structure(self):
-                return self._annotated_structure
+    class StructureCreator(Creator):
+        def __init__(self, project):
+            super().__init__(project)
+            self._structure = StructureFactory(project.graph)
 
-        class StructureCreator(Creator):
-            def __init__(self, project):
-                super().__init__(project)
-                self._structure = StructureFactory(project.graph)
+        @property
+        def structure(self):
+            return self._structure
 
-            @property
-            def structure(self):
-                return self._structure
-
-        pr.graph = kg
-        pr._creator = StructureCreator(pr)
+    pr.graph = kg
+    pr._creator = StructureCreator(pr)
 
 def process_lammps_job(job):
     structure_dict = get_structures(job)
