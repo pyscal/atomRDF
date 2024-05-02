@@ -43,11 +43,12 @@ class Workflow:
         """
         self.kg = kg
 
-    def inform_graph(self, pr, job_type=None, job_module=None):
-        if job_type is not None:
-            job_module = importlib.import_module(f"atomrdf.workflow.{job_type}")
-        elif job_module is not None:
-            job_module.inform_graph(pr, self.kg)
+    def inform_graph(self, pr, workflow_environment=None, workflow_module=None):
+        if workflow_environment is not None:
+            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
+        
+        if workflow_module is not None:
+            workflow_module.inform_graph(pr, self.kg)
         
 
     def to_graph(self, job, job_type=None, job_module=None, job_dict=None):

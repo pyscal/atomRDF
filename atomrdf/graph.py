@@ -44,6 +44,7 @@ from atomrdf.structure import System
 import atomrdf.properties as prp
 from atomrdf.stores import create_store
 import atomrdf.json_io as json_io
+from atomrdf.workflow import Workflow
 
 from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO
 
@@ -212,6 +213,7 @@ class KnowledgeGraph:
         self.store = store
         self._n_triples = 0
         self._initialize_graph()
+        self.workflow = Workflow(self)
 
     def add_structure(self, structure):
         """
@@ -1182,3 +1184,11 @@ class KnowledgeGraph:
         else:
             asesys = sys.write.ase()
             write(filename, asesys, format=format)
+
+    def enable_workflow(self, workflow_object, workflow_environment=None, workflow_module=None):
+        self.inform_graph(workflow_object, 
+                        workflow_environment=workflow_environment, 
+                        workflow_module=workflow_module)
+        
+    def add_workflow(self, job, job_type=None, job_module=None, job_dict=None):
+        self.workflow.to_graph(job, job_type=job_type, job_module=job_module, job_dict=job_dict)
