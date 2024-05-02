@@ -44,6 +44,7 @@ from atomrdf.structure import System
 import atomrdf.properties as prp
 from atomrdf.stores import create_store
 import atomrdf.json_io as json_io
+from atomrdf.workflow.workflow import Workflow
 
 from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO
 
@@ -212,6 +213,7 @@ class KnowledgeGraph:
         self.store = store
         self._n_triples = 0
         self._initialize_graph()
+        self.workflow = Workflow(self)
 
     def add_structure(self, structure):
         """
@@ -697,6 +699,7 @@ class KnowledgeGraph:
         rankdir="BT",
         hide_types=False,
         workflow_view=False,
+        sample_view=False,
         size=None,
         layout="neato",
     ):
@@ -713,6 +716,8 @@ class KnowledgeGraph:
             Whether to hide the types in the visualization. Default is False.
         workflow_view : bool, optional
             Whether to enable the workflow view. Default is False.
+        sample_view : bool, optional
+            Whether to enable the sample view. Default is False.
         size : tuple, optional
             The size of the visualization. Default is None.
         layout : str, optional
@@ -765,6 +770,7 @@ class KnowledgeGraph:
             rankdir=rankdir,
             hide_types=hide_types,
             workflow_view=workflow_view,
+            sample_view=sample_view,
             size=size,
             layout=layout,
         )
@@ -1178,3 +1184,13 @@ class KnowledgeGraph:
         else:
             asesys = sys.write.ase()
             write(filename, asesys, format=format)
+
+    def enable_workflow(self, workflow_object, workflow_environment=None, workflow_module=None):
+        self.workflow.inform_graph(workflow_object, 
+                        workflow_environment=workflow_environment, 
+                        workflow_module=workflow_module)
+        
+    def add_workflow(self, job, workflow_environment=None, workflow_module=None, job_dict=None):
+        self.workflow.to_graph(job, workflow_environment=workflow_environment, 
+                            workflow_module=workflow_module, 
+                            job_dict=job_dict)

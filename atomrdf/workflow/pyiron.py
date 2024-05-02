@@ -13,16 +13,147 @@ from atomrdf.structure import _make_crystal
 from atomrdf.structure import System
 
 
-def _check_if_job_is_valid(job):
+def process_job(job):
+    """
+    Checkes if the job is valid and creates the necessary output dict
+    for the job.
+
+    Parameters
+    ----------
+    job : pyiron.Job
+        The pyiron job object to check.
+    
+    Raises
+    ------
+    TypeError
+        If the job is not a valid pyiron job.
+    """
     valid_jobs = [
         "Lammps",
     ]
 
-    if not type(job).__name__ in valid_jobs:
+    if type(job).__name__ == 'Lammps':
+        return process_lammps_job(job)
+    else:
         raise TypeError("These type of pyiron Job is not currently supported")
+    
+    
 
+def inform_graph(pr, kg):
+    """
+    this function in general can be used to do extra methods to set up things as needed
+    for the workflow environment. 
 
-def _add_structures(job):
+    For example, for pyiron, this updates the project object to have the graph and creator objects
+    """
+
+    try:
+        from pyiron_base import Creator, PyironFactory
+        from pyiron_atomistics.atomistics.structure.atoms import (
+            ase_to_pyiron,
+            pyiron_to_ase,
+        )
+        import pyiron_atomistics.atomistics.structure.factory as sf
+    except ImportError:
+        raise ImportError("Please install pyiron_base and pyiron_atomistics")
+
+    class AnnotatedStructureFactory:
+        def __init__(self, graph):
+            self._graph = graph
+
+        def bulk(
+            self,
+            element,
+            repetitions=None,
+            crystalstructure=None,
+            a=None,
+            covera=None,
+            cubic=True,
+            graph=None,
+        ):
+
+            if crystalstructure is None:
+                crystalstructure = element_dict[element]["structure"]
+                if a is None:
+                    a = element_dict[element]["lattice_constant"]
+
+            struct = _make_crystal(
+                crystalstructure,
+                repetitions=repetitions,
+                lattice_constant=a,
+                ca_ratio=covera,
+                element=element,
+                primitive=not cubic,
+                graph=self._graph,
+            )
+
+            ase_structure = struct.write.ase()
+            pyiron_structure = ase_to_pyiron(ase_structure)
+            pyiron_structure.info["sample_id"] = struct.sample
+            return pyiron_structure
+
+        def grain_boundary(
+            self,
+            element,
+            axis,
+            sigma,
+            gb_plane,
+            repetitions=(1, 1, 1),
+            crystalstructure=None,
+            a=1,
+            overlap=0.0,
+            graph=None,
+        ):
+
+            struct = self._graph._annotated_make_grain_boundary(
+                axis,
+                sigma,
+                gb_plane,
+                structure=crystalstructure,
+                element=element,
+                lattice_constant=a,
+                repetitions=repetitions,
+                overlap=overlap,
+                graph=self._graph,
+            )
+
+            ase_structure = struct.write.ase()
+            pyiron_structure = ase_to_pyiron(ase_structure)
+            pyiron_structure.info["sample_id"] = struct.sample
+            return pyiron_structure
+        
+    class StructureFactory(sf.StructureFactory):
+        def __init__(self, graph):
+            super().__init__()
+            self._annotated_structure = AnnotatedStructureFactory(graph)
+
+        @property
+        def annotated_structure(self):
+            return self._annotated_structure
+
+    class StructureCreator(Creator):
+        def __init__(self, project):
+            super().__init__(project)
+            self._structure = StructureFactory(project.graph)
+
+        @property
+        def structure(self):
+            return self._structure
+
+    pr.graph = kg
+    pr._creator = StructureCreator(pr)
+
+def process_lammps_job(job):
+    structure_dict = get_structures(job)
+    method_dict = lammps_identify_method(job)
+    output_dict = lammps_extract_calculated_quantities(job)
+
+    method_dict['structure'] = structure_dict['structure']
+    method_dict['sample'] = structure_dict['sample']
+    method_dict['outputs'] = output_dict
+    return method_dict
+
+def get_structures(job):
     initial_pyiron_structure = job.structure
     final_pyiron_structure = job.get_structure(frame=-1)
     initial_pyscal_structure = System.read.ase(initial_pyiron_structure)
@@ -34,10 +165,15 @@ def _add_structures(job):
     final_pyscal_structure = System.read.ase(final_pyiron_structure)
 
     # now we do rthe transfer
-    return initial_pyscal_structure, initial_sample_id, final_pyscal_structure, None
+    return {'structure': 
+                {'initial': initial_pyscal_structure, 
+                'final': final_pyscal_structure,}, 
+            'sample': 
+                {'initial':initial_sample_id, 
+                'final': None}}
 
 
-def _identify_method(job):
+def lammps_identify_method(job):
     job_dict = job.input.to_dict()
     input_dict = {
         job_dict["control_inp/data_dict"]["Parameter"][x]: job_dict[
@@ -127,12 +263,9 @@ def _identify_method(job):
     }
     mdict["software"] = [software]
 
-    # finally add calculated quantities
-    quantdict = extract_calculated_quantities(job)
-    mdict["outputs"] = quantdict
     return mdict
 
-def extract_calculated_quantities(job):
+def lammps_extract_calculated_quantities(job):
     """
     Extracts calculated quantities from a job.
 
@@ -169,103 +302,4 @@ def extract_calculated_quantities(job):
     return outputs
 
 
-def inform_graph(pr, kg):
-    """
-    Update project to add extra creator functions
-    """
 
-    try:
-        from pyiron_base import Creator, PyironFactory
-        from pyiron_atomistics.atomistics.structure.atoms import (
-            ase_to_pyiron,
-            pyiron_to_ase,
-        )
-        import pyiron_atomistics.atomistics.structure.factory as sf
-    except ImportError:
-        raise ImportError("Please install pyiron_base and pyiron_atomistics")
-
-    class AnnotatedStructureFactory:
-        def __init__(self, graph):
-            self._graph = graph
-
-        def bulk(
-            self,
-            element,
-            repetitions=None,
-            crystalstructure=None,
-            a=None,
-            covera=None,
-            cubic=True,
-            graph=None,
-        ):
-
-            if crystalstructure is None:
-                crystalstructure = element_dict[element]["structure"]
-                if a is None:
-                    a = element_dict[element]["lattice_constant"]
-
-            struct = _make_crystal(
-                crystalstructure,
-                repetitions=repetitions,
-                lattice_constant=a,
-                ca_ratio=covera,
-                element=element,
-                primitive=not cubic,
-                graph=self._graph,
-            )
-
-            ase_structure = struct.write.ase()
-            pyiron_structure = ase_to_pyiron(ase_structure)
-            pyiron_structure.info["sample_id"] = struct.sample
-            return pyiron_structure
-
-        def grain_boundary(
-            self,
-            element,
-            axis,
-            sigma,
-            gb_plane,
-            repetitions=(1, 1, 1),
-            crystalstructure=None,
-            a=1,
-            overlap=0.0,
-            graph=None,
-        ):
-
-            struct = self._graph._annotated_make_grain_boundary(
-                axis,
-                sigma,
-                gb_plane,
-                structure=crystalstructure,
-                element=element,
-                lattice_constant=a,
-                repetitions=repetitions,
-                overlap=overlap,
-                graph=self._graph,
-            )
-
-            ase_structure = struct.write.ase()
-            pyiron_structure = ase_to_pyiron(ase_structure)
-            pyiron_structure.info["sample_id"] = struct.sample
-            return pyiron_structure
-
-    class StructureFactory(sf.StructureFactory):
-        def __init__(self, graph):
-            super().__init__()
-            self._annotated_structure = AnnotatedStructureFactory(graph)
-
-        @property
-        def annotated_structure(self):
-            return self._annotated_structure
-
-    class StructureCreator(Creator):
-        def __init__(self, project):
-            super().__init__(project)
-            self._structure = StructureFactory(project.graph)
-
-        @property
-        def structure(self):
-            return self._structure
-
-    pr.graph = kg
-    pr._creator = StructureCreator(pr)

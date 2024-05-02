@@ -4,9 +4,6 @@ from rdflib import Graph, Literal
 
 import os
 
-# special methods; for supporting workflow envs
-from atomrdf.workflow import inform_graph
-
 
 def create_store(kg, store, identifier, store_file=None, structure_store=None):
     """
@@ -32,7 +29,7 @@ def create_store(kg, store, identifier, store_file=None, structure_store=None):
 
     """
     kg.store_file = store_file
-    if store == "Memory":
+    if store in ["Memory", "memory"]:
         store_memory(
             kg,
             store,
@@ -40,16 +37,8 @@ def create_store(kg, store, identifier, store_file=None, structure_store=None):
             store_file=store_file,
             structure_store=structure_store,
         )
-    elif store == "SQLAlchemy":
+    elif store in ["SQLAlchemy", "db", "database", "sqlalchemy"]:
         store_alchemy(
-            kg,
-            store,
-            identifier,
-            store_file=store_file,
-            structure_store=structure_store,
-        )
-    elif type(store).__name__ == "Project":
-        store_pyiron(
             kg,
             store,
             identifier,
@@ -120,37 +109,6 @@ def store_alchemy(kg, store, identifier, store_file=None, structure_store=None):
     uri = Literal(f"sqlite:///{store_file}")
     kg.graph.open(uri, create=True)
     kg.structure_store = _setup_structure_store(structure_store=structure_store)
-
-
-def store_pyiron(kg, store, identifier, store_file=None, structure_store=None):
-    """
-    Store the pyiron knowledge graph in a database.
-
-    Parameters
-    ----------
-    kg : pyiron.atomistics.structure.pyiron_atomistics.structure.AtomisticStructure
-        The pyiron knowledge graph to be stored.
-    store : pyiron.atomistics.structure.pyiron_atomistics.structure.AtomisticStructure
-        The store object where the knowledge graph will be stored.
-    identifier : str
-        The identifier for the knowledge graph.
-    store_file : str, optional
-        The path to the store file. If not provided, a default path will be used.
-    structure_store : str, optional
-        The path to the structure store. If not provided, a default path will be used.
-
-    Returns
-    -------
-    None
-
-    """
-    structure_store = os.path.join(store.path, "rdf_structure_store")
-    kg.structure_store = _setup_structure_store(structure_store=structure_store)
-    store_file = os.path.join(store.path, f"{store.name}.db")
-    store_alchemy(kg, store, identifier, store_file, structure_store=structure_store)
-    # finally update project object
-    inform_graph(store, kg)
-
 
 def _check_if_sqlalchemy_is_available():
     try:

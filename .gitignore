@@ -1,6 +1,7 @@
 #custom
 rdf_structure_store/
 *.json
+*.ttl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
