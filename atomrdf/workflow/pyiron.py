@@ -34,6 +34,8 @@ def process_job(job):
 
     if type(job).__name__ == 'Lammps':
         return process_lammps_job(job)
+    elif type(job).__name__ == 'Murnaghan':
+        return process_murnaghan_job(job)
     else:
         raise TypeError("These type of pyiron Job is not currently supported")
     
@@ -143,6 +145,55 @@ def inform_graph(pr, kg):
     pr.graph = kg
     pr._creator = StructureCreator(pr)
 
+def process_murnaghan_job(job):
+    #murnaghan job processing; add individual lammps jobs first
+    job_dicts = []
+    for jobid in job.child_ids:
+        child_job = job.project.load(jobid)
+        if type(child_job).__name__ == 'Lammps':
+            single_job_dict = process_lammps_job(child_job)
+            #note that we turn the jobs to child here
+            single_job_dict['intermediate'] = True
+            job_dicts.append(single_job_dict)
+    #create an additional jobdict with the murnaghan job
+    murnaghan_dict = {}
+    murnaghan_dict['id'] = job.id
+    murnaghan_dict['structure'] = get_structures(job)['structure']
+    murnaghan_dict['sample'] = get_structures(job)['sample']
+    murnaghan_dict['intermediate'] = False
+
+    #add the murnaghan method
+    murnaghan_dict['method'] = "EquationOfState"
+    outputs = []
+    outputs.append(
+        {
+            "label": "EquilibriumEnergy",
+            "value": np.round(job['output/equilibrium_energy'], decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "EquilibriumVolume",
+            "value": np.round(job['output/equilibrium_volume'], decimals=4),
+            "unit": "ANGSTROM3",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "BulkModulus",
+            "value": np.round(job['output/equilibrium_bulk_modulus'], decimals=2),
+            "unit": "GigaPA",
+            "associate_to_sample": True,
+        }
+    )
+    murnaghan_dict['outputs'] = outputs
+    murnaghan_dict = add_software_lammps(murnaghan_dict)
+    job_dicts.append(murnaghan_dict)
+    return job_dicts
+
 def process_lammps_job(job):
     structure_dict = get_structures(job)
     method_dict = lammps_identify_method(job)
@@ -151,6 +202,7 @@ def process_lammps_job(job):
     method_dict['structure'] = structure_dict['structure']
     method_dict['sample'] = structure_dict['sample']
     method_dict['outputs'] = output_dict
+    method_dict['intermediate'] = False
     return method_dict
 
 def get_structures(job):
@@ -252,6 +304,10 @@ def lammps_identify_method(job):
     else:
         mdict["potential"]["uri"] = name
 
+    mdict = add_software_lammps(mdict)
+    return mdict
+
+def add_software_lammps(mdict):
     mdict["workflow_manager"] = {}
     mdict["workflow_manager"]["uri"] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
     mdict["workflow_manager"]["label"] = "pyiron"
@@ -262,7 +318,6 @@ def lammps_identify_method(job):
         "label": "LAMMPS",
     }
     mdict["software"] = [software]
-
     return mdict
 
 def lammps_extract_calculated_quantities(job):

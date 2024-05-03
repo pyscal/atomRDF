@@ -51,23 +51,42 @@ class Workflow:
             workflow_module.inform_graph(pr, self.kg)
         
 
-    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dict=None):
+    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dicts=None, add_intermediate_jobs=False):
 
         if workflow_environment is not None:
             workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
-            job_dict = workflow_module.process_job(job)
+            job_dicts = np.atleast_1d(workflow_module.process_job(job))
         elif workflow_module is not None:
-            job_dict = workflow_module.process_job(job)
-        
-        if job_dict is None:
+            job_dicts = np.atleast_1d(workflow_module.process_job(job))
+        if job_dicts is None:
             raise ValueError("Job dict could not be calculated!")
+        job_dicts = np.atleast_1d(job_dicts)
         
         #print(job_dict)
         #now we call the functions in order
-        job_dict = self._add_structure(job_dict)
-        self._add_structural_relation(job_dict)
-        self._add_method(job_dict)
-        
+        for job_dict in job_dicts:
+            if (not add_intermediate_jobs) and job_dict['intermediate']:
+                continue
+            job_dict = self._add_structure(job_dict)
+            parent_sample = job_dict['sample']['initial']
+            sample = job_dict['sample']['final']
+            structure = job_dict['structure']['final']
+            self._add_structural_relation(parent_sample, sample, structure)
+            self._add_method(job_dict)
+
+        #now add child connection
+        if add_intermediate_jobs:
+            for job_dict in job_dicts:
+                if not job_dict['intermediate']:
+                    parent = job_dict
+                    break
+            
+            for job_dict in job_dicts:
+                if job_dict['intermediate']:
+                    parent_sample = job_dict['sample']['final']
+                    sample = parent['sample']['final']
+                    structure = parent['structure']['final']
+                    self._add_structural_relation(parent_sample, sample, structure)
 
     def _add_structure(self, job_dict):
         #ensure these are not strings
@@ -96,7 +115,7 @@ class Workflow:
         return job_dict
 
     def _add_structural_relation(
-        self, job_dict,
+        self, parent_sample, sample, structure,
     ):
         """
         Add structural relation between samples.
@@ -112,24 +131,20 @@ class Workflow:
         -------
         None
         """
-        parent_sample = job_dict['sample']['initial']
-        sample = job_dict['sample']['final']
 
         self.kg.add((sample, RDF.type, PROV.Entity))
         
         if parent_sample is not None:
             self.kg.add((parent_sample, RDF.type, PROV.Entity))
             self.kg.add((sample, PROV.wasDerivedFrom, parent_sample))
-            self._get_lattice_properties(job_dict)
-            self._add_inherited_properties(job_dict)
+            self._get_lattice_properties(parent_sample, sample, structure,)
+            self._add_inherited_properties(parent_sample, sample,)
 
     def _get_lattice_properties(
-        self, job_dict,
+        self, parent_sample, sample, structure,
     ):
-        if job_dict['sample']['final'] is None:
+        if sample is None:
             return
-
-        parent_sample = job_dict['sample']['initial']
 
         material = list(
             [
@@ -170,19 +185,16 @@ class Workflow:
             [lattice_angle_x, lattice_angle_y, lattice_angle_z],
         ]
 
-        job_dict['structure']['final']._add_crystal_structure(targets=targets)
+        structure._add_crystal_structure(targets=targets)
         
     
     def _add_inherited_properties(
-        self, job_dict,
+        self, parent_sample, sample,
     ):
         # Here we need to add inherited info: CalculatedProperties will be lost
         # Defects will be inherited
-        if job_dict['sample']['final'] is None:
+        if sample is None:
             return
-
-        parent_sample = job_dict['sample']['initial']
-        sample = job_dict['sample']['final']
 
         parent_material = list(
             [
@@ -257,14 +269,34 @@ class Workflow:
         if job_dict["method"] == "MolecularStatics":
             #TODO: Replace with ASMO.MolecularStatics
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
+            self._add_dof(job_dict, activity)
+            self._add_md(job_dict, method, activity)
+            self.kg.add((activity, ASMO.hasComputationalMethod, method))
+
         elif job_dict["method"] == "MolecularDynamics":
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
+            self._add_dof(job_dict, activity)
+            self._add_md(job_dict, method, activity)
+            self.kg.add((activity, ASMO.hasComputationalMethod, method))
+
         elif job_dict["method"] == "DensityFunctionalTheory":
             self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
-        self.kg.add((activity, ASMO.hasComputationalMethod, method))
+            self._add_dof(job_dict, activity)
+            self._add_dft(job_dict, method, activity)
+            self.kg.add((activity, ASMO.hasComputationalMethod, method))
 
-        # choose if its rigid energy or structure optimisation
-        # ----------------------------------------------------------
+        elif job_dict["method"] == "EquationOfState":
+            self.kg.add((method, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfState))
+            self.kg.add((activity, Namespace("http://purls.helmholtz-metadaten.de/asmo/").hasComputationalMethod, method))
+        
+        # add that structure was generated
+        #TODO: Move hasComputationalMethod here after EquationOfState is added
+        self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
+        self._add_inputs(job_dict, activity)
+        self._add_outputs(job_dict, activity)
+        self._add_software(job_dict, method)
+
+    def _add_dof(self, job_dict, activity):
         if len(job_dict["dof"]) == 0:
             self.kg.add(
                 (
@@ -280,18 +312,6 @@ class Workflow:
         # add DOFs
         for dof in job_dict["dof"]:
             self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
-
-        # add method specific items
-        if job_dict["method"] in ["MolecularStatics", "MolecularDynamics"]:
-            self._add_md(job_dict, method, activity)
-        elif job_dict["method"] in ["DensityFunctionalTheory"]:
-            self._add_dft(job_dict, method, activity)
-
-        # add that structure was generated
-        self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
-        self._add_inputs(job_dict, activity)
-        self._add_outputs(job_dict, activity)
-        self._add_software(job_dict, method)
 
     def _add_inputs(self, job_dict, activity):
         main_id = job_dict['id']
