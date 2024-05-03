@@ -151,12 +151,16 @@ def process_murnaghan_job(job):
     for jobid in job.child_ids:
         child_job = job.project.load(jobid)
         if type(child_job).__name__ == 'Lammps':
-            job_dicts.append(process_lammps_job(child_job))
+            single_job_dict = process_lammps_job(child_job)
+            #note that we turn the jobs to child here
+            single_job_dict['intermediate'] = True
+            job_dicts.append(single_job_dict)
     #create an additional jobdict with the murnaghan job
     murnaghan_dict = {}
     murnaghan_dict['id'] = job.id
     murnaghan_dict['structure'] = get_structures(job)['structure']
     murnaghan_dict['sample'] = get_structures(job)['sample']
+    murnaghan_dict['intermediate'] = False
 
     #add the murnaghan method
     murnaghan_dict['method'] = "EquationOfState"
@@ -198,6 +202,7 @@ def process_lammps_job(job):
     method_dict['structure'] = structure_dict['structure']
     method_dict['sample'] = structure_dict['sample']
     method_dict['outputs'] = output_dict
+    method_dict['intermediate'] = False
     return method_dict
 
 def get_structures(job):

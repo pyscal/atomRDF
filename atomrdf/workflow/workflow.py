@@ -51,7 +51,7 @@ class Workflow:
             workflow_module.inform_graph(pr, self.kg)
         
 
-    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dicts=None):
+    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dicts=None, add_intermediate_jobs=False):
 
         if workflow_environment is not None:
             workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
@@ -65,13 +65,28 @@ class Workflow:
         #print(job_dict)
         #now we call the functions in order
         for job_dict in job_dicts:
+            if (not add_intermediate_jobs) and job_dict['intermediate']:
+                continue
             job_dict = self._add_structure(job_dict)
             parent_sample = job_dict['sample']['initial']
             sample = job_dict['sample']['final']
             structure = job_dict['structure']['final']
             self._add_structural_relation(parent_sample, sample, structure)
             self._add_method(job_dict)
+
+        #now add child connection
+        if add_intermediate_jobs:
+            for job_dict in job_dicts:
+                if not job_dict['intermediate']:
+                    parent = job_dict
+                    break
             
+            for job_dict in job_dicts:
+                if job_dict['intermediate']:
+                    parent_sample = job_dict['sample']['final']
+                    sample = parent['sample']['final']
+                    structure = parent['structure']['final']
+                    self._add_structural_relation(parent_sample, sample, structure)
 
     def _add_structure(self, job_dict):
         #ensure these are not strings
