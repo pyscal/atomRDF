@@ -254,14 +254,34 @@ class Workflow:
         if job_dict["method"] == "MolecularStatics":
             #TODO: Replace with ASMO.MolecularStatics
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
+            self._add_dof(job_dict, activity)
+            self._add_md(job_dict, method, activity)
+            self.kg.add((activity, ASMO.hasComputationalMethod, method))
+
         elif job_dict["method"] == "MolecularDynamics":
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
+            self._add_dof(job_dict, activity)
+            self._add_md(job_dict, method, activity)
+            self.kg.add((activity, ASMO.hasComputationalMethod, method))
+
         elif job_dict["method"] == "DensityFunctionalTheory":
             self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
-        self.kg.add((activity, ASMO.hasComputationalMethod, method))
+            self._add_dof(job_dict, activity)
+            self._add_dft(job_dict, method, activity)
+            self.kg.add((activity, ASMO.hasComputationalMethod, method))
 
-        # choose if its rigid energy or structure optimisation
-        # ----------------------------------------------------------
+        elif job_dict["method"] == "EquationOfState":
+            self.kg.add((method, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfState))
+            self.kg.add((activity, Namespace("http://purls.helmholtz-metadaten.de/asmo/").hasComputationalMethod, method))
+        
+        # add that structure was generated
+        #TODO: Move hasComputationalMethod here after EquationOfState is added
+        self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
+        self._add_inputs(job_dict, activity)
+        self._add_outputs(job_dict, activity)
+        self._add_software(job_dict, method)
+
+    def _add_dof(self, job_dict, activity):
         if len(job_dict["dof"]) == 0:
             self.kg.add(
                 (
@@ -277,18 +297,6 @@ class Workflow:
         # add DOFs
         for dof in job_dict["dof"]:
             self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
-
-        # add method specific items
-        if job_dict["method"] in ["MolecularStatics", "MolecularDynamics"]:
-            self._add_md(job_dict, method, activity)
-        elif job_dict["method"] in ["DensityFunctionalTheory"]:
-            self._add_dft(job_dict, method, activity)
-
-        # add that structure was generated
-        self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
-        self._add_inputs(job_dict, activity)
-        self._add_outputs(job_dict, activity)
-        self._add_software(job_dict, method)
 
     def _add_inputs(self, job_dict, activity):
         main_id = job_dict['id']

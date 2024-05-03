@@ -152,6 +152,42 @@ def process_murnaghan_job(job):
         child_job = job.project.load(jobid)
         if type(child_job).__name__ == 'Lammps':
             job_dicts.append(process_lammps_job(child_job))
+    #create an additional jobdict with the murnaghan job
+    murnaghan_dict = {}
+    murnaghan_dict['id'] = job.id
+    murnaghan_dict['structure'] = get_structures(job)['structure']
+    murnaghan_dict['sample'] = get_structures(job)['sample']
+
+    #add the murnaghan method
+    murnaghan_dict['method'] = "EquationOfState"
+    outputs = []
+    outputs.append(
+        {
+            "label": "EquilibriumEnergy",
+            "value": np.round(job['output/equilibrium_energy'], decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "EquilibriumVolume",
+            "value": np.round(job['output/equilibrium_volume'], decimals=4),
+            "unit": "ANGSTROM3",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "BulkModulus",
+            "value": np.round(job['output/equilibrium_bulk_modulus'], decimals=2),
+            "unit": "GigaPA",
+            "associate_to_sample": True,
+        }
+    )
+    murnaghan_dict['outputs'] = outputs
+    murnaghan_dict = add_software_lammps(murnaghan_dict)
+    job_dicts.append(murnaghan_dict)
     return job_dicts
 
 def process_lammps_job(job):
@@ -263,6 +299,10 @@ def lammps_identify_method(job):
     else:
         mdict["potential"]["uri"] = name
 
+    mdict = add_software_lammps(mdict)
+    return mdict
+
+def add_software_lammps(mdict):
     mdict["workflow_manager"] = {}
     mdict["workflow_manager"]["uri"] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
     mdict["workflow_manager"]["label"] = "pyiron"
@@ -273,7 +313,6 @@ def lammps_identify_method(job):
         "label": "LAMMPS",
     }
     mdict["software"] = [software]
-
     return mdict
 
 def lammps_extract_calculated_quantities(job):
