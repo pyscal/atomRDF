@@ -66,7 +66,10 @@ class Workflow:
         #now we call the functions in order
         for job_dict in job_dicts:
             job_dict = self._add_structure(job_dict)
-            self._add_structural_relation(job_dict)
+            parent_sample = job_dict['sample']['initial']
+            sample = job_dict['sample']['final']
+            structure = job_dict['structure']['final']
+            self._add_structural_relation(parent_sample, sample, structure)
             self._add_method(job_dict)
             
 
@@ -97,7 +100,7 @@ class Workflow:
         return job_dict
 
     def _add_structural_relation(
-        self, job_dict,
+        self, parent_sample, sample, structure,
     ):
         """
         Add structural relation between samples.
@@ -113,24 +116,20 @@ class Workflow:
         -------
         None
         """
-        parent_sample = job_dict['sample']['initial']
-        sample = job_dict['sample']['final']
 
         self.kg.add((sample, RDF.type, PROV.Entity))
         
         if parent_sample is not None:
             self.kg.add((parent_sample, RDF.type, PROV.Entity))
             self.kg.add((sample, PROV.wasDerivedFrom, parent_sample))
-            self._get_lattice_properties(job_dict)
-            self._add_inherited_properties(job_dict)
+            self._get_lattice_properties(parent_sample, sample, structure,)
+            self._add_inherited_properties(parent_sample, sample,)
 
     def _get_lattice_properties(
-        self, job_dict,
+        self, parent_sample, sample, structure,
     ):
-        if job_dict['sample']['final'] is None:
+        if sample is None:
             return
-
-        parent_sample = job_dict['sample']['initial']
 
         material = list(
             [
@@ -171,19 +170,16 @@ class Workflow:
             [lattice_angle_x, lattice_angle_y, lattice_angle_z],
         ]
 
-        job_dict['structure']['final']._add_crystal_structure(targets=targets)
+        structure._add_crystal_structure(targets=targets)
         
     
     def _add_inherited_properties(
-        self, job_dict,
+        self, parent_sample, sample,
     ):
         # Here we need to add inherited info: CalculatedProperties will be lost
         # Defects will be inherited
-        if job_dict['sample']['final'] is None:
+        if sample is None:
             return
-
-        parent_sample = job_dict['sample']['initial']
-        sample = job_dict['sample']['final']
 
         parent_material = list(
             [
