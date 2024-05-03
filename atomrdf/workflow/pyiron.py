@@ -150,7 +150,7 @@ def process_murnaghan_job(job):
     job_dicts = []
     for jobid in job.child_ids:
         child_job = job.project.load(jobid)
-        if type(job).__name__ == 'Lammps':
+        if type(child_job).__name__ == 'Lammps':
             job_dicts.append(process_lammps_job(child_job))
     return job_dicts
 
