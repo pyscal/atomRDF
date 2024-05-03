@@ -51,23 +51,24 @@ class Workflow:
             workflow_module.inform_graph(pr, self.kg)
         
 
-    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dict=None):
+    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dicts=None):
 
         if workflow_environment is not None:
             workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
-            job_dict = workflow_module.process_job(job)
+            job_dicts = np.atleast_1d(workflow_module.process_job(job))
         elif workflow_module is not None:
-            job_dict = workflow_module.process_job(job)
+            job_dicts = np.atleast_1d(workflow_module.process_job(job))
         
-        if job_dict is None:
+        if job_dicts is None:
             raise ValueError("Job dict could not be calculated!")
         
         #print(job_dict)
         #now we call the functions in order
-        job_dict = self._add_structure(job_dict)
-        self._add_structural_relation(job_dict)
-        self._add_method(job_dict)
-        
+        for job_dict in job_dicts:
+            job_dict = self._add_structure(job_dict)
+            self._add_structural_relation(job_dict)
+            self._add_method(job_dict)
+            
 
     def _add_structure(self, job_dict):
         #ensure these are not strings

@@ -143,6 +143,14 @@ def inform_graph(pr, kg):
     pr.graph = kg
     pr._creator = StructureCreator(pr)
 
+def process_murnaghan_job(job):
+    #murnaghan job processing; add individual lammps jobs first
+    #for jobid in murn_job.child_ids:
+    #    print(jobid)
+    #    job = pr.load(jobid)
+    #    kg.add_workflow(job, workflow_environment='pyiron')
+    pass
+
 def process_lammps_job(job):
     structure_dict = get_structures(job)
     method_dict = lammps_identify_method(job)
