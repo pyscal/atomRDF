@@ -34,6 +34,8 @@ def process_job(job):
 
     if type(job).__name__ == 'Lammps':
         return process_lammps_job(job)
+    elif type(job).__name__ == 'Murnaghan':
+        return process_murnaghan_job(job)
     else:
         raise TypeError("These type of pyiron Job is not currently supported")
     
@@ -145,11 +147,12 @@ def inform_graph(pr, kg):
 
 def process_murnaghan_job(job):
     #murnaghan job processing; add individual lammps jobs first
-    #for jobid in murn_job.child_ids:
-    #    print(jobid)
-    #    job = pr.load(jobid)
-    #    kg.add_workflow(job, workflow_environment='pyiron')
-    pass
+    job_dicts = []
+    for jobid in job.child_ids:
+        child_job = job.project.load(jobid)
+        if type(job).__name__ == 'Lammps':
+            job_dicts.append(process_lammps_job(child_job))
+    return job_dicts
 
 def process_lammps_job(job):
     structure_dict = get_structures(job)

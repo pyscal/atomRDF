@@ -1190,7 +1190,7 @@ class KnowledgeGraph:
                         workflow_environment=workflow_environment, 
                         workflow_module=workflow_module)
         
-    def add_workflow(self, job, workflow_environment=None, workflow_module=None, job_dict=None):
+    def add_workflow(self, job, workflow_environment=None, workflow_module=None, job_dicts=None):
         self.workflow.to_graph(job, workflow_environment=workflow_environment, 
                             workflow_module=workflow_module, 
-                            job_dict=job_dict)
+                            job_dicts=job_dicts)

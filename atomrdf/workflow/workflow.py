@@ -58,9 +58,9 @@ class Workflow:
             job_dicts = np.atleast_1d(workflow_module.process_job(job))
         elif workflow_module is not None:
             job_dicts = np.atleast_1d(workflow_module.process_job(job))
-        
         if job_dicts is None:
             raise ValueError("Job dict could not be calculated!")
+        job_dicts = np.atleast_1d(job_dicts)
         
         #print(job_dict)
         #now we call the functions in order
