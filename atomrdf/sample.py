@@ -6,6 +6,7 @@ In this module a new Sample class is defined.
 from pyscal3.atoms import AttrSetter
 from atomrdf.namespace import CMSO, PLDO, PODO, ASMO, PROV
 from rdflib import RDFS
+import numpy as np
 
 class Sample:
     def __init__(self, name, sample_id, graph):
@@ -34,7 +35,7 @@ class Sample:
     def _input_properties(self):
         activity = self._graph.value(self._sample_id, PROV.wasGeneratedBy)
         if activity is not None:
-            inps = self._graph.value(activity, ASMO.hasInputParameter)
+            inps = [k[2] for k in self._graph.triples((activity, ASMO.hasInputParameter, None))]
             labels = [self._graph.value(inp, RDFS.label) for inp in inps]
             values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
             units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
@@ -45,7 +46,7 @@ class Sample:
 
     @property
     def _output_properties(self):
-        inps = self._graph.value(self._sample_id, CMSO.hasCalculatedProperty)
+        inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
         values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
         units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
