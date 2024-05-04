@@ -45,6 +45,7 @@ import atomrdf.properties as prp
 from atomrdf.stores import create_store
 import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
+from atomrdf.sample import Sample
 
 from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO
 
@@ -1048,7 +1049,7 @@ class KnowledgeGraph:
         return len([x for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))])
 
     @property
-    def samples(self):
+    def sample_ids(self):
         """
         Returns a list of all Samples in the graph
         """
@@ -1069,6 +1070,15 @@ class KnowledgeGraph:
             else:
                 samples_names.append(sample.toPython())
         return samples_names
+
+    @property
+    def samples(self):
+        sample_ids = self.sample_ids
+        sample_names = self.sample_names
+        sample_objects = []
+        for ids, name in zip(sample_ids, sample_names):
+            sample_objects.append(Sample(name, ids, self))
+        return sample_objects
 
     def iterate_graph(self, item, create_new_graph=False):
         """
