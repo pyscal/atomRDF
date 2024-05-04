@@ -535,6 +535,7 @@ class System(pc.System):
 
         # this is the sample which will be stored
         self.sample = None
+        self.label = None
         # the graph object should also be attached
         # for post-processing of structures
         self.graph = graph

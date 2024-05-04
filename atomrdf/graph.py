@@ -528,7 +528,7 @@ class KnowledgeGraph:
         modified_triple = self._modify_triple(triple)
         return self.graph.remove(modified_triple)
 
-    def create_node(self, namestring, classtype):
+    def create_node(self, namestring, classtype, label=None):
         """
         Create a new node in the graph.
 
@@ -547,6 +547,8 @@ class KnowledgeGraph:
         """
         item = URIRef(namestring)
         self.add((item, RDF.type, classtype))
+        if label is not None:
+            self.add((item, RDFS.label, Literal(label)))
         return item
 
     def _initialize_graph(self):
