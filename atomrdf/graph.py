@@ -1055,6 +1055,21 @@ class KnowledgeGraph:
 
         return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
 
+    @property
+    def sample_names(self):
+        """
+        Returns a list of all Sample names in the graph
+        """
+        samples = [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+        samples_names = []
+        for sample in samples:
+            sample_name = self.value(sample, RDFS.label)
+            if sample_name is not None:
+                samples_names.append(sample_name.toPython())
+            else:
+                samples_names.append(sample.toPython())
+        return samples_names
+
     def iterate_graph(self, item, create_new_graph=False):
         """
         Iterate through the graph starting from the given item.
