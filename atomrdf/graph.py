@@ -528,7 +528,7 @@ class KnowledgeGraph:
         modified_triple = self._modify_triple(triple)
         return self.graph.remove(modified_triple)
 
-    def create_node(self, namestring, classtype):
+    def create_node(self, namestring, classtype, label=None):
         """
         Create a new node in the graph.
 
@@ -547,6 +547,8 @@ class KnowledgeGraph:
         """
         item = URIRef(namestring)
         self.add((item, RDF.type, classtype))
+        if label is not None:
+            self.add((item, RDFS.label, Literal(label)))
         return item
 
     def _initialize_graph(self):
@@ -1052,6 +1054,21 @@ class KnowledgeGraph:
         """
 
         return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+
+    @property
+    def sample_names(self):
+        """
+        Returns a list of all Sample names in the graph
+        """
+        samples = [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+        samples_names = []
+        for sample in samples:
+            sample_name = self.value(sample, RDFS.label)
+            if sample_name is not None:
+                samples_names.append(sample_name.toPython())
+            else:
+                samples_names.append(sample.toPython())
+        return samples_names
 
     def iterate_graph(self, item, create_new_graph=False):
         """

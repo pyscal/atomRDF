@@ -47,6 +47,7 @@ def _make_crystal(
     primitive=False,
     graph=None,
     names=False,
+    label=None,
 ):
     """
     Create a crystal structure using the specified parameters.
@@ -95,6 +96,7 @@ def _make_crystal(
     s.atoms._lattice = structure
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
+    s.label = label
     s.to_graph()
     return s
 
@@ -109,6 +111,7 @@ def _make_general_lattice(
     element=None,
     graph=None,
     names=False,
+    label=None,
 ):
     """
     Generate a general lattice structure.
@@ -157,6 +160,7 @@ def _make_general_lattice(
     s.atoms._lattice = "custom"
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
+    s.label = label
     s.to_graph()
 
     return s
@@ -177,6 +181,7 @@ def _make_dislocation(
     primitive=False,
     graph=None,
     names=False,
+    label=None,
 ):
     """
     Generate a dislocation structure. Wraps the atomman.defect.Dislocation class.
@@ -315,6 +320,7 @@ def _make_dislocation(
     output_structure.box = box
     output_structure.atoms = atom_obj
     output_structure = output_structure.modify.remap_to_box()
+    output_structure.label = label
     return output_structure
 
 
@@ -329,6 +335,7 @@ def _make_grain_boundary(
     overlap=0.0,
     graph=None,
     names=False,
+    label=None,
 ):
     """
     Create a grain boundary system.
@@ -383,6 +390,7 @@ def _make_grain_boundary(
     s.atoms._lattice = structure
     s.atoms._lattice_constant = lattice_constant
     s._structure_dict = sdict
+    s.label = label
     s.to_graph()
     gb_dict = {
         "GBPlane": " ".join(np.array(gb_plane).astype(str)),
@@ -405,6 +413,7 @@ def _read_structure(
     lattice_constant=None,
     basis_box=None,
     basis_positions=None,
+    label=None,
 ):
     """
     Read in structure from file or ase object
@@ -466,6 +475,7 @@ def _read_structure(
         warn_read_in=False,
     )
     s.lattice_properties = datadict
+    s.label = label
     s.to_graph()
     return s
 
@@ -535,6 +545,7 @@ class System(pc.System):
 
         # this is the sample which will be stored
         self.sample = None
+        self.label = None
         # the graph object should also be attached
         # for post-processing of structures
         self.graph = graph
@@ -1075,7 +1086,7 @@ class System(pc.System):
             self._name = f"sample:{str(uuid.uuid4())}"
 
     def _add_sample(self):
-        sample = self.graph.create_node(self._name, CMSO.AtomicScaleSample)
+        sample = self.graph.create_node(self._name, CMSO.AtomicScaleSample, label=self.label)
         self.sample = sample
 
     def _add_material(self):
