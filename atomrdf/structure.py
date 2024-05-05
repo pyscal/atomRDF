@@ -1088,6 +1088,10 @@ class System(pc.System):
     def _add_sample(self):
         sample = self.graph.create_node(self._name, CMSO.AtomicScaleSample, label=self.label)
         self.sample = sample
+    
+    def change_label(self, sample, label):
+        self.graph.remove((sample, RDFS.label, None))
+        self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
 
     def _add_material(self):
         """
