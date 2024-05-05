@@ -23,6 +23,7 @@ import copy
 import ast
 import uuid
 import importlib
+import uuid
 
 from atomrdf.structure import System
 
@@ -267,13 +268,15 @@ class Workflow:
 
         # add activity
         # ----------------------------------------------------------
-        main_id = job_dict['id']
-        activity = URIRef(f"activity_{main_id}")
+        main_id = uuid.uuid4()
+        main_id = f'activity:{main_id}'
+        job_dict['id'] = main_id
+        activity = URIRef(main_id)
         self.kg.add((activity, RDF.type, PROV.Activity))
 
         # add method
         # ----------------------------------------------------------
-        method = URIRef(f"method_{main_id}")
+        method = URIRef(f"{main_id}_method")
         if job_dict["method"] == "MolecularStatics":
             #TODO: Replace with ASMO.MolecularStatics
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))

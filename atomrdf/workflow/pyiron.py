@@ -293,7 +293,7 @@ def lammps_identify_method(job):
     mdict["pressure"] = press
     mdict["dof"] = dof
     mdict["ensemble"] = ensemble
-    mdict["id"] = job.id
+    #mdict["id"] = job.id
 
     # now process potential
     inpdict = job.input.to_dict()
