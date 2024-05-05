@@ -1089,6 +1089,12 @@ class System(pc.System):
         sample = self.graph.create_node(self._name, CMSO.AtomicScaleSample, label=self.label)
         self.sample = sample
     
+    def get_sample_label(self, sample):
+        label = self.graph.value(sample, RDFS.label)
+        if label is not None:
+            return label.toPython()
+        return label
+    
     def change_label(self, sample, label):
         self.graph.remove((sample, RDFS.label, None))
         self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
