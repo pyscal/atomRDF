@@ -17,6 +17,7 @@ import shutil
 import tarfile
 import warnings
 
+
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
 from pyscal3.atoms import AttrSetter, Atoms
@@ -35,7 +36,6 @@ file_location = "/".join(file_location[:-1])
 file_location = os.path.join(os.path.dirname(__file__), "data/element.yml")
 with open(file_location, "r") as fin:
     element_indetifiers = yaml.safe_load(fin)
-
 
 def _make_crystal(
     structure,
