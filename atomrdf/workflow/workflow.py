@@ -397,7 +397,7 @@ class Workflow:
         # add temperature if needed
         if job_dict["temperature"] is not None:
             temperature = self.kg.create_node(
-                f"temperature_{main_id}", ASMO.InputParameter
+                f"{main_id}_temperature", ASMO.InputParameter
             )
             self.kg.add(
                 (temperature, RDFS.label, Literal("temperature", datatype=XSD.string))
@@ -416,7 +416,7 @@ class Workflow:
 
         if job_dict["pressure"] is not None:
             pressure = self.kg.create_node(
-                f"pressure_{main_id}", ASMO.InputParameter
+                f"{main_id}_pressure", ASMO.InputParameter
             )
             self.kg.add(
                 (pressure, RDFS.label, Literal("pressure", datatype=XSD.string))
@@ -434,7 +434,7 @@ class Workflow:
             )
 
         # potentials need to be mapped
-        potential = URIRef(f"potential_{main_id}")
+        potential = URIRef(f"{main_id}_potential")
         if "meam" in job_dict["potential"]["type"]:
             self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
         elif "eam" in job_dict["potential"]["type"]:
