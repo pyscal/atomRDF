@@ -38,7 +38,7 @@ def test_add_structure():
 	s = KnowledgeGraph()
 	sys = System.create.element.Fe()
 	s.add_structure(sys)
-	assert sys.sample in s.samples
+	assert sys.sample in s.sample_ids
 
 def test_add_cross_triple():
 	
@@ -111,7 +111,7 @@ def test_extract_sample():
 	struct_Fe = System.create.element.Fe(graph=kg)
 	sample_graph, no_atoms = kg.get_sample(struct_Fe.sample, no_atoms=True)
 	assert no_atoms == 2
-	assert sample_graph.samples[0] == struct_Fe.sample
+	assert sample_graph.sample_ids[0] == struct_Fe.sample
 
 	struct = kg.get_system_from_sample(struct_Fe.sample)
 	assert len(struct.atoms.positions) == 2
