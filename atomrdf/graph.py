@@ -1135,7 +1135,17 @@ class KnowledgeGraph:
             na = self.sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
             return self.sgraph, na
         return self.sgraph
-
+    
+    def get_sample_label(self, sample):
+        label = self.graph.value(sample, RDFS.label)
+        if label is not None:
+            return label.toPython()
+        return label
+    
+    def change_label(self, sample, label):
+        self.graph.remove((sample, RDFS.label, None))
+        self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
+    
     def get_system_from_sample(self, sample):
         """
         Get a pyscal :py:class:`atomrdf.structure.System` from the selected sample
