@@ -560,7 +560,7 @@ class System(pc.System):
         self.write = AttrSetter()
         mapdict = {}
         mapdict['ase'] = update_wrapper(partial(convert_snap, self), convert_snap)
-        mapdict['file'] = update_wrapper(partial(inputmethods.to_file, self), inputmethods.to_file)
+        mapdict['file'] = self.to_file
         mapdict['dict'] = update_wrapper(partial(serialize.serialize, self, return_type='dict'), serialize.serialize)
         mapdict['json'] = update_wrapper(partial(serialize.serialize, self, return_type='json'), serialize.serialize)
         mapdict['pydantic'] = update_wrapper(partial(serialize.serialize, self, return_type='model'), serialize.serialize)
