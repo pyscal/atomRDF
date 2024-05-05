@@ -61,6 +61,7 @@ class Sample:
         if activity is not None:
             inps = [k[2] for k in self._graph.triples((activity, ASMO.hasInputParameter, None))]
             labels = [self._graph.value(inp, RDFS.label) for inp in inps]
+            labels = [label if label is None else label.toPython() for label in labels]
             values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
             units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
             units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
@@ -73,6 +74,7 @@ class Sample:
     def _output_properties(self):
         inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
+        labels = [label if label is None else label.toPython() for label in labels]
         values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
         units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
         units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
