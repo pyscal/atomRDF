@@ -48,7 +48,7 @@ import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
 
-from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO
+from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -804,7 +804,7 @@ class KnowledgeGraph:
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
 
-    def archive(self, package_name, format="turtle", compress=True):
+    def archive(self, package_name, format="turtle", compress=True, add_simulations=False):
         """
         Publish a dataset from graph including per atom quantities.
 
@@ -1086,6 +1086,14 @@ class KnowledgeGraph:
             sample_objects.append(Sample(name, ids, self))
         return sample_objects
 
+    @property
+    def activity_ids(self):
+        """
+        Returns a list of all Samples in the graph
+        """
+
+        return [x[0] for x in self.triples((None, RDF.type, PROV.Activity))]
+    
     def iterate_graph(self, item, create_new_graph=False):
         """
         Iterate through the graph starting from the given item.
