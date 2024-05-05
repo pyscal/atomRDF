@@ -877,7 +877,7 @@ class KnowledgeGraph:
             for activity in activities:
                 path = self.value(activity, CMSO.hasPath)
                 if path is not None:
-                    newpath = "/".join([simstore, activity.toPython()])
+                    newpath = "/".join([sim_store, activity.toPython()])
                     shutil.copytree(path, newpath)
 
                     #remove old path
