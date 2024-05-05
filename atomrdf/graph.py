@@ -33,6 +33,7 @@ import shutil
 import tarfile
 import logging
 import warnings
+import re
 
 # from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -82,6 +83,11 @@ defstyledict = {
     },
 }
 
+def _clean_string(input_string):
+    input_string = re.sub(r'\W', '_', input_string)
+    if input_string[0].isdigit():
+        input_string = "s" + input_string
+    return input_string
 
 def _replace_keys(refdict, indict):
     for key, val in indict.items():
@@ -549,7 +555,7 @@ class KnowledgeGraph:
         item = URIRef(namestring)
         self.add((item, RDF.type, classtype))
         if label is not None:
-            self.add((item, RDFS.label, Literal(label)))
+            self.add((item, RDFS.label, Literal(_clean_string(label))))
         return item
 
     def _initialize_graph(self):
