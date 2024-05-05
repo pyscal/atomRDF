@@ -23,6 +23,7 @@ import copy
 import ast
 import uuid
 import importlib
+import uuid
 
 from atomrdf.structure import System
 
@@ -267,13 +268,15 @@ class Workflow:
 
         # add activity
         # ----------------------------------------------------------
-        main_id = job_dict['id']
-        activity = URIRef(f"activity_{main_id}")
+        main_id = uuid.uuid4()
+        main_id = f'activity:{main_id}'
+        job_dict['id'] = main_id
+        activity = URIRef(main_id)
         self.kg.add((activity, RDF.type, PROV.Activity))
 
         # add method
         # ----------------------------------------------------------
-        method = URIRef(f"method_{main_id}")
+        method = URIRef(f"{main_id}_method")
         if job_dict["method"] == "MolecularStatics":
             #TODO: Replace with ASMO.MolecularStatics
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
@@ -300,6 +303,7 @@ class Workflow:
         # add that structure was generated
         #TODO: Move hasComputationalMethod here after EquationOfState is added
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
+        self.kg.add((activity, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
         self._add_inputs(job_dict, activity)
         self._add_outputs(job_dict, activity)
         self._add_software(job_dict, method)
@@ -393,7 +397,7 @@ class Workflow:
         # add temperature if needed
         if job_dict["temperature"] is not None:
             temperature = self.kg.create_node(
-                f"temperature_{main_id}", ASMO.InputParameter
+                f"{main_id}_temperature", ASMO.InputParameter
             )
             self.kg.add(
                 (temperature, RDFS.label, Literal("temperature", datatype=XSD.string))
@@ -412,7 +416,7 @@ class Workflow:
 
         if job_dict["pressure"] is not None:
             pressure = self.kg.create_node(
-                f"pressure_{main_id}", ASMO.InputParameter
+                f"{main_id}_pressure", ASMO.InputParameter
             )
             self.kg.add(
                 (pressure, RDFS.label, Literal("pressure", datatype=XSD.string))
@@ -430,7 +434,7 @@ class Workflow:
             )
 
         # potentials need to be mapped
-        potential = URIRef(f"potential_{main_id}")
+        potential = URIRef(f"{main_id}_potential")
         if "meam" in job_dict["potential"]["type"]:
             self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
         elif "eam" in job_dict["potential"]["type"]:
