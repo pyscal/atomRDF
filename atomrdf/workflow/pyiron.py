@@ -165,6 +165,7 @@ def process_murnaghan_job(job):
     murnaghan_dict['structure'] = get_structures(job)['structure']
     murnaghan_dict['sample'] = get_structures(job)['sample']
     murnaghan_dict['intermediate'] = False
+    murnaghan_dict['path'] = get_simulation_folder(job)
 
     #add the murnaghan method
     murnaghan_dict['method'] = "EquationOfState"
@@ -207,7 +208,11 @@ def process_lammps_job(job):
     method_dict['sample'] = structure_dict['sample']
     method_dict['outputs'] = output_dict
     method_dict['intermediate'] = False
+    method_dict['path'] = get_simulation_folder(job)
     return method_dict
+
+def get_simulation_folder(job):
+    return os.path.join(job.project.path, f'{job.name}_hdf5')
 
 def get_structures(job):
     initial_pyiron_structure = job.structure

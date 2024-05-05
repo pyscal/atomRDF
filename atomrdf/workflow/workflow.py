@@ -300,6 +300,7 @@ class Workflow:
         # add that structure was generated
         #TODO: Move hasComputationalMethod here after EquationOfState is added
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
+        self.kg.add((activity, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string))
         self._add_inputs(job_dict, activity)
         self._add_outputs(job_dict, activity)
         self._add_software(job_dict, method)
