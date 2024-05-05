@@ -140,7 +140,10 @@ class Workflow:
             #update label
             label = self.kg.get_sample_label(sample)
             parent_label = self.kg.get_sample_label(parent_sample)
-            new_label = f"{label}_from_{parent_label})"
+            if label is None:
+                new_label = f"{parent_label}_derivative"
+            else:
+                new_label = f"{label}_from_{parent_label}"
             self.kg.change_label(sample, new_label)
             self._get_lattice_properties(parent_sample, sample, structure,)
             self._add_inherited_properties(parent_sample, sample,)
