@@ -72,6 +72,7 @@ def inform_graph(pr, kg):
             covera=None,
             cubic=True,
             graph=None,
+            label=None,
         ):
 
             if crystalstructure is None:
@@ -87,6 +88,7 @@ def inform_graph(pr, kg):
                 element=element,
                 primitive=not cubic,
                 graph=self._graph,
+                label=label,
             )
 
             ase_structure = struct.write.ase()
@@ -105,6 +107,7 @@ def inform_graph(pr, kg):
             a=1,
             overlap=0.0,
             graph=None,
+            label=None,
         ):
 
             struct = self._graph._annotated_make_grain_boundary(
@@ -117,6 +120,7 @@ def inform_graph(pr, kg):
                 repetitions=repetitions,
                 overlap=overlap,
                 graph=self._graph,
+                label=label,
             )
 
             ase_structure = struct.write.ase()

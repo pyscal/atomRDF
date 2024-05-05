@@ -137,6 +137,14 @@ class Workflow:
         if parent_sample is not None:
             self.kg.add((parent_sample, RDF.type, PROV.Entity))
             self.kg.add((sample, PROV.wasDerivedFrom, parent_sample))
+            #update label
+            label = self.kg.get_sample_label(sample)
+            parent_label = self.kg.get_sample_label(parent_sample)
+            if label is None:
+                new_label = f"{parent_label}_derivative"
+            else:
+                new_label = f"{label}_from_{parent_label}"
+            self.kg.change_label(sample, new_label)
             self._get_lattice_properties(parent_sample, sample, structure,)
             self._add_inherited_properties(parent_sample, sample,)
 

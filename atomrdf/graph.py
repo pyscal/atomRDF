@@ -33,6 +33,7 @@ import shutil
 import tarfile
 import logging
 import warnings
+import re
 
 # from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -45,6 +46,7 @@ import atomrdf.properties as prp
 from atomrdf.stores import create_store
 import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
+from atomrdf.sample import Sample
 
 from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO
 
@@ -81,6 +83,11 @@ defstyledict = {
     },
 }
 
+def _clean_string(input_string):
+    input_string = re.sub(r'\W', '_', input_string)
+    if input_string[0].isdigit():
+        input_string = "s" + input_string
+    return input_string
 
 def _replace_keys(refdict, indict):
     for key, val in indict.items():
@@ -528,7 +535,7 @@ class KnowledgeGraph:
         modified_triple = self._modify_triple(triple)
         return self.graph.remove(modified_triple)
 
-    def create_node(self, namestring, classtype):
+    def create_node(self, namestring, classtype, label=None):
         """
         Create a new node in the graph.
 
@@ -547,6 +554,8 @@ class KnowledgeGraph:
         """
         item = URIRef(namestring)
         self.add((item, RDF.type, classtype))
+        if label is not None:
+            self.add((item, RDFS.label, Literal(_clean_string(label))))
         return item
 
     def _initialize_graph(self):
@@ -1046,12 +1055,36 @@ class KnowledgeGraph:
         return len([x for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))])
 
     @property
-    def samples(self):
+    def sample_ids(self):
         """
         Returns a list of all Samples in the graph
         """
 
         return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+
+    @property
+    def sample_names(self):
+        """
+        Returns a list of all Sample names in the graph
+        """
+        samples = [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+        samples_names = []
+        for sample in samples:
+            sample_name = self.value(sample, RDFS.label)
+            if sample_name is not None:
+                samples_names.append(sample_name.toPython())
+            else:
+                samples_names.append(sample.toPython())
+        return samples_names
+
+    @property
+    def samples(self):
+        sample_ids = self.sample_ids
+        sample_names = self.sample_names
+        sample_objects = []
+        for ids, name in zip(sample_ids, sample_names):
+            sample_objects.append(Sample(name, ids, self))
+        return sample_objects
 
     def iterate_graph(self, item, create_new_graph=False):
         """
@@ -1102,7 +1135,17 @@ class KnowledgeGraph:
             na = self.sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
             return self.sgraph, na
         return self.sgraph
-
+    
+    def get_sample_label(self, sample):
+        label = self.graph.value(sample, RDFS.label)
+        if label is not None:
+            return label.toPython()
+        return label
+    
+    def change_label(self, sample, label):
+        self.graph.remove((sample, RDFS.label, None))
+        self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
+    
     def get_system_from_sample(self, sample):
         """
         Get a pyscal :py:class:`atomrdf.structure.System` from the selected sample
