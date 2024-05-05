@@ -14,6 +14,26 @@ class Sample:
         self._sample_id = sample_id
         self._graph = graph
 
+        #create attributes
+        self.properties = AttrSetter()
+        mapdict = {
+            'volume': self._volume,
+            'no_of_atoms': self._no_of_atoms,
+        }
+        self.properties._add_attribute(mapdict)
+
+        self.inputs = AttrSetter()
+        mapdict = {}
+        for key, value in zip(*self._input_properties):
+            mapdict[key] = value
+        self.inputs._add_attribute(mapdict)
+
+        self.outputs = AttrSetter()
+        mapdict = {}
+        for key, value in zip(*self._output_properties):
+            mapdict[key] = value
+        self.outputs._add_attribute(mapdict)
+        
     def __str__(self):
         return f"{self._name}"
     
@@ -39,7 +59,7 @@ class Sample:
             labels = [self._graph.value(inp, RDFS.label) for inp in inps]
             values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
             units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
-            units = [unit if unit is None else unit.toPython() for unit in units]
+            units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
 
             props = [Property(value.toPython(), unit=unit, graph=self._graph) for value, unit in zip(values, units)]
             return props, labels
@@ -50,7 +70,7 @@ class Sample:
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
         values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
         units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
-        units = [unit if unit is None else unit.toPython() for unit in units]
+        units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
 
         props = [Property(value.toPython(), unit=unit, graph=self._graph) for value, unit in zip(values, units)]
         return props, labels   
