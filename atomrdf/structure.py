@@ -23,6 +23,9 @@ from pyscal3.grain_boundary import GrainBoundary
 from pyscal3.atoms import AttrSetter, Atoms
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
+import pyscal3.operations.input as inputmethods
+import pyscal3.operations.serialize as serialize
+from pyscal3.formats.ase import convert_snap
 
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
@@ -554,7 +557,16 @@ class System(pc.System):
         if source is not None:
             self.__dict__.update(source.__dict__)
 
-        # assign attributes
+        self.write = AttrSetter()
+        mapdict = {}
+        mapdict['ase'] = update_wrapper(partial(convert_snap, self), convert_snap)
+        mapdict['file'] = update_wrapper(partial(inputmethods.to_file, self), inputmethods.to_file)
+        mapdict['dict'] = update_wrapper(partial(serialize.serialize, self, return_type='dict'), serialize.serialize)
+        mapdict['json'] = update_wrapper(partial(serialize.serialize, self, return_type='json'), serialize.serialize)
+        mapdict['pydantic'] = update_wrapper(partial(serialize.serialize, self, return_type='model'), serialize.serialize)
+        mapdict['json_file'] = update_wrapper(partial(serialize.serialize, self, return_type='file'), serialize.serialize)
+        self.write._add_attribute(mapdict)
+
         self.schema = AttrSetter()
         mapdict = {
             "material": {
@@ -1057,6 +1069,23 @@ class System(pc.System):
         # now the graph has to be updated accordingly
         self.delete(indices=list(val))
 
+    def to_file(self, outfile, format='lammps-dump', customkeys=None, customvals=None,
+            compressed=False, timestep=0, species=None,  add_sample_id=True):
+
+        inputmethods.to_file(self, outfile, format=format, customkeys=customkeys, customvals=customvals,
+            compressed=compressed, timestep=timestep, species=species)
+        if format == 'poscar':
+            if add_sample_id and (self.sample is not None):
+                lines = []
+                with open(outfile, "r") as fin:
+                    for line in fin:
+                        lines.append(line)
+                lines[0] = self.sample.toPython() + "\n"
+                with open(outfile, "w") as fout:
+                    for line in lines:
+                        fout.write(line)
+
+        
     def to_graph(self):
         """
         Converts the structure object to a graph representation.
