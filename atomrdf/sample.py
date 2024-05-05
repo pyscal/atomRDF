@@ -22,18 +22,22 @@ class Sample:
         }
         self.properties._add_attribute(mapdict)
 
+        labels, props = self._input_properties
         self.inputs = AttrSetter()
         mapdict = {}
-        for key, value in zip(*self._input_properties):
-            mapdict[key] = value
+        for key, value in zip(labels, props):
+            if key is not None:
+                mapdict[key] = value
         self.inputs._add_attribute(mapdict)
 
+        labels, props = self._output_properties
         self.outputs = AttrSetter()
         mapdict = {}
-        for key, value in zip(*self._output_properties):
-            mapdict[key] = value
+        for key, value in zip(labels, props):
+            if key is not None:
+                mapdict[key] = value
         self.outputs._add_attribute(mapdict)
-        
+
     def __str__(self):
         return f"{self._name}"
     
@@ -62,7 +66,8 @@ class Sample:
             units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
 
             props = [Property(value.toPython(), unit=unit, graph=self._graph) for value, unit in zip(values, units)]
-            return props, labels
+            return labels, props
+        return [], []
 
     @property
     def _output_properties(self):
@@ -73,7 +78,7 @@ class Sample:
         units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
 
         props = [Property(value.toPython(), unit=unit, graph=self._graph) for value, unit in zip(values, units)]
-        return props, labels   
+        return labels, props   
 
 class Property:
     def __init__(self, value, unit=None, graph=None):
