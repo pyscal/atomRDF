@@ -869,6 +869,20 @@ class KnowledgeGraph:
                         Literal(new_relpath, datatype=XSD.string),
                     )
                 )
+        #copy simulation files if needed
+        if add_simulations:
+            sim_store = f"{package_name}/simulation_store"
+            os.mkdir(sim_store)
+            activities = self.activity_ids
+            for activity in activities:
+                path = self.value(activity, CMSO.hasPath)
+                if path is not None:
+                    newpath = os.path.join(simstore, activity.toPython())
+                    shutil.copytree(path, newpath)
+
+                    #remove old path
+                    self.remove((activity, CMSO.hasPath, None))
+                    self.add((activity, CMSO.hasPath, Literal(newpath, datatype=XSD.string)))
 
         triple_file = os.path.join(package_name, "triples")
         self.write(triple_file, format=format)
