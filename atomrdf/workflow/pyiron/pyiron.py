@@ -8,6 +8,8 @@ from pyscal3.core import structure_dict, element_dict
 
 from atomrdf.structure import _make_crystal
 import atomrdf.workflow.pyiron.lammps as lammps
+import atomrdf.workflow.pyiron.vasp as vasp
+import atomrdf.workflow.pyiron.murnaghan as murnaghan
 
 def process_job(job):
     """
@@ -24,14 +26,12 @@ def process_job(job):
     TypeError
         If the job is not a valid pyiron job.
     """
-    valid_jobs = [
-        "Lammps",
-    ]
-
     if type(job).__name__ == 'Lammps':
         return lammps.process_job(job)
+    if type(job).__name__ == 'Vasp':
+        return vasp.process_job(job)    
     elif type(job).__name__ == 'Murnaghan':
-        return process_murnaghan_job(job)
+        return murnaghan.process_job(job)
     else:
         raise TypeError("These type of pyiron Job is not currently supported")
     
@@ -144,109 +144,5 @@ def inform_graph(pr, kg):
 
     pr.graph = kg
     pr._creator = StructureCreator(pr)
-
-def process_murnaghan_job(job):
-    #murnaghan job processing; add individual lammps jobs first
-    job_dicts = []
-    for jobid in job.child_ids:
-        child_job = job.project.load(jobid)
-        if type(child_job).__name__ == 'Lammps':
-            single_job_dict = process_lammps_job(child_job)
-            #note that we turn the jobs to child here
-            single_job_dict['intermediate'] = True
-            job_dicts.append(single_job_dict)
-    #create an additional jobdict with the murnaghan job
-    murnaghan_dict = {}
-    murnaghan_dict['id'] = job.id
-    murnaghan_dict['structure'] = get_structures(job)['structure']
-    murnaghan_dict['sample'] = get_structures(job)['sample']
-    murnaghan_dict['intermediate'] = False
-    murnaghan_dict['path'] = get_simulation_folder(job)
-
-    #add the murnaghan method
-    murnaghan_dict['method'] = "EquationOfState"
-    outputs = []
-    outputs.append(
-        {
-            "label": "EquilibriumEnergy",
-            "value": np.round(job['output/equilibrium_energy'], decimals=4),
-            "unit": "EV",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "EquilibriumVolume",
-            "value": np.round(job['output/equilibrium_volume'], decimals=4),
-            "unit": "ANGSTROM3",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "BulkModulus",
-            "value": np.round(job['output/equilibrium_bulk_modulus'], decimals=2),
-            "unit": "GigaPA",
-            "associate_to_sample": True,
-        }
-    )
-    murnaghan_dict['outputs'] = outputs
-    murnaghan_dict = add_software_lammps(murnaghan_dict)
-    job_dicts.append(murnaghan_dict)
-    return job_dicts
-
-
-
-def add_software_vasp(mdict):
-    mdict["workflow_manager"] = {}
-    mdict["workflow_manager"]["uri"] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
-    mdict["workflow_manager"]["label"] = "pyiron"
-    # and finally code details
-
-    software = {
-        "uri": "https://www.vasp.at/",
-        "label": "VASP",
-    }
-    mdict["software"] = [software]
-    return mdict
-
-
-
-def vasp_extract_calculated_quantities(job):
-    """
-    Extracts calculated quantities from a job.
-
-    Parameters
-    ----------
-    job : pyiron.Job
-        The job object containing the calculated quantities.
-
-    Returns
-    -------
-    list
-        A list of dictionaries, each containing the label, value, unit, and associate_to_sample of a calculated quantity.
-
-    """
-    aen = job.output.energy_tot[-1]
-    avol = job.output.volume[-1]
-    outputs = []
-    outputs.append(
-        {
-            "label": "TotalEnergy",
-            "value": np.round(aen, decimals=4),
-            "unit": "EV",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "TotalVolume",
-            "value": np.round(avol, decimals=4),
-            "unit": "ANGSTROM3",
-            "associate_to_sample": True,
-        }
-    )
-    return outputs
-
 
 

@@ -29,21 +29,6 @@ def get_structures(job, method_dict):
 
     if "sample_id" in initial_pyiron_structure.info.keys():
         initial_sample_id = initial_pyiron_structure.info["sample_id"]
-    
-    #now we can try to parse the POSCAR file directly here
-    if initial_sample_id is None:
-        if type(job).__name__ == 'Vasp':
-            #try to parse job directly, see if we have the structure written down in comments
-            job.decompress()
-            poscar_file = os.path.join(get_simulation_folder(job), 'POSCAR')
-            if os.path.exists(poscar_file):
-                lines = []
-                with open(poscar_file, 'r') as f:
-                    for line in f:
-                        lines.append(line)
-                        break
-            if 'sample' in lines[0]:
-                initial_sample_id = lines[0].strip()
 
     #add final structure
     final_pyscal_structure = System.read.ase(final_pyiron_structure)
