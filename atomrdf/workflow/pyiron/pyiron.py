@@ -8,10 +8,9 @@ from functools import partial, update_wrapper
 import ast
 from pyscal3.core import structure_dict, element_dict
 
-import atomrdf.workflow.workflow as wf
 from atomrdf.structure import _make_crystal
 from atomrdf.structure import System
-
+import atomrdf.workflow.pyiron.lammps as lammps
 
 def process_job(job):
     """
@@ -33,7 +32,7 @@ def process_job(job):
     ]
 
     if type(job).__name__ == 'Lammps':
-        return process_lammps_job(job)
+        return lammps.process_job(job)
     elif type(job).__name__ == 'Murnaghan':
         return process_murnaghan_job(job)
     else:
@@ -199,137 +198,24 @@ def process_murnaghan_job(job):
     job_dicts.append(murnaghan_dict)
     return job_dicts
 
-def process_lammps_job(job):
-    structure_dict = get_structures(job)
-    method_dict = lammps_identify_method(job)
-    output_dict = lammps_extract_calculated_quantities(job)
-
-    method_dict['structure'] = structure_dict['structure']
-    method_dict['sample'] = structure_dict['sample']
-    method_dict['outputs'] = output_dict
-    method_dict['intermediate'] = False
-    method_dict['path'] = get_simulation_folder(job)
-    return method_dict
-
-def get_simulation_folder(job):
-    return os.path.join(job.project.path, f'{job.name}_hdf5')
-
-def get_structures(job):
-    initial_pyiron_structure = job.structure
-    final_pyiron_structure = job.get_structure(frame=-1)
-    initial_pyscal_structure = System.read.ase(initial_pyiron_structure)
-
-    initial_sample_id = None
-    if "sample_id" in initial_pyiron_structure.info.keys():
-        initial_sample_id = initial_pyiron_structure.info["sample_id"]
-    # add final structure
-    final_pyscal_structure = System.read.ase(final_pyiron_structure)
-
-    # now we do rthe transfer
-    return {'structure': 
-                {'initial': initial_pyscal_structure, 
-                'final': final_pyscal_structure,}, 
-            'sample': 
-                {'initial':initial_sample_id, 
-                'final': None}}
 
 
-def lammps_identify_method(job):
-    job_dict = job.input.to_dict()
-    input_dict = {
-        job_dict["control_inp/data_dict"]["Parameter"][x]: job_dict[
-            "control_inp/data_dict"
-        ]["Value"][x]
-        for x in range(len(job_dict["control_inp/data_dict"]["Parameter"]))
-    }
-    dof = []
-    temp = None
-    press = None
-    md_method = None
-    ensemble = None
-
-    if "min_style" in input_dict.keys():
-        dof.append("AtomicPosition")
-        dof.append("CellVolume")
-        md_method = "MolecularStatics"
-
-    elif "nve" in input_dict["fix___ensemble"]:
-        if int(input_dict["run"]) == 0:
-            method = "static"
-            md_method = "MolecularStatics"
-            ensemble = "MicrocanonicalEnsemble"
-
-        elif int(input_dict["run"]) > 0:
-            method = "md_nve"
-            dof.append("AtomicPosition")
-            md_method = "MolecularDynamics"
-            ensemble = "MicrocanonicalEnsemble"
-
-    elif "nvt" in input_dict["fix___ensemble"]:
-        method = "md_nvt"
-        raw = input_dict["fix___ensemble"].split()
-        temp = float(raw[3])
-        dof.append("AtomicPosition")
-        md_method = "MolecularDynamics"
-        ensemble = "CanonicalEnsemble"
-
-    elif "npt" in input_dict["fix___ensemble"]:
-        dof.append("AtomicPosition")
-        dof.append("CellVolume")
-        if "aniso" in input_dict["fix___ensemble"]:
-            method = "md_npt_aniso"
-            dof.append("CellShape")
-        else:
-            method = "md_npt_iso"
-        md_method = "MolecularDynamics"
-        raw = input_dict["fix___ensemble"].split()
-        temp = float(raw[3])
-        press = float(raw[7])
-        ensemble = "IsothermalisobaricEnsemble"
-
-    mdict = {}
-    mdict["method"] = md_method
-    mdict["temperature"] = temp
-    mdict["pressure"] = press
-    mdict["dof"] = dof
-    mdict["ensemble"] = ensemble
-    #mdict["id"] = job.id
-
-    # now process potential
-    inpdict = job.input.to_dict()
-    ps = inpdict["potential_inp/data_dict"]["Value"][0]
-    name = inpdict["potential_inp/potential/Name"]
-    potstr = job.input.to_dict()["potential_inp/potential/Citations"]
-    potdict = ast.literal_eval(potstr[1:-1])
-    url = None
-    if "url" in potdict[list(potdict.keys())[0]].keys():
-        url = potdict[list(potdict.keys())[0]]["url"]
-
-    mdict["potential"] = {}
-    mdict["potential"]["type"] = ps
-    mdict["potential"]["label"] = name
-    if url is not None:
-        mdict["potential"]["uri"] = url
-    else:
-        mdict["potential"]["uri"] = name
-
-    mdict = add_software_lammps(mdict)
-    return mdict
-
-def add_software_lammps(mdict):
+def add_software_vasp(mdict):
     mdict["workflow_manager"] = {}
     mdict["workflow_manager"]["uri"] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
     mdict["workflow_manager"]["label"] = "pyiron"
     # and finally code details
 
     software = {
-        "uri": "http://demo.fiz-karlsruhe.de/matwerk/E447986",
-        "label": "LAMMPS",
+        "uri": "https://www.vasp.at/",
+        "label": "VASP",
     }
     mdict["software"] = [software]
     return mdict
 
-def lammps_extract_calculated_quantities(job):
+
+
+def vasp_extract_calculated_quantities(job):
     """
     Extracts calculated quantities from a job.
 
@@ -344,8 +230,8 @@ def lammps_extract_calculated_quantities(job):
         A list of dictionaries, each containing the label, value, unit, and associate_to_sample of a calculated quantity.
 
     """
-    aen = np.mean(job.output.energy_tot)
-    avol = np.mean(job.output.volume)
+    aen = job.output.energy_tot[-1]
+    avol = job.output.volume[-1]
     outputs = []
     outputs.append(
         {
