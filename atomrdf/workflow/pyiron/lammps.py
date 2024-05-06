@@ -49,12 +49,10 @@ def get_structures(job, method_dict):
     final_pyscal_structure = System.read.ase(final_pyiron_structure)
 
     # now we do rthe transfer
-    method_dict['structure'] = {'structure': 
-                {'initial': initial_pyscal_structure, 
-                'final': final_pyscal_structure,}, 
-            'sample': 
-                {'initial':initial_sample_id, 
-                'final': None}}
+    method_dict['structure'] = {'initial': initial_pyscal_structure, 
+                'final': final_pyscal_structure,} 
+    method_dict['sample'] =  {'initial':initial_sample_id, 
+                'final': None}
 
 def identify_method(job, method_dict):
     job_dict = job.input.to_dict()
