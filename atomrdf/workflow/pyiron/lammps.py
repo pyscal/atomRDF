@@ -10,6 +10,7 @@ from atomrdf.structure import System
 
 def process_job(job):
     method_dict = {}
+    method_dict['intermediate'] = False
     get_structures(job, method_dict)
     identify_method(job, method_dict)
     extract_calculated_quantities(job, method_dict)
