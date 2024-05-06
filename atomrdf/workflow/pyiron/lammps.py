@@ -4,6 +4,9 @@ LAMMPS specific functions for parsing
 Use this a reference for specific implementations
 """
 import os
+import numpy as np
+import ast
+from atomrdf.structure import System
 
 def process_job(job):
     method_dict = {}

@@ -46,7 +46,7 @@ class Workflow:
 
     def inform_graph(self, pr, workflow_environment=None, workflow_module=None):
         if workflow_environment is not None:
-            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
+            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}.{workflow_environment}")
         
         if workflow_module is not None:
             workflow_module.inform_graph(pr, self.kg)
@@ -55,7 +55,7 @@ class Workflow:
     def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dicts=None, add_intermediate_jobs=False):
 
         if workflow_environment is not None:
-            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
+            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}.{workflow_environment}")
             job_dicts = np.atleast_1d(workflow_module.process_job(job))
         elif workflow_module is not None:
             job_dicts = np.atleast_1d(workflow_module.process_job(job))

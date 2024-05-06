@@ -3,13 +3,10 @@ Wrappers for pyiron jobs
 """
 
 import os
-import numpy as np
 from functools import partial, update_wrapper
-import ast
 from pyscal3.core import structure_dict, element_dict
 
 from atomrdf.structure import _make_crystal
-from atomrdf.structure import System
 import atomrdf.workflow.pyiron.lammps as lammps
 
 def process_job(job):
