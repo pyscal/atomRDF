@@ -19,7 +19,7 @@ def process_job(job):
     murnaghan_dict = {}
     lammps.get_structures(job, murnaghan_dict)
     murnaghan_dict['intermediate'] = False
-    lammps.get_simulation_folder(job)
+    lammps.get_simulation_folder(job, murnaghan_dict)
 
     #add the murnaghan method
     murnaghan_dict['method'] = "EquationOfState"

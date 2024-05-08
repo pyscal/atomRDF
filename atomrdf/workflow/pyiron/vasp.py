@@ -10,11 +10,11 @@ def process_job(job):
     identify_method(job, method_dict)
     extract_calculated_quantities(job, method_dict)
     add_software(method_dict)
-    get_simulation_folder(job, method_dict)
+    method_dict['path'] = get_simulation_folder(job)
     return method_dict
 
-def get_simulation_folder(job, method_dict):
-    method_dict['path'] = os.path.join(job.project.path, f'{job.name}_hdf5')
+def get_simulation_folder(job):
+    return os.path.join(job.project.path, f'{job.name}_hdf5')
 
 def get_structures(job, method_dict):
     initial_pyiron_structure = job.structure
@@ -36,8 +36,8 @@ def get_structures(job, method_dict):
                 for line in f:
                     lines.append(line)
                     break
-        if 'sample' in lines[0]:
-            initial_sample_id = lines[0].strip()
+            if 'sample' in lines[0]:
+                initial_sample_id = lines[0].strip()
 
     #add final structure
     final_pyscal_structure = System.read.ase(final_pyiron_structure)
@@ -108,7 +108,7 @@ def identify_method(job, method_dict):
     xc = indf['Value'][0]
     method_dict['xc_functional'] = xc
 
-def add_software_(method_dict):
+def add_software(method_dict):
     method_dict["workflow_manager"] = {}
     method_dict["workflow_manager"]["uri"] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
     method_dict["workflow_manager"]["label"] = "pyiron"
