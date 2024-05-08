@@ -28,7 +28,7 @@ import uuid
 from atomrdf.structure import System
 
 # Move imports to another file
-from atomrdf.namespace import PROV, CMSO, PODO, ASMO
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO
 
 class Workflow:
     def __init__(self, kg):
@@ -420,8 +420,10 @@ class Workflow:
             )
 
         if job_dict["xc_functional"] is not None:
-            pass
-        #self.kg.add((method, ASMO.hasInteratomicPotential, potential))
+            if job_dict["xc_functional"] in ['PBE', 'GGA']:
+                self.kg.add((method, MDO.hasXCFunctional, MDO.GGA))
+            elif job_dict["xc_functional"] in ['LDA']:
+                self.kg.add((method, MDO.hasXCFunctional, MDO.LDA)
 
     
     def _add_md(self, job_dict, activity):
