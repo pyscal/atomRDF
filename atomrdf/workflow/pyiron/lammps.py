@@ -54,8 +54,8 @@ def identify_method(job, method_dict):
     ensemble = None
 
     if "min_style" in input_dict.keys():
-        dof.append("AtomicPosition")
-        dof.append("CellVolume")
+        dof.append("AtomicPositionRelaxation")
+        dof.append("CellVolumeRelaxation")
         md_method = "MolecularStatics"
 
     elif "nve" in input_dict["fix___ensemble"]:
@@ -66,7 +66,7 @@ def identify_method(job, method_dict):
 
         elif int(input_dict["run"]) > 0:
             method = "md_nve"
-            dof.append("AtomicPosition")
+            dof.append("AtomicPositionRelaxation")
             md_method = "MolecularDynamics"
             ensemble = "MicrocanonicalEnsemble"
 
@@ -74,23 +74,23 @@ def identify_method(job, method_dict):
         method = "md_nvt"
         raw = input_dict["fix___ensemble"].split()
         temp = float(raw[3])
-        dof.append("AtomicPosition")
+        dof.append("AtomicPositionRelaxation")
         md_method = "MolecularDynamics"
         ensemble = "CanonicalEnsemble"
 
     elif "npt" in input_dict["fix___ensemble"]:
-        dof.append("AtomicPosition")
-        dof.append("CellVolume")
+        dof.append("AtomicPositionRelaxation")
+        dof.append("CellVolumeRelaxation")
         if "aniso" in input_dict["fix___ensemble"]:
             method = "md_npt_aniso"
-            dof.append("CellShape")
+            dof.append("CellShapeRelaxation")
         else:
             method = "md_npt_iso"
         md_method = "MolecularDynamics"
         raw = input_dict["fix___ensemble"].split()
         temp = float(raw[3])
         press = float(raw[7])
-        ensemble = "IsothermalisobaricEnsemble"
+        ensemble = "IsothermalIsobaricEnsemble"
 
     method_dict["method"] = md_method
     method_dict["temperature"] = temp
