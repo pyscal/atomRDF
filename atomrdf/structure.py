@@ -1447,18 +1447,18 @@ class System(pc.System):
         Returns
         -------
         """
-        space_group = URIRef(f"{self._name}_SpaceGroup")
-        self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
+        #space_group = URIRef(f"{self._name}_SpaceGroup")
+        #self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
         self.graph.add(
             (
-                space_group,
+                self.crystal_structure,
                 CMSO.hasSpaceGroupSymbol,
                 Literal(spacegroup_symbol, datatype=XSD.string),
             )
         )
         self.graph.add(
             (
-                space_group,
+                self.crystal_structure,
                 CMSO.hasSpaceGroupNumber,
                 Literal(spacegroup_number, datatype=XSD.integer),
             )
