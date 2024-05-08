@@ -139,7 +139,7 @@ def extract_calculated_quantities(job, method_dict):
     outputs.append(
         {
             "label": "TotalEnergy",
-            "value": np.round(job.output.energy_tot, decimals=5),
+            "value": np.round(job.output.energy_tot[-1], decimals=5),
             "unit": "EV",
             "associate_to_sample": True,
         }
@@ -147,7 +147,7 @@ def extract_calculated_quantities(job, method_dict):
     outputs.append(
         {
             "label": "TotalVolume",
-            "value": np.round(job.output.volume, decimals=5),
+            "value": np.round(job.output.volume[-1], decimals=5),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
         }
