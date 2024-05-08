@@ -655,8 +655,7 @@ class KnowledgeGraph:
             ]
         )
         crystalstructure = self.value(material, CMSO.hasStructure)
-        spacegroup = self.value(crystalstructure, CMSO.hasSpaceGroup)
-        spacegroupsymbol = self.value(spacegroup, CMSO.hasSpaceGroupSymbol).toPython()
+        spacegroupsymbol = self.value(crystalstructure, CMSO.hasSpaceGroupSymbol).toPython()
 
         lattice = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
         defect_types = list([self.value(d, RDF.type).toPython() for d in defects])

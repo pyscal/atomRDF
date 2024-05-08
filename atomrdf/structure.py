@@ -960,9 +960,6 @@ class System(pc.System):
             randindex = np.random.randint(0, len(octa_pos), len(element))
             randpos = np.unique(octa_pos, axis=0)[randindex]
 
-            no_of_impurities = len(randpos)
-            conc_of_impurities = no_of_impurities/self.natoms
-
             if not len(randpos) == len(element):
                 raise ValueError("not enough octahedral positions found!")
 
@@ -970,6 +967,9 @@ class System(pc.System):
             raise ValueError("void_type can only be tetrahedral/octahedral")
 
         # create new system with the atoms added
+        no_of_impurities = len(randpos)
+        conc_of_impurities = no_of_impurities/self.natoms
+
         sysn = System(source=self.add_atoms({"positions": randpos, "species": element}))
         # attach graphs
         sysn.sample = self.sample
