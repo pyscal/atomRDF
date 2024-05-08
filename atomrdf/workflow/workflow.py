@@ -283,19 +283,19 @@ class Workflow:
         # ----------------------------------------------------------
         method = URIRef(f"{main_id}_method")
         if job_dict["method"] == "MolecularStatics":
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EnergyCalculation))
+            self.kg.add((activity, RDF.type, ASMO.EnergyCalculation))
             self.kg.add((method, RDF.type, ASMO.MolecularStatics))
             self._add_dof(job_dict, activity)
             self._add_md(job_dict, activity)
 
         elif job_dict["method"] == "MolecularDynamics":
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EnergyCalculation))
+            self.kg.add((activity, RDF.type, ASMO.EnergyCalculation))
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
             self._add_dof(job_dict, activity)
             self._add_md(job_dict, activity)
 
         elif job_dict["method"] == "DensityFunctionalTheory":
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EnergyCalculation))
+            self.kg.add((activity, RDF.type, ASMO.EnergyCalculation))
             self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
             self._add_dof(job_dict, activity)
             self._add_dft(job_dict, method, activity)

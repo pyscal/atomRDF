@@ -354,7 +354,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/asmo/hasInputParameter -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasInputParameter">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/StructureOptimization"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation"/>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an Energy Calculation activity and the input parameters used.</obo:IAO_0000115>
         <rdfs:label>has input parameter</rdfs:label>
@@ -376,7 +376,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/asmo/hasRelaxationDOF -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasRelaxationDOF">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/StructureOptimization"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation"/>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/asmo/RelaxationDOF"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an Energy Calculation activity and the relaxation degrees of freedom set as constraints in the calculation.</obo:IAO_0000115>
         <rdfs:label>has relaxation DOF</rdfs:label>
@@ -794,6 +794,17 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy calculation is an activity where the energy of the system is computed within the given optimization constraints.</obo:IAO_0000115>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">This activity does not specify the way the energy is calculated, it can be used to refer to a rigid calculation or also to energy minimization or optimization. See RelaxationDOF class for specifics about the constraints.</rdfs:comment>
+        <rdfs:label>Energy Calculation</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/EnergyDifferenceCalculation -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EnergyDifferenceCalculation">
@@ -949,17 +960,6 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stillinger-Weber Potential is an interatomic potential comprising both two- and three-atom contributions to describe interactions in solid and liquid forms of Si (and other diamond structures).</obo:IAO_0000115>
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRevB.31.5262</obo:IAO_0000119>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stillinger-Weber Potential</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://purls.helmholtz-metadaten.de/asmo/StructureOptimization -->
-
-    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/StructureOptimization">
-        <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy calculation is an activity where the energy of the system is computed within the given optimization constraints.</obo:IAO_0000115>
-        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">This activity does not specify the way the energy is calculated, it can be used to refer to a rigid calculation or also to energy minimization or optimization. See RelaxationDOF class for specifics about the constraints.</rdfs:comment>
-        <rdfs:label>Energy Calculation</rdfs:label>
     </owl:Class>
     
 

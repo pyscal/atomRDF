@@ -80,15 +80,15 @@ def read_ontology():
     )
     combo.add_path(("cmso:ComputationalSample", "rdf:type", "prov:Entity"))
     combo.add_path(("cmso:AtomicScaleSample", "prov:wasGeneratedBy", "prov:Activity"))
-    combo.add_path(("asmo:StructureOptimization", "rdf:type", "prov:Activity"))
+    combo.add_path(("asmo:EnergyCalculation", "rdf:type", "prov:Activity"))
     combo.add_path(
-        ("asmo:StructureOptimization", "prov:wasAssociatedWith", "prov:SoftwareAgent")
+        ("asmo:EnergyCalculation", "prov:wasAssociatedWith", "prov:SoftwareAgent")
     )
     combo.add_path(
         (
             "cmso:ComputationalSample",
             "prov:wasGeneratedBy",
-            "asmo:StructureOptimization",
+            "asmo:EnergyCalculation",
         )
     )
     
