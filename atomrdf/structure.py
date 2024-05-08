@@ -880,9 +880,9 @@ class System(pc.System):
     def add_triples_for_substitutional_impurities(self, conc_of_impurities, no_of_impurities=None):
         defect = self.graph.create_node(f"{self._name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity)
         self.graph.add((self.material, CMSO.hasDefect, defect))
-        self.graph.add((self.material, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
+        self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
         if no_of_impurities is not None:
-            self.graph.add((self.material, PODO.hasNumberOfImpurities, Literal(no_of_impurities, datatype=XSD.integer)))
+            self.graph.add((self.sample, PODO.hasNumberOfImpurities, Literal(no_of_impurities, datatype=XSD.integer)))
 
     def add_interstitial_impurities(
         self, element, void_type="tetrahedral", 
@@ -928,6 +928,7 @@ class System(pc.System):
             randindex = np.random.randint(0, len(verts), len(element))
             randpos = np.array(verts)[randindex]
 
+
         elif void_type == "octahedral":
             if lattice_constant is None:
                 if "lattice_constant" in self.lattice_properties.keys():
@@ -957,6 +958,9 @@ class System(pc.System):
 
             randindex = np.random.randint(0, len(octa_pos), len(element))
             randpos = np.unique(octa_pos, axis=0)[randindex]
+
+            no_of_impurities = len(rand_pos)
+            conc_of_impurities = no_of_impurities/self.natoms
 
             if not len(randpos) == len(element):
                 raise ValueError("not enough octahedral positions found!")
@@ -1047,12 +1051,15 @@ class System(pc.System):
             )
             json_io.write_file(outfile, datadict)
 
-            self.add_triples_for_interstitial_impurities()
+            self.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities)
         return sysn
 
-    def add_triples_for_interstitial_impurities(self):
+    def add_triples_for_interstitial_impurities(self, conc_of_impurities, no_of_impurities=None):
         defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity)
         self.graph.add((self.material, CMSO.hasDefect, defect))
+        self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
+        if no_of_impurities is not None:
+            self.graph.add((self.sample, PODO.hasNumberOfImpurities, Literal(no_of_impurities, datatype=XSD.integer)))
 
 
     def __delitem__(self, val):
