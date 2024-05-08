@@ -423,7 +423,7 @@ class Workflow:
             if job_dict["xc_functional"] in ['PBE', 'GGA']:
                 self.kg.add((method, MDO.hasXCFunctional, MDO.GGA))
             elif job_dict["xc_functional"] in ['LDA']:
-                self.kg.add((method, MDO.hasXCFunctional, MDO.LDA)
+                self.kg.add((method, MDO.hasXCFunctional, MDO.LDA))
 
     
     def _add_md(self, job_dict, activity):
