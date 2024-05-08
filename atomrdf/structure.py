@@ -735,7 +735,7 @@ class System(pc.System):
         self.graph.add((self.material, CMSO.hasDefect, vacancy))
         self.graph.add(
             (
-                self.simulation_cell,
+                self.sample,
                 PODO.hasVacancyConcentration,
                 Literal(concentration, datatype=XSD.float),
             )
@@ -743,7 +743,7 @@ class System(pc.System):
         if number is not None:
             self.graph.add(
                 (
-                    self.simulation_cell,
+                    self.sample,
                     PODO.hasNumberOfVacancies,
                     Literal(number, datatype=XSD.integer),
                 )
@@ -805,6 +805,9 @@ class System(pc.System):
         for x in delete_ids:
             self.atoms["species"][x] = substitution_element
             self.atoms["types"][x] = maxtype
+        #impurity metrics
+        no_of_impurities = len(delete_ids)
+        conc_of_impurities = no_of_impurities/self.natoms
 
         # operate on the graph
         if self.graph is not None:
@@ -872,11 +875,14 @@ class System(pc.System):
                 self.graph.structure_store, str(self._name).split(":")[-1]
             )
             json_io.write_file(outfile, datadict)
-            self.add_triples_for_substitutional_impurities()
+            self.add_triples_for_substitutional_impurities(conc_of_impurities, no_of_impurities=no_of_impurities)
 
-    def add_triples_for_substitutional_impurities(self):
+    def add_triples_for_substitutional_impurities(self, conc_of_impurities, no_of_impurities=None):
         defect = self.graph.create_node(f"{self._name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity)
         self.graph.add((self.material, CMSO.hasDefect, defect))
+        self.graph.add((self.material, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
+        if no_of_impurities is not None:
+            self.graph.add((self.material, PODO.hasNumberOfImpurities, Literal(no_of_impurities, datatype=XSD.integer)))
 
     def add_interstitial_impurities(
         self, element, void_type="tetrahedral", 
