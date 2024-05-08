@@ -1495,7 +1495,7 @@ class System(pc.System):
         self.graph.add(
             (
                 self.unit_cell,
-                Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice,
+                CMSO.hasBravaisLattice,
                 bv,
             )
         )
