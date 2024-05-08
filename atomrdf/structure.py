@@ -324,6 +324,7 @@ def _make_dislocation(
     output_structure.atoms = atom_obj
     output_structure = output_structure.modify.remap_to_box()
     output_structure.label = label
+
     return output_structure
 
 
@@ -882,7 +883,7 @@ class System(pc.System):
         self.graph.add((self.material, CMSO.hasDefect, defect))
         self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
         if no_of_impurities is not None:
-            self.graph.add((self.sample, PODO.hasNumberOfImpurities, Literal(no_of_impurities, datatype=XSD.integer)))
+            self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
 
     def add_interstitial_impurities(
         self, element, void_type="tetrahedral", 
@@ -1059,7 +1060,7 @@ class System(pc.System):
         self.graph.add((self.material, CMSO.hasDefect, defect))
         self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
         if no_of_impurities is not None:
-            self.graph.add((self.sample, PODO.hasNumberOfImpurities, Literal(no_of_impurities, datatype=XSD.integer)))
+            self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
 
 
     def __delitem__(self, val):
