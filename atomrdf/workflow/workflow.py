@@ -165,14 +165,14 @@ class Workflow:
 
         altname = self.kg.value(crystal_structure, CMSO.hasAltName)
 
-        space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
-        space_group_symbol = self.kg.value(space_group, CMSO.hasSpaceGroupSymbol)
-        space_group_number = self.kg.value(space_group, CMSO.hasSpaceGroupNumber)
+        #space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
+        space_group_symbol = self.kg.value(crystal_structure, CMSO.hasSpaceGroupSymbol)
+        space_group_number = self.kg.value(crystal_structure, CMSO.hasSpaceGroupNumber)
 
         unit_cell = self.kg.value(crystal_structure, CMSO.hasUnitCell)
         blattice = self.kg.value(
             unit_cell,
-            Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice,
+            CMSO.hasBravaisLattice,
         )
 
         lattice_parameter = self.kg.value(unit_cell, CMSO.hasLatticeParameter)
@@ -226,18 +226,23 @@ class Workflow:
             for triple in self.kg.triples((defect, None, None)):
                 self.kg.add((new_defect, triple[1], triple[2]))
 
-        # now add the special props for vacancy
-        parent_simcell = self.kg.value(sample, CMSO.hasSimulationCell)
-        simcell = self.kg.value(parent_sample, CMSO.hasSimulationCell)
-
+        # now add the special props for vacancy, interstitial &substitional
         for triple in self.kg.triples(
-            (parent_simcell, PODO.hasVacancyConcentration, None)
+            (parent_sample, PODO.hasVacancyConcentration, None)
         ):
-            self.kg.add((simcell, triple[1], triple[2]))
+            self.kg.add((sample, triple[1], triple[2]))
         for triple in self.kg.triples(
-            (parent_simcell, PODO.hasNumberOfVacancies, None)
+            (parent_sample, PODO.hasNumberOfVacancies, None)
         ):
-            self.kg.add((simcell, triple[1], triple[2]))
+            self.kg.add((sample, triple[1], triple[2]))
+        for triple in self.kg.triples(
+            (parent_sample, PODO.hasImpurityConcentration, None)
+        ):
+            self.kg.add((sample, triple[1], triple[2]))
+        for triple in self.kg.triples(
+            (parent_sample, PODO.hasNumberOfImpurityAtoms, None)
+        ):
+            self.kg.add((sample, triple[1], triple[2]))
 
 
 
