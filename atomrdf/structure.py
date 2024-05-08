@@ -960,7 +960,7 @@ class System(pc.System):
             randindex = np.random.randint(0, len(octa_pos), len(element))
             randpos = np.unique(octa_pos, axis=0)[randindex]
 
-            no_of_impurities = len(rand_pos)
+            no_of_impurities = len(randpos)
             conc_of_impurities = no_of_impurities/self.natoms
 
             if not len(randpos) == len(element):
