@@ -1216,7 +1216,7 @@ class KnowledgeGraph:
         sys.graph = self
         return sys
 
-    def to_file(self, sample, filename=None, format="poscar"):
+    def to_file(self, sample, filename=None, format="poscar", add_sample_id=True):
         """
         Save a given sample to a file
 
@@ -1246,6 +1246,15 @@ class KnowledgeGraph:
         elif format == "poscar":
             asesys = sys.write.ase()
             write(filename, asesys, format="vasp")
+            if add_sample_id:
+                lines = []
+                with open(filename, "r") as fin:
+                    for line in fin:
+                        lines.append(line)
+                lines[0] = sample.toPython() + "\n"
+                with open(filename, "w") as fout:
+                    for line in lines:
+                        fout.write(line)
         else:
             asesys = sys.write.ase()
             write(filename, asesys, format=format)

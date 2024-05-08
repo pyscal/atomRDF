@@ -46,7 +46,7 @@ class Workflow:
 
     def inform_graph(self, pr, workflow_environment=None, workflow_module=None):
         if workflow_environment is not None:
-            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
+            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}.{workflow_environment}")
         
         if workflow_module is not None:
             workflow_module.inform_graph(pr, self.kg)
@@ -55,7 +55,7 @@ class Workflow:
     def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dicts=None, add_intermediate_jobs=False):
 
         if workflow_environment is not None:
-            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}")
+            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}.{workflow_environment}")
             job_dicts = np.atleast_1d(workflow_module.process_job(job))
         elif workflow_module is not None:
             job_dicts = np.atleast_1d(workflow_module.process_job(job))
@@ -108,7 +108,7 @@ class Workflow:
 
         if job_dict['sample']['initial'] is None:
             # its not added to graph yet
-            parent_sample = job_dict['structure']['initial']
+            parent_structure = job_dict['structure']['initial']
             if parent_structure is not None:
                 parent_structure.graph = self.kg
                 parent_structure.to_graph()
@@ -387,76 +387,47 @@ class Workflow:
             else:
                 self.kg.add((method, PROV.wasAssociatedWith, agent))
 
-    def _add_md(self, job_dict, method, activity):
+
+    def _add_dft(self, job_dict, method, activity):
         main_id = job_dict['id']
-        if job_dict["ensemble"] is not None:
-            self.kg.add(
-                (method, ASMO.hasStatisticalEnsemble, getattr(ASMO, job_dict["ensemble"]))
-            )
 
         # add temperature if needed
-        if job_dict["temperature"] is not None:
-            temperature = self.kg.create_node(
-                f"{main_id}_temperature", ASMO.InputParameter
+        if job_dict["encut"] is not None:
+            encut = self.kg.create_node(
+                f"{main_id}_energy_cutoff", ASMO.InputParameter
             )
             self.kg.add(
-                (temperature, RDFS.label, Literal("temperature", datatype=XSD.string))
+                (encut, RDFS.label, Literal("energy_cutoff", datatype=XSD.string))
             )
-            self.kg.add((activity, ASMO.hasInputParameter, temperature))
+            self.kg.add((activity, ASMO.hasInputParameter, encut))
             self.kg.add(
                 (
-                    temperature,
+                    encut,
                     ASMO.hasValue,
-                    Literal(job_dict["temperature"], datatype=XSD.float),
+                    Literal(float(job_dict["encut"]), datatype=XSD.float),
                 )
             )
             self.kg.add(
-                (temperature, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/K"))
+                (encut, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/EV"))
             )
 
-        if job_dict["pressure"] is not None:
-            pressure = self.kg.create_node(
-                f"{main_id}_pressure", ASMO.InputParameter
+        if job_dict["kpoint_grid"] is not None:
+            kpoint = self.kg.create_node(
+                f"{main_id}_kpoint", ASMO.InputParameter
             )
+            mesh_name = "K_point_"+job_dict["kpoint_type"]
             self.kg.add(
-                (pressure, RDFS.label, Literal("pressure", datatype=XSD.string))
+                (kpoint, RDFS.label, Literal(mesh_name, datatype=XSD.string))
             )
-            self.kg.add((activity, ASMO.hasInputParameter, pressure))
+            self.kg.add((activity, ASMO.hasInputParameter, kpoint))
             self.kg.add(
                 (
-                    pressure,
+                    kpoint,
                     ASMO.hasValue,
-                    Literal(job_dict["pressure"], datatype=XSD.float),
+                    Literal(job_dict["kpoint_grid"], datatype=XSD.string),
                 )
             )
-            self.kg.add(
-                (pressure, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/GigaPA"))
-            )
 
-        # potentials need to be mapped
-        potential = URIRef(f"{main_id}_potential")
-        if "meam" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
-        elif "eam" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.EmbeddedAtomModel))
-        elif "lj" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.LennardJonesPotential))
-        elif "ace" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.MachineLearningPotential))
-        else:
-            self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
-
-        if "uri" in job_dict["potential"].keys():
-            self.kg.add(
-                (
-                    potential,
-                    CMSO.hasReference,
-                    Literal(job_dict["potential"]["uri"], datatype=XSD.string),
-                )
-            )
-        if "label" in job_dict["potential"].keys():
-            self.kg.add(
-                (potential, RDFS.label, Literal(job_dict["potential"]["label"]))
-            )
-
-        self.kg.add((method, ASMO.hasInteratomicPotential, potential))
+        if job_dict["xc_functional"] is not None:
+            pass
+        #self.kg.add((method, ASMO.hasInteratomicPotential, potential))
