@@ -92,8 +92,7 @@ def test_sparql_query():
 	    ?sample cmso:hasNumberOfAtoms ?number .
 	    ?sample cmso:hasMaterial ?material .
 	    ?material cmso:hasStructure ?structure .
-	    ?structure cmso:hasSpaceGroup ?spgroup .
-	    ?spgroup cmso:hasSpaceGroupSymbol ?symbol .
+	    ?structure cmso:hasSpaceGroupSymbol ?symbol .
 	FILTER (?number="4"^^xsd:integer)
 	}"""
 	res = kg.query(query)

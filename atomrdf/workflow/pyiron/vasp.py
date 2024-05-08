@@ -66,24 +66,24 @@ def identify_method(job, method_dict):
     dof = []
     if 'ISIF' in mdict.keys():
         if mdict['ISIF'] in ['0', '1', '2']:
-            dof.append('AtomicPosition')
+            dof.append('AtomicPositionRelaxation')
         elif mdict['ISIF'] == '3':
-            dof.append('AtomicPosition')
-            dof.append('CellShape')
-            dof.append('CellVolume')
+            dof.append('AtomicPositionRelaxation')
+            dof.append('CellShapeRelaxation')
+            dof.append('CellVolumeRelaxation')
         elif mdict['ISIF'] == '4':
-            dof.append('AtomicPosition')
-            dof.append('CellShape')
+            dof.append('AtomicPositionRelaxation')
+            dof.append('CellShapeRelaxation')
         elif mdict['ISIF'] == '5':
-            dof.append('CellShape')
+            dof.append('CellShapeRelaxation')
         elif mdict['ISIF'] == '6':
-            dof.append('CellShape')
-            dof.append('CellVolume')
+            dof.append('CellShapeRelaxation')
+            dof.append('CellVolumeRelaxation')
         elif mdict['ISIF'] == '7':
-            dof.append('CellVolume')
+            dof.append('CellVolumeRelaxation')
         elif mdict['ISIF'] == '8':
-            dof.append('AtomicPosition')
-            dof.append('CellVolume')
+            dof.append('AtomicPositionRelaxation')
+            dof.append('CellVolumeRelaxation')
     if 'NSW' in mdict.keys():
         if mdict['NSW'] == '0':
             dof = []

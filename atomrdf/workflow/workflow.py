@@ -28,7 +28,7 @@ import uuid
 from atomrdf.structure import System
 
 # Move imports to another file
-from atomrdf.namespace import PROV, CMSO, PODO, ASMO
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO
 
 class Workflow:
     def __init__(self, kg):
@@ -165,14 +165,14 @@ class Workflow:
 
         altname = self.kg.value(crystal_structure, CMSO.hasAltName)
 
-        space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
-        space_group_symbol = self.kg.value(space_group, CMSO.hasSpaceGroupSymbol)
-        space_group_number = self.kg.value(space_group, CMSO.hasSpaceGroupNumber)
+        #space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
+        space_group_symbol = self.kg.value(crystal_structure, CMSO.hasSpaceGroupSymbol)
+        space_group_number = self.kg.value(crystal_structure, CMSO.hasSpaceGroupNumber)
 
         unit_cell = self.kg.value(crystal_structure, CMSO.hasUnitCell)
         blattice = self.kg.value(
             unit_cell,
-            Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice,
+            CMSO.hasBravaisLattice,
         )
 
         lattice_parameter = self.kg.value(unit_cell, CMSO.hasLatticeParameter)
@@ -226,18 +226,23 @@ class Workflow:
             for triple in self.kg.triples((defect, None, None)):
                 self.kg.add((new_defect, triple[1], triple[2]))
 
-        # now add the special props for vacancy
-        parent_simcell = self.kg.value(sample, CMSO.hasSimulationCell)
-        simcell = self.kg.value(parent_sample, CMSO.hasSimulationCell)
-
+        # now add the special props for vacancy, interstitial &substitional
         for triple in self.kg.triples(
-            (parent_simcell, PODO.hasVacancyConcentration, None)
+            (parent_sample, PODO.hasVacancyConcentration, None)
         ):
-            self.kg.add((simcell, triple[1], triple[2]))
+            self.kg.add((sample, triple[1], triple[2]))
         for triple in self.kg.triples(
-            (parent_simcell, PODO.hasNumberOfVacancies, None)
+            (parent_sample, PODO.hasNumberOfVacancies, None)
         ):
-            self.kg.add((simcell, triple[1], triple[2]))
+            self.kg.add((sample, triple[1], triple[2]))
+        for triple in self.kg.triples(
+            (parent_sample, PODO.hasImpurityConcentration, None)
+        ):
+            self.kg.add((sample, triple[1], triple[2]))
+        for triple in self.kg.triples(
+            (parent_sample, PODO.hasNumberOfImpurityAtoms, None)
+        ):
+            self.kg.add((sample, triple[1], triple[2]))
 
 
 
@@ -273,35 +278,34 @@ class Workflow:
         job_dict['id'] = main_id
         activity = URIRef(main_id)
         self.kg.add((activity, RDF.type, PROV.Activity))
-
+        
         # add method
         # ----------------------------------------------------------
         method = URIRef(f"{main_id}_method")
         if job_dict["method"] == "MolecularStatics":
-            #TODO: Replace with ASMO.MolecularStatics
-            self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EnergyCalculation))
+            self.kg.add((method, RDF.type, ASMO.MolecularStatics))
             self._add_dof(job_dict, activity)
-            self._add_md(job_dict, method, activity)
-            self.kg.add((activity, ASMO.hasComputationalMethod, method))
+            self._add_md(job_dict, activity)
 
         elif job_dict["method"] == "MolecularDynamics":
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EnergyCalculation))
             self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
             self._add_dof(job_dict, activity)
-            self._add_md(job_dict, method, activity)
-            self.kg.add((activity, ASMO.hasComputationalMethod, method))
+            self._add_md(job_dict, activity)
 
         elif job_dict["method"] == "DensityFunctionalTheory":
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EnergyCalculation))
             self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
             self._add_dof(job_dict, activity)
             self._add_dft(job_dict, method, activity)
-            self.kg.add((activity, ASMO.hasComputationalMethod, method))
 
-        elif job_dict["method"] == "EquationOfState":
-            self.kg.add((method, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfState))
-            self.kg.add((activity, Namespace("http://purls.helmholtz-metadaten.de/asmo/").hasComputationalMethod, method))
+        elif job_dict["method"] == "EquationOfState":            
+            #special type of EOS should be initialised!
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfStateFit))
         
         # add that structure was generated
-        #TODO: Move hasComputationalMethod here after EquationOfState is added
+        self.kg.add((activity, ASMO.hasComputationalMethod, method))
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
         self.kg.add((activity, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
         self._add_inputs(job_dict, activity)
@@ -309,19 +313,6 @@ class Workflow:
         self._add_software(job_dict, method)
 
     def _add_dof(self, job_dict, activity):
-        if len(job_dict["dof"]) == 0:
-            self.kg.add(
-                (
-                    activity,
-                    RDF.type,
-                    Namespace(
-                        "http://purls.helmholtz-metadaten.de/asmo/"
-                    ).RigidEnergyCalculation,
-                )
-            )
-        else:
-            self.kg.add((activity, RDF.type, ASMO.StructureOptimization))
-        # add DOFs
         for dof in job_dict["dof"]:
             self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
 
@@ -429,5 +420,82 @@ class Workflow:
             )
 
         if job_dict["xc_functional"] is not None:
-            pass
-        #self.kg.add((method, ASMO.hasInteratomicPotential, potential))
+            if job_dict["xc_functional"] in ['PBE', 'GGA']:
+                self.kg.add((method, MDO.hasXCFunctional, MDO.GGA))
+            elif job_dict["xc_functional"] in ['LDA']:
+                self.kg.add((method, MDO.hasXCFunctional, MDO.LDA))
+
+    
+    def _add_md(self, job_dict, activity):
+        main_id = job_dict['id']
+        if job_dict["ensemble"] is not None:
+            self.kg.add(
+                (activity, ASMO.hasStatisticalEnsemble, getattr(ASMO, job_dict["ensemble"]))
+            )
+
+        # add temperature if needed
+        if job_dict["temperature"] is not None:
+            temperature = self.kg.create_node(
+                f"{main_id}_temperature", ASMO.InputParameter
+            )
+            self.kg.add(
+                (temperature, RDFS.label, Literal("temperature", datatype=XSD.string))
+            )
+            self.kg.add((activity, ASMO.hasInputParameter, temperature))
+            self.kg.add(
+                (
+                    temperature,
+                    ASMO.hasValue,
+                    Literal(job_dict["temperature"], datatype=XSD.float),
+                )
+            )
+            self.kg.add(
+                (temperature, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/K"))
+            )
+
+        if job_dict["pressure"] is not None:
+            pressure = self.kg.create_node(
+                f"{main_id}_pressure", ASMO.InputParameter
+            )
+            self.kg.add(
+                (pressure, RDFS.label, Literal("pressure", datatype=XSD.string))
+            )
+            self.kg.add((activity, ASMO.hasInputParameter, pressure))
+            self.kg.add(
+                (
+                    pressure,
+                    ASMO.hasValue,
+                    Literal(job_dict["pressure"], datatype=XSD.float),
+                )
+            )
+            self.kg.add(
+                (pressure, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/GigaPA"))
+            )
+
+        # potentials need to be mapped
+        potential = URIRef(f"{main_id}_potential")
+        if "meam" in job_dict["potential"]["type"]:
+            self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
+        elif "eam" in job_dict["potential"]["type"]:
+            self.kg.add((potential, RDF.type, ASMO.EmbeddedAtomModel))
+        elif "lj" in job_dict["potential"]["type"]:
+            self.kg.add((potential, RDF.type, ASMO.LennardJonesPotential))
+        elif "ace" in job_dict["potential"]["type"]:
+            self.kg.add((potential, RDF.type, ASMO.MachineLearningPotential))
+        else:
+            self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
+
+        if "uri" in job_dict["potential"].keys():
+            self.kg.add(
+                (
+                    potential,
+                    CMSO.hasReference,
+                    Literal(job_dict["potential"]["uri"], datatype=XSD.string),
+                )
+            )
+        if "label" in job_dict["potential"].keys():
+            self.kg.add(
+                (potential, RDFS.label, Literal(job_dict["potential"]["label"]))
+            )
+
+        self.kg.add((activity, ASMO.hasInteratomicPotential, potential))

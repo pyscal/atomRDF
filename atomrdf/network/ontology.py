@@ -63,10 +63,18 @@ def read_ontology():
     combo.add_path(("cmso:CrystalStructure", "cmso:hasAltName", "string"))
 
     # interontology paths
+    #CMSO -> PODO VACANCY
     combo.add_path(("cmso:Material", "cmso:hasDefect", "pldo:PlanarDefect"))
     combo.add_path(("cmso:Material", "cmso:hasDefect", "podo:Vacancy"))
-    combo.add_path(("cmso:SimulationCell", "podo:hasVacancyConcentration", "float"))
-    combo.add_path(("cmso:SimulationCell", "podo:hasNumberOfVacancies", "int"))
+    combo.add_path(("cmso:AtomicScaleSample", "podo:hasVacancyConcentration", "float"))
+    combo.add_path(("cmso:AtomicScaleSample", "podo:hasNumberOfVacancies", "int"))
+    
+    #CMSO -> PODO IMPURITY
+    combo.add_path(("cmso:Material", "cmso:hasDefect", "podo:SubstitutionalImpurity"))
+    combo.add_path(("cmso:Material", "cmso:hasDefect", "podo:InterstitialImpurity"))
+    combo.add_path(("cmso:AtomicScaleSample", "podo:hasNumberOfImpurityAtoms", "int"))
+    combo.add_path(("cmso:AtomicScaleSample", "podo:hasImpurityConcentration", "float"))
+    
     combo.add_path(
         ("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample")
     )

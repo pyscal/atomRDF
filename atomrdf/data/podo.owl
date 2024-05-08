@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
-<rdf:RDF xmlns="http://www.semanticweb.org/a.azocar.guzman/ontologies/2023/5/untitled-ontology-21#"
-     xml:base="http://www.semanticweb.org/a.azocar.guzman/ontologies/2023/5/untitled-ontology-21"
+<rdf:RDF xmlns="http://purls.helmholtz-metadaten.de/podo/"
+     xml:base="http://purls.helmholtz-metadaten.de/podo/"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:obo="http://purl.obolibrary.org/obo/"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:xml="http://www.w3.org/XML/1998/namespace"
@@ -17,6 +18,7 @@
         <terms:creator>https://orcid.org/0000-0001-7564-7990</terms:creator>
         <terms:description>PODO focuses on the description of point defects in crystalline materials.</terms:description>
         <terms:title>Point Defects Ontology (PODO)</terms:title>
+        <owl:versionInfo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0.0.1</owl:versionInfo>
     </owl:Ontology>
     
 
@@ -29,6 +31,79 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000111 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000111"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000114 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000114"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000115 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000115">
+        <obo:IAO_0000111 xml:lang="en">definition</obo:IAO_0000111>
+        <obo:IAO_0000114 rdf:resource="http://purl.obolibrary.org/obo/IAO_0000122"/>
+        <obo:IAO_0000115 xml:lang="en">The official definition, explaining the meaning of a class or property. Shall be Aristotelian, formalized and normalized. Can be augmented with colloquial definitions.</obo:IAO_0000115>
+        <obo:IAO_0000116 xml:lang="en">2012-04-05: 
+Barry Smith
+
+The official OBI definition, explaining the meaning of a class or property: &apos;Shall be Aristotelian, formalized and normalized. Can be augmented with colloquial definitions&apos;  is terrible.
+
+Can you fix to something like:
+
+A statement of necessary and sufficient conditions explaining the meaning of an expression referring to a class or property.
+
+Alan Ruttenberg
+
+Your proposed definition is a reasonable candidate, except that it is very common that necessary and sufficient conditions are not given. Mostly they are necessary, occasionally they are necessary and sufficient or just sufficient. Often they use terms that are not themselves defined and so they effectively can&apos;t be evaluated by those criteria. 
+
+On the specifics of the proposed definition:
+
+We don&apos;t have definitions of &apos;meaning&apos; or &apos;expression&apos; or &apos;property&apos;. For &apos;reference&apos; in the intended sense I think we use the term &apos;denotation&apos;. For &apos;expression&apos;, I think we you mean symbol, or identifier. For &apos;meaning&apos; it differs for class and property. For class we want documentation that let&apos;s the intended reader determine whether an entity is instance of the class, or not. For property we want documentation that let&apos;s the intended reader determine, given a pair of potential relata, whether the assertion that the relation holds is true. The &apos;intended reader&apos; part suggests that we also specify who, we expect, would be able to understand the definition, and also generalizes over human and computer reader to include textual and logical definition. 
+
+Personally, I am more comfortable weakening definition to documentation, with instructions as to what is desirable. 
+
+We also have the outstanding issue of how to aim different definitions to different audiences. A clinical audience reading chebi wants a different sort of definition documentation/definition from a chemistry trained audience, and similarly there is a need for a definition that is adequate for an ontologist to work with.  </obo:IAO_0000116>
+        <obo:IAO_0000117 xml:lang="en">PERSON:Daniel Schober</obo:IAO_0000117>
+        <obo:IAO_0000119 xml:lang="en">GROUP:OBI:&lt;http://purl.obolibrary.org/obo/obi&gt;</obo:IAO_0000119>
+        <rdfs:isDefinedBy rdf:resource="http://purl.obolibrary.org/obo/iao.owl"/>
+        <rdfs:label xml:lang="en">definition</rdfs:label>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000116 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000116"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000117 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000117"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000119 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000119">
+        <obo:IAO_0000111 xml:lang="en">definition source</obo:IAO_0000111>
+        <obo:IAO_0000114 rdf:resource="http://purl.obolibrary.org/obo/IAO_0000122"/>
+        <obo:IAO_0000115 xml:lang="en">Formal citation, e.g. identifier in external database to indicate / attribute source(s) for the definition. Free text indicate / attribute source(s) for the definition. EXAMPLE: Author Name, URI, MeSH Term C04, PUBMED ID, Wiki uri on 31.01.2007</obo:IAO_0000115>
+        <obo:IAO_0000117 xml:lang="en">PERSON:Daniel Schober</obo:IAO_0000117>
+        <obo:IAO_0000119 xml:lang="en">Discussion on obo-discuss mailing-list, see http://bit.ly/hgm99w</obo:IAO_0000119>
+        <obo:IAO_0000119 xml:lang="en">GROUP:OBI:&lt;http://purl.obolibrary.org/obo/obi&gt;</obo:IAO_0000119>
+        <rdfs:isDefinedBy rdf:resource="http://purl.obolibrary.org/obo/iao.owl"/>
+        <rdfs:label xml:lang="en">definition source</rdfs:label>
+    </owl:AnnotationProperty>
     
 
 
@@ -144,9 +219,6 @@
     <!-- http://www.w3.org/2004/02/skos/core#definition -->
 
     <owl:AnnotationProperty rdf:about="http://www.w3.org/2004/02/skos/core#definition">
-        <rdfs:isDefinedBy rdf:resource="http://www.w3.org/2004/02/skos/core"/>
-        <rdfs:label xml:lang="en">definition</rdfs:label>
-        <skos:definition xml:lang="en">A statement or formal explanation of the meaning of a concept.</skos:definition>
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2004/02/skos/core#note"/>
     </owl:AnnotationProperty>
     
@@ -197,11 +269,35 @@
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/podo/hasImpurityConcentration -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/podo/hasImpurityConcentration">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the impurity concentration.</obo:IAO_0000115>
+        <rdfs:comment>The domain of this property should correspond to a material sample (either computational or experimental).</rdfs:comment>
+        <rdfs:label>has impurity concentration</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/podo/hasNumberOfImpurityAtoms -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/podo/hasNumberOfImpurityAtoms">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the total number of impurity atoms in the crystal structure.</obo:IAO_0000115>
+        <rdfs:comment>The domain of this property should correspond to a material sample (either computational or experimental).</rdfs:comment>
+        <rdfs:label>has number of impurity atoms</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/podo/hasNumberOfVacancies -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/podo/hasNumberOfVacancies">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the total number of vacancies in the crystal structure.</obo:IAO_0000115>
+        <rdfs:comment>The domain of this property should correspond to a material sample (either computational or experimental).</rdfs:comment>
         <rdfs:label>has number of vacancies</rdfs:label>
-        <skos:definition>A data property indicating the total number of vacancies in the crystal structure.</skos:definition>
     </owl:DatatypeProperty>
     
 
@@ -209,9 +305,21 @@
     <!-- http://purls.helmholtz-metadaten.de/podo/hasVacancyConcentration -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/podo/hasVacancyConcentration">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the vacancy concentration.</obo:IAO_0000115>
         <rdfs:comment>Note that the vacancy concentration is given as a fraction, with a value from 0 to 1.</rdfs:comment>
+        <rdfs:comment>The domain of this property should correspond to a material sample (either computational or experimental).</rdfs:comment>
         <rdfs:label>has vacancy concentration</rdfs:label>
-        <skos:definition>A data property indicating the vacancy concentration.</skos:definition>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/podo/occupiesInterstitialSite -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/podo/occupiesInterstitialSite">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/podo/Interstitial"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>occupies interstitial site</rdfs:label>
     </owl:DatatypeProperty>
     
 
@@ -231,9 +339,9 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/AntisiteDefect">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/PointDefect"/>
-        <rdfs:comment>Reference: ISBN 978-1-119-45416-8</rdfs:comment>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Antisite Defect is a point defect which occurs in ordered alloys or compounds when two atoms of different type switch positions.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ISBN 978-1-119-45416-8</obo:IAO_0000119>
         <rdfs:label>Antisite Defect</rdfs:label>
-        <skos:definition>Antisite Defect is a point defect which occurs in ordered alloys or compounds when two atoms of different type switch positions.</skos:definition>
     </owl:Class>
     
 
@@ -242,10 +350,10 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/FrenkelDefect">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/PointDefect"/>
-        <rdfs:comment>Reference: ISBN 978-1-119-45416-8</rdfs:comment>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A Frenkel defect is a point defect which occurs in ionic crystals when an ion is removed to an interstitial position, leaving a vacancy behind.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ISBN 978-1-119-45416-8</obo:IAO_0000119>
         <rdfs:label>Frenkel Defect</rdfs:label>
         <skos:altLabel>Frenkel Pair</skos:altLabel>
-        <skos:definition>A Frenkel defect is a point defect which occurs in ionic crystals when an ion is removed to an interstitial position, leaving a vacancy behind.</skos:definition>
     </owl:Class>
     
 
@@ -254,8 +362,8 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/Impurity">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/PointDefect"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An impurity is a point defect where foreign atoms (of different type as the host atom) enter the crystal lattice.</obo:IAO_0000115>
         <rdfs:label>Impurity</rdfs:label>
-        <skos:definition>An impurity is a point defect where foreign atoms (of different type as the host atom) enter the crystal lattice.</skos:definition>
     </owl:Class>
     
 
@@ -264,8 +372,8 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/Interstitial">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/PointDefect"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An interstitial is a point defect where an atom occupies an interstitial site. In crystallography, interstitial sites are the empty space between the atoms (assuming a hard-sphere model).</obo:IAO_0000115>
         <rdfs:label>Interstitial</rdfs:label>
-        <skos:definition>An interstitial is a point defect where an atom occupies an interstitial site. In crystallography, interstitial sites are the empty space between the atoms (assuming a hard-sphere model).</skos:definition>
     </owl:Class>
     
 
@@ -275,8 +383,8 @@
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/InterstitialImpurity">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/Impurity"/>
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/Interstitial"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A interstitial impurity is a point defect where the atom occupying the interstitial site is of a different type as the matrix.</obo:IAO_0000115>
         <rdfs:label>Interstitial Impurity</rdfs:label>
-        <skos:definition>A interstitial impurity is a point defect where the atom occupying the interstitial site is of a different type as the matrix.</skos:definition>
     </owl:Class>
     
 
@@ -284,8 +392,8 @@
     <!-- http://purls.helmholtz-metadaten.de/podo/PointDefect -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/PointDefect">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A point defect is a crystalline defect which is localized at or around a single lattice point. It is considered to be a zero-dimensional defect because it does not extend in any dimension in the lattice.</obo:IAO_0000115>
         <rdfs:label>Point Defect</rdfs:label>
-        <skos:definition>A point defect is a crystalline defect which is localized at or around a single lattice point. It is considered to be a zero-dimensional defect because it does not extend in any dimension in the lattice.</skos:definition>
     </owl:Class>
     
 
@@ -294,8 +402,8 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/SchottkyDefect">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/PointDefect"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A Schottky defect is a point defect which occurs in ionic crystals when oppositely charged ions create a vacancy in the interior of the lattice and go to the surface.</obo:IAO_0000115>
         <rdfs:label>Schottky Defect</rdfs:label>
-        <skos:definition>A Schottky defect is a point defect which occurs in ionic crystals when oppositely charged ions create a vacancy in the interior of the lattice and go to the surface.</skos:definition>
     </owl:Class>
     
 
@@ -304,8 +412,8 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/Self-interstitial">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/Interstitial"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A self-interstitial is an insterstitial defect where the atom occupying the interstitial site is of the same type as the matrix.</obo:IAO_0000115>
         <rdfs:label>Self-interstitial</rdfs:label>
-        <skos:definition>A self-interstitial is an insterstitial defect where the atom occupying the interstitial site is of the same type as the matrix.</skos:definition>
     </owl:Class>
     
 
@@ -314,8 +422,8 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/SubstitutionalImpurity">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/Impurity"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A substitutional impurity is an impurity where an atom of different type replaces a host or matrix atom.</obo:IAO_0000115>
         <rdfs:label>Substitutional Impurity</rdfs:label>
-        <skos:definition>A substitutional impurity is an impurity where an atom of different type replaces a host or matrix atom.</skos:definition>
     </owl:Class>
     
 
@@ -324,8 +432,8 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/podo/Vacancy">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/podo/PointDefect"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A vacancy is a point defect in which an atom is missing from its original lattice site.</obo:IAO_0000115>
         <rdfs:label>Vacancy</rdfs:label>
-        <skos:definition>A vacancy is a point defect in which an atom is missing from its original lattice site.</skos:definition>
     </owl:Class>
     
 

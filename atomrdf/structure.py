@@ -324,6 +324,7 @@ def _make_dislocation(
     output_structure.atoms = atom_obj
     output_structure = output_structure.modify.remap_to_box()
     output_structure.label = label
+
     return output_structure
 
 
@@ -735,7 +736,7 @@ class System(pc.System):
         self.graph.add((self.material, CMSO.hasDefect, vacancy))
         self.graph.add(
             (
-                self.simulation_cell,
+                self.sample,
                 PODO.hasVacancyConcentration,
                 Literal(concentration, datatype=XSD.float),
             )
@@ -743,7 +744,7 @@ class System(pc.System):
         if number is not None:
             self.graph.add(
                 (
-                    self.simulation_cell,
+                    self.sample,
                     PODO.hasNumberOfVacancies,
                     Literal(number, datatype=XSD.integer),
                 )
@@ -805,6 +806,9 @@ class System(pc.System):
         for x in delete_ids:
             self.atoms["species"][x] = substitution_element
             self.atoms["types"][x] = maxtype
+        #impurity metrics
+        no_of_impurities = len(delete_ids)
+        conc_of_impurities = no_of_impurities/self.natoms
 
         # operate on the graph
         if self.graph is not None:
@@ -872,11 +876,14 @@ class System(pc.System):
                 self.graph.structure_store, str(self._name).split(":")[-1]
             )
             json_io.write_file(outfile, datadict)
-            self.add_triples_for_substitutional_impurities()
+            self.add_triples_for_substitutional_impurities(conc_of_impurities, no_of_impurities=no_of_impurities)
 
-    def add_triples_for_substitutional_impurities(self):
+    def add_triples_for_substitutional_impurities(self, conc_of_impurities, no_of_impurities=None):
         defect = self.graph.create_node(f"{self._name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity)
         self.graph.add((self.material, CMSO.hasDefect, defect))
+        self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
+        if no_of_impurities is not None:
+            self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
 
     def add_interstitial_impurities(
         self, element, void_type="tetrahedral", 
@@ -922,6 +929,7 @@ class System(pc.System):
             randindex = np.random.randint(0, len(verts), len(element))
             randpos = np.array(verts)[randindex]
 
+
         elif void_type == "octahedral":
             if lattice_constant is None:
                 if "lattice_constant" in self.lattice_properties.keys():
@@ -959,6 +967,9 @@ class System(pc.System):
             raise ValueError("void_type can only be tetrahedral/octahedral")
 
         # create new system with the atoms added
+        no_of_impurities = len(randpos)
+        conc_of_impurities = no_of_impurities/self.natoms
+
         sysn = System(source=self.add_atoms({"positions": randpos, "species": element}))
         # attach graphs
         sysn.sample = self.sample
@@ -1041,12 +1052,15 @@ class System(pc.System):
             )
             json_io.write_file(outfile, datadict)
 
-            self.add_triples_for_interstitial_impurities()
+            self.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities)
         return sysn
 
-    def add_triples_for_interstitial_impurities(self):
+    def add_triples_for_interstitial_impurities(self, conc_of_impurities, no_of_impurities=None):
         defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity)
         self.graph.add((self.material, CMSO.hasDefect, defect))
+        self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
+        if no_of_impurities is not None:
+            self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
 
 
     def __delitem__(self, val):
@@ -1434,18 +1448,18 @@ class System(pc.System):
         Returns
         -------
         """
-        space_group = URIRef(f"{self._name}_SpaceGroup")
-        self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
+        #space_group = URIRef(f"{self._name}_SpaceGroup")
+        #self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
         self.graph.add(
             (
-                space_group,
+                self.crystal_structure,
                 CMSO.hasSpaceGroupSymbol,
                 Literal(spacegroup_symbol, datatype=XSD.string),
             )
         )
         self.graph.add(
             (
-                space_group,
+                self.crystal_structure,
                 CMSO.hasSpaceGroupNumber,
                 Literal(spacegroup_number, datatype=XSD.integer),
             )
@@ -1482,7 +1496,7 @@ class System(pc.System):
         self.graph.add(
             (
                 self.unit_cell,
-                Namespace("http://purls.helmholtz-metadaten.de/cmso/").hasBravaisLattice,
+                CMSO.hasBravaisLattice,
                 bv,
             )
         )
