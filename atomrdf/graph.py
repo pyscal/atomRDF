@@ -1239,24 +1239,7 @@ class KnowledgeGraph:
             filename = os.path.join(os.getcwd(), "out")
 
         sys = self.get_system_from_sample(sample)
-
-        if format == "ase":
-            return sys.write.ase()
-        elif format == "poscar":
-            asesys = sys.write.ase()
-            write(filename, asesys, format="vasp")
-            if add_sample_id:
-                lines = []
-                with open(filename, "r") as fin:
-                    for line in fin:
-                        lines.append(line)
-                lines[0] = sample.toPython() + "\n"
-                with open(filename, "w") as fout:
-                    for line in lines:
-                        fout.write(line)
-        else:
-            asesys = sys.write.ase()
-            write(filename, asesys, format=format)
+        sys.to_file(filename, format=format, add_sample_id=add_sample_id)
 
     def enable_workflow(self, workflow_object, workflow_environment=None, workflow_module=None):
         self.workflow.inform_graph(workflow_object, 
