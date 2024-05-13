@@ -1083,6 +1083,17 @@ class System(pc.System):
         # now the graph has to be updated accordingly
         self.delete(indices=list(val))
 
+    def write_poscar_id(self, outfile):
+        lines = []
+        with open(outfile, "r") as fin:
+            for line in fin:
+                lines.append(line)
+        lines[0] = self.sample.toPython() + "\n"
+        with open(outfile, "w") as fout:
+            for line in lines:
+                fout.write(line)
+
+
     def to_file(self, outfile, format='lammps-dump', customkeys=None, customvals=None,
             compressed=False, timestep=0, species=None,  add_sample_id=True):
 
@@ -1090,14 +1101,7 @@ class System(pc.System):
             compressed=compressed, timestep=timestep, species=species)
         if format == 'poscar':
             if add_sample_id and (self.sample is not None):
-                lines = []
-                with open(outfile, "r") as fin:
-                    for line in fin:
-                        lines.append(line)
-                lines[0] = self.sample.toPython() + "\n"
-                with open(outfile, "w") as fout:
-                    for line in lines:
-                        fout.write(line)
+                self.write_poscar_id(outfile)
 
         
     def to_graph(self):
