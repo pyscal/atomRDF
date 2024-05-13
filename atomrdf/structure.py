@@ -16,7 +16,7 @@ import json
 import shutil
 import tarfile
 import warnings
-
+from ase.io import write
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
@@ -1097,12 +1097,22 @@ class System(pc.System):
     def to_file(self, outfile, format='lammps-dump', customkeys=None, customvals=None,
             compressed=False, timestep=0, species=None,  add_sample_id=True):
 
-        inputmethods.to_file(self, outfile, format=format, customkeys=customkeys, customvals=customvals,
-            compressed=compressed, timestep=timestep, species=species)
-        if format == 'poscar':
+        if format == "ase":
+            return self.write.ase()
+        elif format == "poscar":
+            asesys = self.write.ase()
+            write(outfile, asesys, format="vasp")
             if add_sample_id and (self.sample is not None):
                 self.write_poscar_id(outfile)
-
+        elif format == "lammps-dump":
+            inputmethods.to_file(self, outfile, format='lammps-dump', customkeys=customkeys, customvals=customvals,
+                compressed=compressed, timestep=timestep, species=species)
+        elif format == "lammps-data":
+            asesys = self.write.ase()
+            write(outfile, asesys, format='lammps-data', atom_style='atomic')
+        else:
+            asesys = self.write.ase()
+            write(outfile, asesys, format=format)
         
     def to_graph(self):
         """
