@@ -1,8 +1,8 @@
 """
-This module provides functions for creating and manipulating atomic structures. It includes functions for creating crystals, 
-general lattices, dislocations, grain boundaries, and reading structures from files. The module also provides functionality for 
-adding interstitial impurities, substituting atoms, deleting atoms, and adding vacancies. 
-The structures can be converted to RDF graphs using the atomrdf library. 
+This module provides functions for creating and manipulating atomic structures. It includes functions for creating crystals,
+general lattices, dislocations, grain boundaries, and reading structures from files. The module also provides functionality for
+adding interstitial impurities, substituting atoms, deleting atoms, and adding vacancies.
+The structures can be converted to RDF graphs using the atomrdf library.
 The main object in this module is the System class, which extends the functionality of the pyscal3.core.System class and provides additional methods for working with atomic structures.
 """
 
@@ -456,7 +456,7 @@ def _read_structure(
 
     Returns
     -------
-    atomrdf.System    
+    atomrdf.System
     """
     datadict = {}
     if lattice is not None:
@@ -676,7 +676,7 @@ class System(pc.System):
                         )
                         self.graph.add((chemical_species, CMSO.hasElement, element))
                         self.graph.add(
-                            (element, CMSO.hasSymbol, Literal(e, datatype=XSD.string))
+                            (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
                         )
                         self.graph.add(
                             (
@@ -840,7 +840,7 @@ class System(pc.System):
                         )
                         self.graph.add((chemical_species, CMSO.hasElement, element))
                         self.graph.add(
-                            (element, CMSO.hasSymbol, Literal(e, datatype=XSD.string))
+                            (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
                         )
                         self.graph.add(
                             (
@@ -886,8 +886,8 @@ class System(pc.System):
             self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
 
     def add_interstitial_impurities(
-        self, element, void_type="tetrahedral", 
-        lattice_constant=None, 
+        self, element, void_type="tetrahedral",
+        lattice_constant=None,
         threshold=0.01
     ):
         """
@@ -905,10 +905,10 @@ class System(pc.System):
 
         lattice_constant: float, optional
             lattice constant of the system. Required only for octahedral voids
-        
+
         threshold: float, optional
             threshold for the distance from the lattice constant for octahedral voids to account for fluctuations in atomic positions
-        
+
         Returns
         -------
         System:
@@ -1015,7 +1015,7 @@ class System(pc.System):
                         )
                         self.graph.add((chemical_species, CMSO.hasElement, element))
                         self.graph.add(
-                            (element, CMSO.hasSymbol, Literal(e, datatype=XSD.string))
+                            (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
                         )
                         self.graph.add(
                             (
@@ -1099,7 +1099,7 @@ class System(pc.System):
                     for line in lines:
                         fout.write(line)
 
-        
+
     def to_graph(self):
         """
         Converts the structure object to a graph representation.
@@ -1407,7 +1407,7 @@ class System(pc.System):
         #fix for lattice angle of HCP
         if targets[0] == 'hcp':
             targets[5] = [90.0, 90.0, 120.0]
-            
+
         valid = self.graph._is_valid(targets)
 
         if valid:
