@@ -34,6 +34,7 @@ import tarfile
 import logging
 import warnings
 import re
+import pickle
 
 # from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -817,13 +818,6 @@ class KnowledgeGraph:
         None
         """
         self.write(filename, format=format)
-    
-    def dump(self, filename):
-        """
-        Pickle the KnowledgeGraph as a python object
-        """
-        with open(filename, "wb") as fout:
-            pickle.dumps(self, fout)
 
     def archive(self, package_name, format="turtle", compress=True, add_simulations=False):
         """
