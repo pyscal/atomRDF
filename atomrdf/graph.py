@@ -803,6 +803,28 @@ class KnowledgeGraph:
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
 
+    def close(self, filename, format="json-ld"):
+        """
+        Close the graph and write to a file
+
+        Parameters
+        ----------
+        filename: string
+            name of output file
+
+        Returns
+        -------
+        None
+        """
+        self.write(filename, format=format)
+    
+    def dump(self, filename):
+        """
+        Pickle the KnowledgeGraph as a python object
+        """
+        with open(filename, "wb") as fout:
+            pickle.dumps(self, fout)
+
     def archive(self, package_name, format="turtle", compress=True, add_simulations=False):
         """
         Publish a dataset from graph including per atom quantities.
@@ -1272,7 +1294,7 @@ class KnowledgeGraph:
                         workflow_module=workflow_module)
         
     def add_workflow(self, job, workflow_environment=None, workflow_module=None, job_dicts=None,
-                     add_intermediate_jobs=False):
+                    add_intermediate_jobs=False):
         self.workflow.to_graph(job, workflow_environment=workflow_environment, 
                             workflow_module=workflow_module, 
                             job_dicts=job_dicts,
