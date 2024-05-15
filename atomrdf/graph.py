@@ -34,6 +34,7 @@ import tarfile
 import logging
 import warnings
 import re
+import pickle
 
 # from pyscal3.core import System
 from pyscal3.atoms import Atoms
@@ -803,6 +804,21 @@ class KnowledgeGraph:
         with open(filename, "w") as fout:
             fout.write(self.graph.serialize(format=format))
 
+    def close(self, filename, format="json-ld"):
+        """
+        Close the graph and write to a file
+
+        Parameters
+        ----------
+        filename: string
+            name of output file
+
+        Returns
+        -------
+        None
+        """
+        self.write(filename, format=format)
+
     def archive(self, package_name, format="turtle", compress=True, add_simulations=False):
         """
         Publish a dataset from graph including per atom quantities.
@@ -1215,7 +1231,11 @@ class KnowledgeGraph:
         sys.graph = self
         return sys
 
-    def to_file(self, sample, filename=None, format="poscar", add_sample_id=True):
+    def to_file(self, sample, filename=None, format="poscar", add_sample_id=True,
+        input_data=None, pseudopotentials=None, 
+                kspacing=None, kpts=None, 
+                koffset=(0, 0, 0), 
+                crystal_coordinates=False):
         """
         Save a given sample to a file
 
@@ -1227,8 +1247,27 @@ class KnowledgeGraph:
         filename: string
             name of output file
 
-        format: string, {"lammps-dump","lammps-data", "poscar"}
+        format: string, {"lammps-dump","lammps-data", "poscar", 'cif', 'quantum-espresso'}
             or any format supported by ase
+
+        input_data : str, optional
+            Additional input data to include in the output file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        pseudopotentials : str, optional
+            The path to the pseudopotentials file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        kspacing : float, optional
+            The k-spacing value to include in the output file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        kpts : list, optional
+            A list of k-points to include in the output file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        koffset : tuple, optional
+            The k-offset values to include in the output file. Defaults to (0, 0, 0).
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        crystal_coordinates : bool, optional
+            Whether to include crystal coordinates in the output file. Defaults to False.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
 
         Returns
         -------
@@ -1239,24 +1278,9 @@ class KnowledgeGraph:
             filename = os.path.join(os.getcwd(), "out")
 
         sys = self.get_system_from_sample(sample)
-
-        if format == "ase":
-            return sys.write.ase()
-        elif format == "poscar":
-            asesys = sys.write.ase()
-            write(filename, asesys, format="vasp")
-            if add_sample_id:
-                lines = []
-                with open(filename, "r") as fin:
-                    for line in fin:
-                        lines.append(line)
-                lines[0] = sample.toPython() + "\n"
-                with open(filename, "w") as fout:
-                    for line in lines:
-                        fout.write(line)
-        else:
-            asesys = sys.write.ase()
-            write(filename, asesys, format=format)
+        sys.to_file(filename, format=format, add_sample_id=add_sample_id, input_data=input_data, 
+                pseudopotentials=pseudopotentials, kspacing=kspacing, 
+                kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
 
     def enable_workflow(self, workflow_object, workflow_environment=None, workflow_module=None):
         self.workflow.inform_graph(workflow_object, 
@@ -1264,7 +1288,7 @@ class KnowledgeGraph:
                         workflow_module=workflow_module)
         
     def add_workflow(self, job, workflow_environment=None, workflow_module=None, job_dicts=None,
-                     add_intermediate_jobs=False):
+                    add_intermediate_jobs=False):
         self.workflow.to_graph(job, workflow_environment=workflow_environment, 
                             workflow_module=workflow_module, 
                             job_dicts=job_dicts,

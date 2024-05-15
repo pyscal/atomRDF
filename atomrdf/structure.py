@@ -16,7 +16,7 @@ import json
 import shutil
 import tarfile
 import warnings
-
+from ase.io import write
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
@@ -1083,22 +1083,104 @@ class System(pc.System):
         # now the graph has to be updated accordingly
         self.delete(indices=list(val))
 
+    def write_poscar_id(self, outfile):
+        lines = []
+        with open(outfile, "r") as fin:
+            for line in fin:
+                lines.append(line)
+        lines[0] = self.sample.toPython() + "\n"
+        with open(outfile, "w") as fout:
+            for line in lines:
+                fout.write(line)
+    
+    def write_quatum_espresso_id(self, outfile):
+        lines = []
+        lines.append(f"! {self.sample.toPython()}\n") 
+        with open(outfile, "r") as fin:
+            for line in fin:
+                lines.append(line)
+        with open(outfile, "w") as fout:
+            for line in lines:
+                fout.write(line)
+
     def to_file(self, outfile, format='lammps-dump', customkeys=None, customvals=None,
-            compressed=False, timestep=0, species=None,  add_sample_id=True):
+                compressed=False, timestep=0, species=None,  add_sample_id=True,
+                input_data=None, pseudopotentials=None, 
+                kspacing=None, kpts=None, 
+                koffset=(0, 0, 0), 
+                crystal_coordinates=False):
+        """
+        Write the structure to a file in the specified format.
 
-        inputmethods.to_file(self, outfile, format=format, customkeys=customkeys, customvals=customvals,
-            compressed=compressed, timestep=timestep, species=species)
-        if format == 'poscar':
+        Parameters
+        ----------
+        outfile : str
+            The path to the output file.
+        format : str, optional
+            The format of the output file. Defaults to 'lammps-dump'.
+        customkeys : list, optional
+            A list of custom keys to include in the output file. Defaults to None.
+            Only valid if format is 'lammps-dump'.
+        customvals : list, optional
+            A list of custom values corresponding to the custom keys. Defaults to None.
+            Only valid if format is 'lammps-dump'.
+        compressed : bool, optional
+            Whether to compress the output file. Defaults to False.
+        timestep : int, optional
+            The timestep value to include in the output file. Defaults to 0.
+            Only valid if format is 'lammps-dump'.
+        species : list, optional
+            A list of species to include in the output file. Defaults to None.
+            Only valid for ASE, if species is not specified.
+        add_sample_id : bool, optional
+            Whether to add a sample ID to the output file. Defaults to True.
+            Only valid for poscar and quantum-espresso formats.
+        input_data : str, optional
+            Additional input data to include in the output file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        pseudopotentials : str, optional
+            The path to the pseudopotentials file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        kspacing : float, optional
+            The k-spacing value to include in the output file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        kpts : list, optional
+            A list of k-points to include in the output file. Defaults to None.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        koffset : tuple, optional
+            The k-offset values to include in the output file. Defaults to (0, 0, 0).
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+        crystal_coordinates : bool, optional
+            Whether to include crystal coordinates in the output file. Defaults to False.
+            Only valid for quantum-espresso format. See ASE write docs for more information.
+
+        Returns
+        -------
+        None
+        """
+        if format == "ase":
+            return self.write.ase()
+        elif format == "poscar":
+            asesys = self.write.ase()
+            write(outfile, asesys, format="vasp")
             if add_sample_id and (self.sample is not None):
-                lines = []
-                with open(outfile, "r") as fin:
-                    for line in fin:
-                        lines.append(line)
-                lines[0] = self.sample.toPython() + "\n"
-                with open(outfile, "w") as fout:
-                    for line in lines:
-                        fout.write(line)
-
+                self.write_poscar_id(outfile)
+        elif format == "lammps-dump":
+            inputmethods.to_file(self, outfile, format='lammps-dump', customkeys=customkeys, customvals=customvals,
+                compressed=compressed, timestep=timestep, species=species)
+        elif format == "lammps-data":
+            asesys = self.write.ase()
+            write(outfile, asesys, format='lammps-data', atom_style='atomic')
+        elif format == "quantum-espresso":
+            asesys = self.write.ase()
+            write(outfile, asesys, format='espresso-in', input_data=input_data, 
+                pseudopotentials=pseudopotentials, kspacing=kspacing, 
+                kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
+            if add_sample_id and (self.sample is not None):
+                self.write_quatum_espresso_id(outfile)
+        else:
+            asesys = self.write.ase()
+            write(outfile, asesys, format=format)
         
     def to_graph(self):
         """
