@@ -118,10 +118,13 @@ class Property:
     #overloaded operations
     def __add__(self, value):
         res = self._value + self._declass(value)
-        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=self._parent) 
+        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=self.parent) 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Addition))
+            self._graph.add((operation, MATH.hasAddend, self._wrap(value)))
             self._graph.add((operation, MATH.hasAddend, self._wrap(self)))
             self._graph.add((operation, MATH.hasSum, self._wrap(res_prop)))
         return res_prop
