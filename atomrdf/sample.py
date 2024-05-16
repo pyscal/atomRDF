@@ -5,8 +5,11 @@ In this module a new Sample class is defined.
 """
 from pyscal3.atoms import AttrSetter
 from atomrdf.namespace import CMSO, PLDO, PODO, ASMO, PROV
-from rdflib import RDFS
+from rdflib import RDFS, Namespace, RDF, URIRef
 import numpy as np
+import uuid
+
+MATH = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
 
 class Sample:
     def __init__(self, name, sample_id, graph):
@@ -65,11 +68,12 @@ class Sample:
             values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
             units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
             units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
-
-            props = [Property(value.toPython(), unit=unit, graph=self._graph) for value, unit in zip(values, units)]
+            props = []
+            for count, value in enumerate(values):
+                props.append(Property(value.toPython(), unit=units[count], graph=self._graph, parent=inps[count]))
             return labels, props
         return [], []
-
+    
     @property
     def _output_properties(self):
         inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
@@ -78,15 +82,17 @@ class Sample:
         values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
         units = [self._graph.value(inp, ASMO.hasUnit) for inp in inps]
         units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
-
-        props = [Property(value.toPython(), unit=unit, graph=self._graph) for value, unit in zip(values, units)]
-        return labels, props   
+        props = []
+        for count, value in enumerate(values):
+            props.append(Property(value.toPython(), unit=units[count], graph=self._graph, parent=inps[count]))
+        return labels, props
 
 class Property:
-    def __init__(self, value, unit=None, graph=None):
+    def __init__(self, value, unit=None, graph=None, parent=None):
         self._value = value
         self._unit = unit
         self._graph = graph
+        self._parent = parent
     
     def __repr__(self):
         if self._unit is not None:
@@ -105,16 +111,20 @@ class Property:
         
     #overloaded operations
     def __add__(self, value):
-        return Property(self._value + self._declass(value), unit=self._unit, graph=self._graph)
+        #if self._graph is not None:
+        #    operation = URIRef(f'operation:{uuid.uuid4()}')
+        #    self._graph.add((operation, RDF.type, MATH.Addition))
+        #    self._graph.add((self._value, MATH.hasValue, value))
+        return Property(self._value + self._declass(value), unit=self._unit, graph=self._graph, parent=self._parent)
     
     def __sub__(self, value):
-        return Property(self._value - self._declass(value), unit=self._unit, graph=self._graph)
+        return Property(self._value - self._declass(value), unit=self._unit, graph=self._graph, parent=self._parent)
     
     def __mul__(self, value):
-        return Property(self._value * self._declass(value), unit=self._unit, graph=self._graph)
+        return Property(self._value * self._declass(value), unit=self._unit, graph=self._graph, parent=self._parent)
 
     def __truediv__(self, value):
-        return Property(self._value / self._declass(value), unit=self._unit, graph=self._graph)
+        return Property(self._value / self._declass(value), unit=self._unit, graph=self._graph, parent=self._parent)
     
     def __eq__(self, value):
         return self._value == self._declass(value)
@@ -135,10 +145,10 @@ class Property:
         return self._value >= self._declass(value)
     
     def __neg__(self):
-        return Property(-self._value, unit=self._unit, graph=self._graph)
+        return Property(-self._value, unit=self._unit, graph=self._graph, parent=self._parent)
     
     def __abs__(self):
-        return Property(abs(self._value), unit=self._unit, graph=self._graph)
+        return Property(abs(self._value), unit=self._unit, graph=self._graph, parent=self._parent)
     
     def __round__(self, n):
-        return Property(round(self._value, n), unit=self._unit, graph=self._graph)
+        return Property(round(self._value, n), unit=self._unit, graph=self._graph, parent=self._parent)
