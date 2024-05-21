@@ -115,12 +115,18 @@ class Property:
         else:
             return Literal(value)
 
+    #create node with units
+    def _create_node(self, res):
+        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+        self._graph.add((parent, ASMO.hasValue, Literal(res)))
+        if self._unit is not None:
+            self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{self._unit}")))
+
     #overloaded operations
     def __add__(self, value):
         res = self._value + self._declass(value)
-        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
-
-        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=self.parent) 
+        self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Addition))
@@ -130,13 +136,41 @@ class Property:
         return res_prop
     
     def __sub__(self, value):
-        return Property(self._value - self._declass(value), unit=self._unit, graph=self._graph, parent=self._parent)
+        res = self._value - self._declass(value)
+        self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Subtraction))
+            self._graph.add((operation, MATH.hasMinuend, self._wrap(self)))
+            self._graph.add((operation, MATH.hasSubtrahend, self._wrap(value)))
+            self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
+        return res_prop    
     
     def __mul__(self, value):
-        return Property(self._value * self._declass(value), unit=self._unit, graph=self._graph, parent=self._parent)
+        res = self._value * self._declass(value)
+        self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Multiplication))
+            self._graph.add((operation, MATH.hasFactor, self._wrap(self)))
+            self._graph.add((operation, MATH.hasFactor, self._wrap(value)))
+            self._graph.add((operation, MATH.hasProduct, self._wrap(res_prop)))
+        return res_prop
 
     def __truediv__(self, value):
-        return Property(self._value / self._declass(value), unit=self._unit, graph=self._graph, parent=self._parent)
+        res = self._value / self._declass(value)
+        self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Division))
+            self._graph.add((operation, MATH.hasDivisor, self._wrap(self)))
+            self._graph.add((operation, MATH.hasDividend, self._wrap(value)))
+            self._graph.add((operation, MATH.hasQuotient, self._wrap(res_prop)))
+        return res_prop
+
     
     def __eq__(self, value):
         return self._value == self._declass(value)
