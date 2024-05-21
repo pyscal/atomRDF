@@ -93,6 +93,7 @@ class Property:
         self._unit = unit
         self._graph = graph
         self._parent = parent
+        self._label = None
     
     def __repr__(self):
         if self._unit is not None:
@@ -102,6 +103,18 @@ class Property:
     @property
     def value(self):
         return self._value
+    
+    @property
+    def label(self):
+        return self._label
+
+    @label.setter
+    def label(self, value):
+        self._label = value
+        if self._graph is not None:
+            if self._parent is not None:
+                self._graph.remove((self._parent, RDFS.label, None))
+                self._graph.add((self._parent, RDFS.label, Literal(value)))
     
     def _declass(self, item):
         if isinstance(item, Property):
