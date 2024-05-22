@@ -1159,18 +1159,24 @@ class System(pc.System):
         None
         """
         if format == "ase":
-            return self.write.ase()
+            s = self.write.ase()
+            s.info["sample_id"] = self.sample
+            return s
+
         elif format == "poscar":
             asesys = self.write.ase()
             write(outfile, asesys, format="vasp")
             if add_sample_id and (self.sample is not None):
                 self.write_poscar_id(outfile)
+        
         elif format == "lammps-dump":
             inputmethods.to_file(self, outfile, format='lammps-dump', customkeys=customkeys, customvals=customvals,
                 compressed=compressed, timestep=timestep, species=species)
+        
         elif format == "lammps-data":
             asesys = self.write.ase()
             write(outfile, asesys, format='lammps-data', atom_style='atomic')
+        
         elif format == "quantum-espresso":
             asesys = self.write.ase()
             write(outfile, asesys, format='espresso-in', input_data=input_data,
@@ -1178,6 +1184,7 @@ class System(pc.System):
                 kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
             if add_sample_id and (self.sample is not None):
                 self.write_quatum_espresso_id(outfile)
+        
         else:
             asesys = self.write.ase()
             write(outfile, asesys, format=format)
