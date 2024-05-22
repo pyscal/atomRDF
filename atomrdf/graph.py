@@ -1427,7 +1427,7 @@ class KnowledgeGraph:
         prov[propname]['found'] = True
         return prov
     
-    def generate_provenance_dict(self, prop=None, label=None, visualize=False):
+    def generate_provenance(self, prop=None, label=None, visualize=False):
         if (prop is None) and (label is None):
             raise ValueError('Either prop or label must be provided')
         
