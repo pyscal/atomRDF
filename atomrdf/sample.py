@@ -134,11 +134,12 @@ class Property:
         self._graph.add((parent, ASMO.hasValue, Literal(res)))
         if self._unit is not None:
             self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{self._unit}")))
+        return parent
 
     #overloaded operations
     def __add__(self, value):
         res = self._value + self._declass(value)
-        self._create_node(res)
+        parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
@@ -150,7 +151,7 @@ class Property:
     
     def __sub__(self, value):
         res = self._value - self._declass(value)
-        self._create_node(res)
+        parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
@@ -162,7 +163,7 @@ class Property:
     
     def __mul__(self, value):
         res = self._value * self._declass(value)
-        self._create_node(res)
+        parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
@@ -174,7 +175,7 @@ class Property:
 
     def __truediv__(self, value):
         res = self._value / self._declass(value)
-        self._create_node(res)
+        parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
