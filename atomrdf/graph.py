@@ -1311,11 +1311,19 @@ class KnowledgeGraph:
 
     def get_string_label(self, item):
         label = self.get_label(item)
+
         if label is None:
             try:
                 label = str(item.toPython())
             except:
                 label = str(item)
+        
+        if "activity" in label:
+            method = self.value(item, ASMO.hasComputationalMethod)
+            if method is not None:
+                method_name = self.value(method, RDFS.type)
+                if method_name is not None:
+                    label = method_name.toPython().split("/")[-1]
         return label
 
     def _add_to_dict(self, prop, indict):
