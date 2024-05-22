@@ -49,7 +49,7 @@ import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
 
-from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH
+from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, UNSAFECMSO, UNSAFEASMO
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -1340,8 +1340,8 @@ class KnowledgeGraph:
             prop = URIRef(prop)
         
         propname = _name(prop)
-
-        if operation == ASMO.hasInputParameter:
+        print(operation)
+        if operation == UNSAFEASMO.hasInputParameter:
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
@@ -1354,7 +1354,7 @@ class KnowledgeGraph:
             prov[_name(parent)]['found'] = True
             prov[_name(parent)]['operation'] = 'activity'
 
-        elif operation == CMSO.hasCalculatedProperty:
+        elif operation == UNSAFECMSO.hasCalculatedProperty:
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
