@@ -1352,7 +1352,7 @@ class KnowledgeGraph:
                 prov[_name(parent)]['inputs'][str(count)] = _name(sample)
                 self._add_to_dict(sample, prov)
             prov[_name(parent)]['found'] = True
-            prov[_name(parent)]['operation'] = 'activity'
+            prov[_name(parent)]['operation'] = 'sample_for_activity'
 
         elif operation == "http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty":
             prov[propname]['operation'] = 'input_parameter'

@@ -278,6 +278,11 @@ def visualize_provenance(
                         color="#263238",
                         fontname='Helvetica',
                         fontsize='8')
+            elif val['operation'] == 'sample_for_activity':
+                    dot.edge(_id(subval), _id(key), label='input_sample', 
+                        color="#263238",
+                        fontname='Helvetica',
+                        fontsize='8')
             else:
                 operation_id = str(uuid.uuid4())
                 operation = dot.node(operation_id, label=val['operation'], 
