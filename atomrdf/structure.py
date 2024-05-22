@@ -562,6 +562,7 @@ class System(pc.System):
         self.write = AttrSetter()
         mapdict = {}
         mapdict['ase'] = update_wrapper(partial(self.to_file, format='ase'), self.to_file)
+        mapdict['pyiron'] = update_wrapper(partial(self.to_file, format='pyiron'), self.to_file)
         mapdict['file'] = self.to_file
         mapdict['dict'] = update_wrapper(partial(serialize.serialize, self, return_type='dict'), serialize.serialize)
         mapdict['json'] = update_wrapper(partial(serialize.serialize, self, return_type='json'), serialize.serialize)
@@ -1179,6 +1180,14 @@ class System(pc.System):
             if self.sample is not None:
                 asesys.info["sample_id"] = self.sample
             return asesys
+        
+        elif format == "pyiron":
+            from pyiron_atomistics.atomistics.structure.atoms import ase_to_pyiron
+            asesys = convert_snap(self)
+            pyironsys = ase_to_pyiron(asesys)
+            if self.sample is not None:
+                pyironsys.info["sample_id"] = self.sample            
+            return pyironsys
 
         elif format == "poscar":
             asesys = convert_snap(self)
