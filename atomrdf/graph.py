@@ -1318,10 +1318,14 @@ class KnowledgeGraph:
                 label = str(item)
         return label
 
+    def _add_to_dict(self, prop, indict):
+        name = _name(prop)
+        if name not in indict.keys():
+            indict[name] = {}
+            indict[name]['found'] = False
+            indict[name]['label'] = self.get_string_label(prop)
+
     def _get_ancestor(self, prop, prov):
-
-
-
         #note that only one operation and parent are present!
         operation = [x[1] for x in self.triples((None, None, prop))]
         parent = [list(self.triples((None, op, prop)))[0][0] for op in operation]
@@ -1341,17 +1345,13 @@ class KnowledgeGraph:
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
-            if _name(parent) not in prov.keys():
-                prov[_name(parent)] = {}
-                prov[_name(parent)]['found'] = False
-        
+            self._add_to_dict(parent, prov)
+
         elif operation == CMSO.hasCalculatedProperty:
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
-            if _name(parent) not in prov.keys():
-                prov[_name(parent)] = {}
-                prov[_name(parent)]['found'] = False
+            self._add_to_dict(parent, prov)
         
         elif operation == MATH.hasSum:
             addends = list(x[2] for x in self.triples((parent, MATH.hasAddend, None)))
@@ -1359,9 +1359,7 @@ class KnowledgeGraph:
             prov[propname]['inputs'] = {}
             for count, term in enumerate(addends):
                 prov[propname]['inputs'][f'{count}'] = _name(term)
-                if _name(term) not in prov.keys():
-                    prov[_name(term)] = {}
-                    prov[_name(term)]['found'] = False
+                self._add_to_dict(term, prov)
         
         elif operation == MATH.hasDifference:
             minuend = self.value(parent, MATH.hasMinuend)
@@ -1370,12 +1368,8 @@ class KnowledgeGraph:
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(minuend)
             prov[propname]['inputs']['1'] = _name(subtrahend)
-            if _name(minuend) not in prov.keys():
-                prov[_name(minuend)] = {}
-                prov[_name(minuend)]['found'] = False
-            if _name(subtrahend) not in prov.keys():
-                prov[_name(subtrahend)] = {}
-                prov[_name(subtrahend)]['found'] = False
+            self._add_to_dict(minuend, prov)
+            self._add_to_dict(subtrahend, prov)
         
         elif operation == MATH.hasProduct:
             factors = list(x[2] for x in self.triples((parent, MATH.hasFactor, None)))
@@ -1383,9 +1377,7 @@ class KnowledgeGraph:
             prov[propname]['inputs'] = {}
             for count, term in enumerate(factors):
                 prov[propname]['inputs'][f'{count}'] = _name(term)
-                if _name(term) not in prov.keys():
-                    prov[_name(term)] = {}
-                    prov[_name(term)]['found'] = False
+                self._add_to_dict(term, prov)
         
         elif operation == MATH.hasQuotient:
             divisor = self.value(parent, MATH.hasDivisor)
@@ -1394,13 +1386,8 @@ class KnowledgeGraph:
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(divisor)
             prov[propname]['inputs']['1'] = _name(dividend)
-            if _name(divisor) not in prov.keys():
-                prov[_name(divisor)] = {}
-                prov[_name(divisor)]['found'] = False
-            if _name(dividend) not in prov.keys():
-                prov[_name(dividend)] = {}
-                prov[_name(dividend)]['found'] = False
-            
+            self._add_to_dict(divisor, prov)
+            self._add_to_dict(dividend, prov)
 
         prov[propname]['found'] = True
         return prov
@@ -1414,9 +1401,7 @@ class KnowledgeGraph:
         
         name = _name(prop)
         prov = {}
-        prov[name] = {}
-        prov[name]['label'] = self.get_string_label(prop)
-        prov[name]['found'] = False
+        self._add_to_dict(prop, prov)
 
         done = False
         while not done:
