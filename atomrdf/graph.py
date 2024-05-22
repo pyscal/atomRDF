@@ -1313,7 +1313,7 @@ class KnowledgeGraph:
         label = self.get_label(item)
         if label is None:
             try:
-                label = item.toPython()
+                label = str(item.toPython())
             except:
                 label = str(item)
         return label
