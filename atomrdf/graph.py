@@ -1413,8 +1413,9 @@ class KnowledgeGraph:
         
         if prop is None:
             prop = self.find_property(label)
-
+        
         name = _name(prop)
+        prov = {}
         prov[name] = {}
         prov[name]['label'] = self.get_string_label(prop)
         prov[name]['found'] = False
