@@ -560,7 +560,7 @@ class System(pc.System):
 
         self.write = AttrSetter()
         mapdict = {}
-        mapdict['ase'] = update_wrapper(partial(convert_snap, self), convert_snap)
+        mapdict['ase'] = update_wrapper(partial(self.to_file, format='ase'), self.to_file)
         mapdict['file'] = self.to_file
         mapdict['dict'] = update_wrapper(partial(serialize.serialize, self, return_type='dict'), serialize.serialize)
         mapdict['json'] = update_wrapper(partial(serialize.serialize, self, return_type='json'), serialize.serialize)
@@ -1160,7 +1160,8 @@ class System(pc.System):
         """
         if format == "ase":
             s = self.write.ase()
-            s.info["sample_id"] = self.sample
+            if self.sample is not None:
+                s.info["sample_id"] = self.sample
             return s
 
         elif format == "poscar":
