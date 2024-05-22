@@ -48,6 +48,10 @@ class Sample:
         return f"{self._name}"
     
     @property
+    def structure(self):
+        return self._graph.get_system_from_sample(self._sample_id)
+
+    @property
     def _volume(self):
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
         volume = self._graph.value(simcell, CMSO.hasVolume)
