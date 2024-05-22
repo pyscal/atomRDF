@@ -128,6 +128,10 @@ class Property:
     
     @property
     def label(self):
+        if self._graph is not None:
+            label = self._graph.value(self._parent, RDFS.label)
+            if label is not None:
+                return label.toPython()
         return self._label
 
     @label.setter
@@ -138,6 +142,17 @@ class Property:
                 self._graph.remove((self._parent, RDFS.label, None))
                 self._graph.add((self._parent, RDFS.label, Literal(value)))
     
+    def _create_label(self, v1, v2, operation):
+        if isinstance(v1, Property):
+            v1 = v1.label
+        else:
+            v1 = f'v{str(v1)}'
+        if isinstance(v2, Property):
+            v2 = v2.label
+        else:
+            v2 = f'v{str(v2)}'
+        return f'{v1}{operation}{v2}'
+
     def _declass(self, item):
         if isinstance(item, Property):
             return item.value
@@ -163,6 +178,7 @@ class Property:
         res = self._value + self._declass(value)
         parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
+        res_prop.label = self._create_label(self, value, '+')
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Addition))
@@ -174,7 +190,8 @@ class Property:
     def __sub__(self, value):
         res = self._value - self._declass(value)
         parent = self._create_node(res)
-        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '-') 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Subtraction))
@@ -186,7 +203,8 @@ class Property:
     def __mul__(self, value):
         res = self._value * self._declass(value)
         parent = self._create_node(res)
-        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '*') 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Multiplication))
@@ -198,7 +216,8 @@ class Property:
     def __truediv__(self, value):
         res = self._value / self._declass(value)
         parent = self._create_node(res)
-        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '/') 
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Division))

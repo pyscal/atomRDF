@@ -1339,18 +1339,12 @@ class KnowledgeGraph:
             prop = URIRef(prop)
         propname = _name(prop)
 
-        operation = [x[1] for x in self.triples((None, None, prop))]
-        parent = [list(self.triples((None, op, prop)))[0][0] for op in operation]
-
-        if len(operation) == 0:
-            prov[propname]['found'] = True
-            return prov
-        
-        operation = operation[0]
-        parent = parent[0]
-        
-        if operation.toPython() == "http://purls.helmholtz-metadaten.de/asmo/hasInputParameter":
-            prov[propname]['operation'] = 'input_parameter'
+        operation = [x[1] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
+        if len(operation) > 0:
+            parent = [x[2] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
+            operation = operation[0]
+            parent = parent[0]        
+            prov[propname]['operation'] = 'output_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
             self._add_to_dict(parent, prov)
@@ -1361,48 +1355,74 @@ class KnowledgeGraph:
                 self._add_to_dict(sample, prov)
             prov[_name(parent)]['found'] = True
             prov[_name(parent)]['operation'] = 'sample_for_activity'
+                
+        else:
+            operation = [x[1] for x in self.triples((None, None, prop))]
+            parent = [list(self.triples((None, op, prop)))[0][0] for op in operation]
+            if len(operation) == 0:
+                prov[propname]['found'] = True
+                return prov
+            operation = operation[0]
+            parent = parent[0]
 
-        elif operation == "http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty":
-            prov[propname]['operation'] = 'input_parameter'
-            prov[propname]['inputs'] = {}
-            prov[propname]['inputs']['0'] = _name(parent)
-            self._add_to_dict(parent, prov)
-        
-        elif operation == MATH.hasSum:
-            addends = list(x[2] for x in self.triples((parent, MATH.hasAddend, None)))
-            prov[propname]['operation'] = 'addition'
-            prov[propname]['inputs'] = {}
-            for count, term in enumerate(addends):
-                prov[propname]['inputs'][f'{count}'] = _name(term)
-                self._add_to_dict(term, prov)
-        
-        elif operation == MATH.hasDifference:
-            minuend = self.value(parent, MATH.hasMinuend)
-            subtrahend = self.value(parent, MATH.hasSubtrahend)
-            prov[propname]['operation'] = 'subtraction'
-            prov[propname]['inputs'] = {}
-            prov[propname]['inputs']['0'] = _name(minuend)
-            prov[propname]['inputs']['1'] = _name(subtrahend)
-            self._add_to_dict(minuend, prov)
-            self._add_to_dict(subtrahend, prov)
-        
-        elif operation == MATH.hasProduct:
-            factors = list(x[2] for x in self.triples((parent, MATH.hasFactor, None)))
-            prov[propname]['operation'] = 'multiplication'
-            prov[propname]['inputs'] = {}
-            for count, term in enumerate(factors):
-                prov[propname]['inputs'][f'{count}'] = _name(term)
-                self._add_to_dict(term, prov)
-        
-        elif operation == MATH.hasQuotient:
-            divisor = self.value(parent, MATH.hasDivisor)
-            dividend = self.value(parent, MATH.hasDividend)
-            prov[propname]['operation'] = 'division'
-            prov[propname]['inputs'] = {}
-            prov[propname]['inputs']['0'] = _name(divisor)
-            prov[propname]['inputs']['1'] = _name(dividend)
-            self._add_to_dict(divisor, prov)
-            self._add_to_dict(dividend, prov)
+            if operation.toPython() == "http://purls.helmholtz-metadaten.de/asmo/hasInputParameter":
+                #print(f'we ran 1 for {operation.toPython()}')
+                prov[propname]['operation'] = 'input_parameter'
+                prov[propname]['inputs'] = {}
+                prov[propname]['inputs']['0'] = _name(parent)
+                self._add_to_dict(parent, prov)
+                prov[_name(parent)]['inputs'] = {}
+                associated_samples = [x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))]
+                for count, sample in enumerate(associated_samples):
+                    prov[_name(parent)]['inputs'][str(count)] = _name(sample)
+                    self._add_to_dict(sample, prov)
+                prov[_name(parent)]['found'] = True
+                prov[_name(parent)]['operation'] = 'sample_for_activity'
+
+            elif operation.toPython() == "http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty":
+                #print(f'we ran 2 for {operation.toPython()}')
+                prov[propname]['operation'] = 'output_parameter'
+                prov[propname]['inputs'] = {}
+                prov[propname]['inputs']['0'] = _name(parent)
+                self._add_to_dict(parent, prov)            
+                prov[_name(parent)]['found'] = True
+                prov[_name(parent)]['operation'] = 'sample_output'
+            
+            elif operation == MATH.hasSum:
+                addends = list(x[2] for x in self.triples((parent, MATH.hasAddend, None)))
+                prov[propname]['operation'] = 'addition'
+                prov[propname]['inputs'] = {}
+                for count, term in enumerate(addends):
+                    prov[propname]['inputs'][f'{count}'] = _name(term)
+                    self._add_to_dict(term, prov)
+            
+            elif operation == MATH.hasDifference:
+                minuend = self.value(parent, MATH.hasMinuend)
+                subtrahend = self.value(parent, MATH.hasSubtrahend)
+                prov[propname]['operation'] = 'subtraction'
+                prov[propname]['inputs'] = {}
+                prov[propname]['inputs']['0'] = _name(minuend)
+                prov[propname]['inputs']['1'] = _name(subtrahend)
+                self._add_to_dict(minuend, prov)
+                self._add_to_dict(subtrahend, prov)
+            
+            elif operation == MATH.hasProduct:
+                factors = list(x[2] for x in self.triples((parent, MATH.hasFactor, None)))
+                prov[propname]['operation'] = 'multiplication'
+                prov[propname]['inputs'] = {}
+                for count, term in enumerate(factors):
+                    prov[propname]['inputs'][f'{count}'] = _name(term)
+                    self._add_to_dict(term, prov)
+            
+            elif operation == MATH.hasQuotient:
+                divisor = self.value(parent, MATH.hasDivisor)
+                dividend = self.value(parent, MATH.hasDividend)
+                prov[propname]['operation'] = 'division'
+                prov[propname]['inputs'] = {}
+                prov[propname]['inputs']['0'] = _name(divisor)
+                prov[propname]['inputs']['1'] = _name(dividend)
+                self._add_to_dict(divisor, prov)
+                self._add_to_dict(dividend, prov)
 
         prov[propname]['found'] = True
         return prov
