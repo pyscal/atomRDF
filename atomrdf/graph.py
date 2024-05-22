@@ -1237,6 +1237,7 @@ class KnowledgeGraph:
         sys.atoms = at
         sys.sample = sample
         sys.graph = self
+        sys._name = sample.toPython().split('sample:')[-1]
         return sys
 
     def to_file(self, sample, filename=None, format="poscar", add_sample_id=True,
