@@ -155,7 +155,7 @@ class Property:
             v2 = v2.label
         else:
             v2 = f'v{str(v2)}'
-        return f'{v1}{operation}{v2}'
+        return f'({v1}{operation}{v2})'
 
     def _declass(self, item):
         if isinstance(item, Property):
