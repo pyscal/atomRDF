@@ -1354,7 +1354,7 @@ class KnowledgeGraph:
                 prov[_name(parent)]['found'] = False
         
         elif operation == MATH.hasSum:
-            addends = list(x[2] for x in kg.graph.triples((parent, MATH.hasAddend, None)))
+            addends = list(x[2] for x in self.triples((parent, MATH.hasAddend, None)))
             prov[propname]['operation'] = 'addition'
             prov[propname]['inputs'] = {}
             for count, term in enumerate(addends):
@@ -1364,8 +1364,8 @@ class KnowledgeGraph:
                     prov[_name(term)]['found'] = False
         
         elif operation == MATH.hasDifference:
-            minuend = kg.graph.value(parent, MATH.hasMinuend)
-            subtrahend = kg.graph.value(parent, MATH.hasSubtrahend)
+            minuend = self.value(parent, MATH.hasMinuend)
+            subtrahend = self.value(parent, MATH.hasSubtrahend)
             prov[propname]['operation'] = 'subtraction'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(minuend)
@@ -1378,7 +1378,7 @@ class KnowledgeGraph:
                 prov[_name(subtrahend)]['found'] = False
         
         elif operation == MATH.hasProduct:
-            factors = list(x[2] for x in kg.graph.triples((parent, MATH.hasFactor, None)))
+            factors = list(x[2] for x in self.triples((parent, MATH.hasFactor, None)))
             prov[propname]['operation'] = 'multiplication'
             prov[propname]['inputs'] = {}
             for count, term in enumerate(factors):
@@ -1388,8 +1388,8 @@ class KnowledgeGraph:
                     prov[_name(term)]['found'] = False
         
         elif operation == MATH.hasQuotient:
-            divisor = kg.graph.value(parent, MATH.hasDivisor)
-            dividend = kg.graph.value(parent, MATH.hasDividend)
+            divisor = self.value(parent, MATH.hasDivisor)
+            dividend = self.value(parent, MATH.hasDividend)
             prov[propname]['operation'] = 'division'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(divisor)
