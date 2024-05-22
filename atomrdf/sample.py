@@ -51,12 +51,22 @@ class Sample:
     def _volume(self):
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
         volume = self._graph.value(simcell, CMSO.hasVolume)
-        return Property(volume.toPython(), graph=self._graph)
+        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+        self._graph.add((parent, ASMO.hasValue, Literal(volume.toPython())))
+        self._graph.add((parent, RDFS.label, Literal("Volume")))
+        self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
+        self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3")))
+        return Property(volume.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3')
     
     @property
     def _no_of_atoms(self):
         no_atoms = self._graph.value(self._sample_id, CMSO.hasNumberOfAtoms)
-        return Property(no_atoms.toPython(), graph=self._graph)
+        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+        self._graph.add((parent, ASMO.hasValue, Literal(no_atoms.toPython())))
+        self._graph.add((parent, RDFS.label, Literal("NumberOfAtoms")))
+        self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
+        return Property(no_atoms.toPython(), graph=self._graph, parent=parent)
+
     
     @property
     def _input_properties(self):

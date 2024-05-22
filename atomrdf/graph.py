@@ -1321,7 +1321,7 @@ class KnowledgeGraph:
         if "activity" in label:
             method = self.value(item, ASMO.hasComputationalMethod)
             if method is not None:
-                method_name = self.value(method, RDFS.type)
+                method_name = self.value(method, RDF.type)
                 if method_name is not None:
                     label = method_name.toPython().split("/")[-1]
         return label
