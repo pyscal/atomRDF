@@ -263,12 +263,20 @@ def visualize_provenance(
     #add all nodes
     for key in prov.keys():
         nid = _id(key)
-        dot.node(nid, label=prov[key]['label'], 
-                shape='parallelogram', 
-                color="#C9DAF8", 
-                style="filled",
-                fontname='Helvetica',
-                fontsize='8')
+        if "activity" in key:
+            dot.node(nid, label=prov[key]['label'], 
+                    shape='box', 
+                    color="#C9DAF8", 
+                    style="filled",
+                    fontname='Helvetica',
+                    fontsize='8')
+        else:
+            dot.node(nid, label=prov[key]['label'], 
+                    shape='parallelogram', 
+                    color="#C9DAF8", 
+                    style="filled",
+                    fontname='Helvetica',
+                    fontsize='8')
     #add all edges
     for key, val in prov.items():
         if 'inputs' in val.keys():
