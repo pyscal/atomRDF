@@ -1286,7 +1286,7 @@ class KnowledgeGraph:
             filename = os.path.join(os.getcwd(), "out")
 
         sys = self.get_system_from_sample(sample)
-        sys.to_file(filename, format=format, add_sample_id=add_sample_id, input_data=input_data, 
+        sys.to_file(filename=filename, format=format, add_sample_id=add_sample_id, input_data=input_data, 
                 pseudopotentials=pseudopotentials, kspacing=kspacing, 
                 kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
 

@@ -1103,7 +1103,7 @@ class System(pc.System):
             for line in lines:
                 fout.write(line)
 
-    def to_file(self, outfile, format='lammps-dump', customkeys=None, customvals=None,
+    def to_file(self, filename=None, format='lammps-dump', customkeys=None, customvals=None,
                 compressed=False, timestep=0, species=None,  add_sample_id=True,
                 input_data=None, pseudopotentials=None,
                 kspacing=None, kpts=None,
@@ -1158,14 +1158,19 @@ class System(pc.System):
         -------
         None
         """
+        if filename is None:
+            outfile = f"structure.out"
+        else:
+            outfile = filename
+
         if format == "ase":
-            s = self.write.ase()
+            asesys = convert_snap(self)
             if self.sample is not None:
-                s.info["sample_id"] = self.sample
-            return s
+                asesys.info["sample_id"] = self.sample
+            return asesys
 
         elif format == "poscar":
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format="vasp")
             if add_sample_id and (self.sample is not None):
                 self.write_poscar_id(outfile)
@@ -1175,11 +1180,11 @@ class System(pc.System):
                 compressed=compressed, timestep=timestep, species=species)
         
         elif format == "lammps-data":
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format='lammps-data', atom_style='atomic')
         
         elif format == "quantum-espresso":
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format='espresso-in', input_data=input_data,
                 pseudopotentials=pseudopotentials, kspacing=kspacing,
                 kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
@@ -1187,7 +1192,7 @@ class System(pc.System):
                 self.write_quatum_espresso_id(outfile)
         
         else:
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format=format)
 
     def to_graph(self):
