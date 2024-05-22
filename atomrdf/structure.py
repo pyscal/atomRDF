@@ -554,6 +554,7 @@ class System(pc.System):
         # for post-processing of structures
         self.graph = graph
         self.names = names
+        self._material = None
         self._atom_ids = None
         if source is not None:
             self.__dict__.update(source.__dict__)
@@ -597,6 +598,16 @@ class System(pc.System):
         }
 
         self.schema._add_attribute(mapdict)
+
+    @property
+    def material(self):
+        if self._material is None:
+            self._material = self.graph.value(self.sample, CMSO.hasMaterial)
+        return self._material
+
+    @material.setter
+    def material(self, value):
+        self._material = value
 
     def delete(self, ids=None, indices=None, condition=None, selection=False):
         """
