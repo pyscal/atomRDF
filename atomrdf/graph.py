@@ -49,7 +49,7 @@ import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
 
-from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV
+from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -1320,9 +1320,7 @@ class KnowledgeGraph:
 
     def _get_ancestor(self, prop, prov):
 
-        RASMO = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
-        RCMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
-        MATH = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
+
 
         #note that only one operation and parent are present!
         operation = [x[1] for x in self.triples((None, None, prop))]
@@ -1339,7 +1337,7 @@ class KnowledgeGraph:
         
         propname = _name(prop)
 
-        if operation == RASMO.hasInputParameter:
+        if operation == ASMO.hasInputParameter:
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
@@ -1347,7 +1345,7 @@ class KnowledgeGraph:
                 prov[_name(parent)] = {}
                 prov[_name(parent)]['found'] = False
         
-        elif operation == RCMSO.hasCalculatedProperty:
+        elif operation == CMSO.hasCalculatedProperty:
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
