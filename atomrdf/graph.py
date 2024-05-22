@@ -1346,6 +1346,13 @@ class KnowledgeGraph:
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
             self._add_to_dict(parent, prov)
+            prov[_name(parent)]['inputs'] = {}
+            associated_samples = [x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))]
+            for count, sample in enumerate(associated_samples):
+                prov[_name(parent)]['inputs'][str(count)] = _name(sample)
+                self._add_to_dict(sample, prov)
+            prov[_name(parent)]['found'] = True
+            prov[_name(parent)]['operation'] = 'activity'
 
         elif operation == CMSO.hasCalculatedProperty:
             prov[propname]['operation'] = 'input_parameter'
