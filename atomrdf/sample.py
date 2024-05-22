@@ -51,20 +51,32 @@ class Sample:
     def _volume(self):
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
         volume = self._graph.value(simcell, CMSO.hasVolume)
-        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
-        self._graph.add((parent, ASMO.hasValue, Literal(volume.toPython())))
-        self._graph.add((parent, RDFS.label, Literal("Volume")))
-        self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
-        self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3")))
+
+        #initially query if there is property with label volume
+        inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
+        labels = [self._graph.value(inp, RDFS.label) for inp in inps]
+        if not "Volume" in labels:
+            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+            self._graph.add((parent, ASMO.hasValue, Literal(volume.toPython())))
+            self._graph.add((parent, RDFS.label, Literal("Volume")))
+            self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
+            self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3")))
+        else:
+            parent = inps[labels.index("Volume")]
         return Property(volume.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3')
     
     @property
     def _no_of_atoms(self):
         no_atoms = self._graph.value(self._sample_id, CMSO.hasNumberOfAtoms)
-        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
-        self._graph.add((parent, ASMO.hasValue, Literal(no_atoms.toPython())))
-        self._graph.add((parent, RDFS.label, Literal("NumberOfAtoms")))
-        self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
+        inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
+        labels = [self._graph.value(inp, RDFS.label) for inp in inps]
+        if not "NumberOfAtoms" in labels:
+            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+            self._graph.add((parent, ASMO.hasValue, Literal(no_atoms.toPython())))
+            self._graph.add((parent, RDFS.label, Literal("NumberOfAtoms")))
+            self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
+        else:
+            parent = inps[labels.index("NumberOfAtoms")]
         return Property(no_atoms.toPython(), graph=self._graph, parent=parent)
 
     
