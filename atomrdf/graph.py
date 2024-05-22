@@ -1327,21 +1327,21 @@ class KnowledgeGraph:
 
     def _get_ancestor(self, prop, prov):
         #note that only one operation and parent are present!
+        if isinstance(prop, str):
+            prop = URIRef(prop)
+        propname = _name(prop)
+
         operation = [x[1] for x in self.triples((None, None, prop))]
         parent = [list(self.triples((None, op, prop)))[0][0] for op in operation]
-        
+
         if len(operation) == 0:
+            prov[propname]['found'] = True
             return prov
         
         operation = operation[0]
         parent = parent[0]
-
-        if isinstance(prop, str):
-            prop = URIRef(prop)
         
-        propname = _name(prop)
-        print(operation)
-        if operation == UNSAFEASMO.hasInputParameter:
+        if operation.toPython() == "http://purls.helmholtz-metadaten.de/asmo/hasInputParameter":
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
@@ -1354,7 +1354,7 @@ class KnowledgeGraph:
             prov[_name(parent)]['found'] = True
             prov[_name(parent)]['operation'] = 'activity'
 
-        elif operation == UNSAFECMSO.hasCalculatedProperty:
+        elif operation == "http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty":
             prov[propname]['operation'] = 'input_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)

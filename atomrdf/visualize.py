@@ -272,20 +272,27 @@ def visualize_provenance(
     #add all edges
     for key, val in prov.items():
         if 'inputs' in val.keys():
-            operation_id = str(uuid.uuid4())
-            operation = dot.node(operation_id, label=val['operation'], 
-                                color="#E6B8AF", 
-                                shape='box', 
-                                style='filled',
-                                fontname='Helvetica',
-                                fontsize='8')
-            for subkey, subval in val['inputs'].items():
-                dot.edge(_id(subval), operation_id, label='input', 
-                    color="#263238",
-                    fontname='Helvetica',
-                    fontsize='8')
-            dot.edge(operation_id, _id(key), label='output', 
-                    color="#263238",
-                    fontname='Helvetica',
-                    fontsize='8')
+            if val['operation'] == 'input_parameter':
+                for subkey, subval in val['inputs'].items():
+                    dot.edge(_id(subval), _id(key), label='input_param', 
+                        color="#263238",
+                        fontname='Helvetica',
+                        fontsize='8')
+            else:
+                operation_id = str(uuid.uuid4())
+                operation = dot.node(operation_id, label=val['operation'], 
+                                    color="#E6B8AF", 
+                                    shape='box', 
+                                    style='filled',
+                                    fontname='Helvetica',
+                                    fontsize='8')
+                for subkey, subval in val['inputs'].items():
+                    dot.edge(_id(subval), operation_id, label='input', 
+                        color="#263238",
+                        fontname='Helvetica',
+                        fontsize='8')
+                dot.edge(operation_id, _id(key), label='output', 
+                        color="#263238",
+                        fontname='Helvetica',
+                        fontsize='8')
     return dot
