@@ -279,6 +279,7 @@ def visualize_provenance(
                         fontname='Helvetica',
                         fontsize='8')
             elif val['operation'] == 'sample_for_activity':
+                for subkey, subval in val['inputs'].items():
                     dot.edge(_id(subval), _id(key), label='input_sample', 
                         color="#263238",
                         fontname='Helvetica',
