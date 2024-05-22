@@ -39,7 +39,7 @@ import pickle
 # from pyscal3.core import System
 from pyscal3.atoms import Atoms
 
-from atomrdf.visualize import visualize_graph
+from atomrdf.visualize import visualize_graph, visualize_provenance
 from atomrdf.network.network import OntologyNetwork
 from atomrdf.network.ontology import read_ontology
 from atomrdf.structure import System
@@ -1392,7 +1392,7 @@ class KnowledgeGraph:
         prov[propname]['found'] = True
         return prov
     
-    def generate_provenance_dict(self, prop=None, label=None):
+    def generate_provenance_dict(self, prop=None, label=None, visualize=False):
         if (prop is None) and (label is None):
             raise ValueError('Either prop or label must be provided')
         
@@ -1411,4 +1411,8 @@ class KnowledgeGraph:
                 if not prov[prop]['found']:
                     prov = self._get_ancestor(prop, prov)
                     done = False
+        
+        if visualize:
+            return visualize_provenance(prov)
+        
         return prov

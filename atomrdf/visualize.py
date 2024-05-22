@@ -242,3 +242,50 @@ def visualize_graph(
         )
 
     return dot
+
+def _id(item):
+    return str(item).replace(':', '_')
+
+def visualize_provenance(
+    prov,
+    rankdir="TB",
+    size=None,
+    layout="dot",
+):
+    dot = graphviz.Digraph()
+    dot.attr(
+        rankdir=rankdir,
+        style="filled",
+        size=size,
+        layout=layout,
+        overlap="false",
+    )
+    #add all nodes
+    for key in prov.keys():
+        nid = _id(key)
+        dot.node(nid, label=prov[key]['label'], 
+                shape='parallelogram', 
+                color="#e6ffcc", 
+                style="filled",
+                fontname='Helvetica',
+                fontsize='8')
+    #add all edges
+    for key, val in prov.items():
+        if 'inputs' in val.keys():
+            operation_id = str(uuid.uuid4())
+            operation = dot.node(operation_id, label=val['operation'], 
+                                color="#ffe6ff", 
+                                shape='box', 
+                                style='filled',
+                                fontname='Helvetica',
+                                fontsize='8')
+            for subkey, subval in val['inputs'].items():
+                dot.edge(_id(subval), operation_id, label='input', 
+                    color="#263238",
+                    fontname='Helvetica',
+                    fontsize='8')
+            dot.edge(operation_id, _id(key), label='output', 
+                    color="#263238",
+                    fontname='Helvetica',
+                    fontsize='8')
+    return dot
