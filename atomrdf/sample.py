@@ -10,7 +10,15 @@ import numpy as np
 import uuid
 
 MATH = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
+RASMO = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
+RCMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 
+def _name(term):
+    try:
+        return str(term.toPython())
+    except:
+        return str(term)
+    
 class Sample:
     def __init__(self, name, sample_id, graph):
         self._name = name
