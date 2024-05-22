@@ -103,7 +103,12 @@ def _replace_keys(refdict, indict):
 def _dummy_log(str):
     pass
 
-
+def _name(term):
+    try:
+        return str(term.toPython())
+    except:
+        return str(term)
+    
 def _prepare_log(file):
     logger = logging.getLogger(__name__)
     handler = logging.FileHandler(file)
@@ -1173,10 +1178,13 @@ class KnowledgeGraph:
             return self.sgraph, na
         return self.sgraph
     
-    def get_sample_label(self, sample):
-        label = self.graph.value(sample, RDFS.label)
+    def get_label(self, item):
+        label = self.graph.value(item, RDFS.label)
         if label is not None:
             return label.toPython()
+
+    def get_sample_label(self, sample):
+        label = self.get_label(sample)
         return label
     
     def change_label(self, sample, label):
@@ -1293,3 +1301,124 @@ class KnowledgeGraph:
                             workflow_module=workflow_module, 
                             job_dicts=job_dicts,
                             add_intermediate_jobs=add_intermediate_jobs)
+    
+    def find_property(self, label):
+        prop_list = list(self.graph.triples((None, RDFS.label, label)))
+        if len(prop_list) == 0:
+            raise RuntimeError(f'Property {label} not found in the graph')
+        prop = prop_list[0][0]
+        return prop        
+
+    def get_string_label(self, item):
+        label = self.get_label(item)
+        if label is None:
+            try:
+                label = item.toPython()
+            except:
+                label = str(item)
+        return label
+
+    def _get_ancestor(self, prop, prov):
+
+        RASMO = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
+        RCMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
+        MATH = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
+
+        #note that only one operation and parent are present!
+        operation = [x[1] for x in self.triples((None, None, prop))]
+        parent = [list(self.triples((None, op, prop)))[0][0] for op in operation]
+        
+        if len(operation) == 0:
+            return prov
+        
+        operation = operation[0]
+        parent = parent[0]
+
+        if isinstance(prop, str):
+            prop = URIRef(prop)
+        
+        propname = _name(prop)
+
+        if operation == RASMO.hasInputParameter:
+            prov[propname]['operation'] = 'input_parameter'
+            prov[propname]['inputs'] = {}
+            prov[propname]['inputs']['0'] = _name(parent)
+            if _name(parent) not in prov.keys():
+                prov[_name(parent)] = {}
+                prov[_name(parent)]['found'] = False
+        
+        elif operation == RCMSO.hasCalculatedProperty:
+            prov[propname]['operation'] = 'input_parameter'
+            prov[propname]['inputs'] = {}
+            prov[propname]['inputs']['0'] = _name(parent)
+            if _name(parent) not in prov.keys():
+                prov[_name(parent)] = {}
+                prov[_name(parent)]['found'] = False
+        
+        elif operation == MATH.hasSum:
+            addends = list(x[2] for x in kg.graph.triples((parent, MATH.hasAddend, None)))
+            prov[propname]['operation'] = 'addition'
+            prov[propname]['inputs'] = {}
+            for count, term in enumerate(addends):
+                prov[propname]['inputs'][f'{count}'] = _name(term)
+                if _name(term) not in prov.keys():
+                    prov[_name(term)] = {}
+                    prov[_name(term)]['found'] = False
+        
+        elif operation == MATH.hasDifference:
+            minuend = kg.graph.value(parent, MATH.hasMinuend)
+            subtrahend = kg.graph.value(parent, MATH.hasSubtrahend)
+            prov[propname]['operation'] = 'subtraction'
+            prov[propname]['inputs'] = {}
+            prov[propname]['inputs']['0'] = _name(minuend)
+            prov[propname]['inputs']['1'] = _name(subtrahend)
+            if _name(minuend) not in prov.keys():
+                prov[_name(minuend)] = {}
+                prov[_name(minuend)]['found'] = False
+            if _name(subtrahend) not in prov.keys():
+                prov[_name(subtrahend)] = {}
+                prov[_name(subtrahend)]['found'] = False
+        
+        elif operation == MATH.hasProduct:
+            factors = list(x[2] for x in kg.graph.triples((parent, MATH.hasFactor, None)))
+            prov[propname]['operation'] = 'multiplication'
+            prov[propname]['inputs'] = {}
+            for count, term in enumerate(factors):
+                prov[propname]['inputs'][f'{count}'] = _name(term)
+                if _name(term) not in prov.keys():
+                    prov[_name(term)] = {}
+                    prov[_name(term)]['found'] = False
+        
+        elif operation == MATH.hasQuotient:
+            divisor = kg.graph.value(parent, MATH.hasDivisor)
+            dividend = kg.graph.value(parent, MATH.hasDividend)
+            prov[propname]['operation'] = 'division'
+            prov[propname]['inputs'] = {}
+            prov[propname]['inputs']['0'] = _name(divisor)
+            prov[propname]['inputs']['1'] = _name(dividend)
+            if _name(divisor) not in prov.keys():
+                prov[_name(divisor)] = {}
+                prov[_name(divisor)]['found'] = False
+            if _name(dividend) not in prov.keys():
+                prov[_name(dividend)] = {}
+                prov[_name(dividend)]['found'] = False
+            
+
+        prov[propname]['found'] = True
+        return prov
+    
+    def generate_provenance_dict(self, prop):
+        name = _name(prop)
+        prov[name] = {}
+        prov[name]['label'] = self.get_string_label(prop)
+        prov[name]['found'] = False
+
+        done = False
+        while not done:
+            done = True
+            keys = list(prov.keys()) 
+            for prop in keys:
+                if not prov[prop]['found']:
+                    prov = self._get_ancestor(prop, prov)
+                    done = False
+        return prov
