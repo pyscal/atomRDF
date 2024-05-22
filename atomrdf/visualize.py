@@ -265,7 +265,7 @@ def visualize_provenance(
         nid = _id(key)
         dot.node(nid, label=prov[key]['label'], 
                 shape='parallelogram', 
-                color="#e6ffcc", 
+                color="#C9DAF8", 
                 style="filled",
                 fontname='Helvetica',
                 fontsize='8')
@@ -274,7 +274,7 @@ def visualize_provenance(
         if 'inputs' in val.keys():
             operation_id = str(uuid.uuid4())
             operation = dot.node(operation_id, label=val['operation'], 
-                                color="#ffe6ff", 
+                                color="#E6B8AF", 
                                 shape='box', 
                                 style='filled',
                                 fontname='Helvetica',
