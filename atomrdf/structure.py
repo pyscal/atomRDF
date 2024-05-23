@@ -1901,7 +1901,6 @@ class System(pc.System):
 
     
     def rotate(self, rotation_vectors, graph=None, label=None):
-
         box = am.Box(
             avect=self.box[0],
             bvect=self.box[1],
@@ -1992,9 +1991,39 @@ class System(pc.System):
         self.graph.add((rot_vector_03, CMSO.hasComponent_y, Literal(rotation_vectors[2][1], datatype=XSD.float),))
         self.graph.add((rot_vector_03, CMSO.hasComponent_z, Literal(rotation_vectors[2][2], datatype=XSD.float),))
 
-    def shear_system(self, shear):
+    def _select_by_plane(self, plane, distance, reverse_orientation=False):
+        plane_norm = np.linalg.norm(plane)
+        selection = []
+        for pos in self.atoms.positions:
+            dist = np.dot(plane, pos)/plane_norm
+            
+            if dist < distance:
+                selection.append(True)
+            else:
+                selection.append(False)
+        if reverse_orientation:
+            selection = np.invert(selection)
+        return selection        
+
+    def select_by_plane(self, plane, distance, reverse_orientation=False):
+        selection = self._select_by_plane(plane, distance, 
+                        reverse_orientation=reverse_orientation)
+        self.apply_selection(condition=selection)
+        
+    def shear_system(self, shear, plane=None, distance=None, reverse_orientation=False):
+        if plane is not None:
+            if distance is None:
+                raise ValueError('distance needs to be provided')
+        
+        if plane is not None:
+            self.select_by_plane(plane, distance, reverse_orientation=reverse_orientation)
+
         if not len(shear) == 3:
             raise ValueError("shear vector must be of length 3")
+        
         for x in range(len(self.atoms['positions'])):
             if self.atoms['condition'][x]:
                 self.atoms['positions'][x] += np.array(shear)
+        
+        if plane is not None:
+            self.remove_selection()
