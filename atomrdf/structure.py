@@ -2027,3 +2027,6 @@ class System(pc.System):
         
         if plane is not None:
             self.remove_selection()
+    
+    def add_shear_triples(self):
+        pass
