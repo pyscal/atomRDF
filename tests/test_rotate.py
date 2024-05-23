@@ -1,6 +1,7 @@
 import pytest
 import os
 from atomrdf import KnowledgeGraph, System
+import numpy as np
 
 def test_rotate():
     kg = KnowledgeGraph()
@@ -14,4 +15,3 @@ def test_rotate():
     assert np.abs(srot.box[2][2] - 4.050) < 1E-3
     assert srot.natoms == 8
 
-    
