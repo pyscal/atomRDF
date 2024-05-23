@@ -1991,3 +1991,10 @@ class System(pc.System):
         self.graph.add((rot_vector_03, CMSO.hasComponent_x, Literal(rotation_vectors[2][0], datatype=XSD.float),))
         self.graph.add((rot_vector_03, CMSO.hasComponent_y, Literal(rotation_vectors[2][1], datatype=XSD.float),))
         self.graph.add((rot_vector_03, CMSO.hasComponent_z, Literal(rotation_vectors[2][2], datatype=XSD.float),))
+
+    def shear_system(self, shear):
+        if not len(shear) == 3:
+            raise ValueError("shear vector must be of length 3")
+        for x in range(len(self.atoms['positions'])):
+            if self.atoms['condition'][x]:
+                self.atoms['positions'][x] += np.array(shear)
