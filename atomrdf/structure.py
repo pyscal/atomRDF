@@ -33,6 +33,10 @@ import atomrdf.properties as prp
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import CMSO, PLDO, PODO
 
+from atomman.defect.Dislocation import Dislocation
+import atomman as am
+import atomman.unitconvert as uc
+
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
 file_location = "/".join(file_location[:-1])
@@ -242,9 +246,6 @@ def _make_dislocation(
     will be generated. If set to "periodicarray", a periodic array of dislocations will be generated.
 
     """
-    from atomman.defect.Dislocation import Dislocation
-    import atomman as am
-    import atomman.unitconvert as uc
 
     if structure is not None:
         # create a structure with the info
@@ -1897,3 +1898,69 @@ class System(pc.System):
                 Literal(gb_dict["MisorientationAngle"], datatype=XSD.float),
             )
         )
+
+    
+    def rotate(self, rotation_vectors, graph=None, label=None):
+
+        box = am.Box(
+            avect=self.box[0],
+            bvect=self.box[1],
+            cvect=self.box[2],
+        )
+        
+        atoms = am.Atoms(
+            atype=self.atoms.types, pos=self.atoms.positions
+        )
+        
+        element = [val for key, val in self.atoms._type_dict.items()]
+
+        system = am.System(
+            atoms=atoms, 
+            box=box, 
+            pbc=[True, True, True], 
+            symbols=element, 
+            scale=False,
+        )
+
+        #now rotate with atomman
+        system = system.rotate(rotation_vectors)
+
+        #now convert back and return the system
+        box = [system.box.avect, 
+            system.box.bvect, 
+            system.box.cvect]
+        
+        atom_df = system.atoms_df()
+        types = [int(x) for x in atom_df.atype.values]
+        
+        species = []
+        for t in types:
+            species.append(element[int(t) - 1])
+
+        positions = np.column_stack(
+            (atom_df["pos[0]"].values, 
+            atom_df["pos[1]"].values, 
+            atom_df["pos[2]"].values)
+        )
+
+        atom_dict = {"positions": positions, "types": types, "species": species}
+        atom_obj = Atoms()
+        atom_obj.from_dict(atom_dict)
+        
+        output_structure = System()
+        output_structure.box = box
+        output_structure.atoms = atom_obj
+        #output_structure = output_structure.modify.remap_to_box()
+        if graph is not None:
+            output_structure.graph = graph
+        else:
+            output_structure.graph = self.graph
+        output_structure.atoms._lattice = self.atoms._lattice
+        output_structure.atoms._lattice_constant = self.atoms._lattice_constant
+        output_structure._structure_dict = self._structure_dict
+        if label is not None:
+            output_structure.label = label
+        else:
+            output_structure.label = self.label
+        output_structure.to_graph()
+        return output_structure
