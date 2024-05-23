@@ -31,7 +31,7 @@ import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, PLDO, PODO
+from atomrdf.namespace import CMSO, PLDO, PODO, UNSAFEASMO, PROV
 
 from atomman.defect.Dislocation import Dislocation
 import atomman as am
@@ -1963,4 +1963,31 @@ class System(pc.System):
         else:
             output_structure.label = self.label
         output_structure.to_graph()
+        if output_structure.graph is not None:
+            self.add_rotation_triples(rotation_vectors, output_structure.sample)
         return output_structure
+
+    def add_rotation_triples(self, rotation_vectors, child_sample_id):
+        activity_id = f"activity:{uuid.uuid4()}"
+        activity = self.graph.create_node(activity_id, UNSAFEASMO.StructureRotation)
+        self.graph.add((activity, RDF.type, PROV.Activity))
+        self.graph.add((child_sample_id, PROV.wasGeneratedBy, activity))
+        self.graph.add((child_sample_id, PROV.wasDerivedFrom, self.sample))
+
+        rot_vector_01 = self.graph.create_node(f"{activity_id}_RotationVector_1", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, rot_vector_01))
+        self.graph.add((rot_vector_01, CMSO.hasComponent_x, Literal(rotation_vectors[0][0], datatype=XSD.float),))
+        self.graph.add((rot_vector_01, CMSO.hasComponent_y, Literal(rotation_vectors[0][1], datatype=XSD.float),))
+        self.graph.add((rot_vector_01, CMSO.hasComponent_z, Literal(rotation_vectors[0][2], datatype=XSD.float),))
+
+        rot_vector_02 = self.graph.create_node(f"{activity_id}_RotationVector_2", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, rot_vector_02))
+        self.graph.add((rot_vector_02, CMSO.hasComponent_x, Literal(rotation_vectors[1][0], datatype=XSD.float),))
+        self.graph.add((rot_vector_02, CMSO.hasComponent_y, Literal(rotation_vectors[1][1], datatype=XSD.float),))
+        self.graph.add((rot_vector_02, CMSO.hasComponent_z, Literal(rotation_vectors[1][2], datatype=XSD.float),))
+
+        rot_vector_03 = self.graph.create_node(f"{activity_id}_RotationVector_3", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, rot_vector_03))
+        self.graph.add((rot_vector_03, CMSO.hasComponent_x, Literal(rotation_vectors[2][0], datatype=XSD.float),))
+        self.graph.add((rot_vector_03, CMSO.hasComponent_y, Literal(rotation_vectors[2][1], datatype=XSD.float),))
+        self.graph.add((rot_vector_03, CMSO.hasComponent_z, Literal(rotation_vectors[2][2], datatype=XSD.float),))

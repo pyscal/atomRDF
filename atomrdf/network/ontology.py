@@ -1,3 +1,15 @@
+"""
+Documentation for the ontology module.
+
+Updates needed
+--------------
+ASMO module
+
+- Add math operations, see sample.py for the complete list of items - at the moment, 4 cardinal operations,
+but maybe more will be needed.
+
+- StructureOperation: StructureRotation and associated vectors, see structure.py
+"""
 import os
 from atomrdf.network.network import OntologyNetwork
 
