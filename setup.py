@@ -18,7 +18,8 @@ setup(
     url = 'https://pyscal.org',
     install_requires=['numpy', 'ase', 'rdflib', 
     'pyyaml', 'graphviz', 'networkx', 
-    'pyscal3', 'spglib', 'pandas', 'owlready2'],
+    'pyscal3', 'spglib', 'pandas', 'owlready2',
+    'atomman'],
     classifiers=[
         'Programming Language :: Python :: 3'
     ],

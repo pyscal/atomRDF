@@ -74,5 +74,5 @@ PROV = RDFLibNamespace("http://www.w3.org/ns/prov#")
 MDO = RDFLibNamespace("https://w3id.org/mdo/calculation/")
 
 MATH = RDFLibNamespace("http://purls.helmholtz-metadaten.de/asmo/")
-UNSAFECMSO = RDFLibNamespace(os.path.join(file_location, "data/cmso.owl"))
-UNSAFEASMO = RDFLibNamespace(os.path.join(file_location, "data/asmo.owl"))
+UNSAFECMSO = RDFLibNamespace("http://purls.helmholtz-metadaten.de/cmso/")
+UNSAFEASMO = RDFLibNamespace("http://purls.helmholtz-metadaten.de/asmo/")

@@ -31,7 +31,11 @@ import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, PLDO, PODO
+from atomrdf.namespace import CMSO, PLDO, PODO, UNSAFEASMO, PROV
+
+from atomman.defect.Dislocation import Dislocation
+import atomman as am
+import atomman.unitconvert as uc
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -242,9 +246,6 @@ def _make_dislocation(
     will be generated. If set to "periodicarray", a periodic array of dislocations will be generated.
 
     """
-    from atomman.defect.Dislocation import Dislocation
-    import atomman as am
-    import atomman.unitconvert as uc
 
     if structure is not None:
         # create a structure with the info
@@ -1897,3 +1898,135 @@ class System(pc.System):
                 Literal(gb_dict["MisorientationAngle"], datatype=XSD.float),
             )
         )
+
+    
+    def rotate(self, rotation_vectors, graph=None, label=None):
+        box = am.Box(
+            avect=self.box[0],
+            bvect=self.box[1],
+            cvect=self.box[2],
+        )
+        
+        atoms = am.Atoms(
+            atype=self.atoms.types, pos=self.atoms.positions
+        )
+        
+        element = [val for key, val in self.atoms._type_dict.items()]
+
+        system = am.System(
+            atoms=atoms, 
+            box=box, 
+            pbc=[True, True, True], 
+            symbols=element, 
+            scale=False,
+        )
+
+        #now rotate with atomman
+        system = system.rotate(rotation_vectors)
+
+        #now convert back and return the system
+        box = [system.box.avect, 
+            system.box.bvect, 
+            system.box.cvect]
+        
+        atom_df = system.atoms_df()
+        types = [int(x) for x in atom_df.atype.values]
+        
+        species = []
+        for t in types:
+            species.append(element[int(t) - 1])
+
+        positions = np.column_stack(
+            (atom_df["pos[0]"].values, 
+            atom_df["pos[1]"].values, 
+            atom_df["pos[2]"].values)
+        )
+
+        atom_dict = {"positions": positions, "types": types, "species": species}
+        atom_obj = Atoms()
+        atom_obj.from_dict(atom_dict)
+        
+        output_structure = System()
+        output_structure.box = box
+        output_structure.atoms = atom_obj
+        #output_structure = output_structure.modify.remap_to_box()
+        if graph is not None:
+            output_structure.graph = graph
+        else:
+            output_structure.graph = self.graph
+        output_structure.atoms._lattice = self.atoms._lattice
+        output_structure.atoms._lattice_constant = self.atoms._lattice_constant
+        output_structure._structure_dict = self._structure_dict
+        if label is not None:
+            output_structure.label = label
+        else:
+            output_structure.label = self.label
+        output_structure.to_graph()
+        if output_structure.graph is not None:
+            self.add_rotation_triples(rotation_vectors, output_structure.sample)
+        return output_structure
+
+    def add_rotation_triples(self, rotation_vectors, child_sample_id):
+        activity_id = f"activity:{uuid.uuid4()}"
+        activity = self.graph.create_node(activity_id, UNSAFEASMO.StructureRotation)
+        self.graph.add((activity, RDF.type, PROV.Activity))
+        self.graph.add((child_sample_id, PROV.wasGeneratedBy, activity))
+        self.graph.add((child_sample_id, PROV.wasDerivedFrom, self.sample))
+
+        rot_vector_01 = self.graph.create_node(f"{activity_id}_RotationVector_1", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, rot_vector_01))
+        self.graph.add((rot_vector_01, CMSO.hasComponent_x, Literal(rotation_vectors[0][0], datatype=XSD.float),))
+        self.graph.add((rot_vector_01, CMSO.hasComponent_y, Literal(rotation_vectors[0][1], datatype=XSD.float),))
+        self.graph.add((rot_vector_01, CMSO.hasComponent_z, Literal(rotation_vectors[0][2], datatype=XSD.float),))
+
+        rot_vector_02 = self.graph.create_node(f"{activity_id}_RotationVector_2", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, rot_vector_02))
+        self.graph.add((rot_vector_02, CMSO.hasComponent_x, Literal(rotation_vectors[1][0], datatype=XSD.float),))
+        self.graph.add((rot_vector_02, CMSO.hasComponent_y, Literal(rotation_vectors[1][1], datatype=XSD.float),))
+        self.graph.add((rot_vector_02, CMSO.hasComponent_z, Literal(rotation_vectors[1][2], datatype=XSD.float),))
+
+        rot_vector_03 = self.graph.create_node(f"{activity_id}_RotationVector_3", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, rot_vector_03))
+        self.graph.add((rot_vector_03, CMSO.hasComponent_x, Literal(rotation_vectors[2][0], datatype=XSD.float),))
+        self.graph.add((rot_vector_03, CMSO.hasComponent_y, Literal(rotation_vectors[2][1], datatype=XSD.float),))
+        self.graph.add((rot_vector_03, CMSO.hasComponent_z, Literal(rotation_vectors[2][2], datatype=XSD.float),))
+
+    def _select_by_plane(self, plane, distance, reverse_orientation=False):
+        plane_norm = np.linalg.norm(plane)
+        selection = []
+        for pos in self.atoms.positions:
+            dist = np.dot(plane, pos)/plane_norm
+            
+            if dist < distance:
+                selection.append(True)
+            else:
+                selection.append(False)
+        if reverse_orientation:
+            selection = np.invert(selection)
+        return selection        
+
+    def select_by_plane(self, plane, distance, reverse_orientation=False):
+        selection = self._select_by_plane(plane, distance, 
+                        reverse_orientation=reverse_orientation)
+        self.apply_selection(condition=selection)
+        
+    def shear_system(self, shear, plane=None, distance=None, reverse_orientation=False):
+        if plane is not None:
+            if distance is None:
+                raise ValueError('distance needs to be provided')
+        
+        if plane is not None:
+            self.select_by_plane(plane, distance, reverse_orientation=reverse_orientation)
+
+        if not len(shear) == 3:
+            raise ValueError("shear vector must be of length 3")
+        
+        for x in range(len(self.atoms['positions'])):
+            if self.atoms['condition'][x]:
+                self.atoms['positions'][x] += np.array(shear)
+        
+        if plane is not None:
+            self.remove_selection()
+    
+    def add_shear_triples(self):
+        pass
