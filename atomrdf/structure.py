@@ -554,13 +554,15 @@ class System(pc.System):
         # for post-processing of structures
         self.graph = graph
         self.names = names
+        self._material = None
         self._atom_ids = None
         if source is not None:
             self.__dict__.update(source.__dict__)
 
         self.write = AttrSetter()
         mapdict = {}
-        mapdict['ase'] = update_wrapper(partial(convert_snap, self), convert_snap)
+        mapdict['ase'] = update_wrapper(partial(self.to_file, format='ase'), self.to_file)
+        mapdict['pyiron'] = update_wrapper(partial(self.to_file, format='pyiron'), self.to_file)
         mapdict['file'] = self.to_file
         mapdict['dict'] = update_wrapper(partial(serialize.serialize, self, return_type='dict'), serialize.serialize)
         mapdict['json'] = update_wrapper(partial(serialize.serialize, self, return_type='json'), serialize.serialize)
@@ -597,6 +599,16 @@ class System(pc.System):
         }
 
         self.schema._add_attribute(mapdict)
+
+    @property
+    def material(self):
+        if self._material is None:
+            self._material = self.graph.value(self.sample, CMSO.hasMaterial)
+        return self._material
+
+    @material.setter
+    def material(self, value):
+        self._material = value
 
     def delete(self, ids=None, indices=None, condition=None, selection=False):
         """
@@ -1103,7 +1115,7 @@ class System(pc.System):
             for line in lines:
                 fout.write(line)
 
-    def to_file(self, outfile, format='lammps-dump', customkeys=None, customvals=None,
+    def to_file(self, filename=None, format='lammps-dump', customkeys=None, customvals=None,
                 compressed=False, timestep=0, species=None,  add_sample_id=True,
                 input_data=None, pseudopotentials=None,
                 kspacing=None, kpts=None,
@@ -1158,28 +1170,49 @@ class System(pc.System):
         -------
         None
         """
+        if filename is None:
+            outfile = f"structure.out"
+        else:
+            outfile = filename
+
         if format == "ase":
-            return self.write.ase()
+            asesys = convert_snap(self)
+            if self.sample is not None:
+                asesys.info["sample_id"] = self.sample
+            return asesys
+        
+        elif format == "pyiron":
+            from pyiron_atomistics.atomistics.structure.atoms import ase_to_pyiron
+            asesys = convert_snap(self)
+            pyironsys = ase_to_pyiron(asesys)
+            if self.sample is not None:
+                pyironsys.info["sample_id"] = self.sample            
+            return pyironsys
+
         elif format == "poscar":
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format="vasp")
             if add_sample_id and (self.sample is not None):
                 self.write_poscar_id(outfile)
+        
         elif format == "lammps-dump":
             inputmethods.to_file(self, outfile, format='lammps-dump', customkeys=customkeys, customvals=customvals,
                 compressed=compressed, timestep=timestep, species=species)
+        
         elif format == "lammps-data":
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format='lammps-data', atom_style='atomic')
+        
         elif format == "quantum-espresso":
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format='espresso-in', input_data=input_data,
                 pseudopotentials=pseudopotentials, kspacing=kspacing,
                 kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
             if add_sample_id and (self.sample is not None):
                 self.write_quatum_espresso_id(outfile)
+        
         else:
-            asesys = self.write.ase()
+            asesys = convert_snap(self)
             write(outfile, asesys, format=format)
 
     def to_graph(self):

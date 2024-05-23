@@ -72,3 +72,7 @@ PODO = Namespace(os.path.join(file_location, "data/podo.owl"))
 ASMO = Namespace(os.path.join(file_location, "data/asmo.owl"))
 PROV = RDFLibNamespace("http://www.w3.org/ns/prov#")
 MDO = RDFLibNamespace("https://w3id.org/mdo/calculation/")
+
+MATH = RDFLibNamespace("http://purls.helmholtz-metadaten.de/asmo/")
+UNSAFECMSO = RDFLibNamespace(os.path.join(file_location, "data/cmso.owl"))
+UNSAFEASMO = RDFLibNamespace(os.path.join(file_location, "data/asmo.owl"))
