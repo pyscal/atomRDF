@@ -19,7 +19,7 @@ setup(
     install_requires=['numpy', 'ase', 'rdflib', 
     'pyyaml', 'graphviz', 'networkx', 
     'pyscal3', 'spglib', 'pandas', 'owlready2',
-    'atomman'],
+    'atomman', 'mp-api'],
     classifiers=[
         'Programming Language :: Python :: 3'
     ],
