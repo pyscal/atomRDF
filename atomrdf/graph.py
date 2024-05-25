@@ -48,6 +48,7 @@ from atomrdf.stores import create_store
 import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
+import atomrdf.mp as amp 
 
 from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, UNSAFECMSO, UNSAFEASMO
 
@@ -1452,3 +1453,41 @@ class KnowledgeGraph:
             return visualize_provenance(prov)
         
         return prov
+    
+
+    def query_structure_from_mp(self, api_key, chemical_system=None, material_ids=None, is_stable=True,
+                        conventional=True,
+                        add_to_graph=True):
+        docs = amp.query_mp(api_key, 
+                            chemical_system = chemical_system, 
+                            material_ids = material_ids, 
+                            is_stable = is_stable)
+        structures = []
+        for doc in docs:
+            struct = doc['structure']
+            if conventional:
+                aseatoms = struct.to_conventional().to_ase_atoms()
+            else:
+                aseatoms = struct.to_primitive().to_ase_atoms()
+            
+            sys = System.read.ase(aseatoms)
+            
+            symmetry = doc['symmetry']
+
+            if add_to_graph:
+                sys.graph = self
+                sys.to_graph()
+                
+                targets = [None, symmetry['symbol'], symmetry['number'], None, None, None]
+                sys._add_crystal_structure(targets=targets)
+
+                #add energy
+                self.add_calculated_quantity(sys.sample, 
+                                            'EnergyPerAtom', 
+                                            doc['energy_per_atom'], 
+                                            unit='EV')  
+                structures.append(sys)
+        if len(structures) == 1:
+            return structures[0]
+        else:
+            return structures                     
