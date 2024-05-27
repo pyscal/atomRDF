@@ -25,7 +25,7 @@ def get_structures(job, method_dict):
     initial_pyscal_structure = System.read.ase(initial_pyiron_structure)
 
     initial_sample_id = None
-    print('im running this')
+    
     if "sample_id" in initial_pyiron_structure.info.keys():
         initial_sample_id = initial_pyiron_structure.info["sample_id"]
     
