@@ -16,12 +16,16 @@ def process_job(job):
 def get_simulation_folder(job):
     return os.path.join(job.project.path, f'{job.name}_hdf5')
 
+def get_simulation_raw_folder(job):
+    return os.path.join(job.project.path, f'{job.name}_hdf5', f'{job.name}')
+
 def get_structures(job, method_dict):
     initial_pyiron_structure = job.structure
     final_pyiron_structure = job.get_structure(frame=-1)
     initial_pyscal_structure = System.read.ase(initial_pyiron_structure)
-    initial_sample_id = None
 
+    initial_sample_id = None
+    
     if "sample_id" in initial_pyiron_structure.info.keys():
         initial_sample_id = initial_pyiron_structure.info["sample_id"]
     
@@ -29,16 +33,19 @@ def get_structures(job, method_dict):
     if initial_sample_id is None:
         #try to parse job directly, see if we have the structure written down in comments
         job.decompress()
-        poscar_file = os.path.join(get_simulation_folder(job), 'POSCAR')
-        if os.path.exists(poscar_file):
-            lines = []
-            with open(poscar_file, 'r') as f:
-                for line in f:
-                    lines.append(line)
+        poscar_file_locations = [os.path.join(get_simulation_folder(job), 'POSCAR'),
+                                os.path.join(get_simulation_raw_folder(job), 'POSCAR')]
+        for poscar_file in poscar_file_locations:
+            if os.path.exists(poscar_file):
+                lines = []
+                with open(poscar_file, 'r') as f:
+                    for line in f:
+                        lines.append(line)
+                        break
+                if 'sample' in lines[0]:
+                    initial_sample_id = lines[0].strip()
                     break
-            if 'sample' in lines[0]:
-                initial_sample_id = lines[0].strip()
-
+                
     #add final structure
     final_pyscal_structure = System.read.ase(final_pyiron_structure)
 
