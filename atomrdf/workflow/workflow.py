@@ -139,8 +139,8 @@ class Workflow:
             self.kg.add((parent_sample, RDF.type, PROV.Entity))
             self.kg.add((sample, PROV.wasDerivedFrom, parent_sample))
             #update label
-            label = self.kg.get_sample_label(sample)
-            parent_label = self.kg.get_sample_label(parent_sample)
+            label = self.kg.get_string_label(sample)
+            parent_label = self.kg.get_string_label(parent_sample)
             if label is None:
                 new_label = f"{parent_label}_derivative"
             else:
