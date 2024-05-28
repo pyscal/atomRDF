@@ -413,6 +413,7 @@ class OntologyNetwork:
         for count, destination in enumerate(destinations):
             #print(source, destination)
             triplets = self.get_shortest_path(source, destination, triples=True)
+            #print(triplets)
             for triple in triplets:
                 #print(triple)
                 line_text =  "    ?%s %s ?%s ."% ( triple[0].replace(":", "_"),
