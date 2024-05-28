@@ -1145,6 +1145,9 @@ class KnowledgeGraph:
         -------
         None
         """
+        if isinstance(item, str):
+            item = URIRef(item)
+
         if create_new_graph:
             self.sgraph = KnowledgeGraph()
         triples = list(self.triples((item, None, None)))
@@ -1172,6 +1175,8 @@ class KnowledgeGraph:
         na: int, only retured if no_atoms is True
 
         """
+        if isinstance(sample, str):
+            sample = URIRef(sample)
 
         self.iterate_graph(sample, create_new_graph=True)
         if no_atoms:
