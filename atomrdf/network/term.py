@@ -4,7 +4,7 @@ https://docs.python.org/3/library/operator.html
 
 from rdflib import Namespace
 import numbers
-
+import copy
 
 def _get_name(uri, delimiter):
     """
@@ -283,36 +283,42 @@ class OntoTerm:
         """
         # self._is_number(val)
         self._is_data_node()
-        self._condition = self._create_condition_string("=", val)
-        return self
+        item = copy.deepcopy(self)
+        item._condition = item._create_condition_string("=", val)
+        return item
 
     def __lt__(self, val):
         self._is_number(val)
         self._is_data_node()
-        self._condition = self._create_condition_string("<", val)
-        return self
+        item = copy.deepcopy(self)
+        item._condition = item._create_condition_string("<", val)
+        return item
 
     def __le__(self, val):
         self._is_number(val)
         self._is_data_node()
-        self._condition = self._create_condition_string("<=", val)
-        return self
+        item = copy.deepcopy(self)
+        item._condition = item._create_condition_string("<=", val)
+        return item
 
     def __ne__(self, val):
         # self._is_number(val)
         self._is_data_node()
-        self._condition = self._create_condition_string("!=", val)
-        return self
+        item = copy.deepcopy(self)
+        item._condition = item._create_condition_string("!=", val)
+        return item
 
     def __ge__(self, val):
         self._is_number(val)
         self._is_data_node()
-        self._condition = self._create_condition_string(">=", val)
-        return self
+        item = copy.deepcopy(self)
+        item._condition = item._create_condition_string(">=", val)
+        return item
 
     def __gt__(self, val):
         self._is_number(val)
         self._is_data_node()
+        item = copy.deepcopy(self)
         self._condition = self._create_condition_string(">", val)
         return self
 
@@ -322,13 +328,14 @@ class OntoTerm:
         term._is_data_node()
         self._ensure_condition_exists()
         term._ensure_condition_exists()
-        self._condition = "&&".join([self._condition, term._condition])
-        self._condition = f"({self._condition})"
-        self._condition_parents.append(term)
+        item = copy.deepcopy(self)
+        item._condition = "&&".join([item._condition, term._condition])
+        item._condition = f"({item._condition})"
+        item._condition_parents.append(copy.deepcopy(term))
         #and clean up the inbound term
-        if self.name != term.name:
+        if item.name != term.name:
             term.refresh_condition()
-        return self
+        return item
 
     def and_(self, term):
         self.__and__(term)
@@ -339,20 +346,22 @@ class OntoTerm:
         term._is_data_node()
         self._ensure_condition_exists()
         term._ensure_condition_exists()
-        self._condition = "||".join([self._condition, term._condition])
-        self._condition = f"({self._condition})"
-        self._condition_parents.append(term)
+        item = copy.deepcopy(self)
+        item._condition = "||".join([item._condition, term._condition])
+        item._condition = f"({item._condition})"
+        item._condition_parents.append(copy.deepcopy(term))
         #and clean up the inbound term
-        if self.name != term.name:
+        if item.name != term.name:
             term.refresh_condition()
-        return self
+        return item
 
     def or_(self, term):
         self.__or__(term)
 
     def __rshift__(self, term):
-        term._parents.append(self)
-        return term
+        item = copy.deepcopy(term)
+        item._parents.append(copy.deepcopy(self))
+        return item
     
     def refresh_condition(self):
         self._condition = None
