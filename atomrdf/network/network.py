@@ -7,16 +7,17 @@ import numpy as np
 import os
 import warnings
 from pyscal3.atoms import AttrSetter
+import copy
 
 from atomrdf.network.parser import OntoParser
 from atomrdf.network.term import OntoTerm, strip_name
+from functools import partial
 
 owlfile = os.path.join(os.path.dirname(__file__), "../data/cmso.owl")
 
 
 def _replace_name(name):
     return ".".join(name.split(":"))
-
 
 class OntologyNetwork:
     """
@@ -34,6 +35,7 @@ class OntologyNetwork:
         self.terms = AttrSetter()
         self._parse_all()
 
+    
     def _assign_attributes(self):
         mapdict = {}
         # add first level - namespaces
