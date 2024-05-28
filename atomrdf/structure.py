@@ -1065,11 +1065,14 @@ class System(pc.System):
             )
             json_io.write_file(outfile, datadict)
 
-            self.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities)
+            self.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities, label=void_type)
         return sysn
 
-    def add_triples_for_interstitial_impurities(self, conc_of_impurities, no_of_impurities=None):
-        defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity)
+    def add_triples_for_interstitial_impurities(self, conc_of_impurities, no_of_impurities=None, label=None):
+        if label is not None:
+            defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity, label=label)
+        else:
+            defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity)
         self.graph.add((self.material, CMSO.hasDefect, defect))
         self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
         if no_of_impurities is not None:
