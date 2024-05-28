@@ -970,8 +970,9 @@ class System(pc.System):
                     # print(vect)
                     octa_pos.append(vect)
 
+            octa_pos = np.unique(octa_pos, axis=0)
             randindex = np.random.randint(0, len(octa_pos), len(element))
-            randpos = np.unique(octa_pos, axis=0)[randindex]
+            randpos = octa_pos[randindex]
 
             if not len(randpos) == len(element):
                 raise ValueError("not enough octahedral positions found!")
