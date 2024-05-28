@@ -9,7 +9,7 @@ def test_lt():
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = kg.ontology.terms.cmso.hasNumberOfAtoms
-	term < 2
+	term = term < 2
 	assert term._condition == '(?cmso:hasNumberOfAtomsvalue<"2"^^xsd:int)'
 
 def test_eq():
@@ -17,7 +17,7 @@ def test_eq():
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = kg.ontology.terms.cmso.hasNumberOfAtoms
-	term == 2
+	term = (term == 2)
 	assert term._condition == '(?cmso:hasNumberOfAtomsvalue="2"^^xsd:int)'	
 
 def test_gt():
@@ -25,7 +25,7 @@ def test_gt():
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = kg.ontology.terms.cmso.hasNumberOfAtoms
-	term > 2
+	term = term > 2
 	assert term._condition == '(?cmso:hasNumberOfAtomsvalue>"2"^^xsd:int)'
 
 def test_lte():
@@ -33,7 +33,7 @@ def test_lte():
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = kg.ontology.terms.cmso.hasNumberOfAtoms
-	term <= 2
+	term = term <= 2
 	assert term._condition == '(?cmso:hasNumberOfAtomsvalue<="2"^^xsd:int)'
 
 def test_gte():
@@ -41,7 +41,7 @@ def test_gte():
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = kg.ontology.terms.cmso.hasNumberOfAtoms
-	term >= 2
+	term = term >= 2
 	assert term._condition == '(?cmso:hasNumberOfAtomsvalue>="2"^^xsd:int)'
 
 def test_ne():
@@ -49,7 +49,7 @@ def test_ne():
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = kg.ontology.terms.cmso.hasNumberOfAtoms
-	term != 2
+	term = term != 2
 	assert term._condition == '(?cmso:hasNumberOfAtomsvalue!="2"^^xsd:int)'
 
 def test_and():
@@ -57,11 +57,11 @@ def test_and():
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = (kg.ontology.terms.cmso.hasVolume > 2) & (kg.ontology.terms.cmso.hasVolume < 4)
-	assert term._condition == '((?cmso:hasVolumevalue<"4"^^xsd:float)&&(?cmso:hasVolumevalue<"4"^^xsd:float))'
+	assert term._condition == '((?cmso:hasVolumevalue>"2"^^xsd:float)&&(?cmso:hasVolumevalue<"4"^^xsd:float))'
 
 def test_or():
 	kg = KnowledgeGraph()
 	struct_Fe = System.create.element.Fe(graph=kg)
 
 	term = (kg.ontology.terms.cmso.hasVolume > 2) | (kg.ontology.terms.cmso.hasVolume < 4)
-	assert term._condition == '((?cmso:hasVolumevalue<"4"^^xsd:float)||(?cmso:hasVolumevalue<"4"^^xsd:float))'
+	assert term._condition == '((?cmso:hasVolumevalue>"2"^^xsd:float)||(?cmso:hasVolumevalue<"4"^^xsd:float))'
