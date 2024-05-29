@@ -28,6 +28,12 @@ def patch_terms(iri, rn):
     elif iri == "http://purls.helmholtz-metadaten.de/asmo/hasValue":
         rn = ["float", "double", "int", "str"]
 
+    #elif iri == "http://purls.helmholtz-metadaten.de/asmo/hasUnit":
+    #    rn = ["str"]
+
+    #elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasUnit":
+    #    rn = ["str"]
+
     elif iri == "http://www.w3.org/2000/01/rdf-schema#label":
         rn = ["str"]
 
