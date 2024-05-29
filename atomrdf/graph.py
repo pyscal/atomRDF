@@ -632,9 +632,9 @@ class KnowledgeGraph:
         prop = self.create_node(propertyname, CMSO.CalculatedProperty)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDFS.label, Literal(propertyname)))
-        self.add((prop, CMSO.hasValue, Literal(value)))
+        self.add((prop, ASMO.hasValue, Literal(value)))
         if unit is not None:
-            self.add((prop, CMSO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{unit}")))
+            self.add((prop, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{unit}")))
 
     def inspect_sample(self, sample):
         """
@@ -670,8 +670,8 @@ class KnowledgeGraph:
             [k[2] for k in self.triples((sample, CMSO.hasCalculatedProperty, None))]
         )
         props = list([self.value(prop_node, RDFS.label) for prop_node in prop_nodes])
-        propvals = list([self.value(d, CMSO.hasValue).toPython() for d in prop_nodes])
-        units = list([self.value(d, CMSO.hasUnit).toPython() for d in prop_nodes])
+        propvals = list([self.value(d, ASMO.hasValue).toPython() for d in prop_nodes])
+        units = list([self.value(d, ASMO.hasUnit).toPython() for d in prop_nodes])
         st = []
         st.append(f"Sample with {natoms} atoms.\n")
         st.append("Material:\n")

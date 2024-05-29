@@ -1,7 +1,7 @@
 import pytest
 import os
 from atomrdf import KnowledgeGraph, System
-from atomrdf.namespace import CMSO, PLDO
+from atomrdf.namespace import CMSO, PLDO, ASMO
 import shutil
 
 def test_structuregraph():
@@ -56,7 +56,7 @@ def test_add_quantity():
 		str(23),
 		unit='eV')
 	cp = s.value(sys.sample, CMSO.hasCalculatedProperty)
-	val = s.value(cp, CMSO.hasValue)
+	val = s.value(cp, ASMO.hasValue)
 	assert val.toPython() == '23'
 
 	insp = s.inspect_sample(sys.sample)
