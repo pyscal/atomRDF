@@ -106,11 +106,13 @@ def read_ontology():
     )
     
     combo.add_path(("cmso:CalculatedProperty", "asmo:hasValue", "float"))
+    combo.add_path(("cmso:CalculatedProperty", "asmo:hasUnit", "string"))
     combo.add_path(("cmso:CalculatedProperty", "rdfs:label", "string"))
     #how to handle units?
 
     #input parameters for ASMO
     combo.add_path(("asmo:InputParameter", "rdfs:label", "string"))
+    combo.add_path(("cmso:CalculatedProperty", "asmo:hasUnit", "string"))
     combo.add_path(("asmo:InputParameter", "asmo:hasValue", "float"))
 
     #software agent

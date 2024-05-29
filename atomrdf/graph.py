@@ -632,9 +632,9 @@ class KnowledgeGraph:
         prop = self.create_node(propertyname, CMSO.CalculatedProperty)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDFS.label, Literal(propertyname)))
-        self.add((prop, CMSO.hasValue, Literal(value)))
+        self.add((prop, ASMO.hasValue, Literal(value)))
         if unit is not None:
-            self.add((prop, CMSO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{unit}")))
+            self.add((prop, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{unit}")))
 
     def inspect_sample(self, sample):
         """
