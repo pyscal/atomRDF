@@ -611,7 +611,21 @@ class System(pc.System):
     def material(self, value):
         self._material = value
 
-    def delete(self, ids=None, indices=None, condition=None, selection=False):
+    def duplicate(self, only_essential=False):
+        new_system = System(source=self)
+        if only_essential:
+            n_dict = {'positions': copy.deepcopy(self.atoms.positions),
+                    'species': copy.deepcopy(self.atoms.species),
+                    'types': copy.deepcopy(self.atoms.types),}
+        else:
+            n_dict = {key: copy.deepcopy(val)[:self.natoms] for key, val in self.atoms.items()}
+        atoms = Atoms()
+        atoms.from_dict(n_dict)
+        new_system.atoms = atoms
+        new_system.sample = None        
+        return new_system
+
+    def delete(self, ids=None, indices=None, condition=None, selection=False, copy_structure=False):
         """
         Delete atoms from the structure.
 
@@ -625,6 +639,8 @@ class System(pc.System):
             A condition to select atoms to delete. Default is None.
         selection : bool, optional
             If True, delete atoms based on the current selection. Default is False.
+        copy_structure: bool, optional
+            If True, a copy of the structure will be returned. Default is False.
 
         Returns
         -------
@@ -635,24 +651,32 @@ class System(pc.System):
         Deletes atoms from the structure based on the provided IDs, indices, condition, or selection.
         If the structure has a graph associated with it, the graph will be updated accordingly.
         """
-        masks = self.atoms._generate_bool_list(
+        if copy_structure:
+            sys = self.duplicate()
+            #and add this new structure to the graph
+            sys.to_graph()
+        else:
+            sys = self
+        
+        masks = sys.atoms._generate_bool_list(
             ids=ids, indices=indices, condition=condition, selection=selection
         )
-        delete_list = [masks[self.atoms["head"][x]] for x in range(self.atoms.ntotal)]
-        delete_ids = [x for x in range(self.atoms.ntotal) if delete_list[x]]
-        actual_natoms = self.natoms
-        self.atoms._delete_atoms(delete_ids)
+        
+        delete_list = [masks[sys.atoms["head"][x]] for x in range(sys.atoms.ntotal)]
+        delete_ids = [x for x in range(sys.atoms.ntotal) if delete_list[x]]
+        actual_natoms = sys.natoms
+        sys.atoms._delete_atoms(delete_ids)
 
-        if self.graph is not None:
+        if sys.graph is not None:
             # first annotate graph
             val = len([x for x in masks if x])
-            c = val / self.natoms
-            self.add_vacancy(c, number=val)
+            c = val / actual_natoms
+            sys.add_vacancy(c, number=val)
             # now we need to re-add atoms, so at to remove
-            self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.add(
+            sys.graph.remove((sys.sample, CMSO.hasNumberOfAtoms, None))
+            sys.graph.add(
                 (
-                    self.sample,
+                    sys.sample,
                     CMSO.hasNumberOfAtoms,
                     Literal(actual_natoms - val, datatype=XSD.integer),
                 )
@@ -660,16 +684,16 @@ class System(pc.System):
             # revamp composition
             # remove existing chem composution
 
-            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = sys.graph.value(sys.sample, CMSO.hasSpecies)
             # start by cleanly removing elements
-            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in sys.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.remove((element, None, None))
-            self.graph.remove((chemical_species, None, None))
-            self.graph.remove((self.sample, CMSO.hasSpecies, None))
+                sys.graph.remove((element, None, None))
+            sys.graph.remove((chemical_species, None, None))
+            sys.graph.remove((sys.sample, CMSO.hasSpecies, None))
 
             # now recalculate and add it again
-            composition = self.schema.material.element_ratio()
+            composition = sys.schema.material.element_ratio()
             valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
@@ -677,21 +701,21 @@ class System(pc.System):
                     break
 
             if valid:
-                chemical_species = self.graph.create_node(
-                    f"{self._name}_ChemicalSpecies", CMSO.ChemicalSpecies
+                chemical_species = sys.graph.create_node(
+                    f"{sys._name}_ChemicalSpecies", CMSO.ChemicalSpecies
                 )
-                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+                sys.graph.add((sys.sample, CMSO.hasSpecies, chemical_species))
 
                 for e, r in composition.items():
                     if e in element_indetifiers.keys():
-                        element = self.graph.create_node(
+                        element = sys.graph.create_node(
                             element_indetifiers[e], CMSO.ChemicalElement
                         )
-                        self.graph.add((chemical_species, CMSO.hasElement, element))
-                        self.graph.add(
+                        sys.graph.add((chemical_species, CMSO.hasElement, element))
+                        sys.graph.add(
                             (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
                         )
-                        self.graph.add(
+                        sys.graph.add(
                             (
                                 element,
                                 CMSO.hasElementRatio,
@@ -700,29 +724,29 @@ class System(pc.System):
                         )
 
             # we also have to read in file and clean it up
-            filepath = self.graph.value(
-                URIRef(f"{self.sample}_Position"), CMSO.hasPath
+            filepath = sys.graph.value(
+                URIRef(f"{sys.sample}_Position"), CMSO.hasPath
             ).toPython()
-            position_identifier = self.graph.value(
-                URIRef(f"{self.sample}_Position"), CMSO.hasIdentifier
+            position_identifier = sys.graph.value(
+                URIRef(f"{sys.sample}_Position"), CMSO.hasIdentifier
             ).toPython()
-            species_identifier = self.graph.value(
-                URIRef(f"{self.sample}_Species"), CMSO.hasIdentifier
+            species_identifier = sys.graph.value(
+                URIRef(f"{sys.sample}_Species"), CMSO.hasIdentifier
             ).toPython()
 
             # clean up items
             datadict = {
                 position_identifier: {
-                    "value": self.schema.atom_attribute.position(),
+                    "value": sys.schema.atom_attribute.position(),
                     "label": "position",
                 },
                 species_identifier: {
-                    "value": self.schema.atom_attribute.species(),
+                    "value": sys.schema.atom_attribute.species(),
                     "label": "species",
                 },
             }
             outfile = os.path.join(
-                self.graph.structure_store, str(self._name).split(":")[-1]
+                sys.graph.structure_store, str(sys._name).split(":")[-1]
             )
             json_io.write_file(outfile, datadict)
 
