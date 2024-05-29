@@ -1971,9 +1971,8 @@ class System(pc.System):
         return output_structure
 
     def add_rotation_triples(self, rotation_vectors, child_sample_id):
-        activity_id = f"activity:{uuid.uuid4()}"
+        activity_id = f"operation:{uuid.uuid4()}"
         activity = self.graph.create_node(activity_id, UNSAFEASMO.RotationOperation)
-        self.graph.add((activity, RDF.type, PROV.Activity))
         self.graph.add((child_sample_id, PROV.wasGeneratedBy, activity))
         self.graph.add((child_sample_id, PROV.wasDerivedFrom, self.sample))
 
@@ -2033,7 +2032,5 @@ class System(pc.System):
             self.remove_selection()
     
     def add_shear_triples(self, shear, plane, distance):
-        activity_id = f"activity:{uuid.uuid4()}"
+        activity_id = f"operation:{uuid.uuid4()}"
         activity = self.graph.create_node(activity_id, UNSAFEASMO.TranslationOperation)
-        self.graph.add((activity, RDF.type, PROV.Activity))
-        
