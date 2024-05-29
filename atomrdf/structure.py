@@ -750,6 +750,14 @@ class System(pc.System):
             )
             json_io.write_file(outfile, datadict)
 
+            #write mapping for the operation
+            if self.sample.toPython() != sys.sample.toPython():
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", PROV.Activity, label='DeleteAtom')
+                sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
+                sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
+
+        return sys
+
     def add_vacancy(self, concentration, number=None):
         """
         Add Vacancy details which will be annotated by PODO

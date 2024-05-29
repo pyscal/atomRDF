@@ -13,7 +13,7 @@ but maybe more will be needed.
     - TranslationOperation - no triples yet, see structure.py
 
 - PROV activities
-    - DeleteAtom - to create vacancy
+    - DeleteAtom - to create vacancy - Now Just added as label to PROV activities
     - AddAtom - to create impurity
     - SubstituteAtom - to create impurity
 """
