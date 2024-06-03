@@ -1054,10 +1054,10 @@ class System(pc.System):
             sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))        
             sys.to_graph()
         else:
-            sys = self.add_atoms({"positions": randpos, "species": element})
+            sys = self.duplicate()
+            sys = System(source=self.add_atoms({"positions": randpos, "species": element}))
             sys.graph = self.graph
             sys.sample = self.sample
-            sys._name = self._name
 
         # now we have to verify the triples correctly and add them in
         if sys.graph is not None:
