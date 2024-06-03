@@ -1000,6 +1000,8 @@ class System(pc.System):
         if None in self.atoms.species:
             raise ValueError("Assign species!")
 
+        sys = self.duplicate()
+
         if void_type == "tetrahedral":
             element = np.atleast_1d(element)
             self.find.neighbors(method="voronoi", cutoff=0.1)
@@ -1050,11 +1052,11 @@ class System(pc.System):
         conc_of_impurities = no_of_impurities/self.natoms
 
         if copy_structure:
-            sys = self.duplicate()
+            #sys = self.duplicate()
             sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))        
             sys.to_graph()
         else:
-            sys = self.duplicate()
+            #sys = self.duplicate()
             sys = System(source=self.add_atoms({"positions": randpos, "species": element}))
             sys.graph = self.graph
             sys.sample = self.sample
