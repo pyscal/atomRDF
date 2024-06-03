@@ -962,7 +962,8 @@ class System(pc.System):
     def add_interstitial_impurities(
         self, element, void_type="tetrahedral",
         lattice_constant=None,
-        threshold=0.01
+        threshold=0.01,
+        copy_structure=False,
     ):
         """
         Add interstitial impurities to the System
@@ -982,6 +983,10 @@ class System(pc.System):
 
         threshold: float, optional
             threshold for the distance from the lattice constant for octahedral voids to account for fluctuations in atomic positions
+        
+        copy_structure: bool, optional
+            If True, the created structure will be recorded as a new entity in the KnowledgeGraph. Default is False.
+            Note that this optional behaves differently as compared to `delete`, and `substitute_atoms` methods. 
 
         Returns
         -------
@@ -1045,32 +1050,37 @@ class System(pc.System):
         no_of_impurities = len(randpos)
         conc_of_impurities = no_of_impurities/self.natoms
 
-        sysn = System(source=self.add_atoms({"positions": randpos, "species": element}))
-        # attach graphs
-        sysn.sample = self.sample
-        sysn.graph = self.graph
+        if copy_structure:
+            sys = self.duplicate()
+            sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))        
+            sys.to_graph()
+        else:
+            sys = self.add_atoms({"positions": randpos, "species": element})
+            sys.graph = self.graph
+            sys.sample = self.sample
+            sys._name = self._name
 
         # now we have to verify the triples correctly and add them in
-        if self.graph is not None:
-            self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
-            self.graph.add(
+        if sys.graph is not None:
+            sys.graph.remove((sys.sample, CMSO.hasNumberOfAtoms, None))
+            sys.graph.add(
                 (
-                    self.sample,
+                    sys.sample,
                     CMSO.hasNumberOfAtoms,
-                    Literal(sysn.natoms, datatype=XSD.integer),
+                    Literal(sys.natoms, datatype=XSD.integer),
                 )
             )
             # revamp composition
             # remove existing chem composution
-            chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
+            chemical_species = sys.graph.value(sys.sample, CMSO.hasSpecies)
             # start by cleanly removing elements
-            for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
+            for s in sys.graph.triples((chemical_species, CMSO.hasElement, None)):
                 element = s[2]
-                self.graph.remove((element, None, None))
-            self.graph.remove((chemical_species, None, None))
-            self.graph.remove((self.sample, CMSO.hasSpecies, None))
+                sys.graph.remove((element, None, None))
+            sys.graph.remove((chemical_species, None, None))
+            sys.graph.remove((sys.sample, CMSO.hasSpecies, None))
 
-            composition = sysn.schema.material.element_ratio()
+            composition = sys.schema.material.element_ratio()
             valid = False
             for e, r in composition.items():
                 if e in element_indetifiers.keys():
@@ -1078,21 +1088,21 @@ class System(pc.System):
                     break
 
             if valid:
-                chemical_species = self.graph.create_node(
-                    f"{self._name}_ChemicalSpecies", CMSO.ChemicalSpecies
+                chemical_species = sys.graph.create_node(
+                    f"{sys._name}_ChemicalSpecies", CMSO.ChemicalSpecies
                 )
-                self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+                sys.graph.add((sys.sample, CMSO.hasSpecies, chemical_species))
 
                 for e, r in composition.items():
                     if e in element_indetifiers.keys():
-                        element = self.graph.create_node(
+                        element = sys.graph.create_node(
                             element_indetifiers[e], CMSO.ChemicalElement
                         )
-                        self.graph.add((chemical_species, CMSO.hasElement, element))
-                        self.graph.add(
+                        sys.graph.add((chemical_species, CMSO.hasElement, element))
+                        sys.graph.add(
                             (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
                         )
-                        self.graph.add(
+                        sys.graph.add(
                             (
                                 element,
                                 CMSO.hasElementRatio,
@@ -1101,34 +1111,39 @@ class System(pc.System):
                         )
 
             # we also have to read in file and clean it up
-            filepath = self.graph.value(
-                URIRef(f"{self.sample}_Position"), CMSO.hasPath
+            filepath = sys.graph.value(
+                URIRef(f"{sys.sample}_Position"), CMSO.hasPath
             ).toPython()
-            position_identifier = self.graph.value(
-                URIRef(f"{self.sample}_Position"), CMSO.hasIdentifier
+            position_identifier = sys.graph.value(
+                URIRef(f"{sys.sample}_Position"), CMSO.hasIdentifier
             ).toPython()
-            species_identifier = self.graph.value(
-                URIRef(f"{self.sample}_Species"), CMSO.hasIdentifier
+            species_identifier = sys.graph.value(
+                URIRef(f"{sys.sample}_Species"), CMSO.hasIdentifier
             ).toPython()
 
             # clean up items
             datadict = {
                 position_identifier: {
-                    "value": sysn.schema.atom_attribute.position(),
+                    "value": sys.schema.atom_attribute.position(),
                     "label": "position",
                 },
                 species_identifier: {
-                    "value": sysn.schema.atom_attribute.species(),
+                    "value": sys.schema.atom_attribute.species(),
                     "label": "species",
                 },
             }
             outfile = os.path.join(
-                self.graph.structure_store, str(self._name).split(":")[-1]
+                sys.graph.structure_store, str(sys._name).split(":")[-1]
             )
             json_io.write_file(outfile, datadict)
 
-            self.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities, label=void_type)
-        return sysn
+            sys.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities, label=void_type)
+            #write mapping for the operation
+            if self.sample.toPython() != sys.sample.toPython():
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", PROV.Activity, label='AddAtom')
+                sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
+                sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
+        return sys
 
     def add_triples_for_interstitial_impurities(self, conc_of_impurities, no_of_impurities=None, label=None):
         if label is not None:
