@@ -556,6 +556,7 @@ class System(pc.System):
         self.graph = graph
         self.names = names
         self._material = None
+        self._name = None
         self._atom_ids = None
         if source is not None:
             self.__dict__.update(source.__dict__)
@@ -612,17 +613,26 @@ class System(pc.System):
         self._material = value
 
     def duplicate(self, only_essential=False):
-        new_system = System(source=self)
+        new_system = System()
         if only_essential:
             n_dict = {'positions': copy.deepcopy(self.atoms.positions),
                     'species': copy.deepcopy(self.atoms.species),
                     'types': copy.deepcopy(self.atoms.types),}
         else:
             n_dict = {key: copy.deepcopy(val)[:self.natoms] for key, val in self.atoms.items()}
+            new_system.label = self.label
+            new_system._name = self._name
+        
         atoms = Atoms()
         atoms.from_dict(n_dict)
+        atoms._lattice = self.atoms._lattice
+        atoms._lattice_constant = self.atoms._lattice_constant
+        new_system._structure_dict = copy.deepcopy(self._structure_dict)
+        new_system.box = self.box
         new_system.atoms = atoms
-        new_system.sample = None        
+        new_system.graph = self.graph
+        new_system.sample = None
+
         return new_system
 
     def delete(self, ids=None, indices=None, condition=None, selection=False, copy_structure=False):
