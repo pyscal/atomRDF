@@ -8,8 +8,16 @@ ASMO module
 - Add math operations, see sample.py for the complete list of items - at the moment, 4 cardinal operations,
 but maybe more will be needed.
 
-- StructureOperation: StructureRotation and associated vectors, see structure.py
+- StructureOperation: 
+    - RotationOperation and associated vectors, see structure.py
+    - TranslationOperation - no triples yet, see structure.py
+
+- PROV activities
+    - DeleteAtom - to create vacancy - Now Just added as label to PROV activities
+    - AddAtom - to create impurity
+    - SubstituteAtom - to create impurity
 """
+
 import os
 from atomrdf.network.network import OntologyNetwork
 
