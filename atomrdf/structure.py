@@ -865,6 +865,7 @@ class System(pc.System):
         rtype_dict = {val: key for key, val in type_dict.items()}
         if substitution_element in rtype_dict.keys():
             atomtype = rtype_dict[substitution_element]
+            maxtype = atomtype
         else:
             maxtype = max(sys.atoms["types"]) + 1
 
