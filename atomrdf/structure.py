@@ -985,8 +985,7 @@ class System(pc.System):
             threshold for the distance from the lattice constant for octahedral voids to account for fluctuations in atomic positions
         
         copy_structure: bool, optional
-            If True, the created structure will be recorded as a new entity in the KnowledgeGraph. Default is False.
-            Note that this optional behaves differently as compared to `delete`, and `substitute_atoms` methods. 
+            If True, a copy of the structure will be returned. Defaults to False.
 
         Returns
         -------
