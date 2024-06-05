@@ -2122,7 +2122,7 @@ class System(pc.System):
                         reverse_orientation=reverse_orientation)
         self.apply_selection(condition=selection)
         
-    def translate_system(self, translation_vector, 
+    def translate(self, translation_vector, 
                         plane=None, distance=None, 
                         reverse_orientation=False, 
                         copy_structure=True):
