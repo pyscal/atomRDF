@@ -26,12 +26,13 @@ from pyscal3.core import structure_dict, element_dict
 import pyscal3.operations.input as inputmethods
 import pyscal3.operations.serialize as serialize
 from pyscal3.formats.ase import convert_snap
+import pyscal3.operations.visualize as visualize
 
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 
 from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, PLDO, PODO, UNSAFEASMO, PROV
+from atomrdf.namespace import CMSO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV
 
 from atomman.defect.Dislocation import Dislocation
 import atomman as am
@@ -566,11 +567,15 @@ class System(pc.System):
         mapdict['ase'] = update_wrapper(partial(self.to_file, format='ase'), self.to_file)
         mapdict['pyiron'] = update_wrapper(partial(self.to_file, format='pyiron'), self.to_file)
         mapdict['file'] = self.to_file
-        mapdict['dict'] = update_wrapper(partial(serialize.serialize, self, return_type='dict'), serialize.serialize)
-        mapdict['json'] = update_wrapper(partial(serialize.serialize, self, return_type='json'), serialize.serialize)
-        mapdict['pydantic'] = update_wrapper(partial(serialize.serialize, self, return_type='model'), serialize.serialize)
-        mapdict['json_file'] = update_wrapper(partial(serialize.serialize, self, return_type='file'), serialize.serialize)
         self.write._add_attribute(mapdict)
+
+        self.show = AttrSetter()
+        mapdict = {}
+        mapdict['all'] = update_wrapper(partial(self._plot_system, plot_style='all'), self._plot_system)
+        mapdict['continuous_property'] = update_wrapper(partial(self._plot_system, plot_style='continuous_property'), self._plot_system)
+        mapdict['boolean_property'] = update_wrapper(partial(self._plot_system, plot_style='boolean_property'), self._plot_system)
+        mapdict['selection'] = update_wrapper(partial(self._plot_system, plot_style='selection'), self._plot_system)
+        self.show._add_attribute(mapdict)
 
         self.schema = AttrSetter()
         mapdict = {
@@ -601,6 +606,33 @@ class System(pc.System):
         }
 
         self.schema._add_attribute(mapdict)
+
+    def _plot_system(self, plot_style='all', colorby=None, 
+        cmap = 'viridis', 
+        radius=10, 
+        opacity=1.0,
+        hide_zero=False,
+        color = '#ff7f00'):
+        
+        if plot_style == 'all':
+            visualize.plot_simple(self)
+        
+        elif plot_style == 'selection':
+            visualize.plot_by_selection(self, radius=radius, opacity=opacity)
+        
+        elif plot_style == 'continuous_property':
+            visualize.plot_by_property(sys, colorby, 
+                cmap = cmap, 
+                radius=radius, 
+                opacity=opacity,
+                hide_zero=hide_zero)
+            
+        elif plot_style == 'boolean_property':
+            visualize.plot_by_boolean(sys, colorby, 
+                color = color, 
+                radius=radius, 
+                opacity=opacity,
+                hide_zero=hide_zero)
 
     @property
     def material(self):
@@ -2090,24 +2122,62 @@ class System(pc.System):
                         reverse_orientation=reverse_orientation)
         self.apply_selection(condition=selection)
         
-    def shear_system(self, shear, plane=None, distance=None, reverse_orientation=False):
+    def translate(self, translation_vector, 
+                        plane=None, distance=None, 
+                        reverse_orientation=False, 
+                        copy_structure=True):
+        
+        if copy_structure:
+            sys = self.duplicate()
+            #and add this new structure to the graph
+            sys.to_graph()
+        else:
+            sys = self
+
         if plane is not None:
             if distance is None:
                 raise ValueError('distance needs to be provided')
         
         if plane is not None:
-            self.select_by_plane(plane, distance, reverse_orientation=reverse_orientation)
+            sys.select_by_plane(plane, distance, reverse_orientation=reverse_orientation)
 
-        if not len(shear) == 3:
-            raise ValueError("shear vector must be of length 3")
+        if not len(translation_vector) == 3:
+            raise ValueError("translation vector must be of length 3")
         
-        for x in range(len(self.atoms['positions'])):
-            if self.atoms['condition'][x]:
-                self.atoms['positions'][x] += np.array(shear)
+        translation_vector = np.array(translation_vector)
+
+        for x in range(len(sys.atoms['positions'])):
+            if sys.atoms['condition'][x]:
+                sys.atoms['positions'][x] += translation_vector
         
         if plane is not None:
-            self.remove_selection()
+            sys.remove_selection()
+
+        if sys.graph is not None:
+            sys.add_translation_triples(translation_vector, plane, distance)
+            if self.sample.toPython() != sys.sample.toPython():
+                sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
+        return sys
     
-    def add_shear_triples(self, shear, plane, distance):
+    def add_translation_triples(self, translation_vector, plane, distance, ):
         activity_id = f"operation:{uuid.uuid4()}"
         activity = self.graph.create_node(activity_id, UNSAFEASMO.TranslationOperation)
+        self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
+
+        #now add specifics
+        #shear is a vector
+        t_vector = self.graph.create_node(f"{activity_id}_TranslationVector", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, t_vector))
+        self.graph.add((t_vector, CMSO.hasComponent_x, Literal(translation_vector[0], datatype=XSD.float),))
+        self.graph.add((t_vector, CMSO.hasComponent_y, Literal(translation_vector[1], datatype=XSD.float),))
+        self.graph.add((t_vector, CMSO.hasComponent_z, Literal(translation_vector[2], datatype=XSD.float),))
+
+        #if plane is provided, add that as well
+        if plane is not None:
+            plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", CMSO.Vector)
+            self.graph.add((activity, UNSAFECMSO.hasPlane, plane_vector))
+            self.graph.add((plane_vector, CMSO.hasComponent_x, Literal(plane[0], datatype=XSD.float),))
+            self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
+            self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
+            self.graph.add((activity, UNSAFECMSO.hasDistance, Literal(distance, datatype=XSD.float)))
+        
