@@ -303,7 +303,10 @@ class Workflow:
         elif job_dict["method"] == "EquationOfState":            
             #special type of EOS should be initialised!
             self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfStateFit))
-        
+
+        elif job_dict["method"] == "QuasiHarmonicModel":            
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").QuasiHarmonicModel))
+
         # add that structure was generated
         self.kg.add((activity, ASMO.hasComputationalMethod, method))
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
