@@ -26,6 +26,7 @@ from pyscal3.core import structure_dict, element_dict
 import pyscal3.operations.input as inputmethods
 import pyscal3.operations.serialize as serialize
 from pyscal3.formats.ase import convert_snap
+import pyscal3.operations.visualize as visualize
 
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
@@ -566,11 +567,15 @@ class System(pc.System):
         mapdict['ase'] = update_wrapper(partial(self.to_file, format='ase'), self.to_file)
         mapdict['pyiron'] = update_wrapper(partial(self.to_file, format='pyiron'), self.to_file)
         mapdict['file'] = self.to_file
-        mapdict['dict'] = update_wrapper(partial(serialize.serialize, self, return_type='dict'), serialize.serialize)
-        mapdict['json'] = update_wrapper(partial(serialize.serialize, self, return_type='json'), serialize.serialize)
-        mapdict['pydantic'] = update_wrapper(partial(serialize.serialize, self, return_type='model'), serialize.serialize)
-        mapdict['json_file'] = update_wrapper(partial(serialize.serialize, self, return_type='file'), serialize.serialize)
         self.write._add_attribute(mapdict)
+
+        self.show = AttrSetter()
+        mapdict = {}
+        mapdict['all'] = update_wrapper(partial(self._plot_system, plot_style='all'), self._plot_system)
+        mapdict['continuous_property'] = update_wrapper(partial(self._plot_system, plot_style='continuous_property'), self._plot_system)
+        mapdict['boolean_property'] = update_wrapper(partial(self._plot_system, plot_style='boolean_property'), self._plot_system)
+        mapdict['selection'] = update_wrapper(partial(self._plot_system, plot_style='selection'), self._plot_system)
+        self.show._add_attribute(mapdict)
 
         self.schema = AttrSetter()
         mapdict = {
@@ -601,6 +606,33 @@ class System(pc.System):
         }
 
         self.schema._add_attribute(mapdict)
+
+    def _plot_system(self, plot_style='all', colorby=None, 
+        cmap = 'viridis', 
+        radius=10, 
+        opacity=1.0,
+        hide_zero=False,
+        color = '#ff7f00'):
+        
+        if plot_style == 'all':
+            visualize.plot_simple(self)
+        
+        elif plot_style == 'selection':
+            visualize.plot_by_selection(self, radius=radius, opacity=opacity)
+        
+        elif plot_style == 'continuous_property':
+            visualize.plot_by_property(sys, colorby, 
+                cmap = cmap, 
+                radius=radius, 
+                opacity=opacity,
+                hide_zero=hide_zero)
+            
+        elif plot_style == 'boolean_property':
+            visualize.plot_by_boolean(sys, colorby, 
+                color = color, 
+                radius=radius, 
+                opacity=opacity,
+                hide_zero=hide_zero)
 
     @property
     def material(self):
@@ -2092,7 +2124,8 @@ class System(pc.System):
         
     def translate_system(self, translation_vector, 
                         plane=None, distance=None, 
-                        reverse_orientation=False, copy_structure=False):
+                        reverse_orientation=False, 
+                        copy_structure=True):
         
         if copy_structure:
             sys = self.duplicate()
