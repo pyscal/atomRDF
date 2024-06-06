@@ -9,7 +9,7 @@ from rdflib import RDFS, Namespace, RDF, URIRef
 import numpy as np
 import uuid
 import re
-from ast import literal_eval
+import json
 
 MATH = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
 
@@ -124,10 +124,9 @@ class Property:
         self._label = None
     
     def _clean_value(self, value):
-        #if isinstance(value, str):
-        #    if (value[0] == '[') and (value[-1] == ']'):
-        #        value = re.sub("\s+", ",", value)
-        #        value = np.array(literal_eval(value))
+        if isinstance(value, str):
+            if (value[0] == '[') and (value[-1] == ']'):
+                value = np.array(json.loads(value))
         return value
     
     def __repr__(self):

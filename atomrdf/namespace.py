@@ -10,6 +10,8 @@ Namespace
 """
 
 import os
+import json
+import numpy as np
 from rdflib import URIRef
 from rdflib import Namespace as RDFLibNamespace
 from rdflib import Literal as RDFLibLiteral
@@ -20,6 +22,10 @@ from atomrdf.network.network import OntologyNetwork
 def Literal(value, datatype=None):
     if datatype is not None:
         return RDFLibLiteral(value, datatype=datatype)
+    elif isinstance(value, list):
+        return RDFLibLiteral(json.dumps(value))
+    elif isinstance(value, np.ndarray):
+        return RDFLibLiteral(json.dumps(value.tolist()))
     else:
         return RDFLibLiteral(value)
     
