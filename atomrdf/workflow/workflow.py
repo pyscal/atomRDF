@@ -14,7 +14,7 @@ inform_graph
 See atomrdf.workflow.pyiron for more details
 """
 
-from rdflib import Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
+from rdflib import Namespace, XSD, RDF, RDFS, BNode, URIRef
 
 import warnings
 import numpy as np
@@ -28,7 +28,7 @@ import uuid
 from atomrdf.structure import System
 
 # Move imports to another file
-from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO, Literal
 
 class Workflow:
     def __init__(self, kg):
@@ -303,7 +303,10 @@ class Workflow:
         elif job_dict["method"] == "EquationOfState":            
             #special type of EOS should be initialised!
             self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfStateFit))
-        
+
+        elif job_dict["method"] == "QuasiHarmonicModel":            
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").QuasiHarmonicModel))
+
         # add that structure was generated
         self.kg.add((activity, ASMO.hasComputationalMethod, method))
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))

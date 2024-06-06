@@ -4,10 +4,12 @@ Sample
 In this module a new Sample class is defined.
 """
 from pyscal3.atoms import AttrSetter
-from atomrdf.namespace import CMSO, PLDO, PODO, ASMO, PROV
-from rdflib import RDFS, Namespace, RDF, URIRef, Literal
+from atomrdf.namespace import CMSO, PLDO, PODO, ASMO, PROV, Literal
+from rdflib import RDFS, Namespace, RDF, URIRef
 import numpy as np
 import uuid
+import re
+import json
 
 MATH = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
 
@@ -115,11 +117,17 @@ class Sample:
 
 class Property:
     def __init__(self, value, unit=None, graph=None, parent=None):
-        self._value = value
+        self._value = self._clean_value(value)
         self._unit = unit
         self._graph = graph
         self._parent = parent
         self._label = None
+    
+    def _clean_value(self, value):
+        if isinstance(value, str):
+            if (value[0] == '[') and (value[-1] == ']'):
+                value = np.array(json.loads(value))
+        return value
     
     def __repr__(self):
         if self._unit is not None:

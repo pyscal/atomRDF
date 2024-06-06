@@ -1,6 +1,7 @@
 from rdflib.store import NO_STORE, VALID_STORE
 from rdflib import plugin
-from rdflib import Graph, Literal
+from rdflib import Graph
+from atomrdf.namespace import Literal
 
 import os
 
