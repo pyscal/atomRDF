@@ -1,6 +1,6 @@
 import graphviz
 import os
-from rdflib import BNode, URIRef, Literal, Namespace
+from rdflib import BNode, URIRef, Namespace, Literal
 import uuid
 import json
 

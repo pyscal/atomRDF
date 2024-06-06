@@ -10,13 +10,25 @@ Namespace
 """
 
 import os
-from rdflib import Literal, URIRef
+import json
+import numpy as np
+from rdflib import URIRef
 from rdflib import Namespace as RDFLibNamespace
+from rdflib import Literal as RDFLibLiteral
 from pyscal3.atoms import AttrSetter
 
 from atomrdf.network.network import OntologyNetwork
 
-
+def Literal(value, datatype=None):
+    if datatype is not None:
+        return RDFLibLiteral(value, datatype=datatype)
+    elif isinstance(value, list):
+        return RDFLibLiteral(json.dumps(value))
+    elif isinstance(value, np.ndarray):
+        return RDFLibLiteral(json.dumps(value.tolist()))
+    else:
+        return RDFLibLiteral(value)
+    
 class Namespace(AttrSetter, RDFLibNamespace):
     """A class representing a namespace in the AtomRDF library.
 

@@ -14,7 +14,7 @@ inform_graph
 See atomrdf.workflow.pyiron for more details
 """
 
-from rdflib import Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
+from rdflib import Namespace, XSD, RDF, RDFS, BNode, URIRef
 
 import warnings
 import numpy as np
@@ -28,7 +28,7 @@ import uuid
 from atomrdf.structure import System
 
 # Move imports to another file
-from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO, Literal
 
 class Workflow:
     def __init__(self, kg):
