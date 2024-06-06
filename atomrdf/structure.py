@@ -31,8 +31,8 @@ import pyscal3.operations.visualize as visualize
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 
-from rdflib import Graph, Literal, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV
+from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
+from atomrdf.namespace import CMSO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal
 
 from atomman.defect.Dislocation import Dislocation
 import atomman as am

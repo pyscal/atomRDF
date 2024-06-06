@@ -18,7 +18,7 @@ Attributes
 """
 
 
-from rdflib import Graph, Literal, XSD, RDF, RDFS, BNode, URIRef
+from rdflib import Graph, XSD, RDF, RDFS, BNode, URIRef
 
 import os
 import numpy as np
@@ -50,7 +50,7 @@ from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
 import atomrdf.mp as amp 
 
-from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, UNSAFECMSO, UNSAFEASMO
+from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, UNSAFECMSO, UNSAFEASMO, Literal
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
