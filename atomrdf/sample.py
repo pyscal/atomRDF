@@ -8,6 +8,8 @@ from atomrdf.namespace import CMSO, PLDO, PODO, ASMO, PROV
 from rdflib import RDFS, Namespace, RDF, URIRef, Literal
 import numpy as np
 import uuid
+import re
+from ast import literal_eval
 
 MATH = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
 
@@ -115,11 +117,18 @@ class Sample:
 
 class Property:
     def __init__(self, value, unit=None, graph=None, parent=None):
-        self._value = value
+        self._value = self._clean_value(value)
         self._unit = unit
         self._graph = graph
         self._parent = parent
         self._label = None
+    
+    def _clean_value(self, value):
+        if isinstance(value, str):
+            if (value[0] == '[') and (value[0] == ']'):
+                value = re.sub("\s+", ",", value)
+                value = np.array(literal_eval(value))
+        return value
     
     def __repr__(self):
         if self._unit is not None:
