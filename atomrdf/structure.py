@@ -2125,7 +2125,8 @@ class System(pc.System):
     def translate(self, translation_vector, 
                         plane=None, distance=None, 
                         reverse_orientation=False, 
-                        copy_structure=True):
+                        copy_structure=True,
+                        add_triples=True):
         
         if copy_structure:
             sys = self.duplicate()
@@ -2153,7 +2154,7 @@ class System(pc.System):
         if plane is not None:
             sys.remove_selection()
 
-        if sys.graph is not None:
+        if (sys.graph is not None) and add_triples:
             sys.add_translation_triples(translation_vector, plane, distance)
             if self.sample.toPython() != sys.sample.toPython():
                 sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
@@ -2172,6 +2173,45 @@ class System(pc.System):
         self.graph.add((t_vector, CMSO.hasComponent_y, Literal(translation_vector[1], datatype=XSD.float),))
         self.graph.add((t_vector, CMSO.hasComponent_z, Literal(translation_vector[2], datatype=XSD.float),))
 
+    def shear(self, shear_vector, 
+                    plane, 
+                    distance, 
+                    reverse_orientation=False, 
+                    copy_structure=True):
+        
+        if copy_structure:
+            sys = self.duplicate()
+            #and add this new structure to the graph
+            sys.to_graph()
+        else:
+            sys = self
+
+        if not np.dot(shear_vector, plane) == 0:
+            raise ValueError("shear vector must be perpendicular to the plane")
+        
+        sys = sys.translate(shear_vector, plane=plane, distance=distance, 
+                            reverse_orientation=reverse_orientation, copy_structure=False,
+                            add_triples=False)
+
+        if sys.graph is not None:
+            sys.add_shear_triples(shear_vector, plane, distance)
+            if self.sample.toPython() != sys.sample.toPython():
+                sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
+        return sys
+    
+    def add_shear_triples(self, translation_vector, plane, distance, ):
+        activity_id = f"operation:{uuid.uuid4()}"
+        activity = self.graph.create_node(activity_id, UNSAFEASMO.ShearOperation)
+        self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
+
+        #now add specifics
+        #shear is a vector
+        t_vector = self.graph.create_node(f"{activity_id}_ShearVector", CMSO.Vector)
+        self.graph.add((activity, CMSO.hasVector, t_vector))
+        self.graph.add((t_vector, CMSO.hasComponent_x, Literal(translation_vector[0], datatype=XSD.float),))
+        self.graph.add((t_vector, CMSO.hasComponent_y, Literal(translation_vector[1], datatype=XSD.float),))
+        self.graph.add((t_vector, CMSO.hasComponent_z, Literal(translation_vector[2], datatype=XSD.float),))
+
         #if plane is provided, add that as well
         if plane is not None:
             plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", CMSO.Vector)
@@ -2180,4 +2220,3 @@ class System(pc.System):
             self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
             self.graph.add((activity, UNSAFECMSO.hasDistance, Literal(distance, datatype=XSD.float)))
-        
