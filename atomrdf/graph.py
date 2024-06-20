@@ -1005,7 +1005,7 @@ class KnowledgeGraph:
         source,
         destination,
         return_query=False,
-        enforce_types=None,
+        enforce_types=True,
         return_df=True,
     ):
         """
@@ -1030,24 +1030,12 @@ class KnowledgeGraph:
             The result of the query execution. If `return_query` is True, returns the generated query as a string.
             Otherwise, returns the result of the query execution as a pandas DataFrame.
         """
-        if enforce_types is None:
-            for val in [True, False]:
-                query = self.ontology.create_query(
-                    source, destination, enforce_types=val
-                )
-                if return_query:
-                    return query
-                res = self.query(query, return_df=return_df)
-                if len(res) != 0:
-                    return res
-        else:
-            query = self.ontology.create_query(
-                source, destination, enforce_types=enforce_types
-            )
-            if return_query:
-                return query
-            res = self.query(query, return_df=return_df)
-
+        query = self.ontology.create_query(
+            source, destination, enforce_types=enforce_types
+        )
+        if return_query:
+            return query
+        res = self.query(query, return_df=return_df)
         return res
 
     #################################
