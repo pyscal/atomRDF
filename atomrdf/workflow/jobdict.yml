@@ -1,0 +1,43 @@
+sample:
+  initial: string-id
+  final: string-id
+structure:
+  initial: System obj
+  final: System obj 
+intermediate: False
+method: MolecularStatics/MolecularDynamics/DensityFunctionalTheory/EquationOfState/QuasiHarmonicModel
+path: job path folder
+dof:
+  - AtomicPosition
+  - CellVolume
+  - CellShape
+inputs:
+  - label:
+    unit:
+    value:
+outputs:
+  - label:
+    unit:
+    value:
+workflow_manager:
+  uri:
+software:
+  - uri:
+    label:
+
+#special keys
+#DFT
+encut:
+kpoint_grid:
+kpoint_type:
+xc_functional:
+
+#MD
+ensemble: CanonicalEnsemble/MicrocanonicalEnsemble/IsothermalIsobaricEnsemble/IsoenthalpicIsobaricEnsemble/GrandCanonicalEnsemble
+temperature:
+pressure:
+potential:
+  type:
+  uri:
+  label:
+
