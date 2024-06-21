@@ -64,6 +64,9 @@ class Workflow:
         job_dicts = np.atleast_1d(job_dicts)
         
         #print(job_dict)
+        if not 'intermediate' in job_dict.keys():
+            job_dict['intermediate'] = False
+            
         #now we call the functions in order
         for job_dict in job_dicts:
             if (not add_intermediate_jobs) and job_dict['intermediate']:
