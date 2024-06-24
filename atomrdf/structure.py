@@ -32,7 +32,7 @@ import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal
+from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal
 
 from atomman.defect.Dislocation import Dislocation
 import atomman as am
@@ -190,6 +190,7 @@ def _make_dislocation(
     graph=None,
     names=False,
     label=None,
+    return_atomman_dislocation=False,
 ):
     """
     Generate a dislocation structure. Wraps the atomman.defect.Dislocation class.
@@ -326,7 +327,10 @@ def _make_dislocation(
     output_structure.atoms = atom_obj
     output_structure = output_structure.modify.remap_to_box()
     output_structure.label = label
+    output_structure.to_graph()
 
+    if return_atomman_dislocation:
+        return output_structure, disc
     return output_structure
 
 
