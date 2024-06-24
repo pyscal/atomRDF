@@ -1930,6 +1930,12 @@ class System(pc.System):
         #    force_identifier = uuid.uuid4()
         #    self.add((force, CMSO.hasIdentifier, Literal(force_identifier, datatype=XSD.string)))
 
+    def add_dislocation(self, disl_dict):
+        if self.graph is None:
+            return
+        
+        plane_defect = self.graph.create_node(f"{self._name}_Dislocation", PLDO.Dislocation)                
+
     def add_gb(self, gb_dict):
         """
         Add GB details which will be annotated using PLDO

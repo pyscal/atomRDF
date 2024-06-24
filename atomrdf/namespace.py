@@ -79,6 +79,7 @@ class Namespace(AttrSetter, RDFLibNamespace):
 file_location = os.path.dirname(__file__)
 
 CMSO = Namespace(os.path.join(file_location, "data/cmso.owl"))
+LDO = Namespace(os.path.join(file_location, "data/ldo.owl"))
 PLDO = Namespace(os.path.join(file_location, "data/pldo.owl"))
 PODO = Namespace(os.path.join(file_location, "data/podo.owl"))
 ASMO = Namespace(os.path.join(file_location, "data/asmo.owl"))
