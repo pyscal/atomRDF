@@ -52,7 +52,7 @@ class Workflow:
             workflow_module.inform_graph(pr, self.kg)
         
 
-    def to_graph(self, job, workflow_environment=None, workflow_module=None, job_dicts=None, add_intermediate_jobs=False):
+    def to_graph(self, job=None, workflow_environment=None, workflow_module=None, job_dicts=None, add_intermediate_jobs=False):
 
         if workflow_environment is not None:
             workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}.{workflow_environment}")
@@ -64,8 +64,11 @@ class Workflow:
         job_dicts = np.atleast_1d(job_dicts)
         
         #print(job_dict)
+
         #now we call the functions in order
         for job_dict in job_dicts:
+            if not 'intermediate' in job_dict.keys():
+                job_dict['intermediate'] = False
             if (not add_intermediate_jobs) and job_dict['intermediate']:
                 continue
             job_dict = self._add_structure(job_dict)
@@ -310,7 +313,8 @@ class Workflow:
         # add that structure was generated
         self.kg.add((activity, ASMO.hasComputationalMethod, method))
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
-        self.kg.add((activity, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
+        if 'path' in job_dict.keys():
+            self.kg.add((activity, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
         self._add_inputs(job_dict, activity)
         self._add_outputs(job_dict, activity)
         self._add_software(job_dict, method)
