@@ -8,9 +8,9 @@ intermediate: False
 method: MolecularStatics/MolecularDynamics/DensityFunctionalTheory/EquationOfState/QuasiHarmonicModel
 path: job path folder
 dof:
-  - AtomicPosition
-  - CellVolume
-  - CellShape
+  - AtomicPositionRelaxation
+  - CellVolumeRelaxation
+  - CellShapeRelaxation
 inputs:
   - label:
     unit:
