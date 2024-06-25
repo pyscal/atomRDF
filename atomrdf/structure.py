@@ -343,7 +343,7 @@ def _make_dislocation(
     disl_dict = {
         'BurgersVector': burgers_vector,
         'SlipPlane': slip_plane,
-        'SlipVector': slip_direction,
+        'SlipDirection': slip_direction,
         'DislocationLine': dislocation_line,
         'DislocationCharacter': angle_deg,
     }
@@ -1994,9 +1994,9 @@ class System(pc.System):
         self.graph.add((line_defect, LDO.hasBurgersVector, burgers_vector))
 
         slip_direction = self.graph.create_node(f"{self._name}_DislocationSlipDirection", LDO.SlipDirection)
-        self.graph.add((slip_direction, CMSO.hasComponent_x, Literal(disl_dict['SlipVector'][0], datatype=XSD.float)))
-        self.graph.add((slip_direction, CMSO.hasComponent_y, Literal(disl_dict['SlipVector'][1], datatype=XSD.float)))
-        self.graph.add((slip_direction, CMSO.hasComponent_z, Literal(disl_dict['SlipVector'][2], datatype=XSD.float)))
+        self.graph.add((slip_direction, CMSO.hasComponent_x, Literal(disl_dict['SlipDirection'][0], datatype=XSD.float)))
+        self.graph.add((slip_direction, CMSO.hasComponent_y, Literal(disl_dict['SlipDirection'][1], datatype=XSD.float)))
+        self.graph.add((slip_direction, CMSO.hasComponent_z, Literal(disl_dict['SlipDirection'][2], datatype=XSD.float)))
         
         slip_plane = self.graph.create_node(f"{self._name}_DislocationSlipPlane", LDO.NormalVector)
         self.graph.add((slip_plane, CMSO.hasComponent_x, Literal(disl_dict['SlipPlane'][0], datatype=XSD.float)))
