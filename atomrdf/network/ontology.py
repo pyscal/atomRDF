@@ -96,7 +96,11 @@ def read_ontology():
     combo.add_path(("podo:InterstitialImpurity", "rdfs:label", "string"))
     combo.add_path(("cmso:AtomicScaleSample", "podo:hasNumberOfImpurityAtoms", "int"))
     combo.add_path(("cmso:AtomicScaleSample", "podo:hasImpurityConcentration", "float"))
-    
+
+    #CMSO -> LDO DISL paths
+    combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:LineDefect"))
+
+
     combo.add_path(
         ("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample")
     )
