@@ -19,24 +19,35 @@ def test_custom():
 	assert kg.value(struct.sample, CMSO.hasNumberOfAtoms).toPython() == 2
 
 def test_dislocation():
-	burgers_vector = 0.5*np.array([1, 0, -1])
-	slip_vector = np.array([1, 1, 1])
+	slip_direction = np.array([1, 0, -1])
+	slip_plane = np.array([1, 1, 1])
+	slip_system = [slip_direction, slip_plane]
+	burgers_vector = 0.5
 	dislocation_line = np.array([1, 0, -1])
 	elastic_constant_dict = {'C11': 169, 'C12': 122, 'C44': 75.4}
-	sys = System.create.defect.dislocation(burgers_vector,
-	                                      slip_vector,
-	                                      dislocation_line,
-	                                      elastic_constant_dict,
-	                                      element='Cu')
+	kg = KnowledgeGraph()
+	sys = System.create.defect.dislocation(slip_system,
+                                        dislocation_line,
+                                        elastic_constant_dict,
+                                        burgers_vector=burgers_vector,
+                                        element='Cu',
+                                        dislocation_type='monopole',
+                                        graph=kg,
+                                        ) 
 	assert sys.natoms == 96
 
-	sys = System.create.defect.dislocation(burgers_vector,
-	                                      slip_vector,
-	                                      dislocation_line,
-	                                      elastic_constant_dict,
-	                                      element='Cu',
-	                                      dislocation_type='periodicarray')
+	sys = System.create.defect.dislocation(slip_system,
+                                        dislocation_line,
+                                        elastic_constant_dict,
+                                        burgers_vector=burgers_vector,
+                                        element='Cu',
+                                        dislocation_type='periodicarray',
+                                        graph=kg,
+                                        ) 
 	assert sys.natoms == 96
+
+	res = kg.query_sample(kg.ontology.terms.ldo.ScrewDislocation)
+	assert res is not None
 
 
 def test_read_in():
