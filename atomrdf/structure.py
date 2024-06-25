@@ -2008,6 +2008,7 @@ class System(pc.System):
         slip_system = self.graph.create_node(f"{self._name}_DislocationSlipSystem", LDO.SlipSystem)
         self.graph.add((slip_direction, LDO.belongsToSystem, slip_system))
         self.graph.add((slip_plane, LDO.belongsToSystem, slip_system))
+        self.graph.add((line_defect, LDO.movesOn, slip_system))
 
 
     def add_gb(self, gb_dict):
