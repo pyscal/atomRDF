@@ -99,6 +99,7 @@ def read_ontology():
 
     #CMSO -> LDO DISL paths
     combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:LineDefect"))
+    combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:Dislocation"))
 
 
     combo.add_path(
