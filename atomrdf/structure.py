@@ -1998,10 +1998,12 @@ class System(pc.System):
         self.graph.add((slip_direction, CMSO.hasComponent_y, Literal(disl_dict['SlipDirection'][1], datatype=XSD.float)))
         self.graph.add((slip_direction, CMSO.hasComponent_z, Literal(disl_dict['SlipDirection'][2], datatype=XSD.float)))
         
-        slip_plane = self.graph.create_node(f"{self._name}_DislocationSlipPlane", LDO.NormalVector)
-        self.graph.add((slip_plane, CMSO.hasComponent_x, Literal(disl_dict['SlipPlane'][0], datatype=XSD.float)))
-        self.graph.add((slip_plane, CMSO.hasComponent_y, Literal(disl_dict['SlipPlane'][1], datatype=XSD.float)))
-        self.graph.add((slip_plane, CMSO.hasComponent_z, Literal(disl_dict['SlipPlane'][2], datatype=XSD.float)))
+        slip_plane = self.graph.create_node(f"{self._name}_DislocationSlipPlane", LDO.SlipPlane)
+        normal_vector = self.graph.create_node(f"{self._name}_DislocationNormalVector", LDO.NormalVector)
+        self.graph.add((normal_vector, CMSO.hasComponent_x, Literal(disl_dict['SlipPlane'][0], datatype=XSD.float)))
+        self.graph.add((normal_vector, CMSO.hasComponent_y, Literal(disl_dict['SlipPlane'][1], datatype=XSD.float)))
+        self.graph.add((normal_vector, CMSO.hasComponent_z, Literal(disl_dict['SlipPlane'][2], datatype=XSD.float)))
+        self.graph.add((slip_plane, LDO.hasNormalVector, normal_vector))
 
         slip_system = self.graph.create_node(f"{self._name}_DislocationSlipSystem", LDO.SlipSystem)
         self.graph.add((slip_direction, LDO.belongsToSystem, slip_system))
