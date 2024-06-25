@@ -175,10 +175,10 @@ def _make_general_lattice(
 
 
 def _make_dislocation(
-    burgers_vector,
-    slip_vector,
+    slip_system,
     dislocation_line,
     elastic_constant_dict,
+    burgers_vector=None,
     dislocation_type="monopole",
     structure=None,
     element=None,
@@ -197,14 +197,22 @@ def _make_dislocation(
 
     Parameters
     ----------
+    slip_system : list of lists, shape (2 x 3)
+        the slip system for the given system. The input should of type [[u, v, w], [h, k, l]].
+        [u, v, w] is the slip direction and [h, k, l] is the slip plane.
+    dislocation_line : numpy array of length 3
+        The dislocation line direction.
+        This determines the type of dislocation to generate, screw, edge or mixed.
+    burgers_vector : scalar or numpy array of length 3, optional
+        if a scalar value (b) is provided, the burgers vector is assumed to be b*[u, v, w].
+        if a numpy array is provided, the burgers vector is set to this value.
+        Default is equal to slip direction [u, v, w] from slip_system.
+    elastic_constant_dict : dict
+        Dictionary of elastic constants. The keys should be in Voigt notation.
     burgers_vector : numpy array of length 3
         The Burgers vector of the dislocation.
     slip_vector : numpy array of length 3
         The slip vector of the dislocation.
-    dislocation_line : numpy array of length 3
-        The dislocation line direction.
-    elastic_constant_dict : dict
-        Dictionary of elastic constants.
     dislocation_type : str, optional
         The type of dislocation to generate. Default is "monopole".
     structure : crystal lattice to be used
@@ -248,6 +256,15 @@ def _make_dislocation(
     will be generated. If set to "periodicarray", a periodic array of dislocations will be generated.
 
     """
+    slip_direction = slip_system[0]
+    slip_plane = slip_system[1]
+    if burgers_vector is None:
+        burgers_vector = slip_direction
+    elif np.isscalar(burgers_vector):
+        burgers_vector = burgers_vector * np.array(slip_direction)
+    elif len(burgers_vector) != 3:
+        raise ValueError('burgers vector should be None, scalar, or of length 3')
+
 
     if structure is not None:
         # create a structure with the info
@@ -299,7 +316,7 @@ def _make_dislocation(
         C,
         burgers_vector,
         dislocation_line,
-        slip_vector,
+        slip_plane,
     )
     if dislocation_type == "monopole":
         disl_system = disc.monopole()
@@ -319,6 +336,20 @@ def _make_dislocation(
     positions = np.column_stack(
         (atom_df["pos[0]"].values, atom_df["pos[1]"].values, atom_df["pos[2]"].values)
     )
+
+    #find dislocation character
+    angle = np.dot(dislocation_line, burgers_vector)/(np.linalg.norm(dislocation_line)*np.linalg.norm(burgers_vector))
+    angle_rad = np.arccos(angle)
+    angle_deg = np.degrees(angle_rad)
+
+    disl_dict = {
+        'BurgersVector': burgers_vector,
+        'SlipPlane': slip_plane,
+        'SlipVector': slip_direction,
+        'DislocationLine': dislocation_line,
+        'DislocationCharacter': angle_deg,
+    }
+
     atom_dict = {"positions": positions, "types": types, "species": species}
     atom_obj = Atoms()
     atom_obj.from_dict(atom_dict)
@@ -328,6 +359,7 @@ def _make_dislocation(
     output_structure = output_structure.modify.remap_to_box()
     output_structure.label = label
     output_structure.to_graph()
+    output_structure.add_dislocation(disl_dict)
 
     if return_atomman_dislocation:
         return output_structure, disc
@@ -1938,7 +1970,44 @@ class System(pc.System):
         if self.graph is None:
             return
         
-        plane_defect = self.graph.create_node(f"{self._name}_Dislocation", PLDO.Dislocation)                
+        #find what kind of disl is present
+        angle_deg = disl_dict['DislocationCharacter']
+        if (np.abs(angle_deg-0) < 1E-3) or (np.abs(angle_deg-180) < 1E-3) or (np.abs(angle_deg-360) < 1E-3):
+            disl_type = LDO.ScrewDislocation
+        elif (np.abs(angle_deg-90) < 1E-3) or (np.abs(angle_deg-270) < 1E-3):
+            disl_type = LDO.EdgeDislocation
+        else:
+            disl_type = LDO.MixedDislocation
+
+        line_defect = self.graph.create_node(f"{self._name}_Dislocation", disl_type)
+        self.graph.add((self.material, CMSO.hasDefect, line_defect))
+
+        line_direction = self.graph.create_node(f"{self._name}_DislocationLineDirection", LDO.LineDirection)
+        self.graph.add((line_direction, CMSO.hasComponent_x, Literal(disl_dict['DislocationLine'][0], datatype=XSD.float)))
+        self.graph.add((line_direction, CMSO.hasComponent_y, Literal(disl_dict['DislocationLine'][1], datatype=XSD.float)))
+        self.graph.add((line_direction, CMSO.hasComponent_z, Literal(disl_dict['DislocationLine'][2], datatype=XSD.float)))
+        self.graph.add((line_defect, LDO.hasLineDirection, line_direction))                
+
+        burgers_vector = self.graph.create_node(f"{self._name}_DislocationBurgersVector", LDO.BurgersVector)
+        self.graph.add((burgers_vector, CMSO.hasComponent_x, Literal(disl_dict['BurgersVector'][0], datatype=XSD.float)))
+        self.graph.add((burgers_vector, CMSO.hasComponent_y, Literal(disl_dict['BurgersVector'][1], datatype=XSD.float)))
+        self.graph.add((burgers_vector, CMSO.hasComponent_z, Literal(disl_dict['BurgersVector'][2], datatype=XSD.float)))
+        self.graph.add((line_defect, LDO.hasBurgersVector, burgers_vector))
+
+        slip_direction = self.graph.create_node(f"{self._name}_DislocationSlipDirection", LDO.SlipDirection)
+        self.graph.add((slip_direction, CMSO.hasComponent_x, Literal(disl_dict['SlipVector'][0], datatype=XSD.float)))
+        self.graph.add((slip_direction, CMSO.hasComponent_y, Literal(disl_dict['SlipVector'][1], datatype=XSD.float)))
+        self.graph.add((slip_direction, CMSO.hasComponent_z, Literal(disl_dict['SlipVector'][2], datatype=XSD.float)))
+        
+        slip_plane = self.graph.create_node(f"{self._name}_DislocationSlipPlane", LDO.NormalVector)
+        self.graph.add((slip_plane, CMSO.hasComponent_x, Literal(disl_dict['SlipPlane'][0], datatype=XSD.float)))
+        self.graph.add((slip_plane, CMSO.hasComponent_y, Literal(disl_dict['SlipPlane'][1], datatype=XSD.float)))
+        self.graph.add((slip_plane, CMSO.hasComponent_z, Literal(disl_dict['SlipPlane'][2], datatype=XSD.float)))
+
+        slip_system = self.graph.create_node(f"{self._name}_DislocationSlipSystem", LDO.SlipSystem)
+        self.graph.add((slip_direction, LDO.belongsToSystem, slip_system))
+        self.graph.add((slip_plane, LDO.belongsToSystem, slip_system))
+
 
     def add_gb(self, gb_dict):
         """
