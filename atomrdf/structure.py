@@ -358,6 +358,7 @@ def _make_dislocation(
     output_structure.atoms = atom_obj
     output_structure = output_structure.modify.remap_to_box()
     output_structure.label = label
+    output_structure.graph = graph
     output_structure.to_graph()
     output_structure.add_dislocation(disl_dict)
 
