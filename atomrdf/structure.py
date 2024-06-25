@@ -211,8 +211,6 @@ def _make_dislocation(
         Dictionary of elastic constants. The keys should be in Voigt notation.
     burgers_vector : numpy array of length 3
         The Burgers vector of the dislocation.
-    slip_vector : numpy array of length 3
-        The slip vector of the dislocation.
     dislocation_type : str, optional
         The type of dislocation to generate. Default is "monopole".
     structure : crystal lattice to be used
