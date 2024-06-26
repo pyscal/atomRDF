@@ -253,6 +253,15 @@
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/hasCharacterAngle -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/hasCharacterAngle">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/MixedDislocation"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/hasDislocationDensity -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/hasDislocationDensity">
@@ -308,6 +317,7 @@
     <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/AngularVector -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/AngularVector">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
         <rdfs:label>Angular Vector</rdfs:label>
         <skos:altLabel>Frank Vector</skos:altLabel>
     </owl:Class>
@@ -320,6 +330,14 @@
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
         <rdfs:label>Burgers Vector</rdfs:label>
         <skos:altLabel>b</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/CharacterAngle -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/CharacterAngle">
+        <rdfs:label>Character Angle</rdfs:label>
     </owl:Class>
     
 
@@ -463,6 +481,15 @@
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/WedgeDisclination">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/Disclination"/>
         <rdfs:label>Wedge Disclination</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Angle -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Angle">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An angle is a measure of the the space (usually in degrees) between two intersecting lines at the point where they meet or vertex.</obo:IAO_0000115>
+        <rdfs:label>Angle</rdfs:label>
     </owl:Class>
     
 

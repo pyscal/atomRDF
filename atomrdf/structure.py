@@ -1973,10 +1973,13 @@ class System(pc.System):
         angle_deg = disl_dict['DislocationCharacter']
         if (np.abs(angle_deg-0) < 1E-3) or (np.abs(angle_deg-180) < 1E-3) or (np.abs(angle_deg-360) < 1E-3):
             disl_type = LDO.ScrewDislocation
+            disl_name = "ScrewDislocation"
         elif (np.abs(angle_deg-90) < 1E-3) or (np.abs(angle_deg-270) < 1E-3):
             disl_type = LDO.EdgeDislocation
+            disl_name = "EdgeDislocation"
         else:
             disl_type = LDO.MixedDislocation
+            disl_name = "MixedDislocation"
 
         line_defect = self.graph.create_node(f"{self._name}_Dislocation", disl_type)
         self.graph.add((self.material, CMSO.hasDefect, line_defect))
@@ -1992,6 +1995,8 @@ class System(pc.System):
         self.graph.add((burgers_vector, CMSO.hasComponent_y, Literal(disl_dict['BurgersVector'][1], datatype=XSD.float)))
         self.graph.add((burgers_vector, CMSO.hasComponent_z, Literal(disl_dict['BurgersVector'][2], datatype=XSD.float)))
         self.graph.add((line_defect, LDO.hasBurgersVector, burgers_vector))
+
+        self.graph.add((line_defect, LDO.hasCharacterAngle, Literal(angle_deg, datatype=XSD.float)))
 
         slip_direction = self.graph.create_node(f"{self._name}_DislocationSlipDirection", LDO.SlipDirection)
         self.graph.add((slip_direction, CMSO.hasComponent_x, Literal(disl_dict['SlipDirection'][0], datatype=XSD.float)))
