@@ -383,7 +383,7 @@ class OntologyNetwork:
         #iterate through the list, if they have condition parents, add them explicitely
         for destination in destinations:
             for parent in destination._condition_parents:
-                if parent.name not in [d.name for d in destinations]:
+                if parent.variable_name not in [d.variable_name for d in destinations]:
                     destinations.append(parent)
 
         #all names are now collected, in a list of lists
