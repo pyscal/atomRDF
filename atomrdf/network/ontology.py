@@ -134,5 +134,6 @@ def read_ontology():
     combo.add_path(("asmo:InteratomicPotential", "cmso:hasReference", "string"))
     combo.add_path(("asmo:InteratomicPotential", "rdfs:label", "string"))
 
+
     # return
     return combo
