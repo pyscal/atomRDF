@@ -274,7 +274,7 @@ class OntoTerm:
 
 
     def _create_condition_string(self, condition, val):
-        return f'(?{self.query_name}{condition}"{val}"^^xsd:{self._clean_datatype(self.range[0])})'
+        return f'(?{self.variable_name}{condition}"{val}"^^xsd:{self._clean_datatype(self.range[0])})'
 
     # overloading operators
     def __eq__(self, val):
