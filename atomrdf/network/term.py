@@ -281,8 +281,8 @@ class OntoTerm:
         """
         =
         """
-        print("eq")
-        print(f'lhs {self} rhs {val}')
+        #print("eq")
+        #print(f'lhs {self} rhs {val}')
         self._is_data_node()
         item = copy.deepcopy(self)
         item._condition = item._create_condition_string("=", val)
@@ -317,8 +317,8 @@ class OntoTerm:
         return item
 
     def __gt__(self, val):
-        print("gt")
-        print(f'lhs {self} rhs {val}')
+        #print("gt")
+        #print(f'lhs {self} rhs {val}')
         self._is_number(val)
         self._is_data_node()
         item = copy.deepcopy(self)
@@ -362,8 +362,8 @@ class OntoTerm:
         self.__or__(term)
 
     def __matmul__(self, term):
-        print("matmul")
-        print(f'lhs {self} rhs {term}')
+        #print("matmul")
+        #print(f'lhs {self} rhs {term}')
         item = copy.deepcopy(self)
         item._parents.append(copy.deepcopy(term))
         return item
