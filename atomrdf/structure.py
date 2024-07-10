@@ -34,10 +34,6 @@ import atomrdf.properties as prp
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal
 
-from atomman.defect.Dislocation import Dislocation
-import atomman as am
-import atomman.unitconvert as uc
-
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
 file_location = "/".join(file_location[:-1])
@@ -253,7 +249,16 @@ def _make_dislocation(
     The dislocation_type parameter can be set to "monopole" or "periodicarray". If set to "monopole", a single dislocation
     will be generated. If set to "periodicarray", a periodic array of dislocations will be generated.
 
+    Needs atomman.
     """
+
+    try:
+        from atomman.defect.Dislocation import Dislocation
+        import atomman as am
+        import atomman.unitconvert as uc
+    except ImportError:
+        raise ImportError("This function requires the atomman package to be installed")
+    
     slip_direction = slip_system[0]
     slip_plane = slip_system[1]
     if burgers_vector is None:
@@ -2100,6 +2105,13 @@ class System(pc.System):
 
     
     def rotate(self, rotation_vectors, graph=None, label=None):
+        try:
+            from atomman.defect.Dislocation import Dislocation
+            import atomman as am
+            import atomman.unitconvert as uc
+        except ImportError:
+            raise ImportError("This function requires the atomman package to be installed")
+    
         box = am.Box(
             avect=self.box[0],
             bvect=self.box[1],
