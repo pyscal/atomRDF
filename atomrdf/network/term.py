@@ -54,6 +54,8 @@ class OntoTerm:
         data_type=None,
         node_id=None,
         delimiter="/",
+        description=None,
+        label=None,
     ):
 
         self.uri = uri
@@ -69,6 +71,8 @@ class OntoTerm:
         self.subclasses = []
         self.subproperties = []
         self.delimiter = delimiter
+        self.description = description
+        self.label = label
         self.is_domain_of = []
         self.is_range_of = []
         self._condition = None
