@@ -82,6 +82,17 @@ class OntoParser:
                         key
                     ].namespace_with_prefix
 
+    def _add_info(self, term, c):
+        try:
+            term.description = c.IAO_0000115
+        except:
+            term.description = ""
+        try:
+            term.label = c.label
+        except:
+            term.label = ""
+        return term
+
     def _parse_data_property(self):
         for c in self.tree.data_properties():
             iri = c.iri
@@ -120,6 +131,8 @@ class OntoParser:
             term.domain = dm
             term.range = rn
             term.node_type = "data_property"
+            term = self._add_info(term, c)
+
             self.attributes["data_property"][term.name] = term
             # assign this data
             for d in dm:
@@ -161,6 +174,7 @@ class OntoParser:
             term = OntoTerm(iri, delimiter=self.delimiter)
             term.domain = dm
             term.range = rn
+            term = self._add_info(term, c)
             term.node_type = "object_property"
             self.attributes["object_property"][term.name] = term
             for d in dm:
@@ -186,6 +200,7 @@ class OntoParser:
             subclasses.append(c)
             for sb in subclasses:
                 term = OntoTerm(sb.iri, delimiter=self.delimiter)
+                term = self._add_info(term, sb)
                 term.node_type = "class"
                 self.attributes["class"][term.name] = term
             subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
