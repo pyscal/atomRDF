@@ -73,6 +73,8 @@ class OntoTerm:
         self.delimiter = delimiter
         self.description = description
         self.label = label
+        self._description = None
+        self._label = None
         self.is_domain_of = []
         self.is_range_of = []
         self._condition = None
@@ -101,6 +103,48 @@ class OntoTerm:
     @uri.setter
     def uri(self, val):
         self._uri = val
+
+    @property
+    def description(self):
+        """
+        Get the description of the term.
+
+        Returns
+        -------
+        str
+            The description of the term.
+        """
+        return self._description
+    
+    @description.setter
+    def description(self, val):
+        if isinstance(val, list):
+            if len(val) > 1:
+                val = ". ".join(val)
+            else:
+                val = val[0]
+        self._description = val
+
+    @property
+    def label(self):
+        """
+        Get the label of the term.
+
+        Returns
+        -------
+        str
+            The label of the term.
+        """
+        return self._label
+
+    @label.setter
+    def label(self, val):
+        if isinstance(val, list):
+            if len(val) > 1:
+                val = ". ".join(val)
+            else:
+                val = val[0]
+        self._label = val
 
     @property
     def name_without_prefix(self):
