@@ -295,7 +295,7 @@ class OntoTerm:
         return self.uri
 
     def __repr__(self):
-        return str(self.name)
+        return str(self.name + '\n' + self.description)
 
     def _clean_datatype(self, r):
         if r == "str":
