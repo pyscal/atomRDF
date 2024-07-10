@@ -119,7 +119,9 @@ class OntoTerm:
     @description.setter
     def description(self, val):
         if isinstance(val, list):
-            if len(val) > 1:
+            if len(val) == 0:
+                val = ''
+            elif len(val) > 1:
                 val = ". ".join(val)
             else:
                 val = val[0]
@@ -140,7 +142,9 @@ class OntoTerm:
     @label.setter
     def label(self, val):
         if isinstance(val, list):
-            if len(val) > 1:
+            if len(val) == 0:
+                val = ''
+            elif len(val) > 1:
                 val = ". ".join(val)
             else:
                 val = val[0]
