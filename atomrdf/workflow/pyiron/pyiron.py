@@ -68,7 +68,7 @@ def inform_graph(pr, kg):
             repetitions=None,
             crystalstructure=None,
             a=None,
-            covera=None,
+            covera=1.633,
             cubic=True,
             graph=None,
             label=None,
