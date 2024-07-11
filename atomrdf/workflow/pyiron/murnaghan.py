@@ -48,6 +48,37 @@ def process_job(job):
             "associate_to_sample": True,
         }
     )
+
+    structure = job.get_structure(frame=-1)
+    lx = np.linalg.norm(structure.cell[0])
+    ly = np.linalg.norm(structure.cell[1])
+    lz = np.linalg.norm(structure.cell[2])
+
+    outputs.append(
+        {
+            "label": "SimulationCellLength_x",
+            "value": np.round(lx, decimals=4),
+            "unit": "ANGSTROM",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "SimulationCellLength_y",
+            "value": np.round(ly, decimals=4),
+            "unit": "ANGSTROM",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "SimulationCellLength_z",
+            "value": np.round(lz, decimals=4),
+            "unit": "ANGSTROM",
+            "associate_to_sample": True,
+        }
+    )   
+    
     murnaghan_dict['outputs'] = outputs
     lammps.add_software(murnaghan_dict)
     job_dicts.append(murnaghan_dict)
