@@ -33,7 +33,7 @@ import atomrdf.properties as prp
 from atomrdf.sample import Property
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal
+from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal, ASMO
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -110,10 +110,7 @@ def _make_crystal(
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
-    s.add_property_mappings(lattice_constant)
-
-    
-    
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')    
     return s
 
 
@@ -853,7 +850,7 @@ class System(pc.System):
         return sys
 
 
-    def add_property_mappings(self, output_property):
+    def add_property_mappings(self, output_property, mapping_quantity=None):
         if self.graph is None:
             return
         if not isinstance(output_property, Property):
@@ -863,6 +860,17 @@ class System(pc.System):
         parent_samples = list([x[0] for x in self.graph.triples((None, CMSO.hasCalculatedProperty, output_property._parent))])
         for parent_sample in parent_samples:
             self.graph.add((self.sample, PROV.wasDerivedFrom, parent_sample))
+        
+        if mapping_quantity=='lattice_constant':
+            #add lattice constant mapping
+            material = self.graph.value(self.sample, CMSO.hasMaterial)
+            crystal_structure = self.graph.value(material, CMSO.hasStructure)
+            unit_cell = self.graph.value(crystal_structure, CMSO.hasUnitCell)
+            lattice_parameter = self.graph.value(unit_cell, CMSO.hasLatticeParameter)
+
+            #also get activity
+            activity = self.graph.value(output_property._parent, ASMO.wasCalculatedBy)
+            self.graph.add((lattice_parameter, ASMO.wasCalculatedBy, activity))
 
 
     def add_vacancy(self, concentration, number=None):
