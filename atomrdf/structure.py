@@ -110,6 +110,10 @@ def _make_crystal(
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
+    s.add_property_mappings(lattice_constant)
+
+    
+    
     return s
 
 
@@ -847,6 +851,19 @@ class System(pc.System):
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
         return sys
+
+
+    def add_property_mappings(self, output_property):
+        if self.graph is None:
+            return
+        if not isinstance(output_property, Property):
+            return
+        
+        #add mappings to the graph
+        parent_samples = list([x[0] for x in self.graph.triples((None, CMSO.hasCalculatedProperty, output_property._parent))])
+        for parent_sample in parent_samples:
+            self.graph.add((self.sample, PROV.wasDerivedFrom, parent_sample))
+
 
     def add_vacancy(self, concentration, number=None):
         """
