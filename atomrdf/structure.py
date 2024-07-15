@@ -30,6 +30,7 @@ import pyscal3.operations.visualize as visualize
 
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
+from atomrdf.sample import Property
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal
@@ -41,6 +42,13 @@ file_location = os.path.join(os.path.dirname(__file__), "data/element.yml")
 with open(file_location, "r") as fin:
     element_indetifiers = yaml.safe_load(fin)
 
+#declassing special variables
+def _declass(item):
+    if isinstance(item, Property):
+        return item.value
+    else:
+        return item
+        
 def _make_crystal(
     structure,
     lattice_constant=1.00,
@@ -85,9 +93,9 @@ def _make_crystal(
     """
     atoms, box, sdict = pcs.make_crystal(
         structure,
-        lattice_constant=lattice_constant,
+        lattice_constant = _declass(lattice_constant),
         repetitions=repetitions,
-        ca_ratio=ca_ratio,
+        ca_ratio = _declass(ca_ratio),
         noise=noise,
         element=element,
         return_structure_dict=True,
@@ -98,7 +106,7 @@ def _make_crystal(
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
-    s.atoms._lattice_constant = lattice_constant
+    s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
@@ -152,7 +160,7 @@ def _make_general_lattice(
         positions,
         types,
         box,
-        lattice_constant=lattice_constant,
+        lattice_constant=_declass(lattice_constant),
         repetitions=repetitions,
         noise=noise,
         element=element,
@@ -162,7 +170,7 @@ def _make_general_lattice(
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = "custom"
-    s.atoms._lattice_constant = lattice_constant
+    s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
@@ -273,9 +281,9 @@ def _make_dislocation(
         # create a structure with the info
         input_structure = _make_crystal(
             structure,
-            lattice_constant=lattice_constant,
+            lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
-            ca_ratio=ca_ratio,
+            ca_ratio=_declass(ca_ratio),
             noise=noise,
             element=element,
             primitive=primitive,
@@ -288,9 +296,9 @@ def _make_dislocation(
             raise ValueError("Please provide structure")
         input_structure = _make_crystal(
             structure,
-            lattice_constant=lattice_constant,
+            lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
-            ca_ratio=ca_ratio,
+            ca_ratio=_declass(ca_ratio),
             noise=noise,
             element=element,
             primitive=primitive,
@@ -423,7 +431,7 @@ def _make_grain_boundary(
         atoms, box, sdict = gb.populate_grain_boundary(
             structure,
             repetitions=repetitions,
-            lattice_parameter=lattice_constant,
+            lattice_parameter=_declass(lattice_constant),
             overlap=overlap,
         )
     elif element is not None:
@@ -434,7 +442,7 @@ def _make_grain_boundary(
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
-    s.atoms._lattice_constant = lattice_constant
+    s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
@@ -506,7 +514,7 @@ def _read_structure(
             datadict = structure_dict[lattice]["conventional"]
         datadict["lattice"] = lattice
     if lattice_constant is not None:
-        datadict["lattice_constant"] = lattice_constant
+        datadict["lattice_constant"] = _declass(lattice_constant)
     if basis_box is not None:
         datadict["box"] = basis_box
     if basis_positions is not None:
