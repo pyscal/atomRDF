@@ -198,7 +198,7 @@ class Property:
             self._graph.add((operation, MATH.hasAddend, self._wrap(value)))
             self._graph.add((operation, MATH.hasAddend, self._wrap(self)))
             self._graph.add((operation, MATH.hasSum, self._wrap(res_prop)))
-            self._graph.add((parent, ASMO.wasCaclulatedBy, operation))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
     
     def __sub__(self, value):
@@ -213,7 +213,7 @@ class Property:
             self._graph.add((operation, MATH.hasMinuend, self._wrap(self)))
             self._graph.add((operation, MATH.hasSubtrahend, self._wrap(value)))
             self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
-            self._graph.add((parent, ASMO.wasCaclulatedBy, operation))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop    
     
     def __mul__(self, value):
@@ -228,7 +228,7 @@ class Property:
             self._graph.add((operation, MATH.hasFactor, self._wrap(self)))
             self._graph.add((operation, MATH.hasFactor, self._wrap(value)))
             self._graph.add((operation, MATH.hasProduct, self._wrap(res_prop)))
-            self._graph.add((parent, ASMO.wasCaclulatedBy, operation))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
 
     def __truediv__(self, value):
@@ -243,7 +243,7 @@ class Property:
             self._graph.add((operation, MATH.hasDivisor, self._wrap(self)))
             self._graph.add((operation, MATH.hasDividend, self._wrap(value)))
             self._graph.add((operation, MATH.hasQuotient, self._wrap(res_prop)))
-            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
 
     
