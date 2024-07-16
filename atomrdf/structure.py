@@ -863,11 +863,16 @@ class System(pc.System):
         if not isinstance(output_property, Property):
             return
         
-        #add mappings to the graph
+        #if the property is a directly calculated value
         parent_samples = list([x[0] for x in self.graph.triples((None, CMSO.hasCalculatedProperty, output_property._parent))])
-        for parent_sample in parent_samples:
-            self.graph.add((self.sample, PROV.wasDerivedFrom, parent_sample))
-        
+        if len(parent_samples)>0:
+            for parent_sample in parent_samples:
+                self.graph.add((self.sample, PROV.wasDerivedFrom, parent_sample))
+        else:
+            #this is quantity that is derived -> for example volume/3 -> it has only sample parent, but no direct connection
+            if output_property._sample_parent is not None:
+                self.graph.add((self.sample, PROV.wasDerivedFrom, output_property._sample_parent))
+
         if mapping_quantity=='lattice_constant':
             #add lattice constant mapping
             material = self.graph.value(self.sample, CMSO.hasMaterial)
