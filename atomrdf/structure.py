@@ -110,7 +110,8 @@ def _make_crystal(
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
-    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')    
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    s.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')    
     return s
 
 
@@ -175,7 +176,8 @@ def _make_general_lattice(
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
-
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    
     return s
 
 
@@ -373,6 +375,8 @@ def _make_dislocation(
     output_structure.graph = graph
     output_structure.to_graph()
     output_structure.add_dislocation(disl_dict)
+    output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
 
     if return_atomman_dislocation:
         return output_structure, disc
@@ -447,6 +451,8 @@ def _make_grain_boundary(
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    
     gb_dict = {
         "GBPlane": " ".join(np.array(gb_plane).astype(str)),
         "RotationAxis": axis,
@@ -532,6 +538,7 @@ def _read_structure(
     s.lattice_properties = datadict
     s.label = label
     s.to_graph()
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     return s
 
 
