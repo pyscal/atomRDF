@@ -82,6 +82,7 @@ def read_ontology():
 
     # General fixes
     combo.add_path(("cmso:CrystalStructure", "cmso:hasAltName", "string"))
+    combo.add_path(("cmso:LatticeParameter", "asmo:wasCalculatedBy", "prov:Activity"))
 
     # interontology paths
     #CMSO -> PODO VACANCY

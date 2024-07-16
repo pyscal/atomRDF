@@ -69,7 +69,7 @@ class Sample:
             self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3")))
         else:
             parent = inps[labels.index("Volume")]
-        return Property(volume.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3')
+        return Property(volume.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3', sample_parent=self._sample_id)
     
     @property
     def _no_of_atoms(self):
@@ -83,7 +83,7 @@ class Sample:
             self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
         else:
             parent = inps[labels.index("NumberOfAtoms")]
-        return Property(no_atoms.toPython(), graph=self._graph, parent=parent)
+        return Property(no_atoms.toPython(), graph=self._graph, parent=parent, sample_parent=self._sample_id)
 
     
     @property
@@ -98,7 +98,7 @@ class Sample:
             units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
             props = []
             for count, value in enumerate(values):
-                props.append(Property(value.toPython(), unit=units[count], graph=self._graph, parent=inps[count]))
+                props.append(Property(value.toPython(), unit=units[count], graph=self._graph, parent=inps[count], sample_parent=self._sample_id))
             return labels, props
         return [], []
     
@@ -112,16 +112,17 @@ class Sample:
         units = [unit if unit is None else unit.toPython().split('/')[-1] for unit in units]
         props = []
         for count, value in enumerate(values):
-            props.append(Property(value.toPython(), unit=units[count], graph=self._graph, parent=inps[count]))
+            props.append(Property(value.toPython(), unit=units[count], graph=self._graph, parent=inps[count], sample_parent=self._sample_id))
         return labels, props
 
 class Property:
-    def __init__(self, value, unit=None, graph=None, parent=None):
+    def __init__(self, value, unit=None, graph=None, parent=None, sample_parent=None):
         self._value = self._clean_value(value)
         self._unit = unit
         self._graph = graph
         self._parent = parent
         self._label = None
+        self._sample_parent = sample_parent
     
     def _clean_value(self, value):
         if isinstance(value, str):
@@ -191,12 +192,15 @@ class Property:
         parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent) 
         res_prop.label = self._create_label(self, value, '+')
+        res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Addition))
+            self._graph.add((operation, RDF.type, PROV.Activity))
             self._graph.add((operation, MATH.hasAddend, self._wrap(value)))
             self._graph.add((operation, MATH.hasAddend, self._wrap(self)))
             self._graph.add((operation, MATH.hasSum, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
     
     def __sub__(self, value):
@@ -204,12 +208,15 @@ class Property:
         parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
         res_prop.label = self._create_label(self, value, '-') 
+        res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Subtraction))
+            self._graph.add((operation, RDF.type, PROV.Activity))
             self._graph.add((operation, MATH.hasMinuend, self._wrap(self)))
             self._graph.add((operation, MATH.hasSubtrahend, self._wrap(value)))
             self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop    
     
     def __mul__(self, value):
@@ -217,12 +224,15 @@ class Property:
         parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
         res_prop.label = self._create_label(self, value, '*') 
+        res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Multiplication))
+            self._graph.add((operation, RDF.type, PROV.Activity))
             self._graph.add((operation, MATH.hasFactor, self._wrap(self)))
             self._graph.add((operation, MATH.hasFactor, self._wrap(value)))
             self._graph.add((operation, MATH.hasProduct, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
 
     def __truediv__(self, value):
@@ -230,12 +240,15 @@ class Property:
         parent = self._create_node(res)
         res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
         res_prop.label = self._create_label(self, value, '/') 
+        res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
             operation = URIRef(f'operation:{uuid.uuid4()}')
             self._graph.add((operation, RDF.type, MATH.Division))
+            self._graph.add((operation, RDF.type, PROV.Activity))
             self._graph.add((operation, MATH.hasDivisor, self._wrap(self)))
             self._graph.add((operation, MATH.hasDividend, self._wrap(value)))
             self._graph.add((operation, MATH.hasQuotient, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
 
     

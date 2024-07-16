@@ -30,9 +30,10 @@ import pyscal3.operations.visualize as visualize
 
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
+from atomrdf.sample import Property
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal
+from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal, ASMO
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -41,6 +42,13 @@ file_location = os.path.join(os.path.dirname(__file__), "data/element.yml")
 with open(file_location, "r") as fin:
     element_indetifiers = yaml.safe_load(fin)
 
+#declassing special variables
+def _declass(item):
+    if isinstance(item, Property):
+        return item.value
+    else:
+        return item
+        
 def _make_crystal(
     structure,
     lattice_constant=1.00,
@@ -85,9 +93,9 @@ def _make_crystal(
     """
     atoms, box, sdict = pcs.make_crystal(
         structure,
-        lattice_constant=lattice_constant,
+        lattice_constant = _declass(lattice_constant),
         repetitions=repetitions,
-        ca_ratio=ca_ratio,
+        ca_ratio = _declass(ca_ratio),
         noise=noise,
         element=element,
         return_structure_dict=True,
@@ -98,10 +106,12 @@ def _make_crystal(
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
-    s.atoms._lattice_constant = lattice_constant
+    s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    s.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')    
     return s
 
 
@@ -152,7 +162,7 @@ def _make_general_lattice(
         positions,
         types,
         box,
-        lattice_constant=lattice_constant,
+        lattice_constant=_declass(lattice_constant),
         repetitions=repetitions,
         noise=noise,
         element=element,
@@ -162,11 +172,12 @@ def _make_general_lattice(
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = "custom"
-    s.atoms._lattice_constant = lattice_constant
+    s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
-
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    
     return s
 
 
@@ -273,9 +284,9 @@ def _make_dislocation(
         # create a structure with the info
         input_structure = _make_crystal(
             structure,
-            lattice_constant=lattice_constant,
+            lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
-            ca_ratio=ca_ratio,
+            ca_ratio=_declass(ca_ratio),
             noise=noise,
             element=element,
             primitive=primitive,
@@ -288,9 +299,9 @@ def _make_dislocation(
             raise ValueError("Please provide structure")
         input_structure = _make_crystal(
             structure,
-            lattice_constant=lattice_constant,
+            lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
-            ca_ratio=ca_ratio,
+            ca_ratio=_declass(ca_ratio),
             noise=noise,
             element=element,
             primitive=primitive,
@@ -364,6 +375,8 @@ def _make_dislocation(
     output_structure.graph = graph
     output_structure.to_graph()
     output_structure.add_dislocation(disl_dict)
+    output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
 
     if return_atomman_dislocation:
         return output_structure, disc
@@ -423,7 +436,7 @@ def _make_grain_boundary(
         atoms, box, sdict = gb.populate_grain_boundary(
             structure,
             repetitions=repetitions,
-            lattice_parameter=lattice_constant,
+            lattice_parameter=_declass(lattice_constant),
             overlap=overlap,
         )
     elif element is not None:
@@ -434,10 +447,12 @@ def _make_grain_boundary(
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
-    s.atoms._lattice_constant = lattice_constant
+    s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
     s.to_graph()
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    
     gb_dict = {
         "GBPlane": " ".join(np.array(gb_plane).astype(str)),
         "RotationAxis": axis,
@@ -506,7 +521,7 @@ def _read_structure(
             datadict = structure_dict[lattice]["conventional"]
         datadict["lattice"] = lattice
     if lattice_constant is not None:
-        datadict["lattice_constant"] = lattice_constant
+        datadict["lattice_constant"] = _declass(lattice_constant)
     if basis_box is not None:
         datadict["box"] = basis_box
     if basis_positions is not None:
@@ -523,6 +538,7 @@ def _read_structure(
     s.lattice_properties = datadict
     s.label = label
     s.to_graph()
+    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     return s
 
 
@@ -839,6 +855,35 @@ class System(pc.System):
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
         return sys
+
+
+    def add_property_mappings(self, output_property, mapping_quantity=None):
+        if self.graph is None:
+            return
+        if not isinstance(output_property, Property):
+            return
+        
+        #if the property is a directly calculated value
+        parent_samples = list([x[0] for x in self.graph.triples((None, CMSO.hasCalculatedProperty, output_property._parent))])
+        if len(parent_samples)>0:
+            for parent_sample in parent_samples:
+                self.graph.add((self.sample, PROV.wasDerivedFrom, parent_sample))
+        else:
+            #this is quantity that is derived -> for example volume/3 -> it has only sample parent, but no direct connection
+            if output_property._sample_parent is not None:
+                self.graph.add((self.sample, PROV.wasDerivedFrom, output_property._sample_parent))
+
+        if mapping_quantity=='lattice_constant':
+            #add lattice constant mapping
+            material = self.graph.value(self.sample, CMSO.hasMaterial)
+            crystal_structure = self.graph.value(material, CMSO.hasStructure)
+            unit_cell = self.graph.value(crystal_structure, CMSO.hasUnitCell)
+            lattice_parameter = self.graph.value(unit_cell, CMSO.hasLatticeParameter)
+
+            #also get activity
+            activity = self.graph.value(output_property._parent, ASMO.wasCalculatedBy)
+            self.graph.add((lattice_parameter, UNSAFEASMO.wasCalculatedBy, activity))
+
 
     def add_vacancy(self, concentration, number=None):
         """
