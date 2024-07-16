@@ -877,7 +877,7 @@ class System(pc.System):
 
             #also get activity
             activity = self.graph.value(output_property._parent, ASMO.wasCalculatedBy)
-            self.graph.add((lattice_parameter, ASMO.wasCalculatedBy, activity))
+            self.graph.add((lattice_parameter, UNSAFEASMO.wasCalculatedBy, activity))
 
 
     def add_vacancy(self, concentration, number=None):
