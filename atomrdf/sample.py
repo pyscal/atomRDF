@@ -243,7 +243,7 @@ class Property:
             self._graph.add((operation, MATH.hasDivisor, self._wrap(self)))
             self._graph.add((operation, MATH.hasDividend, self._wrap(value)))
             self._graph.add((operation, MATH.hasQuotient, self._wrap(res_prop)))
-            self._graph.add((parent, ASMO.wasCaclulatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop
 
     
