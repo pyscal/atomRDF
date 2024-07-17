@@ -461,7 +461,8 @@ def _make_grain_boundary_aimsgb(
 ):  
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
-        from aimsgb import GrainBoundary, Grain
+        from aimsgb import GrainBoundary as AIMSGrainBoundary
+        from aimsgb import Grain as AIMSGrain
     except ImportError:
         raise ImportError("This function requires the aimsgb and pymatgen packages to be installed")
     
@@ -499,13 +500,13 @@ def _make_grain_boundary_aimsgb(
 
     asesys = init_sys.write.ase()
     pmsys = AseAtomsAdaptor().get_structure(atoms=asesys)
-    grain = Grain(pmsys.lattice, pmsys.species, pmsys.frac_coords)
-    gb = GrainBoundary(axis=axis, sigma=sigma, 
+    grain = AIMSGrain(pmsys.lattice, pmsys.species, pmsys.frac_coords)
+    gb = AIMSGrainBoundary(axis=axis, sigma=sigma, 
                     plane=gb_plane, 
                     initial_struct=grain, 
                     uc_a=uc_a, 
                     uc_b=uc_b)
-    gb_struct = Grain.stack_grains(
+    gb_struct = AIMSGrain.stack_grains(
                 grain_a = gb.grain_a,
                 grain_b = gb.grain_b,
                 vacuum = vacuum,
