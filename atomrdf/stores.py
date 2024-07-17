@@ -131,30 +131,31 @@ def _setup_structure_store(structure_store=None):
         os.mkdir(structure_store)
     return structure_store
 
-def purge(kg):
-    store = kg._store
+def purge(store, identifier, structure_store, store_file):
     if store in ["Memory", "memory"]:
-        _purge_memory(kg)
+        return _purge_memory(identifier, structure_store, store_file)
 
     elif store in ["SQLAlchemy", "db", "database", "sqlalchemy"]:
-        _purge_alchemy(kg)
+        return _purge_alchemy(identifier, structure_store, store_file)
+    
     else:
         raise ValueError("Unknown store found!")    
 
-def _purge_memory(kg):
-    graph = Graph(store="Memory", identifier=kg._identifier)
-    kg.graph = graph
-    _purge_structure_store(structure_store=kg._structure_store)
-    kg.structure_store = _setup_structure_store(structure_store=structure_store)
 
+def _purge_memory(identifier, structure_store, store_file):
+    graph = Graph(store="Memory", identifier=identifier)
+    _purge_structure_store(structure_store=structure_store)
+    structure_store = _setup_structure_store(structure_store=structure_store)
+    return graph, structure_store
 
-def _purge_alchemy(kg):
-    os.remove(kg._store_file)
-    _purge_structure_store(structure_store=kg._structure_store)
-    kg.graph = Graph(store="SQLAlchemy", identifier=identifier)
+def _purge_alchemy(identifier, structure_store, store_file):
+    os.remove(store_file)
+    _purge_structure_store(structure_store=structure_store)
+    graph = Graph(store="SQLAlchemy", identifier=identifier)
     uri = Literal(f"sqlite:///{store_file}")
-    kg.graph.open(uri, create=True)
-    kg.structure_store = _setup_structure_store(structure_store=structure_store)
+    graph.open(uri, create=True)
+    structure_store = _setup_structure_store(structure_store=structure_store)
+    return graph, structure_store
 
 def _purge_structure_store(structure_store=None):
     if structure_store is None:

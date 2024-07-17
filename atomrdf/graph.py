@@ -195,7 +195,6 @@ class KnowledgeGraph:
         enable_log : bool, optional
             Whether to enable logging. Default is False.
         """
-
         create_store(
             self,
             store,
@@ -207,7 +206,6 @@ class KnowledgeGraph:
         self._store = store
         self._identifier = identifier
         self._store_file = store_file
-        self._structure_store = structure_store
 
         # enable logging
         if enable_log:
@@ -255,7 +253,10 @@ class KnowledgeGraph:
             warnings.warn('This will remove all information from the KnowledgeGraph. Call with force=True to proceed.')
             return
         else:
-            purge(self)
+            graph, structure_store = purge(self._store, self._identifier, self.structure_store, self._store_file)
+            self.graph = graph
+            self.structure_store = structure_store
+            self._n_triples = 0
 
     def add_structure(self, structure):
         """
@@ -1112,6 +1113,15 @@ class KnowledgeGraph:
         """
 
         return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+
+    @property
+    def sample_files(self):
+        files = []
+        for sample_id in self.sample_files:
+            filepath = self.value(
+                URIRef(f"{sample_id}_Position"), CMSO.hasPath
+            ).toPython()
+            files.append(filepath)
 
     @property
     def sample_names(self):
