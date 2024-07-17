@@ -204,6 +204,11 @@ class KnowledgeGraph:
             structure_store=structure_store,
         )
 
+        self._store = store
+        self._identifier = identifier
+        self._store_file = store_file
+        self._structure_store = structure_store
+        
         # enable logging
         if enable_log:
             logger = _prepare_log(os.path.join(os.getcwd(), "atomrdf.log"))

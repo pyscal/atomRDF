@@ -4,7 +4,7 @@ from rdflib import Graph
 from atomrdf.namespace import Literal
 
 import os
-
+import shutil
 
 def create_store(kg, store, identifier, store_file=None, structure_store=None):
     """
@@ -130,3 +130,34 @@ def _setup_structure_store(structure_store=None):
     if not os.path.exists(structure_store):
         os.mkdir(structure_store)
     return structure_store
+
+def purge(kg):
+    store = kg._store
+    if store in ["Memory", "memory"]:
+        _purge_memory(kg)
+
+    elif store in ["SQLAlchemy", "db", "database", "sqlalchemy"]:
+        _purge_alchemy(kg)
+    else:
+        raise ValueError("Unknown store found!")    
+
+def _purge_memory(kg):
+    graph = Graph(store="Memory", identifier=kg._identifier)
+    kg.graph = graph
+    _purge_structure_store(structure_store=kg._structure_store)
+    kg.structure_store = _setup_structure_store(structure_store=structure_store)
+
+
+def _purge_alchemy(kg):
+    os.remove(kg._store_file)
+    _purge_structure_store(structure_store=kg._structure_store)
+    kg.graph = Graph(store="SQLAlchemy", identifier=identifier)
+    uri = Literal(f"sqlite:///{store_file}")
+    kg.graph.open(uri, create=True)
+    kg.structure_store = _setup_structure_store(structure_store=structure_store)
+
+def _purge_structure_store(structure_store=None):
+    if structure_store is None:
+        structure_store = os.path.join(os.getcwd(), "rdf_structure_store")
+    if os.path.exists(structure_store):
+        shutil.rmtree(structure_store)
