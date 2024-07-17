@@ -382,8 +382,146 @@ def _make_dislocation(
         return output_structure, disc
     return output_structure
 
-
 def _make_grain_boundary(
+    axis,
+    sigma,
+    gb_plane,
+    structure=None,
+    element=None,
+    lattice_constant=1,
+    ca_ratio=1.633,
+    repetitions=(1, 1, 1),
+    overlap=0.0,
+    vacuum=0.0,
+    delete_layer="0b0t0b0t",
+    tolerance=  0.25,
+    primitive=False,
+    uc_a=1,
+    uc_b=1,
+    graph=None,
+    names=False,
+    label=None,
+    backend='aimsgb'         
+):
+    if backend == 'aimsgb':
+        return _make_grain_boundary_aimsgb(
+            axis,
+            sigma,
+            gb_plane,
+            structure=structure,
+            element=element,
+            lattice_constant=lattice_constant,
+            ca_ratio=ca_ratio,
+            repetitions=repetitions,
+            overlap=overlap,
+            vacuum=vacuum,
+            delete_layer=delete_layer,
+            tolerance=  tolerance,
+            primitive=primitive,
+            uc_a=uc_a,
+            uc_b=uc_b,
+            graph=graph,
+            names=names,
+            label=label,             
+        )
+    else:
+        return _make_grain_boundary_inbuilt(
+            axis,
+            sigma,
+            gb_plane,
+            structure=structure,
+            element=element,
+            lattice_constant=lattice_constant,
+            repetitions=repetitions,
+            overlap=overlap,
+            graph=graph,
+            names=names,
+            label=label,
+        )
+
+def _make_grain_boundary_aimsgb(
+    axis,
+    sigma,
+    gb_plane,
+    structure=None,
+    element=None,
+    lattice_constant=1,
+    ca_ratio=1.633,
+    repetitions=(1, 1, 1),
+    overlap=0.0,
+    vacuum=0.0,
+    delete_layer="0b0t0b0t",
+    tolerance=  0.25,
+    primitive=False,
+    uc_a=1,
+    uc_b=1,
+    graph=None,
+    names=False,
+    label=None,  
+):  
+    try:
+        from pymatgen.io.ase import AseAtomsAdaptor
+        from aimsgb import GrainBoundary, Grain
+    except ImportError:
+        raise ImportError("This function requires the aimsgb and pymatgen packages to be installed")
+    
+
+    init_sys = _make_crystal(
+        structure,
+        lattice_constant=_declass(lattice_constant),
+        repetitions=repetitions,
+        ca_ratio=_declass(ca_ratio),
+        noise=0,
+        element=element,
+        primitive=False,
+    )
+
+    sdict = copy.deepcopy(init_sys._structure_dict)
+
+    asesys = init_sys.write.ase()
+    pmsys = AseAtomsAdaptor().get_structure(atoms=asesys)
+    grain = Grain(pmsys.lattice, pmsys.species, pmsys.frac_coords)
+    gb = GrainBoundary(axis=axis, sigma=sigma, 
+                    plane=gb_plane, 
+                    initial_struct=grain, 
+                    uc_a=uc_a, 
+                    uc_b=uc_b)
+    gb_struct = Grain.stack_grains(
+                grain_a = gb.grain_a,
+                grain_b = gb.grain_b,
+                vacuum = vacuum,
+                gap=overlap,
+                direction = gb.direction,
+                delete_layer=delete_layer,
+                tol=tolerance,
+                to_primitive=primitive,
+            )
+    asestruct = AseAtomsAdaptor().get_atoms(structure=gb_struct)
+    sys = System.read.ase(asestruct, graph=graph, names=names, label=label)
+    sys.atoms._lattice = structure
+    sys.atoms._lattice_constant = _declass(lattice_constant)
+    sys._structure_dict = sdict
+    sys.label = label
+    sys.to_graph()
+    sys.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    sys.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
+
+    gb_inb = GrainBoundary()
+    gb_inb.create_grain_boundary(axis=axis, sigma=sigma, gb_plane=gb_plane)
+
+    gb_dict = {
+        "GBPlane": " ".join(np.array(gb_plane).astype(str)),
+        "RotationAxis": axis,
+        "MisorientationAngle": gb.theta[0],
+        "GBType": gb_inb.find_gb_character(),
+        "sigma": gb.sigma,
+    }
+    sys.add_gb(gb_dict)
+    return sys
+
+
+
+def _make_grain_boundary_inbuilt(
     axis,
     sigma,
     gb_plane,
