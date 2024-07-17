@@ -131,34 +131,24 @@ def _setup_structure_store(structure_store=None):
         os.mkdir(structure_store)
     return structure_store
 
-def purge(store, identifier, structure_store, store_file):
+def purge(store, identifier, store_file):
     if store in ["Memory", "memory"]:
-        return _purge_memory(identifier, structure_store, store_file)
+        return _purge_memory(identifier, store_file)
 
     elif store in ["SQLAlchemy", "db", "database", "sqlalchemy"]:
-        return _purge_alchemy(identifier, structure_store, store_file)
+        return _purge_alchemy(identifier, store_file)
     
     else:
         raise ValueError("Unknown store found!")    
 
 
-def _purge_memory(identifier, structure_store, store_file):
+def _purge_memory(identifier, store_file):
     graph = Graph(store="Memory", identifier=identifier)
-    _purge_structure_store(structure_store=structure_store)
-    structure_store = _setup_structure_store(structure_store=structure_store)
-    return graph, structure_store
+    return graph
 
-def _purge_alchemy(identifier, structure_store, store_file):
+def _purge_alchemy(identifier, store_file):
     os.remove(store_file)
-    _purge_structure_store(structure_store=structure_store)
     graph = Graph(store="SQLAlchemy", identifier=identifier)
     uri = Literal(f"sqlite:///{store_file}")
     graph.open(uri, create=True)
-    structure_store = _setup_structure_store(structure_store=structure_store)
-    return graph, structure_store
-
-def _purge_structure_store(structure_store=None):
-    if structure_store is None:
-        structure_store = os.path.join(os.getcwd(), "rdf_structure_store")
-    if os.path.exists(structure_store):
-        shutil.rmtree(structure_store)
+    return graph
