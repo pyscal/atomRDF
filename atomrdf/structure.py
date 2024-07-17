@@ -526,14 +526,18 @@ def _make_grain_boundary_aimsgb(
     sys.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     sys.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
 
-    gb_inb = GrainBoundary()
-    gb_inb.create_grain_boundary(axis=axis, sigma=sigma, gb_plane=gb_plane)
+    try:
+        gb_inb = GrainBoundary()
+        gb_inb.create_grain_boundary(axis=axis, sigma=sigma, gb_plane=gb_plane)
+        gb_type = gb_inb.find_gb_character()
+    except:
+        gb_type = None
 
     gb_dict = {
         "GBPlane": " ".join(np.array(gb_plane).astype(str)),
         "RotationAxis": axis,
         "MisorientationAngle": gb.theta[0],
-        "GBType": gb_inb.find_gb_character(),
+        "GBType": gb_type,
         "sigma": gb.sigma,
     }
     sys.add_gb(gb_dict)
