@@ -44,7 +44,7 @@ from atomrdf.network.network import OntologyNetwork
 from atomrdf.network.ontology import read_ontology
 from atomrdf.structure import System
 import atomrdf.properties as prp
-from atomrdf.stores import create_store
+from atomrdf.stores import create_store, purge
 import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
@@ -208,7 +208,7 @@ class KnowledgeGraph:
         self._identifier = identifier
         self._store_file = store_file
         self._structure_store = structure_store
-        
+
         # enable logging
         if enable_log:
             logger = _prepare_log(os.path.join(os.getcwd(), "atomrdf.log"))
@@ -233,6 +233,29 @@ class KnowledgeGraph:
         self._n_triples = 0
         self._initialize_graph()
         self.workflow = Workflow(self)
+
+    def purge(force=False):
+        """
+        Remove all information from the KnowledgeGraph.
+
+        Parameters
+        ----------
+        force : bool, optional
+            Whether to proceed with purging the graph. Default is False.
+        
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This method removes all information from the KnowledgeGraph. If the `force` parameter is set to False, a warning is issued before proceeding with the purging.
+        """
+        if not force:
+            warnings.warn('This will remove all information from the KnowledgeGraph. Call with force=True to proceed.')
+            return
+        else:
+            purge(self)
 
     def add_structure(self, structure):
         """
