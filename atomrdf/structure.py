@@ -466,15 +466,34 @@ def _make_grain_boundary_aimsgb(
         raise ImportError("This function requires the aimsgb and pymatgen packages to be installed")
     
 
-    init_sys = _make_crystal(
-        structure,
-        lattice_constant=_declass(lattice_constant),
-        repetitions=repetitions,
-        ca_ratio=_declass(ca_ratio),
-        noise=0,
-        element=element,
-        primitive=False,
-    )
+    if structure is not None:
+        # create a structure with the info
+        init_sys = _make_crystal(
+            structure,
+            lattice_constant=_declass(lattice_constant),
+            repetitions=repetitions,
+            ca_ratio=_declass(ca_ratio),
+            noise=0,
+            element=element,
+            primitive=primitive,
+        )
+    elif element is not None:
+        if element in element_dict.keys():
+            structure = element_dict[element]["structure"]
+            lattice_constant = element_dict[element]["lattice_constant"]
+        else:
+            raise ValueError("Please provide structure")
+        init_sys = _make_crystal(
+            structure,
+            lattice_constant=_declass(lattice_constant),
+            repetitions=repetitions,
+            ca_ratio=_declass(ca_ratio),
+            noise=0,
+            element=element,
+            primitive=primitive,
+        )
+    else:
+        raise ValueError("Provide either structure or element")
 
     sdict = copy.deepcopy(init_sys._structure_dict)
 
