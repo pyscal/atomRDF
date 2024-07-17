@@ -253,14 +253,15 @@ class KnowledgeGraph:
             warnings.warn('This will remove all information from the KnowledgeGraph. Call with force=True to proceed.')
             return
         else:
+            #clean up files
+            sample_files = self.sample_files
+            for file in sample_files:
+                if os.path.exists(file):
+                    os.remove(file)
+                    
             graph = purge(self._store, self._identifier, self._store_file)
             self.graph = graph
             self._n_triples = 0
-
-            #clean up files
-            for file in self.sample_files:
-                if os.path.exists(file):
-                    os.remove(file)
 
     def add_structure(self, structure):
         """
