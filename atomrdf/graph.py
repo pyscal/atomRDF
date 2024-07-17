@@ -1121,7 +1121,7 @@ class KnowledgeGraph:
     @property
     def sample_files(self):
         files = []
-        for sample_id in self.sample_files:
+        for sample_id in self.sample_ids:
             filepath = self.value(
                 URIRef(f"{sample_id}_Position"), CMSO.hasPath
             ).toPython()
