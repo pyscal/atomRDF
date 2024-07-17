@@ -18,5 +18,7 @@ dependencies:
   #- atomman
   - mp-api
   - sqlalchemy
+  - aimsgb
+  - pymatgen
   - pip:
     - "git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"

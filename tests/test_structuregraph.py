@@ -16,10 +16,18 @@ def test_structuregraph():
                         sigma=5, 
                         gb_plane=[3, -1, 0],
                         element='Fe',
-                        graph=s)
+                        graph=s,
+						backend='inbuilt')
 
 	assert(sys.sample != None)
 
+	sys = System.create.defect.grain_boundary(axis=[0,0,1], 
+                        sigma=5, 
+                        gb_plane=[3, -1, 0],
+                        element='Fe',
+                        graph=s,
+						backend='aimsgb')
 
+	assert(sys.sample != None)
 
 
