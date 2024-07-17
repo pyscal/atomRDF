@@ -258,7 +258,7 @@ class KnowledgeGraph:
             for file in sample_files:
                 if os.path.exists(file):
                     os.remove(file)
-                    
+
             graph = purge(self._store, self._identifier, self._store_file)
             self.graph = graph
             self._n_triples = 0
@@ -1127,6 +1127,7 @@ class KnowledgeGraph:
                 URIRef(f"{sample_id}_Position"), CMSO.hasPath
             ).toPython()
             files.append(filepath)
+        return files
 
     @property
     def sample_names(self):
