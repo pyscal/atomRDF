@@ -234,7 +234,7 @@ class KnowledgeGraph:
         self._initialize_graph()
         self.workflow = Workflow(self)
 
-    def purge(force=False):
+    def purge(self, force=False):
         """
         Remove all information from the KnowledgeGraph.
 
