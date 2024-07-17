@@ -2257,7 +2257,7 @@ class System(pc.System):
             return
 
         if gb_dict["GBType"] is None:
-            plane_defect = self.graph.create_node(f"{self._name}_GrainBoundary")
+            plane_defect = self.graph.create_node(f"{self._name}_GrainBoundary", PLDO.GrainBoundary)
 
         elif gb_dict["GBType"] == "Twist":
             plane_defect = self.graph.create_node(
