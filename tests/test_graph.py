@@ -134,6 +134,10 @@ def test_extract_sample():
 def test_purge():
 	s = KnowledgeGraph()
 	sys = System.create.element.Fe(graph=s)
-	s.purge()
+	s.purge(force=True)
 	assert s.n_samples == 0
 
+	s = KnowledgeGraph(store='db', store_file=f'testr.db')
+	sys = System.create.element.Fe(graph=s)
+	s.purge(force=True)
+	assert s.n_samples == 0
