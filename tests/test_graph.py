@@ -131,5 +131,13 @@ def test_extract_sample():
 #	status, _ = s._check_domain_if_ontoterm((CMSO.Material, CMSO.hasDefect, PLDO.AntiphaseBoundary))
 #	assert status == True
 
+def test_purge():
+	s = KnowledgeGraph()
+	sys = System.create.element.Fe(graph=s)
+	s.purge(force=True)
+	assert s.n_samples == 0
 
-
+	s = KnowledgeGraph(store='db', store_file=f'testr.db')
+	sys = System.create.element.Fe(graph=s)
+	s.purge(force=True)
+	assert s.n_samples == 0

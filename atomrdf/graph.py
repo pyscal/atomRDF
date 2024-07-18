@@ -44,7 +44,7 @@ from atomrdf.network.network import OntologyNetwork
 from atomrdf.network.ontology import read_ontology
 from atomrdf.structure import System
 import atomrdf.properties as prp
-from atomrdf.stores import create_store
+from atomrdf.stores import create_store, purge
 import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
@@ -195,7 +195,6 @@ class KnowledgeGraph:
         enable_log : bool, optional
             Whether to enable logging. Default is False.
         """
-
         create_store(
             self,
             store,
@@ -203,6 +202,10 @@ class KnowledgeGraph:
             store_file=store_file,
             structure_store=structure_store,
         )
+
+        self._store = store
+        self._identifier = identifier
+        self._store_file = store_file
 
         # enable logging
         if enable_log:
@@ -228,6 +231,37 @@ class KnowledgeGraph:
         self._n_triples = 0
         self._initialize_graph()
         self.workflow = Workflow(self)
+
+    def purge(self, force=False):
+        """
+        Remove all information from the KnowledgeGraph.
+
+        Parameters
+        ----------
+        force : bool, optional
+            Whether to proceed with purging the graph. Default is False.
+        
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This method removes all information from the KnowledgeGraph. If the `force` parameter is set to False, a warning is issued before proceeding with the purging.
+        """
+        if not force:
+            warnings.warn('This will remove all information from the KnowledgeGraph. Call with force=True to proceed.')
+            return
+        else:
+            #clean up files
+            sample_files = self.sample_files
+            for file in sample_files:
+                if os.path.exists(file):
+                    os.remove(file)
+
+            graph = purge(self._store, self._identifier, self._store_file)
+            self.graph = graph
+            self._n_triples = 0
 
     def add_structure(self, structure):
         """
@@ -1084,6 +1118,16 @@ class KnowledgeGraph:
         """
 
         return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+
+    @property
+    def sample_files(self):
+        files = []
+        for sample_id in self.sample_ids:
+            filepath = self.value(
+                URIRef(f"{sample_id}_Position"), CMSO.hasPath
+            ).toPython()
+            files.append(filepath)
+        return files
 
     @property
     def sample_names(self):
