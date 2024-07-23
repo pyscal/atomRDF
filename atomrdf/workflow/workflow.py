@@ -310,6 +310,11 @@ class Workflow:
         elif job_dict["method"] == "QuasiHarmonicModel":            
             self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").QuasiHarmonicModel))
 
+        elif job_dict["method"] == "ThermodynamicIntegration":     
+            self._add_dof(job_dict, activity)
+            self._add_md(job_dict, activity)       
+            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").ThermodynamicIntegration))
+
         # add that structure was generated
         self.kg.add((activity, ASMO.hasComputationalMethod, method))
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))

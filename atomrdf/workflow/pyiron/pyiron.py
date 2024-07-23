@@ -11,6 +11,7 @@ import atomrdf.workflow.pyiron.lammps as lammps
 import atomrdf.workflow.pyiron.vasp as vasp
 import atomrdf.workflow.pyiron.murnaghan as murnaghan
 import atomrdf.workflow.pyiron.quasiharmonic as qha
+import atomrdf.workflow.pyiron.calphy as calphy
 
 def process_job(job):
     """
@@ -35,6 +36,8 @@ def process_job(job):
         return murnaghan.process_job(job)
     elif type(job).__name__ == 'QuasiHarmonicJob':
         return qha.process_job(job)
+    elif type(job).__name__ == 'Calphy':
+        return calphy.process_job(job)
     else:
         raise TypeError("These type of pyiron Job is not currently supported")
     
