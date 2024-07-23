@@ -1,0 +1,42 @@
+ &CONTROL
+    prefix='fe',
+
+    !pseudo_dir = 'directory with pseudopotentials',
+    !outdir = 'temporary directory for large files'
+    !verbosity = 'high',
+ /
+ 
+ &SYSTEM
+    ibrav = 0,
+    nat = 1,
+    ntyp = 1,
+    ecutwfc = 25.0,
+    ecutrho = 200.0,
+
+    occupations='smearing',
+    smearing='mv',
+    degauss=0.01,
+
+    nspin = 2, 
+    starting_magnetization(1)= 0.6
+ /
+
+ &ELECTRONS
+ /
+
+ATOMIC_SPECIES
+# the second field, atomic mass, is not actually used 
+# except for MD calculations
+   Fe  1.  Fe.pbe-nd-rrkjus.UPF
+   
+ATOMIC_POSITIONS crystal
+   Fe 0.0  0.0  0.0 
+! this is a comment that the code will ignore
+
+K_POINTS automatic
+   8 8 8   1 1 1
+
+CELL_PARAMETERS angstrom
+   2.87 0.0 0.0
+   0.0 2.87 0.0
+   0.0 0.0 2.87
