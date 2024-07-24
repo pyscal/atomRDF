@@ -44,7 +44,7 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
 
     for count, us in enumerate(unique_species):
         chem = mendeleev.element(us)
-        lines['ATOMIC_SPECIES'].append(f'{us} {chem.atomic_weight} {pseudo_files[count]}')
+        lines['ATOMIC_SPECIES'].append(f'{us} {chem.atomic_weight} {os.path.basename(pseudo_files[count])}')
 
 
     lines['ATOMIC_POSITIONS crystal'] = []
