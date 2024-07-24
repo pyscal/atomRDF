@@ -18,6 +18,7 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
     if data is None:
         data = {}
         data['system'] = {}
+        data['control'] = {}
     
     lines = {}
     lines['CELL_PARAMETERS angstrom'] = []
@@ -32,6 +33,10 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
     if pseudo_files is not None:
         if not len(pseudo_files) == len(unique_species):
             raise ValueError('Number of pseudo files must match number of unique species')
+        pseudo_dirs = [os.path.dirname(os.path.abspath(pseudo_file)) for pseudo_file in pseudo_files]
+        if not len(np.unique(pseudo_dirs)) == 1:
+            raise ValueError('All pseudo files must be in the same directory')
+        data['control']['pseudo_dir'] = f"'{pseudo_dirs[0]}'"
     else:
         pseudo_files = ['None' for x in range(len(unique_species))]
 
