@@ -36,7 +36,7 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
         pseudo_dirs = [os.path.dirname(os.path.abspath(pseudo_file)) for pseudo_file in pseudo_files]
         if not len(np.unique(pseudo_dirs)) == 1:
             raise ValueError('All pseudo files must be in the same directory')
-        data['control']['pseudo_dir'] = f"'{pseudo_dirs[0]}'"
+        data['control']['pseudo_dir'] = pseudo_dirs[0]
     else:
         pseudo_files = ['None' for x in range(len(unique_species))]
 
@@ -62,7 +62,10 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
         for key, val in data.items():
             fout.write(f'&{key.upper()}\n')
             for k, v in val.items():
-                fout.write(f'   {k} = {v},\n')
+                if isinstance(v, str):
+                    fout.write(f'   {k} = \'{v}\',\n')
+                else:
+                    fout.write(f'   {k} = {v},\n')
             fout.write('/\n')
             fout.write('\n')
 
