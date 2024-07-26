@@ -31,6 +31,7 @@ import pyscal3.operations.visualize as visualize
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 from atomrdf.sample import Property
+import atomrdf.io as aio
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal, ASMO
@@ -784,6 +785,7 @@ class System(pc.System):
         mapdict = {}
         mapdict['ase'] = update_wrapper(partial(self.to_file, format='ase'), self.to_file)
         mapdict['pyiron'] = update_wrapper(partial(self.to_file, format='pyiron'), self.to_file)
+        mapdict['quantum_espresso'] = update_wrapper(partial(self.to_file, format='quantum-espresso'), self.to_file)
         mapdict['file'] = self.to_file
         self.write._add_attribute(mapdict)
 
@@ -1466,22 +1468,11 @@ class System(pc.System):
             for line in lines:
                 fout.write(line)
 
-    def write_quatum_espresso_id(self, outfile):
-        lines = []
-        lines.append(f"! {self.sample.toPython()}\n")
-        with open(outfile, "r") as fin:
-            for line in fin:
-                lines.append(line)
-        with open(outfile, "w") as fout:
-            for line in lines:
-                fout.write(line)
-
-    def to_file(self, filename=None, format='lammps-dump', customkeys=None, customvals=None,
+    def to_file(self, filename=None, 
+                format='lammps-dump', 
+                customkeys=None, customvals=None,
                 compressed=False, timestep=0, species=None,  add_sample_id=True,
-                input_data=None, pseudopotentials=None,
-                kspacing=None, kpts=None,
-                koffset=(0, 0, 0),
-                crystal_coordinates=False):
+                copy_from=None, pseudo_files=None):
         """
         Write the structure to a file in the specified format.
 
@@ -1508,24 +1499,13 @@ class System(pc.System):
         add_sample_id : bool, optional
             Whether to add a sample ID to the output file. Defaults to True.
             Only valid for poscar and quantum-espresso formats.
-        input_data : str, optional
-            Additional input data to include in the output file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        pseudopotentials : str, optional
-            The path to the pseudopotentials file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        kspacing : float, optional
-            The k-spacing value to include in the output file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        kpts : list, optional
-            A list of k-points to include in the output file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        koffset : tuple, optional
-            The k-offset values to include in the output file. Defaults to (0, 0, 0).
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        crystal_coordinates : bool, optional
-            Whether to include crystal coordinates in the output file. Defaults to False.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
+        copy_from : str, optional
+            If provided, input options for quantum-espresso format will be copied from
+            the given file. Structure specific information will be replaced.
+            Note that the validity of input file is not checked.
+        pseudo_files : list, optional
+            if provided, add the pseudopotential filenames to file.
+            Should be in alphabetical order of chemical species symbols.        
 
         Returns
         -------
@@ -1565,12 +1545,7 @@ class System(pc.System):
             write(outfile, asesys, format='lammps-data', atom_style='atomic')
         
         elif format == "quantum-espresso":
-            asesys = convert_snap(self)
-            write(outfile, asesys, format='espresso-in', input_data=input_data,
-                pseudopotentials=pseudopotentials, kspacing=kspacing,
-                kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
-            if add_sample_id and (self.sample is not None):
-                self.write_quatum_espresso_id(outfile)
+            aio.write_espresso(self, filename, copy_from=copy_from, pseudo_files=pseudo_files)
         
         else:
             asesys = convert_snap(self)

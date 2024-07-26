@@ -6,7 +6,7 @@ with open('README.md') as readme_file:
 
 setup(
     name='atomrdf',
-    version='0.9.8',
+    version='0.9.9',
     author='Abril Azocar Guzman, Sarath Menon',
     author_email='sarath.menon@pyscal.org',
     description='Ontology based structural manipulation and quering',
@@ -19,7 +19,7 @@ setup(
     install_requires=['numpy', 'ase', 'rdflib', 
     'pyyaml', 'graphviz', 'networkx', 
     'pyscal3', 'spglib', 'pandas', 'owlready2',
-    'atomman', 'mp-api', 'aimsgb', 'pymatgen'],
+    'atomman', 'mp-api', 'aimsgb', 'pymatgen', 'mendeleev'],
     classifiers=[
         'Programming Language :: Python :: 3'
     ],

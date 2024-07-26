@@ -1,0 +1,17 @@
+ &CONTROL
+    calculation = 'vc-relax',
+    prefix='silicon',
+    outdir = './',
+ /
+ &SYSTEM    
+    ecutwfc = 12, 
+ /
+ &ELECTRONS
+ /
+   &IONS
+ /
+ &CELL
+ / 
+ 
+K_POINTS automatic
+   4 4 4   1 1 1

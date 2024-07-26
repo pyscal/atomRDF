@@ -1278,11 +1278,10 @@ class KnowledgeGraph:
         sys._name = sample.toPython().split('sample:')[-1]
         return sys
 
-    def to_file(self, sample, filename=None, format="poscar", add_sample_id=True,
-        input_data=None, pseudopotentials=None, 
-                kspacing=None, kpts=None, 
-                koffset=(0, 0, 0), 
-                crystal_coordinates=False):
+    def to_file(self, sample, filename=None, format="poscar", 
+                add_sample_id=True,
+                copy_from=None, 
+                pseudo_files=None):
         """
         Save a given sample to a file
 
@@ -1297,24 +1296,13 @@ class KnowledgeGraph:
         format: string, {"lammps-dump","lammps-data", "poscar", 'cif', 'quantum-espresso'}
             or any format supported by ase
 
-        input_data : str, optional
-            Additional input data to include in the output file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        pseudopotentials : str, optional
-            The path to the pseudopotentials file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        kspacing : float, optional
-            The k-spacing value to include in the output file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        kpts : list, optional
-            A list of k-points to include in the output file. Defaults to None.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        koffset : tuple, optional
-            The k-offset values to include in the output file. Defaults to (0, 0, 0).
-            Only valid for quantum-espresso format. See ASE write docs for more information.
-        crystal_coordinates : bool, optional
-            Whether to include crystal coordinates in the output file. Defaults to False.
-            Only valid for quantum-espresso format. See ASE write docs for more information.
+        copy_from : str, optional
+            If provided, input options for quantum-espresso format will be copied from
+            the given file. Structure specific information will be replaced.
+            Note that the validity of input file is not checked.
+        pseudo_files : list, optional
+            if provided, add the pseudopotential filenames to file.
+            Should be in alphabetical order of chemical species symbols. 
 
         Returns
         -------
@@ -1325,9 +1313,11 @@ class KnowledgeGraph:
             filename = os.path.join(os.getcwd(), "out")
 
         sys = self.get_system_from_sample(sample)
-        sys.to_file(filename=filename, format=format, add_sample_id=add_sample_id, input_data=input_data, 
-                pseudopotentials=pseudopotentials, kspacing=kspacing, 
-                kpts=kpts, koffset=koffset, crystal_coordinates=crystal_coordinates)
+        sys.to_file(filename=filename, 
+                    format=format, 
+                    add_sample_id=add_sample_id, 
+                    copy_from=copy_from,
+                    pseudo_files=pseudo_files)
 
     def enable_workflow(self, workflow_object, workflow_environment=None, workflow_module=None):
         self.workflow.inform_graph(workflow_object, 
