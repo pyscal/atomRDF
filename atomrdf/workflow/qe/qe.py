@@ -133,15 +133,15 @@ def extract_calculated_quantities(job, method_dict):
     outputs.append(
         {
             "label": "TotalVolume",
-            "value": np.round(struct.inp.get_volume(), decimals=5),
+            "value": np.round(struct.get_volume(), decimals=5),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
         }
     )
     structure = job.get_structure(frame=-1)
-    lx = np.linalg.norm(structure.cell[0])
-    ly = np.linalg.norm(structure.cell[1])
-    lz = np.linalg.norm(structure.cell[2])
+    lx = np.linalg.norm(struct.cell[0])
+    ly = np.linalg.norm(struct.cell[1])
+    lz = np.linalg.norm(struct.cell[2])
 
     outputs.append(
         {
