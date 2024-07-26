@@ -138,7 +138,7 @@ def extract_calculated_quantities(job, method_dict):
             "associate_to_sample": True,
         }
     )
-    structure = job.get_structure(frame=-1)
+    
     lx = np.linalg.norm(struct.cell[0])
     ly = np.linalg.norm(struct.cell[1])
     lz = np.linalg.norm(struct.cell[2])
