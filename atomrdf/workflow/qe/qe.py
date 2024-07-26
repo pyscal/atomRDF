@@ -8,6 +8,7 @@ import ast
 from ase.io import read
 from atomrdf.structure import System
 from ase.io.espresso import read_fortran_namelist
+from atomrdf.io import _convert_tab_to_dict
 
 def _parse_inp(file):
     sample = None
@@ -39,7 +40,11 @@ def process_job(job):
     method_dict = {}
     method_dict['intermediate'] = False
     get_structures(job, method_dict)
-
+    identify_method(job, method_dict)
+    add_software(method_dict)
+    extract_calculated_quantities(job, method_dict)
+    method_dict['path'] = os.path.abspath(os.path.dirname(infile))
+    return method_dict
 
 def get_structures(job, method_dict):
     infile = job[0]
@@ -63,8 +68,9 @@ def identify_method(job, method_dict):
     outfile = job[1]
 
     with open(infile, 'r') as fin:
-        data, _ = read_fortran_namelist(fin)
+        data, tab = read_fortran_namelist(fin)
     
+    tab = _convert_tab_to_dict(tab)
     calc_method = data['control']['calculation']
 
     dof = []
@@ -87,4 +93,78 @@ def identify_method(job, method_dict):
     #convert to eV
     method_dict['encut'] = encut*13.6057039763
 
+    #get kpoints
+    if tab['K_POINTS']['extra'] == 'automatic':
+        method_dict['kpoint_type'] = 'Monkhorst-Pack'
+        method_dict['kpoint_grid'] = " ".join(tab['K_POINTS']['value'][0].split()[:3])
     
+    #get pseudopotentials
+    pseudo = None
+    with open(outfile, 'r') as fin:
+        for line in fin:
+            if 'Exchange-correlation' in line:
+                pseudo = line.split('=')[0].strip()
+                break
+    
+    if pseudo is not None:
+        method_dict['xc_functional'] = pseudo
+
+def add_software(method_dict):
+    software = {
+        "uri": "https://www.quantum-espresso.org/",
+        "label": "QuantumEspresso",
+    }
+    method_dict["software"] = [software]
+    
+def extract_calculated_quantities(job, method_dict):
+    infile = job[0]
+    outfile = job[1]   
+    
+    struct = read(outfile, format='espresso-out')
+    outputs = []
+    outputs.append(
+        {
+            "label": "TotalEnergy",
+            "value": np.round(struct.get_total_energy(), decimals=5),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "TotalVolume",
+            "value": np.round(struct.inp.get_volume(), decimals=5),
+            "unit": "ANGSTROM3",
+            "associate_to_sample": True,
+        }
+    )
+    structure = job.get_structure(frame=-1)
+    lx = np.linalg.norm(structure.cell[0])
+    ly = np.linalg.norm(structure.cell[1])
+    lz = np.linalg.norm(structure.cell[2])
+
+    outputs.append(
+        {
+            "label": "SimulationCellLength_x",
+            "value": np.round(lx, decimals=4),
+            "unit": "ANGSTROM",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "SimulationCellLength_y",
+            "value": np.round(ly, decimals=4),
+            "unit": "ANGSTROM",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "SimulationCellLength_z",
+            "value": np.round(lz, decimals=4),
+            "unit": "ANGSTROM",
+            "associate_to_sample": True,
+        }
+    )   
+    method_dict['outputs'] =  outputs    
