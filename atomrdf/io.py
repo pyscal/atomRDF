@@ -4,27 +4,50 @@ from ase.io.espresso import read_fortran_namelist
 import os
 import warnings
 
+def _convert_tab_to_dict(tab):
+    tabdict = {}
+    for line in tab:
+        firstword = line.split()[0]
+        secondword = " ".join(line.split()[1:]) 
+
+        if firstword in keywords:
+            tabdict[firstword] = {}
+            tabdict[firstword]['value'] = []
+            tabdict[firstword]['extra'] = secondword
+            tabarr = tabdict[firstword]['value']
+        else:
+            tabarr.append(line.strip())
+    return tabdict
+
 def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
     data = None
+    tab = None
+
     if copy_from is not None:
         if os.path.exists(copy_from):
             try:
                 with open(copy_from, 'r') as fin:
-                    data, _ = read_fortran_namelist(fin)
+                    data, tab = read_fortran_namelist(fin)
             except:
                 warnings.warn(f'Error reading {copy_from}, a clean file will be written')
                 copy=True
+    
+    if tab is not None:
+        tab = _convert_tab_to_dict(tab)
+    else:
+        tab = {}
     
     if data is None:
         data = {}
         data['system'] = {}
         data['control'] = {}
     
-    lines = {}
-    lines['CELL_PARAMETERS angstrom'] = []
+    tab['CELL_PARAMETERS'] = {}
+    tab['CELL_PARAMETERS']['extra'] = 'angstrom'
+    tab['CELL_PARAMETERS']['value'] = []
 
     for vec in s.box:
-        lines['CELL_PARAMETERS angstrom'].append(' '.join([str(x) for x in vec])) 
+        tab['CELL_PARAMETERS']['value'].append(' '.join([str(x) for x in vec])) 
 
     cds = s.direct_coordinates
     species = s.atoms.species
@@ -40,17 +63,20 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
     else:
         pseudo_files = ['None' for x in range(len(unique_species))]
 
-    lines['ATOMIC_SPECIES'] = []
+    tab['ATOMIC_SPECIES'] = {}
+    tab['ATOMIC_SPECIES']['extra'] = ''
+    tab['ATOMIC_SPECIES']['value'] = []
 
     for count, us in enumerate(unique_species):
         chem = mendeleev.element(us)
-        lines['ATOMIC_SPECIES'].append(f'{us} {chem.atomic_weight} {os.path.basename(pseudo_files[count])}')
+        tab['ATOMIC_SPECIES']['value'].append(f'{us} {chem.atomic_weight} {os.path.basename(pseudo_files[count])}')
 
-
-    lines['ATOMIC_POSITIONS crystal'] = []
+    tab['ATOMIC_POSITIONS'] = {}
+    tab['ATOMIC_POSITIONS']['extra'] = 'crystal'
+    tab['ATOMIC_POSITIONS']['value'] = []
 
     for cd, sp in zip(cds, species):
-        lines['ATOMIC_POSITIONS crystal'].append(f'{sp} {cd[0]} {cd[1]} {cd[2]}')
+        tab['ATOMIC_POSITIONS']['value'].append(f'{sp} {cd[0]} {cd[1]} {cd[2]}')
 
     data['system']['ibrav'] = 0
     data['system']['nat'] = len(species)
@@ -59,6 +85,7 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
     with open(inputfile, 'w') as fout:
         if s.sample is not None:
             fout.write(f'! {s.sample.toPython()}\n\n')
+        
         for key, val in data.items():
             fout.write(f'&{key.upper()}\n')
             for k, v in val.items():
@@ -69,10 +96,10 @@ def write_espresso(s, inputfile, copy_from=None, pseudo_files=None):
             fout.write('/\n')
             fout.write('\n')
 
-        for key, val in lines.items():
-            fout.write(key)
+        for key, val in tab.items():
+            fout.write(f'{key} {val["extra"]}\n')
             fout.write('\n')
-            for v in val:
+            for v in val['value']:
                 fout.write(v)
                 fout.write('\n')
             fout.write('\n')   

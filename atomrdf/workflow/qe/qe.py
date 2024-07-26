@@ -25,6 +25,8 @@ def _parse_inp(file):
             return sample
     return sample
 
+
+
 def inform_graph(pr, kg):
     pass
 
