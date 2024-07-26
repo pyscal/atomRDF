@@ -5,6 +5,18 @@ import os
 import warnings
 
 def _convert_tab_to_dict(tab):
+    keywords = ["ATOMIC_SPECIES",
+            "ATOMIC_POSITIONS",
+            "K_POINTS",
+            "CELL_PARAMETERS",
+            "OCCUPATIONS",
+            "CONSTRAINTS",
+            "ATOMIC_VELOCITIES",
+            "ATOMIC_FORCES",
+            "ADDITIONAL_K_POINTS",
+            "SOLVENTS",
+            "HUBBARD"]
+
     tabdict = {}
     for line in tab:
         firstword = line.split()[0]
