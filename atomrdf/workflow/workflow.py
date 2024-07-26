@@ -75,6 +75,7 @@ class Workflow:
             parent_sample = job_dict['sample']['initial']
             sample = job_dict['sample']['final']
             structure = job_dict['structure']['final']
+            #print(parent_sample)
             self._add_structural_relation(parent_sample, sample, structure)
             self._add_method(job_dict)
 
@@ -109,7 +110,8 @@ class Workflow:
             structure.to_graph()
             job_dict['sample']['final'] = structure.sample
 
-        if job_dict['sample']['initial'] is None:
+
+        if (job_dict['sample']['initial'] is None) or (job_dict['sample']['initial'] not in self.kg.sample_ids):
             # its not added to graph yet
             parent_structure = job_dict['structure']['initial']
             if parent_structure is not None:
