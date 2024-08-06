@@ -829,6 +829,7 @@ class System(pc.System):
                 "length": partial(prp.get_simulation_cell_length, self),
                 "vector": partial(prp.get_simulation_cell_vector, self),
                 "angle": partial(prp.get_simulation_cell_angle, self),
+                "repetitions": partial(prp.get_repetitions, self),
             },
             "atom_attribute": {
                 "position": partial(prp.get_position, self),
@@ -1653,7 +1654,7 @@ class System(pc.System):
                         (element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float))
                     )
 
-    def _add_simulation_cell(self, repetitions=(1,1,1)):
+    def _add_simulation_cell(self):
         """
         Add a CMSO SimulationCell
 
@@ -1689,8 +1690,8 @@ class System(pc.System):
                 ),
             )
         )
-        if repetitions == None:
-            repetitions = (1,1,1)
+        
+        repetitions = self.schema.simulation_cell.repetitions()
         self.graph.add((simulation_cell, CMSO.hasRepetition_x, Literal(repetitions[0], datatype=XSD.integer)))
         self.graph.add((simulation_cell, CMSO.hasRepetition_y, Literal(repetitions[1], datatype=XSD.integer)))
         self.graph.add((simulation_cell, CMSO.hasRepetition_z, Literal(repetitions[2], datatype=XSD.integer)))
