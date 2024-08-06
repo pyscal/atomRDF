@@ -234,6 +234,12 @@ def get_crystal_structure_name(system):
         return None
     return system.atoms._lattice
 
+def get_repetitions(system):
+    if system._structure_dict is None:
+        return None
+    if "repetitions" in system._structure_dict.keys():
+        return system._structure_dict["repetitions"]
+    return None
 
 def get_bravais_lattice(system):
     """
