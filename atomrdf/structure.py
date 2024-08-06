@@ -23,10 +23,12 @@ from pyscal3.grain_boundary import GrainBoundary
 from pyscal3.atoms import AttrSetter, Atoms
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
+from pyscal3.formats.ase import convert_snap
+
 import pyscal3.operations.input as inputmethods
 import pyscal3.operations.serialize as serialize
-from pyscal3.formats.ase import convert_snap
 import pyscal3.operations.visualize as visualize
+import pyscal3.operations.operations as operations
 
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
@@ -899,6 +901,31 @@ class System(pc.System):
 
         return new_system
 
+    def repeat(self, repetitions):
+        """
+        Repeat the system in each direction by the specified number of times.
+
+        Parameters
+        ----------
+        repetitions : tuple
+            The number of times to repeat the system in each direction.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        The system is repeated in each direction by the specified number of times.
+        """
+        new_system = self.duplicate()
+        new_system = operations.repeat(new_system, repetitions)
+        if new_system._structure_dict is None:
+            new_system._structure_dict = {}
+        new_system._structure_dict["repetitions"] = repetitions
+        new_system.to_graph()
+        return new_system
+    
     def delete(self, ids=None, indices=None, condition=None, selection=False, copy_structure=False):
         """
         Delete atoms from the structure.
