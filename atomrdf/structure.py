@@ -810,6 +810,12 @@ class System(pc.System):
         mapdict['selection'] = update_wrapper(partial(self._plot_system, plot_style='selection'), self._plot_system)
         self.show._add_attribute(mapdict)
 
+        self.modify = AttrSetter()
+        mapdict = {}
+        mapdict["repeat"] = self.repeat
+        mapdict["delete"] = self.delete
+        self.modify._add_attribute(mapdict)
+
         self.schema = AttrSetter()
         mapdict = {
             "material": {
