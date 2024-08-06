@@ -1725,9 +1725,9 @@ class System(pc.System):
         )
         
         repetitions = self.schema.simulation_cell.repetitions()
-        self.graph.add((simulation_cell, CMSO.hasRepetition_x, Literal(repetitions[0], datatype=XSD.integer)))
-        self.graph.add((simulation_cell, CMSO.hasRepetition_y, Literal(repetitions[1], datatype=XSD.integer)))
-        self.graph.add((simulation_cell, CMSO.hasRepetition_z, Literal(repetitions[2], datatype=XSD.integer)))
+        self.graph.add((simulation_cell, CMSO.hasRepetition_x, Literal(float(repetitions[0]), datatype=XSD.integer)))
+        self.graph.add((simulation_cell, CMSO.hasRepetition_y, Literal(float(repetitions[1]), datatype=XSD.integer)))
+        self.graph.add((simulation_cell, CMSO.hasRepetition_z, Literal(float(repetitions[2]), datatype=XSD.integer)))
         self.simulation_cell = simulation_cell
 
     def _add_simulation_cell_properties(self):

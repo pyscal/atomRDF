@@ -25,6 +25,15 @@ def patch_terms(iri, rn):
     elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasValue":
         rn = ["float", "double", "int", "str"]
 
+    elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasRepetition_x":
+        rn = ["float", "double", "int"]
+
+    elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasRepetition_y":
+        rn = ["float", "double", "int"]
+
+    elif iri == "http://purls.helmholtz-metadaten.de/cmso/hasRepetition_z":
+        rn = ["float", "double", "int"]
+
     elif iri == "http://purls.helmholtz-metadaten.de/asmo/hasValue":
         rn = ["float", "double", "int", "str"]
 
