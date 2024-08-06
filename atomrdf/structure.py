@@ -23,10 +23,12 @@ from pyscal3.grain_boundary import GrainBoundary
 from pyscal3.atoms import AttrSetter, Atoms
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
+from pyscal3.formats.ase import convert_snap
+
 import pyscal3.operations.input as inputmethods
 import pyscal3.operations.serialize as serialize
-from pyscal3.formats.ase import convert_snap
 import pyscal3.operations.visualize as visualize
+import pyscal3.operations.operations as operations
 
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
@@ -102,6 +104,8 @@ def _make_crystal(
         return_structure_dict=True,
         primitive=primitive,
     )
+    if 'repetitions' not in sdict.keys():
+        sdict['repetitions'] = repetitions
 
     s = System(graph=graph, names=names)
     s.box = box
@@ -169,6 +173,10 @@ def _make_general_lattice(
         element=element,
         return_structure_dict=True,
     )
+
+    if 'repetitions' not in sdict.keys():
+        sdict['repetitions'] = repetitions
+
     s = System(graph=graph, names=names)
     s.box = box
     s.atoms = atoms
@@ -365,6 +373,7 @@ def _make_dislocation(
         'DislocationCharacter': angle_deg,
     }
 
+    # here we dont add repetitions, since we cannot guarantee
     atom_dict = {"positions": positions, "types": types, "species": species}
     atom_obj = Atoms()
     atom_obj.from_dict(atom_dict)
@@ -606,6 +615,10 @@ def _make_grain_boundary_inbuilt(
         atoms, box, sdict = gb.populate_grain_boundary(
             element, repetitions=repetitions, overlap=overlap
         )
+
+    if 'repetitions' not in sdict.keys():
+        sdict['repetitions'] = repetitions
+    
     s = System(graph=graph, names=names)
     s.box = box
     s.atoms = atoms
@@ -797,6 +810,16 @@ class System(pc.System):
         mapdict['selection'] = update_wrapper(partial(self._plot_system, plot_style='selection'), self._plot_system)
         self.show._add_attribute(mapdict)
 
+        self.modify = AttrSetter()
+        mapdict = {}
+        mapdict["repeat"] = self.repeat
+        mapdict["delete"] = self.delete
+        mapdict["transform_to_cubic_cell"] = update_wrapper(partial(operations.extract_cubic_representation, self), operations.extract_cubic_representation)
+        mapdict["remap_to_box"] = update_wrapper(partial(operations.remap_to_box, self), operations.remap_to_box)
+        mapdict["remap_position_to_box"] = update_wrapper(partial(operations.remap_position_to_box, self), operations.remap_position_to_box)
+        mapdict["embed_in_cubic_box"] = update_wrapper(partial(operations.embed_in_cubic_box, self), operations.embed_in_cubic_box)
+        self.modify._add_attribute(mapdict)
+
         self.schema = AttrSetter()
         mapdict = {
             "material": {
@@ -818,6 +841,7 @@ class System(pc.System):
                 "length": partial(prp.get_simulation_cell_length, self),
                 "vector": partial(prp.get_simulation_cell_vector, self),
                 "angle": partial(prp.get_simulation_cell_angle, self),
+                "repetitions": partial(prp.get_repetitions, self),
             },
             "atom_attribute": {
                 "position": partial(prp.get_position, self),
@@ -887,6 +911,31 @@ class System(pc.System):
 
         return new_system
 
+    def repeat(self, repetitions):
+        """
+        Repeat the system in each direction by the specified number of times.
+
+        Parameters
+        ----------
+        repetitions : tuple
+            The number of times to repeat the system in each direction.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        The system is repeated in each direction by the specified number of times.
+        """
+        new_system = self.duplicate()
+        new_system = operations.repeat(new_system, repetitions)
+        if new_system._structure_dict is None:
+            new_system._structure_dict = {}
+        new_system._structure_dict["repetitions"] = repetitions
+        new_system.to_graph()
+        return new_system
+    
     def delete(self, ids=None, indices=None, condition=None, selection=False, copy_structure=False):
         """
         Delete atoms from the structure.
@@ -1019,8 +1068,7 @@ class System(pc.System):
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
         return sys
-
-
+        
     def add_property_mappings(self, output_property, mapping_quantity=None):
         if self.graph is None:
             return
@@ -1679,6 +1727,11 @@ class System(pc.System):
                 ),
             )
         )
+        
+        repetitions = self.schema.simulation_cell.repetitions()
+        self.graph.add((simulation_cell, CMSO.hasRepetition_x, Literal(repetitions[0], datatype=XSD.integer)))
+        self.graph.add((simulation_cell, CMSO.hasRepetition_y, Literal(repetitions[1], datatype=XSD.integer)))
+        self.graph.add((simulation_cell, CMSO.hasRepetition_z, Literal(repetitions[2], datatype=XSD.integer)))
         self.simulation_cell = simulation_cell
 
     def _add_simulation_cell_properties(self):
