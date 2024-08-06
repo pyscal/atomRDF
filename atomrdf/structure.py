@@ -1019,8 +1019,7 @@ class System(pc.System):
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
         return sys
-
-
+        
     def add_property_mappings(self, output_property, mapping_quantity=None):
         if self.graph is None:
             return
@@ -1643,7 +1642,7 @@ class System(pc.System):
                         (element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float))
                     )
 
-    def _add_simulation_cell(self):
+    def _add_simulation_cell(self, repetitions=(1,1,1)):
         """
         Add a CMSO SimulationCell
 
@@ -1679,6 +1678,9 @@ class System(pc.System):
                 ),
             )
         )
+        self.graph.add((simulation_cell, CMSO.hasRepetition_x, Literal(repetitions[0], datatype=XSD.integer)))
+        self.graph.add((simulation_cell, CMSO.hasRepetition_y, Literal(repetitions[1], datatype=XSD.integer)))
+        self.graph.add((simulation_cell, CMSO.hasRepetition_z, Literal(repetitions[2], datatype=XSD.integer)))
         self.simulation_cell = simulation_cell
 
     def _add_simulation_cell_properties(self):
