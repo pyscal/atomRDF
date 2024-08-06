@@ -1550,7 +1550,7 @@ class System(pc.System):
             asesys = convert_snap(self)
             write(outfile, asesys, format=format)
 
-    def to_graph(self):
+    def to_graph(self, repetitions=(1,1,1)):
         """
         Converts the structure object to a graph representation.
 
@@ -1565,7 +1565,7 @@ class System(pc.System):
         self._add_sample()
         self._add_material()
         self._add_chemical_composition()
-        self._add_simulation_cell()
+        self._add_simulation_cell(repetitions=repetitions)
         self._add_simulation_cell_properties()
         self._add_crystal_structure()
         self._add_atoms()
@@ -1678,6 +1678,8 @@ class System(pc.System):
                 ),
             )
         )
+        if repetitions == None:
+            repetitions = (1,1,1)
         self.graph.add((simulation_cell, CMSO.hasRepetition_x, Literal(repetitions[0], datatype=XSD.integer)))
         self.graph.add((simulation_cell, CMSO.hasRepetition_y, Literal(repetitions[1], datatype=XSD.integer)))
         self.graph.add((simulation_cell, CMSO.hasRepetition_z, Literal(repetitions[2], datatype=XSD.integer)))
