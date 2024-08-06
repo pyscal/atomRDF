@@ -102,6 +102,8 @@ def _make_crystal(
         return_structure_dict=True,
         primitive=primitive,
     )
+    if 'repetitions' not in sdict.keys():
+        sdict['repetitions'] = repetitions
 
     s = System(graph=graph, names=names)
     s.box = box
@@ -169,6 +171,10 @@ def _make_general_lattice(
         element=element,
         return_structure_dict=True,
     )
+
+    if 'repetitions' not in sdict.keys():
+        sdict['repetitions'] = repetitions
+
     s = System(graph=graph, names=names)
     s.box = box
     s.atoms = atoms
@@ -365,6 +371,7 @@ def _make_dislocation(
         'DislocationCharacter': angle_deg,
     }
 
+    # here we dont add repetitions, since we cannot guarantee
     atom_dict = {"positions": positions, "types": types, "species": species}
     atom_obj = Atoms()
     atom_obj.from_dict(atom_dict)
@@ -606,6 +613,10 @@ def _make_grain_boundary_inbuilt(
         atoms, box, sdict = gb.populate_grain_boundary(
             element, repetitions=repetitions, overlap=overlap
         )
+
+    if 'repetitions' not in sdict.keys():
+        sdict['repetitions'] = repetitions
+    
     s = System(graph=graph, names=names)
     s.box = box
     s.atoms = atoms
@@ -1550,7 +1561,7 @@ class System(pc.System):
             asesys = convert_snap(self)
             write(outfile, asesys, format=format)
 
-    def to_graph(self, repetitions=(1,1,1)):
+    def to_graph(self):
         """
         Converts the structure object to a graph representation.
 
@@ -1565,7 +1576,7 @@ class System(pc.System):
         self._add_sample()
         self._add_material()
         self._add_chemical_composition()
-        self._add_simulation_cell(repetitions=repetitions)
+        self._add_simulation_cell()
         self._add_simulation_cell_properties()
         self._add_crystal_structure()
         self._add_atoms()
