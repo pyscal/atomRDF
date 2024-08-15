@@ -936,6 +936,7 @@ class System(pc.System):
             new_system._structure_dict = {}
         new_system._structure_dict["repetitions"] = repetitions
         new_system.to_graph()
+        new_system.copy_defects(self.sample)
         return new_system
     
     def delete(self, ids=None, indices=None, condition=None, selection=False, copy_structure=False):
@@ -968,6 +969,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
         
@@ -1184,6 +1186,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
         
@@ -1386,6 +1389,7 @@ class System(pc.System):
             #sys = self.duplicate()
             sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))        
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             #sys = self.duplicate()
             sys = System(source=self.add_atoms({"positions": randpos, "species": element}))
@@ -2410,6 +2414,7 @@ class System(pc.System):
         else:
             output_structure.label = self.label
         output_structure.to_graph()
+        output_structure.copy_defects(self.sample)
         if output_structure.graph is not None:
             self.add_rotation_triples(rotation_vectors, output_structure.sample)
         return output_structure
@@ -2467,6 +2472,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
 
@@ -2518,6 +2524,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
 
