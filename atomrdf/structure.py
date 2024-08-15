@@ -2568,17 +2568,4 @@ class System(pc.System):
             return
         if parent_sample is None:
             return
-        
-        parent_material = list([k[2] for k in self.graph.triples((parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_defects = list([x[2] for x in self.graph.triples((parent_material, CMSO.hasDefect, None))])
-
-        material = list([k[2] for k in self.graph.triples((self.sample, CMSO.hasMaterial, None))])[0]
-
-        for defect in parent_defects:
-            new_defect, defect_triples = self.graph.iterate_and_rename_triples(defect)
-            #add the new defect to the new material
-            self.graph.add((material, CMSO.hasDefect, new_defect))
-            #add the triples to the graph
-            for triple in defect_triples:
-                #print(triple)
-                self.graph.add(triple)        
+        self.graph.copy_defects(self.sample, parent_sample)

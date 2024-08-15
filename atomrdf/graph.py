@@ -1276,7 +1276,44 @@ class KnowledgeGraph:
             new_triples.append((subject, predicate, object))
         
         return URIRef(uri_dict[item.toPython()]), new_triples
-                
+
+    def copy_defects(self, sample, parent_sample):
+        """
+        Copy defects from one sample to another
+        """
+        parent_material = list([k[2] for k in self.triples((parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_defects = list([x[2] for x in self.triples((parent_material, CMSO.hasDefect, None))])
+
+        material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
+
+        for defect in parent_defects:
+            new_defect, defect_triples = self.graph.iterate_and_rename_triples(defect)
+            #add the new defect to the new material
+            self.add((material, CMSO.hasDefect, new_defect))
+            #add the triples to the graph
+            for triple in defect_triples:
+                #print(triple)
+                self.add(triple)
+
+        #we need to add special items which are mapped to the sample directly
+        # now add the special props for vacancy, interstitial &substitional
+        for triple in self.triples(
+            (parent_sample, PODO.hasVacancyConcentration, None)
+        ):
+            self.add((sample, triple[1], triple[2]))
+        #for triple in self.graph.triples(
+        #    (parent_sample, PODO.hasNumberOfVacancies, None)
+        #):
+        #    self.graph.add((self.sample, triple[1], triple[2]))
+        for triple in self.triples(
+            (parent_sample, PODO.hasImpurityConcentration, None)
+        ):
+            self.add((sample, triple[1], triple[2]))
+        #for triple in self.graph.triples(
+        #    (parent_sample, PODO.hasNumberOfImpurityAtoms, None)
+        #):
+        #    self.graph.add((self.sample, triple[1], triple[2]))                                    
+    
     def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """
         Get the Sample as a KnowledgeGraph

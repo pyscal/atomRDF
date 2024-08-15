@@ -207,49 +207,11 @@ class Workflow:
     ):
         # Here we need to add inherited info: CalculatedProperties will be lost
         # Defects will be inherited
+
         if sample is None:
             return
 
-        parent_material = list(
-            [
-                k[2]
-                for k in self.kg.triples((parent_sample, CMSO.hasMaterial, None))
-            ]
-        )[0]
-        parent_defects = list(
-            [x[2] for x in self.kg.triples((parent_material, CMSO.hasDefect, None))]
-        )
-        # now for each defect we copy add this to the final sample
-        material = list(
-            [k[2] for k in self.kg.triples((sample, CMSO.hasMaterial, None))]
-        )[0]
-
-        for defect in parent_defects:
-            new_defect = URIRef(defect.toPython())
-            self.kg.add((material, CMSO.hasDefect, new_defect))
-            # now fetch all defect based info
-            for triple in self.kg.triples((defect, None, None)):
-                self.kg.add((new_defect, triple[1], triple[2]))
-
-        # now add the special props for vacancy, interstitial &substitional
-        for triple in self.kg.triples(
-            (parent_sample, PODO.hasVacancyConcentration, None)
-        ):
-            self.kg.add((sample, triple[1], triple[2]))
-        for triple in self.kg.triples(
-            (parent_sample, PODO.hasNumberOfVacancies, None)
-        ):
-            self.kg.add((sample, triple[1], triple[2]))
-        for triple in self.kg.triples(
-            (parent_sample, PODO.hasImpurityConcentration, None)
-        ):
-            self.kg.add((sample, triple[1], triple[2]))
-        for triple in self.kg.triples(
-            (parent_sample, PODO.hasNumberOfImpurityAtoms, None)
-        ):
-            self.kg.add((sample, triple[1], triple[2]))
-
-
+        self.kg.copy_defects(sample, parent_sample)
 
     def _add_method(
             self, job_dict, 
