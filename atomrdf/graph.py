@@ -1264,13 +1264,18 @@ class KnowledgeGraph:
                     else:
                         uri_dict[triple[0].toPython()] = triple[0].toPython()
         
+        new_triples = []
         for triple in triples:
-            if triple[0].toPython() in uri_dict.keys():
-                triples[0] = URIRef(uri_dict[triple[0].toPython()])
-            if triple[2].toPython() in uri_dict.keys():
-                triples[2] = URIRef(uri_dict[triple[2].toPython()])
+            subject = triple[0]
+            if subject.toPython() in uri_dict.keys():
+                subject = URIRef(uri_dict[subject.toPython()])
+            predicate  = triple[1]
+            object = triple[2]
+            if object.toPython() in uri_dict.keys():
+                object = URIRef(uri_dict[object.toPython()])
+            new_triples.append((subject, predicate, object))
         
-        return URIRef(uri_dict[item.toPython()]), triples
+        return URIRef(uri_dict[item.toPython()]), new_triples
                 
     def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """

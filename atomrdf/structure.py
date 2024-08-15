@@ -2573,4 +2573,5 @@ class System(pc.System):
             self.graph.add((material, CMSO.hasDefect, new_defect))
             #add the triples to the graph
             for triple in defect_triples:
-                self.graph.add((triple))        
+                #print(triple)
+                self.graph.add(triple)        
