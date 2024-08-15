@@ -91,3 +91,22 @@ def test_interstitials():
 	species = s.value(sys.sample, CMSO.hasSpecies)
 	elements = [k[2] for k in s.triples((species, CMSO.hasElement, None))]
 	assert len(elements) == 3
+
+def test_gb():
+	kg = KnowledgeGraph()
+	struct_gb_1 = System.create.defect.grain_boundary(axis=[0,0,1], 
+                        sigma=5, 
+                        gb_plane=[3, -1, 0],
+                        element='Fe',
+                        graph=kg)
+	res = kg.query_sample(kg.ontology.terms.pldo.SymmetricalTiltGrainBoundary)
+	assert len(res.AtomicScaleSample.values) == 1
+	
+	new = struct_gb_1.repeat((2,2,2))
+	res = kg.query_sample(kg.ontology.terms.pldo.SymmetricalTiltGrainBoundary)
+	assert len(res.AtomicScaleSample.values) == 2
+
+	ss = kg.get_sample(new.sample)
+	res = ss.query_sample(ss.ontology.terms.pldo.SymmetricalTiltGrainBoundary)
+	assert len(res.AtomicScaleSample.values) == 1
+
