@@ -527,11 +527,12 @@ def _make_grain_boundary_aimsgb(
                 to_primitive=primitive,
             )
     asestruct = AseAtomsAdaptor().get_atoms(structure=gb_struct)
-    sys = System.read.ase(asestruct, graph=graph, names=names, label=label)
+    sys = System.read.ase(asestruct, graph=None, names=names, label=label)
     sys.atoms._lattice = structure
     sys.atoms._lattice_constant = _declass(lattice_constant)
     sys._structure_dict = sdict
     sys.label = label
+    sys.graph = graph
     sys.to_graph()
     sys.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     sys.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
@@ -619,13 +620,14 @@ def _make_grain_boundary_inbuilt(
     if 'repetitions' not in sdict.keys():
         sdict['repetitions'] = repetitions
     
-    s = System(graph=graph, names=names)
+    s = System(graph=None, names=names)
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
     s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
+    s.graph = graph
     s.to_graph()
     s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     
