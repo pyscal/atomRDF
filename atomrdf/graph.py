@@ -1233,7 +1233,24 @@ class KnowledgeGraph:
             sgraph.add(triple)
         return sgraph
 
-    def iterate_and_reapply_triples(self, item):
+    def _create_a_new_name(self, uristring):
+        """
+        take a given uriref string name and create one in similar fashion
+        """
+        raw = uristring.split(':')
+        if len(raw) > 1:
+            prologue = raw[0]+':'
+        else:
+            prologue = ''
+        
+        raw = uristring.split('_')
+        if len(raw) > 1:
+            epilogue = '_'+"_".join(raw[1:])
+        else:
+            epilogue = ''
+        return f"{prologue}{uuid.uuid4()}{epilogue}"
+
+    def iterate_and_rename_triples(self, item):
         self.iterate_graph(item, create_new_list=True)
         triples = copy.deepcopy(self.slist)
         #now we have to edit this triples, and reapply them
@@ -1242,7 +1259,10 @@ class KnowledgeGraph:
         for triple in triples:
             if isinstance(triple[0], URIRef):
                 if triple[0].toPython() not in uri_dict.keys():
-                    uri_dict[triple[0].toPython()] = None
+                    if self._is_bnode(triple[0]):
+                        uri_dict[triple[0].toPython()] = self._create_a_new_name(triple[0].toPython())
+                    else:
+                        uri_dict[triple[0].toPython()] = None
         return uri_dict
                 
     def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
