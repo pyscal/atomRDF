@@ -1287,7 +1287,7 @@ class KnowledgeGraph:
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
 
         for defect in parent_defects:
-            new_defect, defect_triples = self.graph.iterate_and_rename_triples(defect)
+            new_defect, defect_triples = self.iterate_and_rename_triples(defect)
             #add the new defect to the new material
             self.add((material, CMSO.hasDefect, new_defect))
             #add the triples to the graph
