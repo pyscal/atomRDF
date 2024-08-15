@@ -300,7 +300,13 @@ class KnowledgeGraph:
 
     def _is_ontoterm(self, term):
         return type(term).__name__ == "OntoTerm"
-
+    
+    def _is_uriref(self, term):
+        return type(term).__name__ == "URIRef"
+    
+    def _is_bnode(self, term):
+        return not term.toPython().startswith("http")
+    
     def _modify_triple(self, triple):
         modified_triple = []
         for term in triple:
@@ -1160,8 +1166,32 @@ class KnowledgeGraph:
         """
 
         return [x[0] for x in self.triples((None, RDF.type, PROV.Activity))]
-    
-    def iterate_graph(self, item, create_new_graph=False):
+
+    def _is_of_type(self, item, target_item):
+        """
+        Check if an item is of a specific type
+        
+        item - direct from graph, comparison only makes sense if it is URIRef
+            if item is node with https - direct comparison
+            if not - check the type of the item
+
+        target_item - URIRef or OntoTerm
+        """
+        if not self._is_uriref(item):
+            return False
+
+        if self._is_bnode(item):
+            rdftype = self.value(item, RDF.type)
+            if rdftype is not None:
+                rdftype = rdftype.toPython()
+        else:
+            rdftype = item.toPython()
+
+        target_type = target_item.toPython()
+        return rdftype == target_type
+                
+    def iterate_graph(self, item, create_new_graph=False, create_new_list=False,
+                    stop_at_sample=False):
         """
         Iterate through the graph starting from the given item.
 
@@ -1169,25 +1199,122 @@ class KnowledgeGraph:
         ----------
         item : object
             The item to start the iteration from.
-        create_new_graph : bool, optional
-            If True, create a new KnowledgeGraph object to store the iteration results.
-            Default is False. The results are stored in `self.sgraph`.
+        create_new_list : bool, optional
+            If True, create a new list to store extracted triples, this is needed when
+            calling this function iteratively
+        stop_at_sample : bool, optional
+            If True, stops the iteration at the when a sample object is encountered. Default is False.
+            will only stop if `item` is a sample object
 
         Returns
         -------
         None
         """
-        if isinstance(item, str):
-            item = URIRef(item)
-
-        if create_new_graph:
-            self.sgraph = KnowledgeGraph()
+        if not type(item).__name__ == 'URIRef':
+            return
+        
+        if create_new_list:
+            self.slist = []
+            stop_at_sample = stop_at_sample and self._is_of_type(item, CMSO.AtomicScaleSample)
+        
         triples = list(self.triples((item, None, None)))
+        
         for triple in triples:
-            self.sgraph.graph.add(triple)
-            self.iterate_graph(triple[2])
+            if not (stop_at_sample and self._is_of_type(triple[1], PROV.wasDerivedFrom)):
+                self.slist.append(triple)
+                self.iterate_graph(triple[2], stop_at_sample=stop_at_sample)
+    
+    def iterate_and_create_graph(self, item, stop_at_sample=False):
+        self.iterate_graph(item, create_new_list=True, stop_at_sample=stop_at_sample)
+        triples = copy.deepcopy(self.slist)
+        self.slist = []
+        sgraph = KnowledgeGraph()
+        for triple in triples:
+            sgraph.add(triple)
+        return sgraph
 
-    def get_sample(self, sample, no_atoms=False):
+    def _create_a_new_name(self, uristring):
+        """
+        take a given uriref string name and create one in similar fashion
+        """
+        raw = uristring.split(':')
+        if len(raw) > 1:
+            prologue = raw[0]+':'
+        else:
+            prologue = ''
+        
+        raw = uristring.split('_')
+        if len(raw) > 1:
+            epilogue = '_'+"_".join(raw[1:])
+        else:
+            epilogue = ''
+        return f"{prologue}{uuid.uuid4()}{epilogue}"
+
+    def iterate_and_rename_triples(self, item):
+        self.iterate_graph(item, create_new_list=True)
+        triples = copy.deepcopy(self.slist)
+        #now we have to edit this triples, and reapply them
+        #for that we make a dict of all URIRef values in this graph
+        uri_dict = {}
+        for triple in triples:
+            if isinstance(triple[0], URIRef):
+                if triple[0].toPython() not in uri_dict.keys():
+                    if self._is_bnode(triple[0]):
+                        uri_dict[triple[0].toPython()] = self._create_a_new_name(triple[0].toPython())
+                    else:
+                        uri_dict[triple[0].toPython()] = triple[0].toPython()
+        
+        new_triples = []
+        for triple in triples:
+            subject = triple[0]
+            if subject.toPython() in uri_dict.keys():
+                subject = URIRef(uri_dict[subject.toPython()])
+            predicate  = triple[1]
+            object = triple[2]
+            if object.toPython() in uri_dict.keys():
+                object = URIRef(uri_dict[object.toPython()])
+            new_triples.append((subject, predicate, object))
+        
+        return URIRef(uri_dict[item.toPython()]), new_triples
+
+    def copy_defects(self, sample, parent_sample):
+        """
+        Copy defects from one sample to another
+        """
+        parent_material = list([k[2] for k in self.triples((parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_defects = list([x[2] for x in self.triples((parent_material, CMSO.hasDefect, None))])
+
+        material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
+
+        for defect in parent_defects:
+            new_defect, defect_triples = self.iterate_and_rename_triples(defect)
+            #add the new defect to the new material
+            self.add((material, CMSO.hasDefect, new_defect))
+            #add the triples to the graph
+            for triple in defect_triples:
+                #print(triple)
+                self.add(triple)
+
+        #we need to add special items which are mapped to the sample directly
+        # now add the special props for vacancy, interstitial &substitional
+        for triple in self.triples(
+            (parent_sample, PODO.hasVacancyConcentration, None)
+        ):
+            self.add((sample, triple[1], triple[2]))
+        #for triple in self.graph.triples(
+        #    (parent_sample, PODO.hasNumberOfVacancies, None)
+        #):
+        #    self.graph.add((self.sample, triple[1], triple[2]))
+        for triple in self.triples(
+            (parent_sample, PODO.hasImpurityConcentration, None)
+        ):
+            self.add((sample, triple[1], triple[2]))
+        #for triple in self.graph.triples(
+        #    (parent_sample, PODO.hasNumberOfImpurityAtoms, None)
+        #):
+        #    self.graph.add((self.sample, triple[1], triple[2]))                                    
+    
+    def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """
         Get the Sample as a KnowledgeGraph
 
@@ -1198,6 +1325,9 @@ class KnowledgeGraph:
 
         no_atoms: bool, optional
             if True, returns the number of atoms in the sample
+
+        stop_at_sample: bool, optional
+            if True, stops the iteration at the when a sample object is encountered. Default is True.
 
         Returns
         -------
@@ -1210,11 +1340,11 @@ class KnowledgeGraph:
         if isinstance(sample, str):
             sample = URIRef(sample)
 
-        self.iterate_graph(sample, create_new_graph=True)
+        sgraph = self.iterate_and_create_graph(sample, stop_at_sample=stop_at_sample)
         if no_atoms:
-            na = self.sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
-            return self.sgraph, na
-        return self.sgraph
+            na = sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
+            return sgraph, na
+        return sgraph
     
     def get_label(self, item):
         label = self.graph.value(item, RDFS.label)

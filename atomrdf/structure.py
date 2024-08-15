@@ -527,11 +527,12 @@ def _make_grain_boundary_aimsgb(
                 to_primitive=primitive,
             )
     asestruct = AseAtomsAdaptor().get_atoms(structure=gb_struct)
-    sys = System.read.ase(asestruct, graph=graph, names=names, label=label)
+    sys = System.read.ase(asestruct, graph=None, names=names, label=label)
     sys.atoms._lattice = structure
     sys.atoms._lattice_constant = _declass(lattice_constant)
     sys._structure_dict = sdict
     sys.label = label
+    sys.graph = graph
     sys.to_graph()
     sys.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     sys.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
@@ -619,13 +620,14 @@ def _make_grain_boundary_inbuilt(
     if 'repetitions' not in sdict.keys():
         sdict['repetitions'] = repetitions
     
-    s = System(graph=graph, names=names)
+    s = System(graph=None, names=names)
     s.box = box
     s.atoms = atoms
     s.atoms._lattice = structure
     s.atoms._lattice_constant = _declass(lattice_constant)
     s._structure_dict = sdict
     s.label = label
+    s.graph = graph
     s.to_graph()
     s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     
@@ -934,6 +936,7 @@ class System(pc.System):
             new_system._structure_dict = {}
         new_system._structure_dict["repetitions"] = repetitions
         new_system.to_graph()
+        new_system.copy_defects(self.sample)
         return new_system
     
     def delete(self, ids=None, indices=None, condition=None, selection=False, copy_structure=False):
@@ -966,6 +969,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
         
@@ -1182,6 +1186,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
         
@@ -1384,6 +1389,7 @@ class System(pc.System):
             #sys = self.duplicate()
             sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))        
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             #sys = self.duplicate()
             sys = System(source=self.add_atoms({"positions": randpos, "species": element}))
@@ -2408,6 +2414,7 @@ class System(pc.System):
         else:
             output_structure.label = self.label
         output_structure.to_graph()
+        output_structure.copy_defects(self.sample)
         if output_structure.graph is not None:
             self.add_rotation_triples(rotation_vectors, output_structure.sample)
         return output_structure
@@ -2465,6 +2472,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
 
@@ -2516,6 +2524,7 @@ class System(pc.System):
             sys = self.duplicate()
             #and add this new structure to the graph
             sys.to_graph()
+            sys.copy_defects(self.sample)
         else:
             sys = self
 
@@ -2553,3 +2562,10 @@ class System(pc.System):
             self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
             self.graph.add((activity, UNSAFECMSO.hasDistance, Literal(distance, datatype=XSD.float)))
+
+    def copy_defects(self, parent_sample):
+        if self.sample is None:
+            return
+        if parent_sample is None:
+            return
+        self.graph.copy_defects(self.sample, parent_sample)
