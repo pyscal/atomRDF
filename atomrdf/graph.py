@@ -1245,7 +1245,7 @@ class KnowledgeGraph:
                     uri_dict[triple[0].toPython()] = None
         return uri_dict
                 
-    def get_sample(self, sample, no_atoms=False):
+    def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """
         Get the Sample as a KnowledgeGraph
 
@@ -1256,6 +1256,9 @@ class KnowledgeGraph:
 
         no_atoms: bool, optional
             if True, returns the number of atoms in the sample
+
+        stop_at_sample: bool, optional
+            if True, stops the iteration at the when a sample object is encountered. Default is True.
 
         Returns
         -------
@@ -1268,11 +1271,11 @@ class KnowledgeGraph:
         if isinstance(sample, str):
             sample = URIRef(sample)
 
-        _ = self.iterate_graph(sample, create_new_graph=True)
+        sgraph = self.iterate_and_create_graph(sample, stop_at_sample=stop_at_sample)
         if no_atoms:
-            na = self.sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
-            return self.sgraph, na
-        return self.sgraph
+            na = sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
+            return sgraph, na
+        return sgraph
     
     def get_label(self, item):
         label = self.graph.value(item, RDFS.label)
