@@ -1161,7 +1161,7 @@ class KnowledgeGraph:
 
         return [x[0] for x in self.triples((None, RDF.type, PROV.Activity))]
     
-    def iterate_graph(self, item, create_new_graph=False):
+    def iterate_graph(self, item, create_new_graph=False, create_new_list=False):
         """
         Iterate through the graph starting from the given item.
 
@@ -1177,16 +1177,40 @@ class KnowledgeGraph:
         -------
         None
         """
-        if isinstance(item, str):
-            item = URIRef(item)
+        #active = False
 
-        if create_new_graph:
-            self.sgraph = KnowledgeGraph()
+        if not type(item).__name__ == 'URIRef':
+            return
+
+        #if create_new_graph:
+        #    self.sgraph = KnowledgeGraph()
+        
+        if create_new_list:
+            self.slist = []
+
         triples = list(self.triples((item, None, None)))
+        #print(triples)
+        
         for triple in triples:
-            self.sgraph.graph.add(triple)
+            #active = True
+            #if create_new_graph:
+            #    self.sgraph.graph.add(triple)
+            self.slist.append(triple)
             self.iterate_graph(triple[2])
-
+    
+    def iterate_and_reapply_triples(self, item):
+        self.iterate_graph(item, create_new_list=True)
+        triples = copy.deepcopy(self.slist)
+        #now we have to edit this triples, and reapply them
+        #for that we make a dict of all URIRef values in this graph
+        uri_dict = {}
+        for triple in triples:
+            if isinstance(triple[0], URIRef):
+                print(triple[0])
+                if triple[0].toPython() not in uri_dict.keys():
+                    uri_dict[triple[0].toPython()] = None
+        return uri_dict
+                
     def get_sample(self, sample, no_atoms=False):
         """
         Get the Sample as a KnowledgeGraph
@@ -1210,7 +1234,7 @@ class KnowledgeGraph:
         if isinstance(sample, str):
             sample = URIRef(sample)
 
-        self.iterate_graph(sample, create_new_graph=True)
+        _ = self.iterate_graph(sample, create_new_graph=True)
         if no_atoms:
             na = self.sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
             return self.sgraph, na

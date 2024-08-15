@@ -2553,3 +2553,18 @@ class System(pc.System):
             self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
             self.graph.add((activity, UNSAFECMSO.hasDistance, Literal(distance, datatype=XSD.float)))
+
+    def copy_defects(self, parent_sample):
+        if self.sample is None:
+            return
+        if parent_sample is None:
+            return
+        
+        parent_material = list([k[2] for k in self.kg.triples((parent_sample, CMSO.hasMaterial, None))])[0]
+        parent_defects = list([x[2] for x in self.kg.triples((parent_material, CMSO.hasDefect, None))])
+
+        material = list([k[2] for k in self.kg.triples((self.sample, CMSO.hasMaterial, None))])[0]
+
+        for defect in parent_defects:
+            new_defect = URIRef(defect.toPython())
+        
