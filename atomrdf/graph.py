@@ -1266,9 +1266,9 @@ class KnowledgeGraph:
         
         for triple in triples:
             if triple[0].toPython() in uri_dict.keys():
-                triples[0] = uri_dict[triple[0].toPython()]
+                triples[0] = URIRef(uri_dict[triple[0].toPython()])
             if triple[2].toPython() in uri_dict.keys():
-                triples[2] = uri_dict[triple[2].toPython()]
+                triples[2] = URIRef(uri_dict[triple[2].toPython()])
         
         return URIRef(uri_dict[item.toPython()]), triples
                 
