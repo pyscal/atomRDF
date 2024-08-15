@@ -1161,7 +1161,8 @@ class KnowledgeGraph:
 
         return [x[0] for x in self.triples((None, RDF.type, PROV.Activity))]
     
-    def iterate_graph(self, item, create_new_graph=False, create_new_list=False):
+    def iterate_graph(self, item, create_new_graph=False, create_new_list=False,
+                    stop_at_sample=False):
         """
         Iterate through the graph starting from the given item.
 
@@ -1169,35 +1170,48 @@ class KnowledgeGraph:
         ----------
         item : object
             The item to start the iteration from.
-        create_new_graph : bool, optional
-            If True, create a new KnowledgeGraph object to store the iteration results.
-            Default is False. The results are stored in `self.sgraph`.
+        create_new_list : bool, optional
+            If True, create a new list to store extracted triples, this is needed when
+            calling this function iteratively
+        stop_at_sample : bool, optional
+            If True, stops the iteration at the when a sample object is encountered. Default is False.
+            will only stop if `item` is a sample object
 
         Returns
         -------
         None
         """
         #active = False
+        #if create_new_graph:
+        #    self.sgraph = KnowledgeGraph()
+        #print(triples)
+        #active = True
+        #if create_new_graph:
+        #    self.sgraph.graph.add(triple)
 
         if not type(item).__name__ == 'URIRef':
             return
-
-        #if create_new_graph:
-        #    self.sgraph = KnowledgeGraph()
         
         if create_new_list:
             self.slist = []
-
+            rdftype = self.value(item, RDF.type)
+            if rdftype is not None:
+                rdftype = rdftype.toPython()
+            stop_at_sample = stop_at_sample and rdftype == CMSO.AtomicScaleSample.uri
+        
         triples = list(self.triples((item, None, None)))
-        #print(triples)
         
         for triple in triples:
-            #active = True
-            #if create_new_graph:
-            #    self.sgraph.graph.add(triple)
             self.slist.append(triple)
-            self.iterate_graph(triple[2])
+            self.iterate_graph(triple[2], stop_at_sample=stop_at_sample)
     
+    def iterate_and_create_graph(self, item, stop_at_sample=False):
+        triples = self.iterate_graph(item, create_new_list=True, stop_at_sample=stop_at_sample)
+        sgraph = KnowledgeGraph()
+        for triple in triples:
+            sgraph.add(triple)
+        return sgraph
+
     def iterate_and_reapply_triples(self, item):
         self.iterate_graph(item, create_new_list=True)
         triples = copy.deepcopy(self.slist)
