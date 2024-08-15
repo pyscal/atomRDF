@@ -1262,8 +1262,15 @@ class KnowledgeGraph:
                     if self._is_bnode(triple[0]):
                         uri_dict[triple[0].toPython()] = self._create_a_new_name(triple[0].toPython())
                     else:
-                        uri_dict[triple[0].toPython()] = None
-        return uri_dict
+                        uri_dict[triple[0].toPython()] = triple[0].toPython()
+        
+        for triple in triples:
+            if triple[0].toPython() in uri_dict.keys():
+                triples[0] = uri_dict[triple[0].toPython()]
+            if triple[2].toPython() in uri_dict.keys():
+                triples[2] = uri_dict[triple[2].toPython()]
+        
+        return uri_dict[item.toPython()], triples
                 
     def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """
