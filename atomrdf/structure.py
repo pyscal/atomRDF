@@ -402,6 +402,7 @@ def _make_grain_boundary(
     ca_ratio=1.633,
     repetitions=(1, 1, 1),
     overlap=0.0,
+    gap=0.0,
     vacuum=0.0,
     delete_layer="0b0t0b0t",
     tolerance=  0.25,
@@ -413,6 +414,90 @@ def _make_grain_boundary(
     label=None,
     backend='aimsgb'         
 ):
+    """
+    Create a grain boundary system. GB can be created either with AIMSGB or GBCode.
+
+    Parameters:
+    -----------
+    axis : tuple or list
+        The rotation axis of the grain boundary.
+        Used with backend 'aimsgb' and 'gbcode'.
+    sigma : int
+        The sigma value of the grain boundary.
+        Used with backend 'aimsgb' and 'gbcode'.
+    gb_plane : tuple or list
+        The Miller indices of the grain boundary plane.
+        Used with backend 'aimsgb' and 'gbcode'.
+    backend : str, optional
+        The backend to use to create the grain boundary. Default is 'aimsgb'.
+        Some keyword arguments are only suitable for some backend.
+    structure : the lattice structure to be used to create the GB, optional
+        The lattice structure to populate the grain boundary with.
+        Used with backend 'aimsgb' and 'gbcode'.
+    element : str, optional
+        The element symbol to populate the grain boundary with.
+        Used with backend 'aimsgb' and 'gbcode'.
+    lattice_constant : float, optional
+        The lattice constant of the structure.
+        Used with backend 'aimsgb' and 'gbcode'.
+    repetitions : tuple or list, optional
+        The number of repetitions of the structure that will be used to create the GB.
+        Used only with 'gbcode'.
+        For example, if (2,3,4) is provided, each grain will have these repetitions in (x,y,z) directions.
+        For similar functionality in 'aimsgb', use 'uc_a' and 'uc_b'.
+    overlap : float, optional
+        The overlap between adjacent grain boundaries.
+        Used only with 'gbcode'.
+    vaccum : float, optional
+        Adds space between the grains at one of the two interfaces
+        that must exist due to periodic boundary conditions.
+        Used only with 'aimsgb'.
+    gap: float, optional
+        Adds space between the grains at both of the two interfaces
+        that must exist due to periodic boundary conditions.
+        Used only with 'aimsgb'.
+    delete_layer: str, optional
+        To delete layers of the GB.
+        Used only with 'aimsgb'.
+    tolerance: float, optional
+        Tolerance factor (in distance units) to determine whether two atoms
+        are in the same plane.
+        Used only with 'aimsgb'.
+    primitive: bool, optional
+        To generate primitive or non-primitive GB structure.
+        Used only with 'aimsgb'.
+    uc_a: int, optional
+        Number of unit cells of left grain.
+        Used only with 'aimsgb'.
+    uc_b: int, optional
+        Number of unit cells of right grain.
+        Used only with 'aimsgb'.
+    graph : atomrdf.KnowledgeGraph, optional
+        The graph object to store the system.
+        The system is only added to the KnowledgeGraph  if this option is provided.
+    names : bool, optional
+        If True human readable names will be assigned to each property. If False random ids will be used. Default is False.
+    label: str, optional
+        Add a label to the structure
+
+    Returns:
+    --------
+    atomrdf.System
+        The grain boundary system.
+
+    Notes
+    -----
+    This function requires the aimsgb and pymatgen packages to be installed to use the 'aimsgb' backend.
+
+    `repetitions` is used only with the 'gbcode' backend. 
+    For similar functionality in 'aimsgb', use `uc_a` and `uc_b`. However, repetition in the third direction
+    is not supported in 'aimsgb'. For a similar effect, after reaching the GB, `system.modify.repeat` function
+    could be used with (1, 1, u_c).
+
+    If 'gbcode' is used as backend, the specific type of GB is determined using the `find_gb_character` function
+    When backend 'aimsgb' is used, this is attempted. If the type could not be found, a normal GB will be added in the annotation.
+
+    """ 
     if backend == 'aimsgb':
         return _make_grain_boundary_aimsgb(
             axis,
@@ -423,7 +508,7 @@ def _make_grain_boundary(
             lattice_constant=lattice_constant,
             ca_ratio=ca_ratio,
             repetitions=repetitions,
-            overlap=overlap,
+            gap=gap,
             vacuum=vacuum,
             delete_layer=delete_layer,
             tolerance=  tolerance,
@@ -435,7 +520,7 @@ def _make_grain_boundary(
             label=label,             
         )
     else:
-        return _make_grain_boundary_inbuilt(
+        return _make_grain_boundary_gbcode(
             axis,
             sigma,
             gb_plane,
@@ -458,7 +543,7 @@ def _make_grain_boundary_aimsgb(
     lattice_constant=1,
     ca_ratio=1.633,
     repetitions=(1, 1, 1),
-    overlap=0.0,
+    gap=0.0,
     vacuum=0.0,
     delete_layer="0b0t0b0t",
     tolerance=  0.25,
@@ -468,7 +553,7 @@ def _make_grain_boundary_aimsgb(
     graph=None,
     names=False,
     label=None,  
-):  
+): 
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
         from aimsgb import GrainBoundary as AIMSGrainBoundary
@@ -520,7 +605,7 @@ def _make_grain_boundary_aimsgb(
                 grain_a = gb.grain_a,
                 grain_b = gb.grain_b,
                 vacuum = vacuum,
-                gap=overlap,
+                gap=gap,
                 direction = gb.direction,
                 delete_layer=delete_layer,
                 tol=tolerance,
@@ -556,7 +641,7 @@ def _make_grain_boundary_aimsgb(
 
 
 
-def _make_grain_boundary_inbuilt(
+def _make_grain_boundary_gbcode(
     axis,
     sigma,
     gb_plane,
