@@ -300,7 +300,13 @@ class KnowledgeGraph:
 
     def _is_ontoterm(self, term):
         return type(term).__name__ == "OntoTerm"
-
+    
+    def _is_uriref(self, term):
+        return type(term).__name__ == "URIRef"
+    
+    def _is_bnode(self, term):
+        return not term.toPython().startswith("http")
+    
     def _modify_triple(self, triple):
         modified_triple = []
         for term in triple:
@@ -1160,7 +1166,30 @@ class KnowledgeGraph:
         """
 
         return [x[0] for x in self.triples((None, RDF.type, PROV.Activity))]
-    
+
+    def _is_of_type(self, item, target_item):
+        """
+        Check if an item is of a specific type
+        
+        item - direct from graph, comparison only makes sense if it is URIRef
+            if item is node with https - direct comparison
+            if not - check the type of the item
+
+        target_item - URIRef or OntoTerm
+        """
+        if not self._is_uriref(item):
+            return False
+
+        if self._is_bnode(item):
+            rdftype = self.value(item, RDF.type)
+            if rdftype is not None:
+                rdftype = rdftype.toPython()
+        else:
+            rdftype = item.toPython()
+
+        target_type = target_item.toPython()
+        return rdftype == target_type
+                
     def iterate_graph(self, item, create_new_graph=False, create_new_list=False,
                     stop_at_sample=False):
         """
@@ -1181,32 +1210,24 @@ class KnowledgeGraph:
         -------
         None
         """
-        #active = False
-        #if create_new_graph:
-        #    self.sgraph = KnowledgeGraph()
-        #print(triples)
-        #active = True
-        #if create_new_graph:
-        #    self.sgraph.graph.add(triple)
-
         if not type(item).__name__ == 'URIRef':
             return
         
         if create_new_list:
             self.slist = []
-            rdftype = self.value(item, RDF.type)
-            if rdftype is not None:
-                rdftype = rdftype.toPython()
-            stop_at_sample = stop_at_sample and rdftype == CMSO.AtomicScaleSample.uri
+            stop_at_sample = stop_at_sample and self._is_of_type(item, CMSO.AtomicScaleSample)
         
         triples = list(self.triples((item, None, None)))
         
         for triple in triples:
-            self.slist.append(triple)
-            self.iterate_graph(triple[2], stop_at_sample=stop_at_sample)
+            if not (stop_at_sample and self._is_of_type(triple[1], PROV.wasDerivedFrom)):
+                self.slist.append(triple)
+                self.iterate_graph(triple[2], stop_at_sample=stop_at_sample)
     
     def iterate_and_create_graph(self, item, stop_at_sample=False):
-        triples = self.iterate_graph(item, create_new_list=True, stop_at_sample=stop_at_sample)
+        self.iterate_graph(item, create_new_list=True, stop_at_sample=stop_at_sample)
+        triples = copy.deepcopy(self.slist)
+        self.slist = []
         sgraph = KnowledgeGraph()
         for triple in triples:
             sgraph.add(triple)
@@ -1220,7 +1241,6 @@ class KnowledgeGraph:
         uri_dict = {}
         for triple in triples:
             if isinstance(triple[0], URIRef):
-                print(triple[0])
                 if triple[0].toPython() not in uri_dict.keys():
                     uri_dict[triple[0].toPython()] = None
         return uri_dict
