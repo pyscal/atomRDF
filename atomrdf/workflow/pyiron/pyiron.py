@@ -6,7 +6,7 @@ import os
 from functools import partial, update_wrapper
 from pyscal3.core import structure_dict, element_dict
 
-from atomrdf.structure import _make_crystal
+from atomrdf.structure import _make_crystal, _make_grain_boundary
 import atomrdf.workflow.pyiron.lammps as lammps
 import atomrdf.workflow.pyiron.vasp as vasp
 import atomrdf.workflow.pyiron.murnaghan as murnaghan
@@ -100,29 +100,49 @@ def inform_graph(pr, kg):
 
         def grain_boundary(
             self,
-            element,
             axis,
             sigma,
             gb_plane,
-            repetitions=(1, 1, 1),
             crystalstructure=None,
+            element=None,
             a=1,
+            covera=1.633,
+            repetitions=(1, 1, 1),
             overlap=0.0,
+            gap=0.0,
+            vacuum=0.0,
+            delete_layer="0b0t0b0t",
+            tolerance=  0.25,
+            primitive=False,
+            uc_a=1,
+            uc_b=1,
             graph=None,
+            names=False,
             label=None,
+            backend='aimsgb'  
         ):
 
-            struct = self._graph._annotated_make_grain_boundary(
+            struct = _make_grain_boundary(
                 axis,
                 sigma,
                 gb_plane,
                 structure=crystalstructure,
                 element=element,
                 lattice_constant=a,
+                ca_ratio=covera,
                 repetitions=repetitions,
                 overlap=overlap,
+                gap=gap,
+                vacuum=vacuum,
+                delete_layer=delete_layer,
+                tolerance=tolerance,
+                primitive=primitive,
+                uc_a=uc_a,
+                uc_b=uc_b,
                 graph=self._graph,
+                names=names,
                 label=label,
+                backend=backend  
             )
 
             ase_structure = struct.write.ase()
