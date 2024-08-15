@@ -1270,7 +1270,7 @@ class KnowledgeGraph:
             if triple[2].toPython() in uri_dict.keys():
                 triples[2] = uri_dict[triple[2].toPython()]
         
-        return uri_dict[item.toPython()], triples
+        return URIRef(uri_dict[item.toPython()]), triples
                 
     def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """

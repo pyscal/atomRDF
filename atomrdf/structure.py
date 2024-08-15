@@ -2566,5 +2566,9 @@ class System(pc.System):
         material = list([k[2] for k in self.kg.triples((self.sample, CMSO.hasMaterial, None))])[0]
 
         for defect in parent_defects:
-            new_defect = URIRef(defect.toPython())
-        
+            new_defect, defect_triples = self.graph.iterate_and_rename_triples(defect)
+            #add the new defect to the new material
+            self.graph.add((material, CMSO.hasDefect, new_defect))
+            #add the triples to the graph
+            for triple in defect_triples:
+                self.graph.add((triple))        
