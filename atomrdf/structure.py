@@ -738,6 +738,7 @@ def _read_structure(
     basis_box=None,
     basis_positions=None,
     label=None,
+    repetitions=None,
 ):
     """
     Read in structure from file or ase object
@@ -773,6 +774,9 @@ def _read_structure(
 
     basis_positions: nX3 list, optional
         specify the relative positions of atoms in the unit cell. Not required if lattice is provided
+    
+    repetitions: tuple, optional
+        specify the number of repetitions of the unit cell in each direction. Default is None.
 
     Returns
     -------
@@ -789,6 +793,8 @@ def _read_structure(
         datadict["box"] = basis_box
     if basis_positions is not None:
         datadict["positions"] = basis_positions
+    if repetitions is not None:
+        datadict["repetitions"] = repetitions
 
     s = System(
         filename,
