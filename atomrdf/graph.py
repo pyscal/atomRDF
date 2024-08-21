@@ -1647,4 +1647,239 @@ class KnowledgeGraph:
         if len(structures) == 1:
             return structures[0]
         else:
-            return structures                     
+            return structures
+
+    def update_sample(self, sample, struct):
+        """
+        Take a new system, and update the given sample with it.
+        Updated properties would be cell, atom positions, species
+
+        Parameters
+        ----------
+        sample: string
+            sample id
+        struct: :py:class:`atomrdf.structure.System`
+            system to be updated
+        """
+        if isinstance(sample, str):
+            sample = URIRef(sample)
+
+        sample_id = sample.toPython()
+
+        chemical_species = self.value(sample, CMSO.hasSpecies)
+        # start by cleanly removing elements
+        for s in self.triples((chemical_species, CMSO.hasElement, None)):
+            element = s[2]
+            self.remove((element, None, None))
+        self.remove((chemical_species, None, None))
+        self.remove((sample, CMSO.hasSpecies, None))
+
+        # now recalculate and add it again
+        composition = struct.schema.material.element_ratio()
+        valid = False
+        for e, r in composition.items():
+            if e in element_indetifiers.keys():
+                valid = True
+                break
+
+        if valid:
+            chemical_species = self.create_node(
+                f"{sample_id}_ChemicalSpecies", CMSO.ChemicalSpecies
+            )
+            self.add((sample, CMSO.hasSpecies, chemical_species))
+
+            for e, r in composition.items():
+                if e in element_indetifiers.keys():
+                    element = self.create_node(
+                        element_indetifiers[e], CMSO.ChemicalElement
+                    )
+                    self.add((chemical_species, CMSO.hasElement, element))
+                    self.add(
+                        (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
+                    )
+                    self.add(
+                        (
+                            element,
+                            CMSO.hasElementRatio,
+                            Literal(r, datatype=XSD.float),
+                        )
+                    )
+
+        # we also have to read in file and clean it up
+        filepath = self.value(
+            URIRef(f"{sample_id}_Position"), CMSO.hasPath
+        ).toPython()
+        position_identifier = self.value(
+            URIRef(f"{sample_id}_Position"), CMSO.hasIdentifier
+        ).toPython()
+        species_identifier = self.value(
+            URIRef(f"{sample_id}_Species"), CMSO.hasIdentifier
+        ).toPython()
+
+        # clean up items
+        datadict = {
+            position_identifier: {
+                "value": struct.schema.atom_attribute.position(),
+                "label": "position",
+            },
+            species_identifier: {
+                "value": struct.schema.atom_attribute.species(),
+                "label": "species",
+            },
+        }
+        outfile = os.path.join(
+            self.structure_store, str(sample_id).split(":")[-1]
+        )
+        json_io.write_file(outfile, datadict)
+
+        #now the only thing that needs to be updated is the cell                    
+        simulation_cell = self.value(sample, CMSO.hasSimulationCell)
+
+        #readd volume
+        self.remove((simulation_cell, CMSO.hasVolume, None))
+        self.add(
+            (
+                simulation_cell,
+                CMSO.hasVolume,
+                Literal(
+                    np.round(struct.schema.simulation_cell.volume(), decimals=2),
+                    datatype=XSD.float,
+                ),
+            )
+        )
+
+        #readd number of atoms
+        self.remove((sample, CMSO.hasNumberOfAtoms, None))
+        self.add(
+            (
+                sample,
+                CMSO.hasNumberOfAtoms,
+                Literal(struct.schema.simulation_cell.number_of_atoms(), datatype=XSD.integer),
+            )
+        )
+
+        #update simulation cell length
+        simulation_cell_length = self.value(simulation_cell, CMSO.hasLength)
+        self.remove((simulation_cell_length, None, None))
+        data = struct.schema.simulation_cell.length()
+        self.add(
+            (
+                simulation_cell_length,
+                CMSO.hasLength_x,
+                Literal(data[0], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simulation_cell_length,
+                CMSO.hasLength_y,
+                Literal(data[1], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simulation_cell_length,
+                CMSO.hasLength_z,
+                Literal(data[2], datatype=XSD.float),
+            )
+        )
+
+        #simulation cell vectors
+        simvecs = [x[2] for x in self.triples((simulation_cell, CMSO.hasVector, None))]
+
+        for simvec in simvecs:
+            self.remove((simvec, None, None))
+        
+        #now re-add
+        data = struct.schema.simulation_cell.vector()
+        self.add(
+            (
+                simvecs[0],
+                CMSO.hasComponent_x,
+                Literal(data[0][0], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simvecs[0],
+                CMSO.hasComponent_y,
+                Literal(data[0][1], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simvecs[0],
+                CMSO.hasComponent_z,
+                Literal(data[0][2], datatype=XSD.float),
+            )
+        )
+
+        self.add(
+            (
+                simvecs[1],
+                CMSO.hasComponent_x,
+                Literal(data[1][0], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simvecs[1],
+                CMSO.hasComponent_y,
+                Literal(data[1][1], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simvecs[1],
+                CMSO.hasComponent_z,
+                Literal(data[1][2], datatype=XSD.float),
+            )
+        )
+
+        self.add(
+            (
+                simvecs[2],
+                CMSO.hasComponent_x,
+                Literal(data[2][0], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simvecs[2],
+                CMSO.hasComponent_y,
+                Literal(data[2][1], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simvecs[2],
+                CMSO.hasComponent_z,
+                Literal(data[2][2], datatype=XSD.float),
+            )
+        )
+
+        #angle
+        simangle = self.value(simulation_cell, CMSO.hasAngle)
+        self.remove((simangle, None, None))
+        data = struct.schema.simulation_cell.angle()
+        self.add(
+            (
+                simangle,
+                CMSO.hasAngle_alpha,
+                Literal(data[0], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simangle,
+                CMSO.hasAngle_beta,
+                Literal(data[1], datatype=XSD.float),
+            )
+        )
+        self.add(
+            (
+                simangle,
+                CMSO.hasAngle_gamma,
+                Literal(data[2], datatype=XSD.float),
+            )
+        )        
