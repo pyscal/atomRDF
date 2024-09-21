@@ -669,7 +669,8 @@ class KnowledgeGraph:
         >>> sample = graph.create_node("Sample1", CMSO.Sample)
         >>> graph.add_calculated_quantity(sample, "energy", "10.5", "eV")
         """
-        prop = self.create_node(propertyname, CMSO.CalculatedProperty)
+
+        prop = self.create_node(f"{sample}_{propertyname}", CMSO.CalculatedProperty)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDFS.label, Literal(propertyname)))
         self.add((prop, ASMO.hasValue, Literal(value)))
