@@ -2676,4 +2676,3 @@ class System(pc.System):
         ase_structure = self.write.ase()
         pyiron_structure = ase_to_pyiron(ase_structure)
         return pyiron_structure.plot3d(*args, **kwargs)
-    
