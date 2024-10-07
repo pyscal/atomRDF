@@ -94,6 +94,8 @@ def _make_crystal(
     s : object
         The atomrdf.Structure object representing the generated crystal structure.
     """
+    if repetitions is None:
+        repetitions = [1, 1, 1]
     atoms, box, sdict = pcs.make_crystal(
         structure,
         lattice_constant = _declass(lattice_constant),
@@ -2674,4 +2676,3 @@ class System(pc.System):
         ase_structure = self.write.ase()
         pyiron_structure = ase_to_pyiron(ase_structure)
         return pyiron_structure.plot3d(*args, **kwargs)
-    
