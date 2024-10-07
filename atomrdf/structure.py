@@ -94,6 +94,8 @@ def _make_crystal(
     s : object
         The atomrdf.Structure object representing the generated crystal structure.
     """
+    if repetitions is None:
+        repetitions = [1, 1, 1]
     atoms, box, sdict = pcs.make_crystal(
         structure,
         lattice_constant = _declass(lattice_constant),
