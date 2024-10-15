@@ -9,16 +9,23 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
-     xmlns:terms="http://purl.org/dc/terms/">
+     xmlns:terms="http://purl.org/dc/terms/"
+     xmlns:schema="https://schema.org/">
     <owl:Ontology rdf:about="http://purls.helmholtz-metadaten.de/cmso/">
-        <terms:contributor>https://orcid.org/0000-0001-9560-4728</terms:contributor>
-        <terms:contributor>https://orcid.org/0000-0002-5149-603X</terms:contributor>
-        <terms:contributor>https://orcid.org/0000-0002-6776-1213</terms:contributor>
-        <terms:contributor>https://orcid.org/0000-0003-0698-4891</terms:contributor>
-        <terms:creator>https://orcid.org/0000-0001-7564-7990</terms:creator>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0001-9560-4728"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0002-5149-603X"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0002-6776-1213"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0003-0698-4891"/>
+        <terms:creator rdf:resource="https://orcid.org/0000-0001-7564-7990"/>
         <terms:description>CMSO is an ontology that aims to describe computational materials science samples (or structures), including crystalline defects.</terms:description>
+        <terms:license rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://creativecommons.org/licenses/by/4.0/</terms:license>
         <terms:title>Computational Material Sample Ontology (CMSO)</terms:title>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/OCDO/cmso-ontology</rdfs:seeAlso>
         <owl:versionInfo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0.0.1</owl:versionInfo>
+        <schema:citation rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Azocar Guzman, A., Menon, S., Hofmann, V., Hickel, T., Sandfeld. S. (2024), Computational Material Sample Ontology, https://purls.helmholtz-metadaten.de/cmso/</schema:citation>
+        <schema:creativeWorkStatus rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Pre-release</schema:creativeWorkStatus>
+        <schema:funder rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org/05qj6w324</schema:funder>
+        <schema:logo rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://raw.githubusercontent.com/OCDO/.github/refs/heads/main/profile/ocdo_logo.png</schema:logo>
     </owl:Ontology>
     
 
@@ -37,6 +44,12 @@
     <!-- http://purl.obolibrary.org/obo/IAO_0000111 -->
 
     <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000111"/>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/IAO_0000112 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/IAO_0000112"/>
     
 
 
@@ -101,6 +114,18 @@ We also have the outstanding issue of how to aim different definitions to differ
         <obo:IAO_0000119 xml:lang="en">Discussion on obo-discuss mailing-list, see http://bit.ly/hgm99w</obo:IAO_0000119>
         <obo:IAO_0000119 xml:lang="en">GROUP:OBI:&lt;http://purl.obolibrary.org/obo/obi&gt;</obo:IAO_0000119>
         <rdfs:label xml:lang="en">definition source</rdfs:label>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://purl.obolibrary.org/obo/OBCS_0000221 -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.obolibrary.org/obo/OBCS_0000221">
+        <obo:IAO_0000112>A normal distribution probability density function has a formula of:
+f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
+        <obo:IAO_0000115>An annotation property that represents a mathematical formula.</obo:IAO_0000115>
+        <obo:IAO_0000117>Asiyah Yu Lin, Jie Zheng, Yongqun He</obo:IAO_0000117>
+        <rdfs:label xml:lang="en">mathematical formula</rdfs:label>
     </owl:AnnotationProperty>
     
 
@@ -180,6 +205,16 @@ We also have the outstanding issue of how to aim different definitions to differ
     
 
 
+    <!-- http://purl.org/dc/terms/license -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/license">
+        <rdfs:label xml:lang="en-us">License</rdfs:label>
+        <skos:definition xml:lang="en-us">A legal document giving official permission to do something with the resource.</skos:definition>
+        <rdfs:range rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+    </owl:AnnotationProperty>
+    
+
+
     <!-- http://purl.org/dc/terms/tableOfContents -->
 
     <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/tableOfContents">
@@ -252,6 +287,30 @@ We also have the outstanding issue of how to aim different definitions to differ
         <skos:definition xml:lang="en">The preferred lexical label for a resource, in a given language.</skos:definition>
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2000/01/rdf-schema#label"/>
     </owl:AnnotationProperty>
+    
+
+
+    <!-- https://schema.org/citation -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/citation"/>
+    
+
+
+    <!-- https://schema.org/creativeWorkStatus -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/creativeWorkStatus"/>
+    
+
+
+    <!-- https://schema.org/funder -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/funder"/>
+    
+
+
+    <!-- https://schema.org/logo -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/logo"/>
     
 
 
@@ -388,6 +447,18 @@ We also have the outstanding issue of how to aim different definitions to differ
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a computational sample and the material it represents.</obo:IAO_0000115>
         <rdfs:label>has material</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasNormalVector -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasNormalVector">
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/hasVector"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Plane"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/NormalVector"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a plane and a vector normal to it.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has normal vector</rdfs:label>
     </owl:ObjectProperty>
     
 
@@ -630,6 +701,17 @@ We also have the outstanding issue of how to aim different definitions to differ
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a vector with its component on the z axis.</obo:IAO_0000115>
         <rdfs:label>has component z</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasDistanceFromOrigin -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasDistanceFromOrigin">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Plane"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking an plane with the value of distance from its origin.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has distance from origin</rdfs:label>
     </owl:DatatypeProperty>
     
 
@@ -1080,6 +1162,16 @@ We also have the outstanding issue of how to aim different definitions to differ
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cmso/LatticePlane -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticePlane">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Plane"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In crystallography, lattice planes are sets of parallel mathematical planes, where each lattice point is on a lattice plane. The lattice plane of a crystal is represented by three integers —h,k,l— which are referred to as the Miller indices.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Lattice Plane</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cmso/LatticeVector -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeVector">
@@ -1174,6 +1266,16 @@ We also have the outstanding issue of how to aim different definitions to differ
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cmso/NormalVector -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/NormalVector">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The normal vector is a vector perpendicular to a given object.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Normal Vector</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cmso/Occupancy -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Occupancy">
@@ -1181,6 +1283,17 @@ We also have the outstanding issue of how to aim different definitions to differ
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Occupancy refers to the atom type at each lattice site.</obo:IAO_0000115>
         <rdfs:comment>Note the difference from a total ratio or percentage of the occupancy of a site in the crystal structure (as defined in CIF)</rdfs:comment>
         <rdfs:label>Occupancy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Plane -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Plane">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In mathematics, a plane is a two-dimensional space or flat surface that extends indefinitely.</obo:IAO_0000115>
+        <obo:OBCS_0000221 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">𝑎 𝑥 + 𝑏 𝑦 + 𝑐 𝑧 + 𝑑 = 0</obo:OBCS_0000221>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The equation of a plane is 𝑎 𝑥 + 𝑏 𝑦 + 𝑐 𝑧 + 𝑑 = 0 , where 𝑎 , 𝑏 , and 𝑐 are the components of the normal vector ⃑ 𝑛 = ( 𝑎 , 𝑏 , 𝑐 ) , which is perpendicular to the plane or any vector parallel to the plane.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Plane</rdfs:label>
     </owl:Class>
     
 
