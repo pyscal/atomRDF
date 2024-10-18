@@ -2525,7 +2525,7 @@ class System(pc.System):
 
     def add_rotation_triples(self, rotation_vectors, child_sample_id):
         activity_id = f"operation:{uuid.uuid4()}"
-        activity = self.graph.create_node(activity_id, UNSAFEASMO.Rotation)
+        activity = self.graph.create_node(activity_id, ASMO.Rotation)
         self.graph.add((child_sample_id, PROV.wasGeneratedBy, activity))
         self.graph.add((child_sample_id, PROV.wasDerivedFrom, self.sample))
 
@@ -2607,7 +2607,7 @@ class System(pc.System):
     
     def add_translation_triples(self, translation_vector, plane, distance, ):
         activity_id = f"operation:{uuid.uuid4()}"
-        activity = self.graph.create_node(activity_id, UNSAFEASMO.Translation)
+        activity = self.graph.create_node(activity_id, ASMO.Translation)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
         #now add specifics
@@ -2647,7 +2647,7 @@ class System(pc.System):
     
     def add_shear_triples(self, translation_vector, plane, distance, ):
         activity_id = f"operation:{uuid.uuid4()}"
-        activity = self.graph.create_node(activity_id, UNSAFEASMO.Shear)
+        activity = self.graph.create_node(activity_id, ASMO.Shear)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
         #now add specifics
@@ -2661,7 +2661,7 @@ class System(pc.System):
         #if plane is provided, add that as well
         if plane is not None:
             plane = self.graph.create_node(f"{activity_id}_Plane", CMSO.Plane)
-            plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", UNSAFECMSO.NormalVector)
+            plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", CMSO.NormalVector)
             self.graph.add((activity, UNSAFECMSO.hasPlane, plane))
             self.graph.add((plane, UNSAFECMSO.hasNormalVector, plane_vector))
             self.graph.add((plane_vector, CMSO.hasComponent_x, Literal(plane[0], datatype=XSD.float),))
