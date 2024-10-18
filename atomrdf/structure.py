@@ -1814,7 +1814,7 @@ class System(pc.System):
         self.graph.add(
             (
                 volume,
-                ASMO.hasValue,
+                UNSAFEASMO.hasValue,
                 Literal(
                     np.round(self.schema.simulation_cell.volume(), decimals=2),
                     datatype=XSD.float,
@@ -1824,7 +1824,7 @@ class System(pc.System):
         self.graph.add(
             (
                 volume,
-                ASMO.hasUnit,
+                UNSAFEASMO.hasUnit,
                 URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
             )
         )

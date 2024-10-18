@@ -22,8 +22,8 @@ class Sample:
         #create attributes
         self.properties = AttrSetter()
         mapdict = {
-            'volume': self._volume,
-            'no_of_atoms': self._no_of_atoms,
+            'SimulationCellVolume': self._volume,
+            'NumberOfAtoms': self._no_of_atoms,
         }
         self.properties._add_attribute(mapdict)
 
@@ -62,6 +62,7 @@ class Sample:
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
         #get the volume, these are volume objects now!
         volume = self._graph.value(simcell, CMSO.hasVolume)
+        volume_value = self._graph.value(volume, ASMO.hasValue)
 
         #find there are already volume attached as calculated property
         inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
@@ -73,7 +74,7 @@ class Sample:
             parent = volume            
         else:
             parent = inps[labels.index("SimulationCellVolume")]
-        return Property(volume.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3', sample_parent=self._sample_id)
+        return Property(volume_value.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3', sample_parent=self._sample_id)
     
     @property
     def _no_of_atoms(self):
