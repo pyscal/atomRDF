@@ -1160,7 +1160,7 @@ class System(pc.System):
 
             #write mapping for the operation
             if self.sample.toPython() != sys.sample.toPython():
-                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", UNSAFEASMO.DeleteAtom)
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.DeleteAtom)
                 sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
@@ -1373,7 +1373,7 @@ class System(pc.System):
 
             #write mapping for the operation
             if self.sample.toPython() != sys.sample.toPython():
-                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", UNSAFEASMO.SubstituteAtom)
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.SubstituteAtom)
                 sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
@@ -1569,7 +1569,7 @@ class System(pc.System):
             sys.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities, label=void_type)
             #write mapping for the operation
             if self.sample.toPython() != sys.sample.toPython():
-                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", UNSAFEASMO.AddAtom)
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.AddAtom)
                 sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
         return sys
@@ -2663,11 +2663,11 @@ class System(pc.System):
             plane = self.graph.create_node(f"{activity_id}_Plane", CMSO.Plane)
             plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", CMSO.NormalVector)
             self.graph.add((activity, UNSAFECMSO.hasPlane, plane))
-            self.graph.add((plane, UNSAFECMSO.hasNormalVector, plane_vector))
+            self.graph.add((plane, CMSO.hasNormalVector, plane_vector))
             self.graph.add((plane_vector, CMSO.hasComponent_x, Literal(plane[0], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
-            self.graph.add((plane, UNSAFECMSO.hasDistanceFromOrigin, Literal(distance, datatype=XSD.float)))
+            self.graph.add((plane, CMSO.hasDistanceFromOrigin, Literal(distance, datatype=XSD.float)))
 
     def copy_defects(self, parent_sample):
         if self.sample is None:
