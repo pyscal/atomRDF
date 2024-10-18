@@ -316,10 +316,33 @@ class Workflow:
         main_id = job_dict['id']
         if "outputs" in job_dict.keys():
             for out in job_dict["outputs"]:
-                prop = self.kg.create_node(
-                    f'{main_id}_{out["label"]}', CMSO.CalculatedProperty
-                )
-                self.kg.add((prop, RDFS.label, Literal(out["label"])))
+                #here we add the classes by property
+                if out["label"] == 'TotalEnergy':
+                    prop = self.kg.create_node(
+                        f'{main_id}_{out["label"]}', UNSAFEASMO.TotalEnergy,
+                        label=out["label"],
+                    )
+                elif out["label"] == 'PotentialEnergy':
+                    prop = self.kg.create_node(
+                        f'{main_id}_{out["label"]}', UNSAFEASMO.PotentialEnergy,
+                        label=out["label"],
+                    )
+                elif out["label"] == 'KineticEnergy':
+                    prop = self.kg.create_node(
+                        f'{main_id}_{out["label"]}', UNSAFEASMO.KineticEnergy,
+                        label=out["label"],
+                    )
+                elif out["label"] == 'SimulationCellVolume':
+                    prop = self.kg.create_node(
+                        f'{main_id}_{out["label"]}', UNSAFEASMO.Volume,
+                        label=out["label"],
+                    )
+                else:
+                    prop = self.kg.create_node(
+                        f'{main_id}_{out["label"]}', CMSO.CalculatedProperty,
+                        label=out["label"],
+                    )
+                
                 self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
                 if "unit" in out.keys():
                     unit = out["unit"]
@@ -330,7 +353,9 @@ class Workflow:
                             URIRef(f"http://qudt.org/vocab/unit/{unit}"),
                         )
                     )
+                
                 self.kg.add((prop, ASMO.wasCalculatedBy, activity))
+                
                 if out["associate_to_sample"]:
                     self.kg.add((job_dict['sample']['final'], CMSO.hasCalculatedProperty, prop))
 
