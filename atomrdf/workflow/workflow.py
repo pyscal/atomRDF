@@ -28,7 +28,7 @@ import uuid
 from atomrdf.structure import System
 
 # Move imports to another file
-from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO, Literal
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO, Literal, UNSAFECMSO, UNSAFEASMO
 
 class Workflow:
     def __init__(self, kg):
@@ -269,15 +269,15 @@ class Workflow:
 
         elif job_dict["method"] == "EquationOfState":            
             #special type of EOS should be initialised!
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfStateFit))
+            self.kg.add((activity, RDF.type, ASMO.EquationOfStateFit))
 
         elif job_dict["method"] == "QuasiHarmonicModel":            
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").QuasiHarmonicModel))
+            self.kg.add((activity, RDF.type, ASMO.QuasiHarmonicModel))
 
         elif job_dict["method"] == "ThermodynamicIntegration":     
             self._add_dof(job_dict, activity)
             self._add_md(job_dict, activity)       
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").ThermodynamicIntegration))
+            self.kg.add((activity, RDF.type, ASMO.ThermodynamicIntegration))
 
         # add that structure was generated
         self.kg.add((activity, ASMO.hasComputationalMethod, method))
