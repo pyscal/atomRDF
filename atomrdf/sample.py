@@ -81,7 +81,7 @@ class Sample:
         inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
         if not "NumberOfAtoms" in labels:
-            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), UNSAFEASMO.InputParameter)
             self._graph.add((parent, ASMO.hasValue, Literal(no_atoms.toPython())))
             self._graph.add((parent, RDFS.label, Literal("NumberOfAtoms")))
             self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
