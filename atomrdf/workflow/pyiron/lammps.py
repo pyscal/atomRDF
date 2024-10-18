@@ -180,6 +180,7 @@ def extract_calculated_quantities(job, method_dict):
             "value": np.round(volume, decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
+            "base": "Volume",
         }
     ) 
     method_dict['outputs'] =  outputs

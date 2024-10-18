@@ -317,22 +317,27 @@ class Workflow:
         if "outputs" in job_dict.keys():
             for out in job_dict["outputs"]:
                 #here we add the classes by property
-                if out["label"] == 'TotalEnergy':
+                if "base" in out.keys():
+                    base = out["base"]
+                else:
+                    base = out["label"]
+
+                if base == 'TotalEnergy':
                     prop = self.kg.create_node(
                         f'{main_id}_{out["label"]}', UNSAFEASMO.TotalEnergy,
                         label=out["label"],
                     )
-                elif out["label"] == 'PotentialEnergy':
+                elif base == 'PotentialEnergy':
                     prop = self.kg.create_node(
                         f'{main_id}_{out["label"]}', UNSAFEASMO.PotentialEnergy,
                         label=out["label"],
                     )
-                elif out["label"] == 'KineticEnergy':
+                elif base == 'KineticEnergy':
                     prop = self.kg.create_node(
                         f'{main_id}_{out["label"]}', UNSAFEASMO.KineticEnergy,
                         label=out["label"],
                     )
-                elif out["label"] == 'SimulationCellVolume':
+                elif base == 'Volume':
                     prop = self.kg.create_node(
                         f'{main_id}_{out["label"]}', UNSAFEASMO.Volume,
                         label=out["label"],
