@@ -1807,14 +1807,25 @@ class System(pc.System):
             f"{self._name}_SimulationCell", CMSO.SimulationCell
         )
         self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
+        volume = self.graph.create_node(
+            f"{self._name}_Volume", UNSAFEASMO.Volume, label="SimulationCellVolume"
+        )
+        self.graph.add((simulation_cell, UNSAFECMSO.hasVolume, volume))
         self.graph.add(
             (
-                simulation_cell,
-                CMSO.hasVolume,
+                volume,
+                ASMO.hasValue,
                 Literal(
                     np.round(self.schema.simulation_cell.volume(), decimals=2),
                     datatype=XSD.float,
                 ),
+            )
+        )
+        self.graph.add(
+            (
+                volume,
+                ASMO.hasUnit,
+                URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
             )
         )
         self.graph.add(

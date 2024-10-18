@@ -55,7 +55,12 @@ class Sample:
 
     @property
     def _volume(self):
+        """
+        Volume of the sample, PhysicalQuantity
+        """
+        #get the simulation cell
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        #get the volume
         volume = self._graph.value(simcell, CMSO.hasVolume)
 
         #initially query if there is property with label volume
