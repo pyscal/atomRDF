@@ -24,6 +24,7 @@ class Sample:
         mapdict = {
             'SimulationCellVolume': self._volume,
             'NumberOfAtoms': self._no_of_atoms,
+            'SimulationCellLengths': self._simulation_cell_lengths,
         }
         self.properties._add_attribute(mapdict)
 
@@ -90,7 +91,15 @@ class Sample:
             parent = inps[labels.index("NumberOfAtoms")]
         return Property(no_atoms.toPython(), graph=self._graph, parent=parent, sample_parent=self._sample_id)
 
-    
+    @property
+    def _simulation_cell_lengths(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        simcelllength = self._graph.value(simcell, CMSO.hasLength)
+        x = self._graph.value(simcelllength, CMSO.hasLength_x).toPython()
+        y = self._graph.value(simcelllength, CMSO.hasLength_y).toPython()
+        z = self._graph.value(simcelllength, CMSO.hasLength_z).toPython()
+        return Property([x, y, z], graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
+
     @property
     def _input_properties(self):
         activity = self._graph.value(self._sample_id, PROV.wasGeneratedBy)
