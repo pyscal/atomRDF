@@ -93,8 +93,6 @@ def identify_method(job, method_dict):
         ensemble = "IsothermalIsobaricEnsemble"
 
     method_dict["method"] = md_method
-    method_dict["temperature"] = temp
-    method_dict["pressure"] = press
     method_dict["dof"] = dof
     method_dict["ensemble"] = ensemble
 

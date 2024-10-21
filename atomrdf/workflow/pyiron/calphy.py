@@ -71,6 +71,21 @@ def identify_method(job, method_dict):
     else:
         method_dict["potential"]["uri"] = name
     method_dict['method'] = 'ThermodynamicIntegration'
+    method_dict['inputs'] = []
+    method_dict['inputs'].append(
+        {
+            "label": "Pressure",
+            "value": job.input.pressure,
+            "unit": "BAR",
+        }
+    )
+    method_dict['inputs'].append(
+        {
+            "label": "Temperature",
+            "value": job.input.temperature,
+            "unit": "K",
+        }
+    )    
 
 def add_software(method_dict):
     method_dict["workflow_manager"] = {}
