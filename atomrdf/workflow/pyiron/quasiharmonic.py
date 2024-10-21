@@ -23,6 +23,7 @@ def process_job(job):
             "value": np.round(job['output/free_energy'].T, decimals=4),
             "unit": "EV",
             "associate_to_sample": True,
+            "base": "FreeEnergy",
         }
     )
     outputs.append(
@@ -31,6 +32,7 @@ def process_job(job):
             "value": np.round(job['output/volumes'].T, decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
+            "base": "Volume",
         }
     )
     outputs.append(
@@ -39,6 +41,7 @@ def process_job(job):
             "value": np.round(job['output/temperatures'][0], decimals=2),
             "unit": "K",
             "associate_to_sample": True,
+            "base": "Temperature",
         }
     )
     quasi_dict['outputs'] = outputs
