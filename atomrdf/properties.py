@@ -440,4 +440,4 @@ def _get_symmetry_dict(system):
     atom_types = system._structure_dict["species"]
 
     results = spglib.get_symmetry_dataset((box, direct_coordinates, atom_types))
-    return results["international"], results["number"]
+    return results.international, results.number
