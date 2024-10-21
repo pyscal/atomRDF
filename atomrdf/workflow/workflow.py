@@ -369,13 +369,13 @@ class Workflow:
                 label=out["label"],
             )
         
-        self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
+        self.kg.add((prop, UNSAFEASMO.hasValue, Literal(out["value"])))
         if "unit" in out.keys():
             unit = out["unit"]
             self.kg.add(
                 (
                     prop,
-                    ASMO.hasUnit,
+                    UNSAFEASMO.hasUnit,
                     URIRef(f"http://qudt.org/vocab/unit/{unit}"),
                 )
             )
@@ -387,7 +387,7 @@ class Workflow:
         if "inputs" in job_dict.keys():
             for inp in job_dict["inputs"]:
                 prop = self._select_base_property(inp, main_id, ASMO.InputParameter)
-                self.kg.add((activity, ASMO.hasInputParameter, prop))
+                self.kg.add((activity, UNSAFEASMO.hasInputParameter, prop))
 
     def _add_outputs(self, job_dict, activity):
         main_id = job_dict['id']
@@ -396,10 +396,10 @@ class Workflow:
                 #here we add the classes by property
                 #call func here
                 prop = self._select_base_property(out, main_id, ASMO.CalculatedProperty)
-                self.kg.add((prop, ASMO.wasCalculatedBy, activity))
+                self.kg.add((prop, UNSAFEASMO.wasCalculatedBy, activity))
                 
                 if out["associate_to_sample"]:
-                    self.kg.add((job_dict['sample']['final'], CMSO.hasCalculatedProperty, prop))
+                    self.kg.add((job_dict['sample']['final'], UNSAFECMSO.hasCalculatedProperty, prop))
 
     def _add_software(self, job_dict, method):
         # finally add software
