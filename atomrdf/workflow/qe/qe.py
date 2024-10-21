@@ -91,13 +91,39 @@ def identify_method(job, method_dict):
 
     encut = data['system']['ecutwfc']
     #convert to eV
-    method_dict['encut'] = encut*13.6057039763
+    inputs = []
+    inputs.append(
+        {
+            "label": "EnergyCutoff",
+            "value": encut*13.6057039763,
+            "unit": "EV",
+        }
+    )
 
     #get kpoints
     if tab['K_POINTS']['extra'] == 'automatic':
-        method_dict['kpoint_type'] = 'Monkhorst-Pack'
-        method_dict['kpoint_grid'] = " ".join(tab['K_POINTS']['value'][0].split()[:3])
-    
+        inputs.append(
+            {
+                "label": "MonkhorstPackKPointMesh",
+                "value": " ".join(tab['K_POINTS']['value'][0].split()[:3]),
+            }
+        )
+    elif tab['K_POINTS']['extra'] == 'gamma':
+        inputs.append(
+            {
+                "label": "GammaCenteredKPointMesh",
+                "value": " ",
+            }
+        )
+    else:
+        inputs.append(
+            {
+                "label": "ExplicitKPointMesh",
+                "value": " ",
+            }
+        )
+    method_dict['inputs'] = inputs
+
     #get pseudopotentials
     pseudo = None
     with open(outfile, 'r') as fin:
@@ -132,39 +158,9 @@ def extract_calculated_quantities(job, method_dict):
     )
     outputs.append(
         {
-            "label": "TotalVolume",
+            "label": "Volume",
             "value": np.round(struct.get_volume(), decimals=5),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
         }
-    )
-    
-    lx = np.linalg.norm(struct.cell[0])
-    ly = np.linalg.norm(struct.cell[1])
-    lz = np.linalg.norm(struct.cell[2])
-
-    outputs.append(
-        {
-            "label": "SimulationCellLength_x",
-            "value": np.round(lx, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_y",
-            "value": np.round(ly, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_z",
-            "value": np.round(lz, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )   
-    method_dict['outputs'] =  outputs    
+    ) 

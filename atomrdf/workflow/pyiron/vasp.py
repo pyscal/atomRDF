@@ -100,6 +100,8 @@ def identify_method(job, method_dict):
     method_dict['dof'] = dof
 
     inputs = []
+
+    encut = mdict['ENCUT'] 
     inputs.append(
         {
             "label": "EnergyCutoff",
@@ -143,7 +145,8 @@ def identify_method(job, method_dict):
                 "value": kpoint_grid,
             }
         )
-
+    method_dict['inputs'] = inputs
+    
     indf = job.input.to_dict()['potcar/data_dict']
     xc = indf['Value'][0]
     method_dict['xc_functional'] = xc
