@@ -199,5 +199,6 @@ def extract_calculated_quantities(job, method_dict):
             "associate_to_sample": True,
             "base": "Volume",
         }
-    ) 
+    )
+    
     method_dict['outputs'] =  outputs
