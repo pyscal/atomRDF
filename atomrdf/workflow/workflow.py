@@ -386,22 +386,7 @@ class Workflow:
         main_id = job_dict['id']
         if "inputs" in job_dict.keys():
             for inp in job_dict["inputs"]:
-                
-
-                prop = self.kg.create_node(
-                    f'{main_id}_{inp["label"]}', ASMO.InputParameter
-                )
-                self.kg.add((prop, RDFS.label, Literal(inp["label"])))
-                self.kg.add((prop, ASMO.hasValue, Literal(inp["value"])))
-                if "unit" in inp.keys():
-                    unit = inp["unit"]
-                    self.kg.add(
-                        (
-                            prop,
-                            ASMO.hasUnit,
-                            URIRef(f"http://qudt.org/vocab/unit/{unit}"),
-                        )
-                    )
+                prop = self._select_base_property(inp, main_id, ASMO.InputParameter)
                 self.kg.add((activity, ASMO.hasInputParameter, prop))
 
     def _add_outputs(self, job_dict, activity):
@@ -410,7 +395,7 @@ class Workflow:
             for out in job_dict["outputs"]:
                 #here we add the classes by property
                 #call func here
-                
+                prop = self._select_base_property(out, main_id, ASMO.CalculatedProperty)
                 self.kg.add((prop, ASMO.wasCalculatedBy, activity))
                 
                 if out["associate_to_sample"]:
