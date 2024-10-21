@@ -424,44 +424,6 @@ class Workflow:
 
     def _add_dft(self, job_dict, method, activity):
         main_id = job_dict['id']
-
-        # add temperature if needed
-        if job_dict["encut"] is not None:
-            encut = self.kg.create_node(
-                f"{main_id}_energy_cutoff", ASMO.InputParameter
-            )
-            self.kg.add(
-                (encut, RDFS.label, Literal("energy_cutoff", datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, encut))
-            self.kg.add(
-                (
-                    encut,
-                    ASMO.hasValue,
-                    Literal(float(job_dict["encut"]), datatype=XSD.float),
-                )
-            )
-            self.kg.add(
-                (encut, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/EV"))
-            )
-
-        if job_dict["kpoint_grid"] is not None:
-            kpoint = self.kg.create_node(
-                f"{main_id}_kpoint", ASMO.InputParameter
-            )
-            mesh_name = "K_point_"+job_dict["kpoint_type"]
-            self.kg.add(
-                (kpoint, RDFS.label, Literal(mesh_name, datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, kpoint))
-            self.kg.add(
-                (
-                    kpoint,
-                    ASMO.hasValue,
-                    Literal(job_dict["kpoint_grid"], datatype=XSD.string),
-                )
-            )
-
         if job_dict["xc_functional"] is not None:
             if job_dict["xc_functional"] in ['PBE', 'GGA']:
                 self.kg.add((method, MDO.hasXCFunctional, MDO.GGA))
@@ -474,45 +436,6 @@ class Workflow:
         if job_dict["ensemble"] is not None:
             self.kg.add(
                 (activity, ASMO.hasStatisticalEnsemble, getattr(ASMO, job_dict["ensemble"]))
-            )
-
-        # add temperature if needed
-        if job_dict["temperature"] is not None:
-            temperature = self.kg.create_node(
-                f"{main_id}_temperature", ASMO.InputParameter
-            )
-            self.kg.add(
-                (temperature, RDFS.label, Literal("temperature", datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, temperature))
-            self.kg.add(
-                (
-                    temperature,
-                    ASMO.hasValue,
-                    Literal(job_dict["temperature"], datatype=XSD.float),
-                )
-            )
-            self.kg.add(
-                (temperature, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/K"))
-            )
-
-        if job_dict["pressure"] is not None:
-            pressure = self.kg.create_node(
-                f"{main_id}_pressure", ASMO.InputParameter
-            )
-            self.kg.add(
-                (pressure, RDFS.label, Literal("pressure", datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, pressure))
-            self.kg.add(
-                (
-                    pressure,
-                    ASMO.hasValue,
-                    Literal(job_dict["pressure"], datatype=XSD.float),
-                )
-            )
-            self.kg.add(
-                (pressure, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/GigaPA"))
             )
 
         # potentials need to be mapped
