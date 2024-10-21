@@ -114,6 +114,25 @@ def identify_method(job, method_dict):
     else:
         method_dict["potential"]["uri"] = name
 
+    #add temperature and pressure as inputs
+    method_dict['inputs'] = []
+    if temp is not None:
+        method_dict['inputs'].append(
+            {
+                "label": "Temperature",
+                "value": temp,
+                "unit": "K",
+            }
+        )
+    if press is not None:
+        method_dict['inputs'].append(
+            {
+                "label": "Pressure",
+                "value": press,
+                "unit": "GigaPA",
+            }
+        )
+
 def add_software(method_dict):
     method_dict["workflow_manager"] = {}
     method_dict["workflow_manager"]["uri"] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
