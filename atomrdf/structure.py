@@ -1480,7 +1480,8 @@ class System(pc.System):
 
         if copy_structure:
             #sys = self.duplicate()
-            sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))        
+            sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))
+            sys.graph = self.graph        
             sys.to_graph()
             sys.copy_defects(self.sample)
         else:

@@ -395,7 +395,7 @@ class Workflow:
             for out in job_dict["outputs"]:
                 #here we add the classes by property
                 #call func here
-                prop = self._select_base_property(out, main_id, ASMO.CalculatedProperty)
+                prop = self._select_base_property(out, main_id, CMSO.CalculatedProperty)
                 self.kg.add((prop, UNSAFEASMO.wasCalculatedBy, activity))
                 
                 if out["associate_to_sample"]:

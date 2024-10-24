@@ -1500,10 +1500,11 @@ class KnowledgeGraph:
         propname = _name(prop)
 
         operation = [x[1] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
+        
         if len(operation) > 0:
             parent = [x[2] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
             operation = operation[0]
-            parent = parent[0]        
+            parent = parent[0]      
             prov[propname]['operation'] = 'output_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
@@ -1583,7 +1584,7 @@ class KnowledgeGraph:
                 prov[propname]['inputs']['1'] = _name(dividend)
                 self._add_to_dict(divisor, prov)
                 self._add_to_dict(dividend, prov)
-
+        print(operation)
         prov[propname]['found'] = True
         return prov
     
