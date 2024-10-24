@@ -331,6 +331,8 @@ We also have the outstanding issue of how to aim different definitions to differ
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundary"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the misorientation angle (θ) of the grains with respect to each other.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1016/j.actamat.2022.118006</obo:IAO_0000119>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A disorientation angle can also be used to describe the grain boundary and is defined by the minimum misorientation angle when the misorientation axis is found in the standard stereographic triangle.</rdfs:comment>
         <rdfs:label>has misorientation angle</rdfs:label>
     </owl:DatatypeProperty>
     

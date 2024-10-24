@@ -99,18 +99,54 @@ def identify_method(job, method_dict):
     method_dict['method'] = method
     method_dict['dof'] = dof
 
-    encut = mdict['ENCUT'] 
-    method_dict['encut'] = encut
+    inputs = []
 
+    encut = mdict['ENCUT'] 
+    inputs.append(
+        {
+            "label": "EnergyCutoff",
+            "value": encut,
+            "unit": "EV",
+        }
+    )
+    
     indf = job.input.to_dict()['kpoints/data_dict']
     params = indf['Parameter']
     vals = indf['Value']   
 
     kpoint_type = vals[2]
     kpoint_grid = vals[3]
-    method_dict['kpoint_type'] = kpoint_type
-    method_dict['kpoint_grid'] = kpoint_grid
 
+    if kpoint_type == 'Monkhorst-pack':
+        inputs.append(
+            {
+                "label": "MonkhorstPackKPointMesh",
+                "value": kpoint_grid,
+            }
+        )
+    elif kpoint_type == 'Gamma':
+        inputs.append(
+            {
+                "label": "GammaCenteredKPointMesh",
+                "value": kpoint_grid,
+            }
+        )
+    elif kpoint_type in ['Reciprocal', 'Cartesian']:
+        inputs.append(
+            {
+                "label": "ExplicitKPointMesh",
+                "value": kpoint_grid,
+            }
+        )
+    else:
+        inputs.append(
+            {
+                "label": "KPointMesh",
+                "value": kpoint_grid,
+            }
+        )
+    method_dict['inputs'] = inputs
+    
     indf = job.input.to_dict()['potcar/data_dict']
     xc = indf['Value'][0]
     method_dict['xc_functional'] = xc
@@ -153,39 +189,19 @@ def extract_calculated_quantities(job, method_dict):
     )
     outputs.append(
         {
-            "label": "TotalVolume",
+            "label": "PotentialEnergy",
+            "value": np.round(job.output.energy_pot[-1], decimals=5),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "Volume",
             "value": np.round(job.output.volume[-1], decimals=5),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
         }
     )
-    structure = job.get_structure(frame=-1)
-    lx = np.linalg.norm(structure.cell[0])
-    ly = np.linalg.norm(structure.cell[1])
-    lz = np.linalg.norm(structure.cell[2])
 
-    outputs.append(
-        {
-            "label": "SimulationCellLength_x",
-            "value": np.round(lx, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_y",
-            "value": np.round(ly, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_z",
-            "value": np.round(lz, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )   
     method_dict['outputs'] =  outputs

@@ -28,7 +28,7 @@ import uuid
 from atomrdf.structure import System
 
 # Move imports to another file
-from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO, Literal
+from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO, Literal, UNSAFECMSO, UNSAFEASMO
 
 class Workflow:
     def __init__(self, kg):
@@ -269,15 +269,15 @@ class Workflow:
 
         elif job_dict["method"] == "EquationOfState":            
             #special type of EOS should be initialised!
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").EquationOfStateFit))
+            self.kg.add((activity, RDF.type, ASMO.EquationOfStateFit))
 
         elif job_dict["method"] == "QuasiHarmonicModel":            
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").QuasiHarmonicModel))
+            self.kg.add((activity, RDF.type, ASMO.QuasiHarmonicModel))
 
         elif job_dict["method"] == "ThermodynamicIntegration":     
             self._add_dof(job_dict, activity)
             self._add_md(job_dict, activity)       
-            self.kg.add((activity, RDF.type, Namespace("http://purls.helmholtz-metadaten.de/asmo/").ThermodynamicIntegration))
+            self.kg.add((activity, RDF.type, ASMO.ThermodynamicIntegration))
 
         # add that structure was generated
         self.kg.add((activity, ASMO.hasComputationalMethod, method))
@@ -291,48 +291,115 @@ class Workflow:
     def _add_dof(self, job_dict, activity):
         for dof in job_dict["dof"]:
             self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
+    
+    def _select_base_property(self, out, main_id, default_class):
+        if "base" in out.keys():
+            base = out["base"]
+        else:
+            base = out["label"]
+
+        if base == 'TotalEnergy':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.TotalEnergy,
+                label=out["label"],
+            )
+        elif base == 'PotentialEnergy':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.PotentialEnergy,
+                label=out["label"],
+            )
+        elif base == 'KineticEnergy':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.KineticEnergy,
+                label=out["label"],
+            )
+        elif base == 'Volume':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.Volume,
+                label=out["label"],
+            )
+        elif base == 'Pressure':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.Pressure,
+                label=out["label"],
+            )
+        elif base == 'Temperature':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.Temperature,
+                label=out["label"],
+            )
+        elif base == 'BulkModulus':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.BulkModulus,
+                label=out["label"],
+            )
+        elif base == 'FreeEnergy':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.FreeEnergy,
+                label=out["label"],
+            )
+        elif base == 'EnergyCutoff':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.EnergyCutoff,
+                label=out["label"],
+            )
+        elif base == 'ExplicitKPointMesh':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.ExplicitKPointMesh,
+                label=out["label"],
+            )
+        elif base == 'GammaCenteredKPointMesh':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.GammaCenteredKPointMesh,
+                label=out["label"],
+            )
+        elif base == 'MonkhorstPackKPointMesh':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.MonkhorstPackKPointMesh,
+                label=out["label"],
+            )
+        elif base == 'KPointMesh':
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', UNSAFEASMO.KPointMesh,
+                label=out["label"],
+            )
+        else:
+            prop = self.kg.create_node(
+                f'{main_id}_{out["label"]}', default_class,
+                label=out["label"],
+            )
+        
+        self.kg.add((prop, UNSAFEASMO.hasValue, Literal(out["value"])))
+        if "unit" in out.keys():
+            unit = out["unit"]
+            self.kg.add(
+                (
+                    prop,
+                    UNSAFEASMO.hasUnit,
+                    URIRef(f"http://qudt.org/vocab/unit/{unit}"),
+                )
+            )
+        return prop
+
 
     def _add_inputs(self, job_dict, activity):
         main_id = job_dict['id']
         if "inputs" in job_dict.keys():
             for inp in job_dict["inputs"]:
-                prop = self.kg.create_node(
-                    f'{main_id}_{inp["label"]}', ASMO.InputParameter
-                )
-                self.kg.add((prop, RDFS.label, Literal(inp["label"])))
-                self.kg.add((prop, ASMO.hasValue, Literal(inp["value"])))
-                if "unit" in inp.keys():
-                    unit = inp["unit"]
-                    self.kg.add(
-                        (
-                            prop,
-                            ASMO.hasUnit,
-                            URIRef(f"http://qudt.org/vocab/unit/{unit}"),
-                        )
-                    )
-                self.kg.add((activity, ASMO.hasInputParameter, prop))
+                prop = self._select_base_property(inp, main_id, ASMO.InputParameter)
+                self.kg.add((activity, UNSAFEASMO.hasInputParameter, prop))
 
     def _add_outputs(self, job_dict, activity):
         main_id = job_dict['id']
         if "outputs" in job_dict.keys():
             for out in job_dict["outputs"]:
-                prop = self.kg.create_node(
-                    f'{main_id}_{out["label"]}', CMSO.CalculatedProperty
-                )
-                self.kg.add((prop, RDFS.label, Literal(out["label"])))
-                self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
-                if "unit" in out.keys():
-                    unit = out["unit"]
-                    self.kg.add(
-                        (
-                            prop,
-                            ASMO.hasUnit,
-                            URIRef(f"http://qudt.org/vocab/unit/{unit}"),
-                        )
-                    )
-                self.kg.add((prop, ASMO.wasCalculatedBy, activity))
+                #here we add the classes by property
+                #call func here
+                prop = self._select_base_property(out, main_id, CMSO.CalculatedProperty)
+                self.kg.add((prop, UNSAFEASMO.wasCalculatedBy, activity))
+                
                 if out["associate_to_sample"]:
-                    self.kg.add((job_dict['sample']['final'], CMSO.hasCalculatedProperty, prop))
+                    self.kg.add((job_dict['sample']['final'], UNSAFECMSO.hasCalculatedProperty, prop))
 
     def _add_software(self, job_dict, method):
         # finally add software
@@ -357,44 +424,6 @@ class Workflow:
 
     def _add_dft(self, job_dict, method, activity):
         main_id = job_dict['id']
-
-        # add temperature if needed
-        if job_dict["encut"] is not None:
-            encut = self.kg.create_node(
-                f"{main_id}_energy_cutoff", ASMO.InputParameter
-            )
-            self.kg.add(
-                (encut, RDFS.label, Literal("energy_cutoff", datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, encut))
-            self.kg.add(
-                (
-                    encut,
-                    ASMO.hasValue,
-                    Literal(float(job_dict["encut"]), datatype=XSD.float),
-                )
-            )
-            self.kg.add(
-                (encut, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/EV"))
-            )
-
-        if job_dict["kpoint_grid"] is not None:
-            kpoint = self.kg.create_node(
-                f"{main_id}_kpoint", ASMO.InputParameter
-            )
-            mesh_name = "K_point_"+job_dict["kpoint_type"]
-            self.kg.add(
-                (kpoint, RDFS.label, Literal(mesh_name, datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, kpoint))
-            self.kg.add(
-                (
-                    kpoint,
-                    ASMO.hasValue,
-                    Literal(job_dict["kpoint_grid"], datatype=XSD.string),
-                )
-            )
-
         if job_dict["xc_functional"] is not None:
             if job_dict["xc_functional"] in ['PBE', 'GGA']:
                 self.kg.add((method, MDO.hasXCFunctional, MDO.GGA))
@@ -407,45 +436,6 @@ class Workflow:
         if job_dict["ensemble"] is not None:
             self.kg.add(
                 (activity, ASMO.hasStatisticalEnsemble, getattr(ASMO, job_dict["ensemble"]))
-            )
-
-        # add temperature if needed
-        if job_dict["temperature"] is not None:
-            temperature = self.kg.create_node(
-                f"{main_id}_temperature", ASMO.InputParameter
-            )
-            self.kg.add(
-                (temperature, RDFS.label, Literal("temperature", datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, temperature))
-            self.kg.add(
-                (
-                    temperature,
-                    ASMO.hasValue,
-                    Literal(job_dict["temperature"], datatype=XSD.float),
-                )
-            )
-            self.kg.add(
-                (temperature, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/K"))
-            )
-
-        if job_dict["pressure"] is not None:
-            pressure = self.kg.create_node(
-                f"{main_id}_pressure", ASMO.InputParameter
-            )
-            self.kg.add(
-                (pressure, RDFS.label, Literal("pressure", datatype=XSD.string))
-            )
-            self.kg.add((activity, ASMO.hasInputParameter, pressure))
-            self.kg.add(
-                (
-                    pressure,
-                    ASMO.hasValue,
-                    Literal(job_dict["pressure"], datatype=XSD.float),
-                )
-            )
-            self.kg.add(
-                (pressure, ASMO.hasUnit, URIRef("http://qudt.org/vocab/unit/GigaPA"))
             )
 
         # potentials need to be mapped

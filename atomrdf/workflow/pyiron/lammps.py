@@ -93,8 +93,6 @@ def identify_method(job, method_dict):
         ensemble = "IsothermalIsobaricEnsemble"
 
     method_dict["method"] = md_method
-    method_dict["temperature"] = temp
-    method_dict["pressure"] = press
     method_dict["dof"] = dof
     method_dict["ensemble"] = ensemble
 
@@ -115,6 +113,25 @@ def identify_method(job, method_dict):
         method_dict["potential"]["uri"] = url
     else:
         method_dict["potential"]["uri"] = name
+
+    #add temperature and pressure as inputs
+    method_dict['inputs'] = []
+    if temp is not None:
+        method_dict['inputs'].append(
+            {
+                "label": "Temperature",
+                "value": temp,
+                "unit": "K",
+            }
+        )
+    if press is not None:
+        method_dict['inputs'].append(
+            {
+                "label": "Pressure",
+                "value": press,
+                "unit": "GigaPA",
+            }
+        )
 
 def add_software(method_dict):
     method_dict["workflow_manager"] = {}
@@ -143,53 +160,45 @@ def extract_calculated_quantities(job, method_dict):
         A list of dictionaries, each containing the label, value, unit, and associate_to_sample of a calculated quantity.
 
     """
-    aen = np.mean(job.output.energy_tot)
-    avol = np.mean(job.output.volume)
+    energy_tot = np.mean(job.output.energy_tot)
+    energy_pot = np.mean(job.output.energy_pot)
+    energy_kin = energy_tot - energy_pot
+
+    volume = np.mean(job.output.volume)
+    
     outputs = []
     outputs.append(
         {
             "label": "TotalEnergy",
-            "value": np.round(aen, decimals=4),
+            "value": np.round(energy_tot, decimals=4),
             "unit": "EV",
             "associate_to_sample": True,
         }
     )
     outputs.append(
         {
-            "label": "TotalVolume",
-            "value": np.round(avol, decimals=4),
+            "label": "PotentialEnergy",
+            "value": np.round(energy_pot, decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "KineticEnergy",
+            "value": np.round(energy_kin, decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "SimulationCellVolume",
+            "value": np.round(volume, decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
+            "base": "Volume",
         }
     )
-
-    structure = job.get_structure(frame=-1)
-    lx = np.linalg.norm(structure.cell[0])
-    ly = np.linalg.norm(structure.cell[1])
-    lz = np.linalg.norm(structure.cell[2])
-
-    outputs.append(
-        {
-            "label": "SimulationCellLength_x",
-            "value": np.round(lx, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_y",
-            "value": np.round(ly, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_z",
-            "value": np.round(lz, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )    
+    
     method_dict['outputs'] =  outputs

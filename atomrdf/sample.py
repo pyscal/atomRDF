@@ -4,7 +4,7 @@ Sample
 In this module a new Sample class is defined.
 """
 from pyscal3.atoms import AttrSetter
-from atomrdf.namespace import CMSO, PLDO, PODO, ASMO, PROV, Literal
+from atomrdf.namespace import CMSO, PLDO, PODO, ASMO, PROV, Literal, UNSAFEASMO
 from rdflib import RDFS, Namespace, RDF, URIRef
 import numpy as np
 import uuid
@@ -22,8 +22,9 @@ class Sample:
         #create attributes
         self.properties = AttrSetter()
         mapdict = {
-            'volume': self._volume,
-            'no_of_atoms': self._no_of_atoms,
+            'SimulationCellVolume': self._volume,
+            'NumberOfAtoms': self._no_of_atoms,
+            'SimulationCellLengths': self._simulation_cell_lengths,
         }
         self.properties._add_attribute(mapdict)
 
@@ -55,21 +56,26 @@ class Sample:
 
     @property
     def _volume(self):
+        """
+        Volume of the sample, PhysicalQuantity
+        """
+        #get the simulation cell
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        #get the volume, these are volume objects now!
         volume = self._graph.value(simcell, CMSO.hasVolume)
+        volume_value = self._graph.value(volume, ASMO.hasValue)
 
-        #initially query if there is property with label volume
+        #find there are already volume attached as calculated property
         inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
+        #initially query if there is property with label volume
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
-        if not "Volume" in labels:
-            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
-            self._graph.add((parent, ASMO.hasValue, Literal(volume.toPython())))
-            self._graph.add((parent, RDFS.label, Literal("Volume")))
-            self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
-            self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3")))
+        if not "SimulationCellVolume" in labels:
+            #add this as a calculated property
+            self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, volume))
+            parent = volume            
         else:
-            parent = inps[labels.index("Volume")]
-        return Property(volume.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3', sample_parent=self._sample_id)
+            parent = inps[labels.index("SimulationCellVolume")]
+        return Property(volume_value.toPython(), graph=self._graph, parent=parent, unit='ANGSTROM3', sample_parent=self._sample_id)
     
     @property
     def _no_of_atoms(self):
@@ -77,7 +83,7 @@ class Sample:
         inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
         if not "NumberOfAtoms" in labels:
-            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), UNSAFEASMO.InputParameter)
             self._graph.add((parent, ASMO.hasValue, Literal(no_atoms.toPython())))
             self._graph.add((parent, RDFS.label, Literal("NumberOfAtoms")))
             self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
@@ -85,7 +91,15 @@ class Sample:
             parent = inps[labels.index("NumberOfAtoms")]
         return Property(no_atoms.toPython(), graph=self._graph, parent=parent, sample_parent=self._sample_id)
 
-    
+    @property
+    def _simulation_cell_lengths(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        simcelllength = self._graph.value(simcell, CMSO.hasLength)
+        x = self._graph.value(simcelllength, CMSO.hasLength_x).toPython()
+        y = self._graph.value(simcelllength, CMSO.hasLength_y).toPython()
+        z = self._graph.value(simcelllength, CMSO.hasLength_z).toPython()
+        return Property([x, y, z], graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
+
     @property
     def _input_properties(self):
         activity = self._graph.value(self._sample_id, PROV.wasGeneratedBy)

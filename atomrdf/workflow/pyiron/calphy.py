@@ -71,8 +71,21 @@ def identify_method(job, method_dict):
     else:
         method_dict["potential"]["uri"] = name
     method_dict['method'] = 'ThermodynamicIntegration'
-    method_dict["temperature"] = job.input.temperature
-    method_dict["pressure"] = job.input.pressure
+    method_dict['inputs'] = []
+    method_dict['inputs'].append(
+        {
+            "label": "Pressure",
+            "value": job.input.pressure,
+            "unit": "BAR",
+        }
+    )
+    method_dict['inputs'].append(
+        {
+            "label": "Temperature",
+            "value": job.input.temperature,
+            "unit": "K",
+        }
+    )    
 
 def add_software(method_dict):
     method_dict["workflow_manager"] = {}
@@ -124,37 +137,8 @@ def extract_calculated_quantities(job, method_dict):
             "value": np.round(job['output/atomic_volume'], decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
+            "base": "Volume",
         }
 
-    )    
-
-    structure = job.get_structure(frame=-1)
-    lx = np.linalg.norm(structure.cell[0])
-    ly = np.linalg.norm(structure.cell[1])
-    lz = np.linalg.norm(structure.cell[2])
-
-    outputs.append(
-        {
-            "label": "SimulationCellLength_x",
-            "value": np.round(lx, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_y",
-            "value": np.round(ly, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
-    )
-    outputs.append(
-        {
-            "label": "SimulationCellLength_z",
-            "value": np.round(lz, decimals=4),
-            "unit": "ANGSTROM",
-            "associate_to_sample": True,
-        }
     )    
     method_dict['outputs'] =  outputs

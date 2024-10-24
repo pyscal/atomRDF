@@ -916,6 +916,8 @@ class KnowledgeGraph:
         # now go through each sample, and copy the file, at the same time fix the paths
         for sample in self.sample_ids:
             filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath).toPython()
+            #filepath has to fixed with the correct prefix as needed
+            filepath = os.path.join(self.structure_store, os.path.basename(filepath))
             shutil.copy(filepath, structure_store)
 
             # now we have to remove the old path, and fix new
@@ -1500,10 +1502,11 @@ class KnowledgeGraph:
         propname = _name(prop)
 
         operation = [x[1] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
+        
         if len(operation) > 0:
             parent = [x[2] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
             operation = operation[0]
-            parent = parent[0]        
+            parent = parent[0]      
             prov[propname]['operation'] = 'output_parameter'
             prov[propname]['inputs'] = {}
             prov[propname]['inputs']['0'] = _name(parent)
@@ -1583,7 +1586,7 @@ class KnowledgeGraph:
                 prov[propname]['inputs']['1'] = _name(dividend)
                 self._add_to_dict(divisor, prov)
                 self._add_to_dict(dividend, prov)
-
+        print(operation)
         prov[propname]['found'] = True
         return prov
     

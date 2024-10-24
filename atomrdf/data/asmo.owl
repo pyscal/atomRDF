@@ -10,13 +10,23 @@
      xmlns:prov="http://www.w3.org/ns/prov#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
-     xmlns:terms="http://purl.org/dc/terms/">
+     xmlns:terms="http://purl.org/dc/terms/"
+     xmlns:schema="https://schema.org/">
     <owl:Ontology rdf:about="http://purls.helmholtz-metadaten.de/asmo/">
-        <terms:contributor>https://orcid.org/0000-0002-6776-1213</terms:contributor>
-        <terms:creator>https://orcid.org/0000-0001-7564-7990</terms:creator>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0001-9560-4728"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0002-5149-603X"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0002-6776-1213"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0003-0698-4891"/>
+        <terms:creator rdf:resource="https://orcid.org/0000-0001-7564-7990"/>
         <terms:description>ASMO is an ontology that aims to define the concepts needed to describe commonly used atomic scale simulation methods, i.e. density functional theory, molecular dynamics, Monte Carlo methods, etc. ASMO uses the Provenance Ontology (PROV-O) to describe the simulation process.</terms:description>
+        <terms:license rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://creativecommons.org/licenses/by/4.0/</terms:license>
         <terms:title>Atomistic Simulation Methods Ontology (ASMO)</terms:title>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/OCDO/asmo</rdfs:seeAlso>
         <owl:versionInfo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">0.0.1</owl:versionInfo>
+        <schema:citation rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Azocar Guzman, A., Menon, S., Hofmann, V., Hickel, T., Sandfeld. S. (2024), Atomistic Simulation Methods Ontology, https://purls.helmholtz-metadaten.de/asmo/</schema:citation>
+        <schema:creativeWorkStatus rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Pre-release</schema:creativeWorkStatus>
+        <schema:funder rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org/05qj6w324</schema:funder>
+        <schema:logo rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://raw.githubusercontent.com/OCDO/.github/refs/heads/main/profile/ocdo_logo.png</schema:logo>
     </owl:Ontology>
     
 
@@ -182,6 +192,16 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     
 
 
+    <!-- http://purl.org/dc/terms/license -->
+
+    <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/license">
+        <rdfs:label xml:lang="en-us">License</rdfs:label>
+        <skos:definition xml:lang="en-us">A legal document giving official permission to do something with the resource.</skos:definition>
+        <rdfs:range rdf:resource="http://purl.org/dc/terms/LicenseDocument"/>
+    </owl:AnnotationProperty>
+    
+
+
     <!-- http://purl.org/dc/terms/title -->
 
     <owl:AnnotationProperty rdf:about="http://purl.org/dc/terms/title">
@@ -309,6 +329,30 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://www.w3.org/ns/prov#sharesDefinitionWith -->
 
     <owl:AnnotationProperty rdf:about="http://www.w3.org/ns/prov#sharesDefinitionWith"/>
+    
+
+
+    <!-- https://schema.org/citation -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/citation"/>
+    
+
+
+    <!-- https://schema.org/creativeWorkStatus -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/creativeWorkStatus"/>
+    
+
+
+    <!-- https://schema.org/funder -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/funder"/>
+    
+
+
+    <!-- https://schema.org/logo -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/logo"/>
     
 
 
@@ -683,6 +727,116 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasAddend -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasAddend">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Addition"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking an addition with the addend value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has addend</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasDifference -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasDifference">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Subtraction"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a subtraction with the difference value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has difference</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasDividend -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasDividend">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Division"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a division with the dividend value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has dividend</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasDivisor -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasDivisor">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Division"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a division with the divisor value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has divisor</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasFactor -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasFactor">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Multiplication"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a multiplication with the factor value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has factor</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasMinuend -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasMinuend">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Subtraction"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a subtraction with the minuend value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has minuend</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasProduct -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasProduct">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Multiplication"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a multiplication with the product value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has product</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasQuotient -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasQuotient">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Division"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a division with the quotient value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has quotient</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasSubtrahend -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasSubtrahend">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Subtraction"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a subtraction with the subtrahend value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has subtrahend</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasSum -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasSum">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Addition"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking an addition with the sum value.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has sum</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/hasValue -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasValue">
@@ -697,8 +851,8 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasReference">
         <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2000/01/rdf-schema#Literal"/>
+        <obo:IAO_0000115>A data property linking an entity with a reference (e.g. bibliographic) to another resource.</obo:IAO_0000115>
         <rdfs:label>has reference</rdfs:label>
-        <skos:definition>A data property linking an entity with a reference (e.g. bibliographic) to another resource.</skos:definition>
     </owl:DatatypeProperty>
     
 
@@ -760,6 +914,16 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Addition -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Addition">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An arithmetic operation by which the total or sum of two or more numbers is computed, symbolized by the plus symbol +.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Addition</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/ComputationalMethod -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ComputationalMethod">
@@ -781,6 +945,16 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Division -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Division">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An arithmetic operation by which the quotient of two numbers (dividen and divisor) is computed, symbolized by / or ÷.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Division</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/EmbeddedAtomModel -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EmbeddedAtomModel">
@@ -797,7 +971,7 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     <!-- http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation">
-        <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy calculation is an activity where the energy of the system is computed within the given optimization constraints.</obo:IAO_0000115>
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">This activity does not specify the way the energy is calculated, it can be used to refer to a rigid calculation or also to energy minimization or optimization. See RelaxationDOF class for specifics about the constraints.</rdfs:comment>
         <rdfs:label>Energy Calculation</rdfs:label>
@@ -805,11 +979,14 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/asmo/EnergyDifferenceCalculation -->
+    <!-- http://purls.helmholtz-metadaten.de/asmo/EquationOfStateFit -->
 
-    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EnergyDifferenceCalculation">
-        <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
-        <rdfs:label>Energy Difference Calculation</rdfs:label>
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EquationOfStateFit">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Equation of state is a relationship between the volume of a body and the pressure to which it is subjected. There are multiple proposed equations for fitting the values of the energy as a function of the volume obtained from ab-initio and molecular dynamics calculations.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Equation of State Fit</rdfs:label>
+        <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">EOS</skos:altLabel>
+        <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Equation of State</skos:altLabel>
     </owl:Class>
     
 
@@ -868,6 +1045,18 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:label>Machine Learning Potential</rdfs:label>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MLIP</skos:altLabel>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MLP</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In mathematics, an operation is a function which takes zero or more input values (also called &quot;operands&quot; or &quot;arguments&quot;) to a well-defined output value.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://en.wikipedia.org/wiki/Operation_(mathematics)</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Mathematical Operation</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">http://purl.obolibrary.org/obo/NCIT_C54025</rdfs:seeAlso>
     </owl:Class>
     
 
@@ -932,6 +1121,36 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Multiplication -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Multiplication">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An arithmetic operation by which the product of two numbers is computed, symbolized by x or *.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">http://purl.obolibrary.org/obo/NCIT_C90596</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Multiplication</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/PointDefectCreation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/PointDefectCreation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/StructureManipulation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Point defect creation is a type of structure manipulation to introduce a point defect, i.e. add, delete or substitute atoms.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Point Defect Creation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/QuasiharmonicModel -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/QuasiharmonicModel">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Quasi-harmonic Model</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/RelaxationDOF -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/RelaxationDOF">
@@ -939,6 +1158,47 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The instances of this class indicate the type of relaxation allowed, i.e. relaxation of the atomic positions, cell volume and cell shape.</rdfs:comment>
         <rdfs:label>Relaxation Degrees of Freedom</rdfs:label>
         <skos:altLabel>RelaxationDOF</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Rotation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Rotation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SpatialTransformation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Rotation is a type of spatial transformation described by the motion of an object around a point or axis.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Rotation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Shear -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Shear">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SpatialTransformation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Shear</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Simulation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Simulation">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In computational materials science, a simulation refers to the production of a computer model of a material system, for the purpose of imitating a process over time.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Simulation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/SpatialTransformation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/SpatialTransformation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/StructureManipulation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Spatial transformation is a type of structure manipulation to convert the coordinates of  an image to the coordinates of a reference image.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1561/0600000009</obo:IAO_0000119>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The spatial transformations that involve translation or rotation are generally considered rigid body or Euclidean transformations, since the Euclidean distances within images are preserved. In contrast, the other ones are classified as non-rigid or elastic.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Spatial Transformation</rdfs:label>
     </owl:Class>
     
 
@@ -960,6 +1220,45 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stillinger-Weber Potential is an interatomic potential comprising both two- and three-atom contributions to describe interactions in solid and liquid forms of Si (and other diamond structures).</obo:IAO_0000115>
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRevB.31.5262</obo:IAO_0000119>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stillinger-Weber Potential</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/StructureManipulation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/StructureManipulation">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Structure manipulation is an activity where methods are applied to a structure (e.g. atomic structure) to modify it.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Structure Manipulation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Subtraction -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Subtraction">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An arithmetic operation by which the removal of a number from another number or amount is computed, symbolized by the minus symbol -.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Subtraction</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/ThermodynamicIntegration -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ThermodynamicIntegration">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Thermodynamic Integration</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Translation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Translation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SpatialTransformation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Translation is a type of spatial transformation described by the motion of every point of an object by the same distance in a given direction.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Translation</rdfs:label>
     </owl:Class>
     
 
@@ -1176,12 +1475,34 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/AddAtom -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/AddAtom">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PointDefectCreation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Substitution of an atom to create an impurity.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Add Atom</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/AtomicPositionRelaxation -->
 
     <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/AtomicPositionRelaxation">
         <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/RelaxationDOF"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Atomic positions are allowed to change in the calculation.</obo:IAO_0000115>
         <rdfs:label>Atomic Position Relaxation</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/BirchMurnaghan -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/BirchMurnaghan">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EquationOfStateFit"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Equation of state proposed by Albert Francis Birch in 1947, based on the Murnaghan equation.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRev.71.809</obo:IAO_0000119>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://en.wikipedia.org/wiki/Birch%E2%80%93Murnaghan_equation_of_state</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Birch-Murnaghan</rdfs:label>
     </owl:NamedIndividual>
     
 
@@ -1214,6 +1535,16 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/RelaxationDOF"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Cell volume is allowed to change in the calculation.</obo:IAO_0000115>
         <rdfs:label>Cell Volume Relaxation</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/DeleteAtom -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/DeleteAtom">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PointDefectCreation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Deletion of an atom to create a vacancy.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Delete Atom</rdfs:label>
     </owl:NamedIndividual>
     
 
@@ -1262,6 +1593,51 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ISBN-13: 978-0323902922</obo:IAO_0000119>
         <rdfs:label>Microcanonical Ensemble</rdfs:label>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NVE ensemble</skos:altLabel>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Murnaghan -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/Murnaghan">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EquationOfStateFit"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Equation of state proposed by Francis D. Murnaghan in 1944. The Murnaghan equation is derived, under certain assumptions, from the equations of continuum mechanics. It involves two adjustable parameters: the modulus of incompressibility K0 and its first derivative with respect to the pressure, K′0, both measured at ambient pressure.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">&quot;Finite Deformation of an Elastic Solid&quot;, Applied mathematics series, ISSN 0272-1643</obo:IAO_0000119>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://en.wikipedia.org/wiki/Murnaghan_equation_of_state</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Murnaghan</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/SubstituteAtom -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/SubstituteAtom">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PointDefectCreation"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Substitution of an atom to create an impurity.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Substitute Atom</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/ThirdOrderPolynomialFit -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/ThirdOrderPolynomialFit">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EquationOfStateFit"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">EOS calculation using a third-order polynomial fit.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Third-order polynomial fit</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Vinet -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/Vinet">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EquationOfStateFit"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Equation of state proposed by Pascal Vinet in 1987. It is a modification of the Birch–Murnaghan equation of state.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRevB.35.1945</obo:IAO_0000119>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://en.wikipedia.org/wiki/Rose%E2%80%93Vinet_equation_of_state</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Vinet</rdfs:label>
+        <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">Rose–Vinet</skos:altLabel>
     </owl:NamedIndividual>
 </rdf:RDF>
 

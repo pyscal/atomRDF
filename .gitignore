@@ -5,6 +5,13 @@ rdf_structure_store/
 *.db
 wf*
 *.data
+*.ipynb
+*.dump
+*POSCAR*
+*.tar.gz
+*.in
+*.dot
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

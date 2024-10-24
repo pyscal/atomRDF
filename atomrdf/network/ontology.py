@@ -34,10 +34,10 @@ def read_ontology():
     file_location = os.path.dirname(__file__).split("/")
     file_location = "/".join(file_location[:-1])
 
-    cmso = OntologyNetwork(os.path.join(file_location, "data/cmso.owl")) #eb8a58a60af1759afc4115ae395ad62ddffb6844
-    pldo = OntologyNetwork(os.path.join(file_location, "data/pldo.owl")) #d15d27712e3f64b405d75c70ad970c9d54ff0b51
+    cmso = OntologyNetwork(os.path.join(file_location, "data/cmso.owl")) #b7c8f3544d16d0ec9a9aace682da0e6abba1c57f
+    pldo = OntologyNetwork(os.path.join(file_location, "data/pldo.owl")) #688ce36a3e6520a6e280bb248789c231d3c36f25
     podo = OntologyNetwork(os.path.join(file_location, "data/podo.owl")) #6a74d511c5b78042e1cb7a6e76e948fa56de598e
-    asmo = OntologyNetwork(os.path.join(file_location, "data/asmo.owl")) #c7e2da99b9126844f19f225c6a10cdb01aeb55e6
+    asmo = OntologyNetwork(os.path.join(file_location, "data/asmo.owl")) #688ce36a3e6520a6e280bb248789c231d3c36f25
     ldo = OntologyNetwork(os.path.join(file_location, "data/ldo.owl")) #e23fa9930351787e701347878a3e1a0e3924d084
 
     # combine them

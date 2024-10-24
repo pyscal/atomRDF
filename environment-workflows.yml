@@ -1,4 +1,4 @@
-name: workflow-rdf-v0.2
+name: workflow-rdf
 channels:
   - conda-forge
 dependencies:

@@ -1160,7 +1160,7 @@ class System(pc.System):
 
             #write mapping for the operation
             if self.sample.toPython() != sys.sample.toPython():
-                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", UNSAFEASMO.DeleteAtom)
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.DeleteAtom)
                 sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
@@ -1373,7 +1373,7 @@ class System(pc.System):
 
             #write mapping for the operation
             if self.sample.toPython() != sys.sample.toPython():
-                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", UNSAFEASMO.SubstituteAtom)
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.SubstituteAtom)
                 sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
 
@@ -1480,7 +1480,8 @@ class System(pc.System):
 
         if copy_structure:
             #sys = self.duplicate()
-            sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))        
+            sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))
+            sys.graph = self.graph        
             sys.to_graph()
             sys.copy_defects(self.sample)
         else:
@@ -1569,7 +1570,7 @@ class System(pc.System):
             sys.add_triples_for_interstitial_impurities(conc_of_impurities, no_of_impurities=no_of_impurities, label=void_type)
             #write mapping for the operation
             if self.sample.toPython() != sys.sample.toPython():
-                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", UNSAFEASMO.AddAtom)
+                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.AddAtom)
                 sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
                 sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
         return sys
@@ -1807,14 +1808,25 @@ class System(pc.System):
             f"{self._name}_SimulationCell", CMSO.SimulationCell
         )
         self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
+        volume = self.graph.create_node(
+            f"{self._name}_Volume", UNSAFEASMO.Volume, label="SimulationCellVolume"
+        )
+        self.graph.add((simulation_cell, UNSAFECMSO.hasVolume, volume))
         self.graph.add(
             (
-                simulation_cell,
-                CMSO.hasVolume,
+                volume,
+                UNSAFEASMO.hasValue,
                 Literal(
                     np.round(self.schema.simulation_cell.volume(), decimals=2),
                     datatype=XSD.float,
                 ),
+            )
+        )
+        self.graph.add(
+            (
+                volume,
+                UNSAFEASMO.hasUnit,
+                URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
             )
         )
         self.graph.add(
@@ -2514,7 +2526,7 @@ class System(pc.System):
 
     def add_rotation_triples(self, rotation_vectors, child_sample_id):
         activity_id = f"operation:{uuid.uuid4()}"
-        activity = self.graph.create_node(activity_id, UNSAFEASMO.Rotation)
+        activity = self.graph.create_node(activity_id, ASMO.Rotation)
         self.graph.add((child_sample_id, PROV.wasGeneratedBy, activity))
         self.graph.add((child_sample_id, PROV.wasDerivedFrom, self.sample))
 
@@ -2596,7 +2608,7 @@ class System(pc.System):
     
     def add_translation_triples(self, translation_vector, plane, distance, ):
         activity_id = f"operation:{uuid.uuid4()}"
-        activity = self.graph.create_node(activity_id, UNSAFEASMO.Translation)
+        activity = self.graph.create_node(activity_id, ASMO.Translation)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
         #now add specifics
@@ -2636,7 +2648,7 @@ class System(pc.System):
     
     def add_shear_triples(self, translation_vector, plane, distance, ):
         activity_id = f"operation:{uuid.uuid4()}"
-        activity = self.graph.create_node(activity_id, UNSAFEASMO.Shear)
+        activity = self.graph.create_node(activity_id, ASMO.Shear)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
         #now add specifics
@@ -2650,13 +2662,13 @@ class System(pc.System):
         #if plane is provided, add that as well
         if plane is not None:
             plane = self.graph.create_node(f"{activity_id}_Plane", CMSO.Plane)
-            plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", UNSAFECMSO.NormalVector)
+            plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", CMSO.NormalVector)
             self.graph.add((activity, UNSAFECMSO.hasPlane, plane))
-            self.graph.add((plane, UNSAFECMSO.hasNormalVector, plane_vector))
+            self.graph.add((plane, CMSO.hasNormalVector, plane_vector))
             self.graph.add((plane_vector, CMSO.hasComponent_x, Literal(plane[0], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
-            self.graph.add((plane, UNSAFECMSO.hasDistanceFromOrigin, Literal(distance, datatype=XSD.float)))
+            self.graph.add((plane, CMSO.hasDistanceFromOrigin, Literal(distance, datatype=XSD.float)))
 
     def copy_defects(self, parent_sample):
         if self.sample is None:
