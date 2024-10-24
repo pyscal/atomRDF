@@ -916,6 +916,8 @@ class KnowledgeGraph:
         # now go through each sample, and copy the file, at the same time fix the paths
         for sample in self.sample_ids:
             filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath).toPython()
+            #filepath has to fixed with the correct prefix as needed
+            filepath = os.path.join(self.structure_store, os.path.basename(filepath))
             shutil.copy(filepath, structure_store)
 
             # now we have to remove the old path, and fix new
