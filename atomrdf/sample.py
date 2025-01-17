@@ -27,7 +27,10 @@ class Sample:
             'SimulationCellLengths': self._simulation_cell_lengths,
             'SimulationCellLengthX': self._simulation_cell_length_x,
             'SimulationCellLengthY': self._simulation_cell_length_y,
-            'SimulationCellLengthZ': self._simulation_cell_length_z
+            'SimulationCellLengthZ': self._simulation_cell_length_z,
+            'SimulationCellRepetitionX': self._simulation_cell_rep_x,
+            'SimulationCellRepetitionY': self._simulation_cell_rep_y,
+            'SimulationCellRepetitionZ': self._simulation_cell_rep_z
         }
         self.properties._add_attribute(mapdict)
 
@@ -123,6 +126,24 @@ class Sample:
         simcelllength = self._graph.value(simcell, CMSO.hasLength)
         z = self._graph.value(simcelllength, CMSO.hasLength_z).toPython()
         return Property(z, graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_rep_x(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        x = self._graph.value(simcellrep, CMSO.hasRepetition_x).toPython()
+        return Property(x, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_rep_y(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        y = self._graph.value(simcellrep, CMSO.hasRepetition_y).toPython()
+        return Property(y, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_rep_z(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        z = self._graph.value(simcellrep, CMSO.hasRepetition_z).toPython()
+        return Property(z, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
 
     @property
     def _input_properties(self):
