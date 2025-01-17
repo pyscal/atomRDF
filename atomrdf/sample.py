@@ -25,6 +25,9 @@ class Sample:
             'SimulationCellVolume': self._volume,
             'NumberOfAtoms': self._no_of_atoms,
             'SimulationCellLengths': self._simulation_cell_lengths,
+            'SimulationCellLengthX': self._simulation_cell_length_x,
+            'SimulationCellLengthY': self._simulation_cell_length_y,
+            'SimulationCellLengthZ': self._simulation_cell_length_z
         }
         self.properties._add_attribute(mapdict)
 
@@ -99,6 +102,27 @@ class Sample:
         y = self._graph.value(simcelllength, CMSO.hasLength_y).toPython()
         z = self._graph.value(simcelllength, CMSO.hasLength_z).toPython()
         return Property([x, y, z], graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_length_x(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        simcelllength = self._graph.value(simcell, CMSO.hasLength)
+        x = self._graph.value(simcelllength, CMSO.hasLength_x).toPython()
+        return Property(x, graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_length_y(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        simcelllength = self._graph.value(simcell, CMSO.hasLength)
+        y = self._graph.value(simcelllength, CMSO.hasLength_y).toPython()
+        return Property(y, graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_length_z(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        simcelllength = self._graph.value(simcell, CMSO.hasLength)
+        z = self._graph.value(simcelllength, CMSO.hasLength_z).toPython()
+        return Property(z, graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
 
     @property
     def _input_properties(self):
