@@ -130,19 +130,22 @@ class Sample:
     @property
     def _simulation_cell_rep_x(self):
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
-        x = self._graph.value(simcell, CMSO.hasRepetition_x).toPython() if x is not None else 1
+        x = self._graph.value(simcell, CMSO.hasRepetition_x)
+        x = x.toPython() if x is not None else 1
         return Property(x, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
     
     @property
     def _simulation_cell_rep_y(self):
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
-        y = self._graph.value(simcell, CMSO.hasRepetition_y).toPython() if y is not None else 1
+        y = self._graph.value(simcell, CMSO.hasRepetition_y)
+        y = y.toPython() if y is not None else 1
         return Property(y, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
     
     @property
     def _simulation_cell_rep_z(self):
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
-        z = self._graph.value(simcell, CMSO.hasRepetition_z).toPython() if z is not None else 1
+        z = self._graph.value(simcell, CMSO.hasRepetition_z)
+        z = z.toPython() if z is not None else 1
         return Property(z, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
 
     @property
