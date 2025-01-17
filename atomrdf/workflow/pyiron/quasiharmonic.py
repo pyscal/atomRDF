@@ -15,11 +15,11 @@ def process_job(job):
     lammps.get_simulation_folder(job, quasi_dict)
 
     #add the murnaghan method
-    quasi_dict['method'] = "QuasiHarmonicModel"
+    quasi_dict['method'] = "QuasiharmonicModel"
     outputs = []
     outputs.append(
         {
-            "label": "QuasiHarmonicFreeEnergy",
+            "label": "QuasiharmonicFreeEnergy",
             "value": np.round(job['output/free_energy'].T, decimals=4),
             "unit": "EV",
             "associate_to_sample": True,
@@ -28,7 +28,7 @@ def process_job(job):
     )
     outputs.append(
         {
-            "label": "QuasiHarmonicVolume",
+            "label": "QuasiharmonicVolume",
             "value": np.round(job['output/volumes'].T, decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
@@ -37,7 +37,7 @@ def process_job(job):
     )
     outputs.append(
         {
-            "label": "QuasiHarmonicTemperature",
+            "label": "QuasiharmonicTemperature",
             "value": np.round(job['output/temperatures'][0], decimals=2),
             "unit": "K",
             "associate_to_sample": True,
