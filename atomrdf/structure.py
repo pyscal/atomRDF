@@ -414,7 +414,8 @@ def _make_grain_boundary(
     graph=None,
     names=False,
     label=None,
-    backend='aimsgb'         
+    backend='aimsgb',
+    add_extras=False,         
 ):
     """
     Create a grain boundary system. GB can be created either with AIMSGB or GBCode.
@@ -481,6 +482,8 @@ def _make_grain_boundary(
         If True human readable names will be assigned to each property. If False random ids will be used. Default is False.
     label: str, optional
         Add a label to the structure
+    add_extras: bool, optional
+        returns internal objects of the GB creation process.
 
     Returns:
     --------
@@ -519,7 +522,8 @@ def _make_grain_boundary(
             uc_b=uc_b,
             graph=graph,
             names=names,
-            label=label,             
+            label=label, 
+            add_extras=add_extras,              
         )
     else:
         return _make_grain_boundary_gbcode(
@@ -534,6 +538,7 @@ def _make_grain_boundary(
             graph=graph,
             names=names,
             label=label,
+            add_extras=add_extras,
         )
 
 def _make_grain_boundary_aimsgb(
@@ -554,7 +559,8 @@ def _make_grain_boundary_aimsgb(
     uc_b=1,
     graph=None,
     names=False,
-    label=None,  
+    label=None,
+    add_extras=False,  
 ): 
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
@@ -639,6 +645,11 @@ def _make_grain_boundary_aimsgb(
         "sigma": gb.sigma,
     }
     sys.add_gb(gb_dict)
+
+    if add_extras:
+        sys._ase_system = asestruct
+        sys._gb = gb
+        sys._gb_struct = gb_struct
     return sys
 
 
@@ -655,6 +666,7 @@ def _make_grain_boundary_gbcode(
     graph=None,
     names=False,
     label=None,
+    add_extras=False,  
 ):
     """
     Create a grain boundary system.
