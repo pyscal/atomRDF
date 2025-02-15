@@ -292,6 +292,9 @@ class Property:
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
     
+    def __radd__(self, value):
+        return self.__add__(value)
+    
     def __sub__(self, value):
         res = self._value - self._declass(value)
         parent = self._create_node(res)
@@ -306,7 +309,23 @@ class Property:
             self._graph.add((operation, MATH.hasSubtrahend, self._wrap(value)))
             self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
-        return res_prop    
+        return res_prop
+
+    def __rsub__(self, value):
+        res =  self._declass(value) - self._value
+        parent = self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '-') 
+        res_prop._sample_parent = self._sample_parent
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Subtraction))
+            self._graph.add((operation, RDF.type, PROV.Activity))
+            self._graph.add((operation, MATH.hasMinuend, self._wrap(value)))
+            self._graph.add((operation, MATH.hasSubtrahend, self._wrap(self)))
+            self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+        return res_prop  
     
     def __mul__(self, value):
         res = self._value * self._declass(value)
@@ -323,6 +342,9 @@ class Property:
             self._graph.add((operation, MATH.hasProduct, self._wrap(res_prop)))
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
+    
+    def __rmul__(self, value):
+        return self.__mul__(value)
 
     def __truediv__(self, value):
         res = self._value / self._declass(value)
@@ -352,6 +374,22 @@ class Property:
             self._graph.add((operation, RDF.type, PROV.Activity))
             self._graph.add((operation, MATH.hasBase, self._wrap(self)))
             self._graph.add((operation, MATH.hasExponent, self._wrap(value)))
+            self._graph.add((operation, MATH.hasPower, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+        return res_prop
+
+    def __rpow__(self, value):
+        res =  self._declass(value) ** self._value
+        parent = self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '^') 
+        res_prop._sample_parent = self._sample_parent
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Exponentiation))
+            self._graph.add((operation, RDF.type, PROV.Activity))
+            self._graph.add((operation, MATH.hasBase, self._wrap(value)))
+            self._graph.add((operation, MATH.hasExponent, self._wrap(self)))
             self._graph.add((operation, MATH.hasPower, self._wrap(res_prop)))
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
