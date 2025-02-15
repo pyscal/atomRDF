@@ -30,7 +30,10 @@ class Sample:
             'SimulationCellLengthZ': self._simulation_cell_length_z,
             'SimulationCellRepetitionX': self._simulation_cell_rep_x,
             'SimulationCellRepetitionY': self._simulation_cell_rep_y,
-            'SimulationCellRepetitionZ': self._simulation_cell_rep_z
+            'SimulationCellRepetitionZ': self._simulation_cell_rep_z,
+            'SimulationCellAngleAlpha': self._simulation_cell_angle_alpha,
+            'SimulationCellAngleBeta': self._simulation_cell_angle_beta,
+            'SimulationCellAngleGamma': self._simulation_cell_angle_gamma
         }
         self.properties._add_attribute(mapdict)
 
@@ -127,6 +130,30 @@ class Sample:
         z = self._graph.value(simcelllength, CMSO.hasLength_z).toPython()
         return Property(z, graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
     
+    @property
+    def _simulation_cell_angle_alpha(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        angle = self._graph.value(simcell, CMSO.hasAngle)
+        alpha = self._graph.value(angle, CMSO.hasAngle_alpha)
+        alpha = alpha.toPython() if alpha is not None
+        return Property(alpha, graph=self._graph, parent=angle, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_angle_beta(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        angle = self._graph.value(simcell, CMSO.hasAngle)
+        beta = self._graph.value(angle, CMSO.hasAngle_beta)
+        beta = beta.toPython() if beta is not None
+        return Property(beta, graph=self._graph, parent=angle, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_angle_gamma(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        angle = self._graph.value(simcell, CMSO.hasAngle)
+        gamma = self._graph.value(angle, CMSO.hasAngle_gamma)
+        gamma = gamma.toPython() if gamma is not None
+        return Property(gamma, graph=self._graph, parent=angle, sample_parent=self._sample_id)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+
     @property
     def _simulation_cell_rep_x(self):
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
