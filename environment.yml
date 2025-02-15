@@ -9,7 +9,7 @@ dependencies:
   - jupyterlab
   - graphviz
   - python-graphviz
-  - ase 
+  - ase =3.23.0
   - networkx
   - pandas
   - owlready2

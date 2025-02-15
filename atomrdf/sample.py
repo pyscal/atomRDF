@@ -27,7 +27,13 @@ class Sample:
             'SimulationCellLengths': self._simulation_cell_lengths,
             'SimulationCellLengthX': self._simulation_cell_length_x,
             'SimulationCellLengthY': self._simulation_cell_length_y,
-            'SimulationCellLengthZ': self._simulation_cell_length_z
+            'SimulationCellLengthZ': self._simulation_cell_length_z,
+            'SimulationCellRepetitionX': self._simulation_cell_rep_x,
+            'SimulationCellRepetitionY': self._simulation_cell_rep_y,
+            'SimulationCellRepetitionZ': self._simulation_cell_rep_z,
+            'SimulationCellAngleAlpha': self._simulation_cell_angle_alpha,
+            'SimulationCellAngleBeta': self._simulation_cell_angle_beta,
+            'SimulationCellAngleGamma': self._simulation_cell_angle_gamma
         }
         self.properties._add_attribute(mapdict)
 
@@ -123,6 +129,51 @@ class Sample:
         simcelllength = self._graph.value(simcell, CMSO.hasLength)
         z = self._graph.value(simcelllength, CMSO.hasLength_z).toPython()
         return Property(z, graph=self._graph, parent=simcelllength, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_angle_alpha(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        angle = self._graph.value(simcell, CMSO.hasAngle)
+        alpha = self._graph.value(angle, CMSO.hasAngle_alpha)
+        alpha = alpha.toPython() if alpha is not None else None
+        return Property(alpha, graph=self._graph, parent=angle, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_angle_beta(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        angle = self._graph.value(simcell, CMSO.hasAngle)
+        beta = self._graph.value(angle, CMSO.hasAngle_beta)
+        beta = beta.toPython() if beta is not None else None
+        return Property(beta, graph=self._graph, parent=angle, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_angle_gamma(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        angle = self._graph.value(simcell, CMSO.hasAngle)
+        gamma = self._graph.value(angle, CMSO.hasAngle_gamma)
+        gamma = gamma.toPython() if gamma is not None else None
+        return Property(gamma, graph=self._graph, parent=angle, sample_parent=self._sample_id)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+
+    @property
+    def _simulation_cell_rep_x(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        x = self._graph.value(simcell, CMSO.hasRepetition_x)
+        x = x.toPython() if x is not None else 1
+        return Property(x, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_rep_y(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        y = self._graph.value(simcell, CMSO.hasRepetition_y)
+        y = y.toPython() if y is not None else 1
+        return Property(y, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
+    
+    @property
+    def _simulation_cell_rep_z(self):
+        simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
+        z = self._graph.value(simcell, CMSO.hasRepetition_z)
+        z = z.toPython() if z is not None else 1
+        return Property(z, graph=self._graph, parent=simcell, sample_parent=self._sample_id)
 
     @property
     def _input_properties(self):
@@ -241,6 +292,9 @@ class Property:
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
     
+    def __radd__(self, value):
+        return self.__add__(value)
+    
     def __sub__(self, value):
         res = self._value - self._declass(value)
         parent = self._create_node(res)
@@ -255,7 +309,23 @@ class Property:
             self._graph.add((operation, MATH.hasSubtrahend, self._wrap(value)))
             self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
-        return res_prop    
+        return res_prop
+
+    def __rsub__(self, value):
+        res =  self._declass(value) - self._value
+        parent = self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '-') 
+        res_prop._sample_parent = self._sample_parent
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Subtraction))
+            self._graph.add((operation, RDF.type, PROV.Activity))
+            self._graph.add((operation, MATH.hasMinuend, self._wrap(value)))
+            self._graph.add((operation, MATH.hasSubtrahend, self._wrap(self)))
+            self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+        return res_prop  
     
     def __mul__(self, value):
         res = self._value * self._declass(value)
@@ -272,6 +342,9 @@ class Property:
             self._graph.add((operation, MATH.hasProduct, self._wrap(res_prop)))
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
+    
+    def __rmul__(self, value):
+        return self.__mul__(value)
 
     def __truediv__(self, value):
         res = self._value / self._declass(value)
@@ -289,6 +362,37 @@ class Property:
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
 
+    def __pow__(self, value):
+        res = self._value ** self._declass(value)
+        parent = self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '^') 
+        res_prop._sample_parent = self._sample_parent
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Exponentiation))
+            self._graph.add((operation, RDF.type, PROV.Activity))
+            self._graph.add((operation, MATH.hasBase, self._wrap(self)))
+            self._graph.add((operation, MATH.hasExponent, self._wrap(value)))
+            self._graph.add((operation, MATH.hasPower, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+        return res_prop
+
+    def __rpow__(self, value):
+        res =  self._declass(value) ** self._value
+        parent = self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '^') 
+        res_prop._sample_parent = self._sample_parent
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Exponentiation))
+            self._graph.add((operation, RDF.type, PROV.Activity))
+            self._graph.add((operation, MATH.hasBase, self._wrap(value)))
+            self._graph.add((operation, MATH.hasExponent, self._wrap(self)))
+            self._graph.add((operation, MATH.hasPower, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+        return res_prop
     
     def __eq__(self, value):
         return self._value == self._declass(value)
