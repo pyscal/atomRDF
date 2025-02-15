@@ -135,7 +135,7 @@ class Sample:
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
         angle = self._graph.value(simcell, CMSO.hasAngle)
         alpha = self._graph.value(angle, CMSO.hasAngle_alpha)
-        alpha = alpha.toPython() if alpha is not None
+        alpha = alpha.toPython() if alpha is not None else None
         return Property(alpha, graph=self._graph, parent=angle, sample_parent=self._sample_id)
     
     @property
@@ -143,7 +143,7 @@ class Sample:
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
         angle = self._graph.value(simcell, CMSO.hasAngle)
         beta = self._graph.value(angle, CMSO.hasAngle_beta)
-        beta = beta.toPython() if beta is not None
+        beta = beta.toPython() if beta is not None else None
         return Property(beta, graph=self._graph, parent=angle, sample_parent=self._sample_id)
     
     @property
@@ -151,7 +151,7 @@ class Sample:
         simcell = self._graph.value(self._sample_id, CMSO.hasSimulationCell)
         angle = self._graph.value(simcell, CMSO.hasAngle)
         gamma = self._graph.value(angle, CMSO.hasAngle_gamma)
-        gamma = gamma.toPython() if gamma is not None
+        gamma = gamma.toPython() if gamma is not None else None
         return Property(gamma, graph=self._graph, parent=angle, sample_parent=self._sample_id)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 
     @property
@@ -340,6 +340,21 @@ class Property:
             self._graph.add((parent, MATH.wasCalculatedBy, operation))
         return res_prop
 
+    def __pow__(self, value):
+        res = self._value ** self._declass(value)
+        parent = self._create_node(res)
+        res_prop = Property(res, unit=self._unit, graph=self._graph, parent=parent)
+        res_prop.label = self._create_label(self, value, '^') 
+        res_prop._sample_parent = self._sample_parent
+        if self._graph is not None:
+            operation = URIRef(f'operation:{uuid.uuid4()}')
+            self._graph.add((operation, RDF.type, MATH.Exponentiation))
+            self._graph.add((operation, RDF.type, PROV.Activity))
+            self._graph.add((operation, MATH.hasBase, self._wrap(self)))
+            self._graph.add((operation, MATH.hasExponent, self._wrap(value)))
+            self._graph.add((operation, MATH.hasPower, self._wrap(res_prop)))
+            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+        return res_prop
     
     def __eq__(self, value):
         return self._value == self._declass(value)
