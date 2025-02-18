@@ -212,6 +212,9 @@ class Workflow:
         x = self.kg.value(old_simcell, CMSO.hasRepetition_x)        
         y = self.kg.value(old_simcell, CMSO.hasRepetition_y)
         z = self.kg.value(old_simcell, CMSO.hasRepetition_z)
+        x = 1 if x is None else x
+        y = 1 if y is None else y
+        z = 1 if z is None else z
 
         new_simcell = self.kg.value(sample, CMSO.hasSimulationCell)
         self.kg.add((new_simcell, CMSO.hasRepetition_x, x))
