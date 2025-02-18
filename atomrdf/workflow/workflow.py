@@ -319,67 +319,67 @@ class Workflow:
 
         if base == 'TotalEnergy':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.TotalEnergy,
+                f'{main_id}_{out["label"]}', ASMO.TotalEnergy,
                 label=out["label"],
             )
         elif base == 'PotentialEnergy':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.PotentialEnergy,
+                f'{main_id}_{out["label"]}', ASMO.PotentialEnergy,
                 label=out["label"],
             )
         elif base == 'KineticEnergy':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.KineticEnergy,
+                f'{main_id}_{out["label"]}', ASMO.KineticEnergy,
                 label=out["label"],
             )
         elif base == 'Volume':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.Volume,
+                f'{main_id}_{out["label"]}', ASMO.Volume,
                 label=out["label"],
             )
         elif base == 'Pressure':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.Pressure,
+                f'{main_id}_{out["label"]}', ASMO.Pressure,
                 label=out["label"],
             )
         elif base == 'Temperature':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.Temperature,
+                f'{main_id}_{out["label"]}', ASMO.Temperature,
                 label=out["label"],
             )
         elif base == 'BulkModulus':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.BulkModulus,
+                f'{main_id}_{out["label"]}', ASMO.BulkModulus,
                 label=out["label"],
             )
         elif base == 'FreeEnergy':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.FreeEnergy,
+                f'{main_id}_{out["label"]}', ASMO.FreeEnergy,
                 label=out["label"],
             )
         elif base == 'EnergyCutoff':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.EnergyCutoff,
+                f'{main_id}_{out["label"]}', ASMO.EnergyCutoff,
                 label=out["label"],
             )
         elif base == 'ExplicitKPointMesh':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.ExplicitKPointMesh,
+                f'{main_id}_{out["label"]}', ASMO.ExplicitKPointMesh,
                 label=out["label"],
             )
         elif base == 'GammaCenteredKPointMesh':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.GammaCenteredKPointMesh,
+                f'{main_id}_{out["label"]}', ASMO.GammaCenteredKPointMesh,
                 label=out["label"],
             )
         elif base == 'MonkhorstPackKPointMesh':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.MonkhorstPackKPointMesh,
+                f'{main_id}_{out["label"]}', ASMO.MonkhorstPackKPointMesh,
                 label=out["label"],
             )
         elif base == 'KPointMesh':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.KPointMesh,
+                f'{main_id}_{out["label"]}', ASMO.KPointMesh,
                 label=out["label"],
             )
         else:
@@ -388,13 +388,13 @@ class Workflow:
                 label=out["label"],
             )
         
-        self.kg.add((prop, UNSAFEASMO.hasValue, Literal(out["value"])))
+        self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
         if "unit" in out.keys():
             unit = out["unit"]
             self.kg.add(
                 (
                     prop,
-                    UNSAFEASMO.hasUnit,
+                    ASMO.hasUnit,
                     URIRef(f"http://qudt.org/vocab/unit/{unit}"),
                 )
             )
@@ -406,7 +406,7 @@ class Workflow:
         if "inputs" in job_dict.keys():
             for inp in job_dict["inputs"]:
                 prop = self._select_base_property(inp, main_id, ASMO.InputParameter)
-                self.kg.add((activity, UNSAFEASMO.hasInputParameter, prop))
+                self.kg.add((activity, ASMO.hasInputParameter, prop))
 
     def _add_outputs(self, job_dict, activity):
         main_id = job_dict['id']
@@ -415,10 +415,10 @@ class Workflow:
                 #here we add the classes by property
                 #call func here
                 prop = self._select_base_property(out, main_id, CMSO.CalculatedProperty)
-                self.kg.add((prop, UNSAFEASMO.wasCalculatedBy, activity))
+                self.kg.add((prop, ASMO.wasCalculatedBy, activity))
                 
                 if out["associate_to_sample"]:
-                    self.kg.add((job_dict['sample']['final'], UNSAFECMSO.hasCalculatedProperty, prop))
+                    self.kg.add((job_dict['sample']['final'], CMSO.hasCalculatedProperty, prop))
 
     def _add_software(self, job_dict, method):
         # finally add software
