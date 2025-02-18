@@ -14,7 +14,7 @@ inform_graph
 See atomrdf.workflow.pyiron for more details
 """
 
-from rdflib import Namespace, XSD, RDF, RDFS, BNode, URIRef
+from rdflib import Namespace, XSD, RDF, RDFS, BNode, URIRef, Literal
 
 import warnings
 import numpy as np
@@ -212,9 +212,9 @@ class Workflow:
         x = self.kg.value(old_simcell, CMSO.hasRepetition_x)        
         y = self.kg.value(old_simcell, CMSO.hasRepetition_y)
         z = self.kg.value(old_simcell, CMSO.hasRepetition_z)
-        x = 1 if x is None else x
-        y = 1 if y is None else y
-        z = 1 if z is None else z
+        x = Literal(1) if x is None else x
+        y = Literal(1) if y is None else y
+        z = Literal(1) if z is None else z
 
         new_simcell = self.kg.value(sample, CMSO.hasSimulationCell)
         self.kg.add((new_simcell, CMSO.hasRepetition_x, x))
