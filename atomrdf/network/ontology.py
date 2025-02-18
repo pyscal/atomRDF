@@ -103,22 +103,12 @@ def read_ontology():
     combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:Dislocation"))
 
 
-    combo.add_path(
-        ("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample")
-    )
+    combo.add_path(("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample"))
     combo.add_path(("cmso:ComputationalSample", "rdf:type", "prov:Entity"))
     combo.add_path(("cmso:AtomicScaleSample", "prov:wasGeneratedBy", "prov:Activity"))
     combo.add_path(("asmo:EnergyCalculation", "rdf:type", "prov:Activity"))
-    combo.add_path(
-        ("asmo:EnergyCalculation", "prov:wasAssociatedWith", "prov:SoftwareAgent")
-    )
-    combo.add_path(
-        (
-            "cmso:ComputationalSample",
-            "prov:wasGeneratedBy",
-            "asmo:EnergyCalculation",
-        )
-    )
+    combo.add_path(("asmo:EnergyCalculation", "prov:wasAssociatedWith", "prov:SoftwareAgent"))
+    combo.add_path(("cmso:ComputationalSample","prov:wasGeneratedBy","asmo:EnergyCalculation",))
     
     combo.add_path(("cmso:CalculatedProperty", "asmo:hasValue", "float"))
     #combo.add_path(("cmso:CalculatedProperty", "asmo:hasUnit", "string"))
@@ -134,6 +124,13 @@ def read_ontology():
     combo.add_path(("prov:SoftwareAgent", "rdfs:label", "string"))
     combo.add_path(("asmo:InteratomicPotential", "cmso:hasReference", "string"))
     combo.add_path(("asmo:InteratomicPotential", "rdfs:label", "string"))
+
+    #now more paths
+    combo.add_path(("prov:Activity", "asmo:hasInputParameter", "asmo:InputParameter"))
+    combo.add_path(("cmso:CalculatedProperty", "asmo:wasCalculatedBy", "prov:Activity"))
+    combo.add_path(("cmso:ComputationalSample", "cmso:hasCalculatedProperty", "cmso:CalculatedProperty"))
+    combo.add_path(("cmso:ComputationalSample", "cmso:hasCalculatedProperty", "asmo:PhysicalQuantity"))
+    combo.add_path(("cmso:ComputationalSample", "cmso:hasCalculatedProperty", "asmo:OutputParameter"))
 
 
     # return

@@ -398,9 +398,10 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/asmo/hasInputParameter -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasInputParameter">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation"/>
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/hasSimulationParameter"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an Energy Calculation activity and the input parameters used.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a Simulation activity and the input parameters used.</obo:IAO_0000115>
         <rdfs:label>has input parameter</rdfs:label>
     </owl:ObjectProperty>
     
@@ -417,6 +418,27 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasOutputParameter -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasOutputParameter">
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/hasSimulationParameter"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/asmo/OutputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has output parameter</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasPlane -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasPlane">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Shear"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Plane"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has plane</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/hasRelaxationDOF -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasRelaxationDOF">
@@ -424,6 +446,23 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/asmo/RelaxationDOF"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an Energy Calculation activity and the relaxation degrees of freedom set as constraints in the calculation.</obo:IAO_0000115>
         <rdfs:label>has relaxation DOF</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/hasSimulationParameter -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasSimulationParameter">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
+        <rdfs:range>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/asmo/SimulationParameter"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:range>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has simulation parameter</rdfs:label>
     </owl:ObjectProperty>
     
 
@@ -442,9 +481,17 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/asmo/hasUnit -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasUnit">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/asmo/SimulationParameter"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
         <rdfs:range rdf:resource="http://qudt.org/schema/qudt/Unit"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between the input parameter set and the unit of the quantity. (e.g. eV for energy cutoff)</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an entity and the unit of the quantity. (e.g. eV for energy cutoff)</obo:IAO_0000115>
         <rdfs:label>has unit</rdfs:label>
     </owl:ObjectProperty>
     
@@ -457,6 +504,24 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
         <rdfs:range rdf:resource="http://www.w3.org/ns/prov#Activity"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a calculated property and the activity through which it was obtained.</obo:IAO_0000115>
         <rdfs:label>was calculated by</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasVector -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasVector">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/asmo/SpatialTransformation"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an entity and its vectors.</obo:IAO_0000115>
+        <rdfs:label>has vector</rdfs:label>
     </owl:ObjectProperty>
     
 
@@ -655,21 +720,6 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     </owl:ObjectProperty>
     <owl:Axiom>
         <owl:annotatedSource rdf:resource="http://www.w3.org/ns/prov#wasInfluencedBy"/>
-        <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#range"/>
-        <owl:annotatedTarget>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://www.w3.org/ns/prov#Activity"/>
-                    <rdf:Description rdf:about="http://www.w3.org/ns/prov#Agent"/>
-                    <rdf:Description rdf:about="http://www.w3.org/ns/prov#Entity"/>
-                </owl:unionOf>
-            </owl:Class>
-        </owl:annotatedTarget>
-        <prov:definition>influencer: an identifier (o1) for an ancestor entity, activity, or agent that the former depends on;</prov:definition>
-        <prov:dm>http://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-influence</prov:dm>
-    </owl:Axiom>
-    <owl:Axiom>
-        <owl:annotatedSource rdf:resource="http://www.w3.org/ns/prov#wasInfluencedBy"/>
         <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#domain"/>
         <owl:annotatedTarget>
             <owl:Class>
@@ -681,6 +731,21 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
             </owl:Class>
         </owl:annotatedTarget>
         <prov:definition>influencee: an identifier (o2) for an entity, activity, or agent; </prov:definition>
+        <prov:dm>http://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-influence</prov:dm>
+    </owl:Axiom>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://www.w3.org/ns/prov#wasInfluencedBy"/>
+        <owl:annotatedProperty rdf:resource="http://www.w3.org/2000/01/rdf-schema#range"/>
+        <owl:annotatedTarget>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.w3.org/ns/prov#Activity"/>
+                    <rdf:Description rdf:about="http://www.w3.org/ns/prov#Agent"/>
+                    <rdf:Description rdf:about="http://www.w3.org/ns/prov#Entity"/>
+                </owl:unionOf>
+            </owl:Class>
+        </owl:annotatedTarget>
+        <prov:definition>influencer: an identifier (o1) for an ancestor entity, activity, or agent that the former depends on;</prov:definition>
         <prov:dm>http://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-influence</prov:dm>
     </owl:Axiom>
     
@@ -837,15 +902,6 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/asmo/hasValue -->
-
-    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasValue">
-        <obo:IAO_0000115>A data property linking an input parameter with the value set.</obo:IAO_0000115>
-        <rdfs:label>has value</rdfs:label>
-    </owl:DatatypeProperty>
-    
-
-
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasReference -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasReference">
@@ -853,6 +909,25 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:range rdf:resource="http://www.w3.org/2000/01/rdf-schema#Literal"/>
         <obo:IAO_0000115>A data property linking an entity with a reference (e.g. bibliographic) to another resource.</obo:IAO_0000115>
         <rdfs:label>has reference</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasValue -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasValue">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/asmo/SimulationParameter"/>
+                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking an entity to its value.</obo:IAO_0000115>
+        <rdfs:label>has value</rdfs:label>
     </owl:DatatypeProperty>
     
 
@@ -924,6 +999,22 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Barostat -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Barostat">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/BulkModulus -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/BulkModulus">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/ComputationalMethod -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ComputationalMethod">
@@ -968,6 +1059,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Energy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Energy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EnergyCalculation">
@@ -975,6 +1075,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy calculation is an activity where the energy of the system is computed within the given optimization constraints.</obo:IAO_0000115>
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">This activity does not specify the way the energy is calculated, it can be used to refer to a rigid calculation or also to energy minimization or optimization. See RelaxationDOF class for specifics about the constraints.</rdfs:comment>
         <rdfs:label>Energy Calculation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/EnergyCutoff -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/EnergyCutoff">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy Cutoff</rdfs:label>
     </owl:Class>
     
 
@@ -991,10 +1100,20 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/FreeEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/FreeEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Energy"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Free Energy</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/InputParameter -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/InputParameter">
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Input Parameter are the parameters provided as input to the software tool performing the numerical calculations.</obo:IAO_0000115>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SimulationParameter"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Input Parameter is a parameter provided as input to the software tool performing the numerical calculations.</obo:IAO_0000115>
         <rdfs:label>Input Parameter</rdfs:label>
     </owl:Class>
     
@@ -1010,6 +1129,24 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/KPointMesh -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/KPointMesh">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">KPoint Mesh</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/KineticEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/KineticEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Energy"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Kinetic Energy</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/KineticMonteCarloMethod -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/KineticMonteCarloMethod">
@@ -1017,6 +1154,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Kinetic Monte Carlo Method is a variation of the Monte Carlo method, intended to simulate the time evolution of a process with known transition rates among states.</obo:IAO_0000115>
         <rdfs:label>Kinetic Monte Carlo Method</rdfs:label>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">kMC</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Length -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Length">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Length</rdfs:label>
     </owl:Class>
     
 
@@ -1045,6 +1191,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:label>Machine Learning Potential</rdfs:label>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MLIP</skos:altLabel>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">MLP</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Mass -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Mass">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Mass</rdfs:label>
     </owl:Class>
     
 
@@ -1132,12 +1287,66 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/NumberOfIonicSteps -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/NumberOfIonicSteps">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/OutputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Number Of Ionic Steps</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/OutputParameter -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/OutputParameter">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SimulationParameter"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Output Parameter is a parameter resulting from a software tool performing the numerical calculations.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Output Parameter</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/PeriodicBoundaryCondition -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/PeriodicBoundaryCondition">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Periodic Boundary Condition</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Physical Quantity</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/PointDefectCreation -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/PointDefectCreation">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/StructureManipulation"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Point defect creation is a type of structure manipulation to introduce a point defect, i.e. add, delete or substitute atoms.</obo:IAO_0000115>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Point Defect Creation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/PotentialEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/PotentialEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Energy"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Potential Energy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Pressure -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Pressure">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Pressure</rdfs:label>
     </owl:Class>
     
 
@@ -1187,6 +1396,33 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:subClassOf rdf:resource="http://www.w3.org/ns/prov#Activity"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In computational materials science, a simulation refers to the production of a computer model of a material system, for the purpose of imitating a process over time.</obo:IAO_0000115>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Simulation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/SimulationCellLength -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/SimulationCellLength">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Length"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Simulation Cell Length</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/SimulationParameter -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/SimulationParameter">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Simulation parameter is a parameter for a software tool to perform numerical calculations.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Simulation Parameter</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/SimulationTime -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/SimulationTime">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Time"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Simulation Time</rdfs:label>
     </owl:Class>
     
 
@@ -1244,11 +1480,65 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Temperature -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Temperature">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Temperature</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/ThermodynamicIntegration -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ThermodynamicIntegration">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Simulation"/>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Thermodynamic Integration</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Thermostat -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Thermostat">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Thermostat</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Time -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Time">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Time</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/TimeStep -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/TimeStep">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Time Step</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/TotalEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/TotalEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Energy"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Total Energy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/TotalMagneticMoment -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/TotalMagneticMoment">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Total Magnetic Moment</rdfs:label>
     </owl:Class>
     
 
@@ -1263,11 +1553,60 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Volume -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Volume">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Volume</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/VolumeRange -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/VolumeRange">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Volume Range</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty">
         <rdfs:label>Calculated Property</rdfs:label>
         <skos:definition>A calculated property is a property of a material resulting from a calculation or simulation.</skos:definition>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Plane -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Plane">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In mathematics, a plane is a two-dimensional space or flat surface that extends indefinitely.</obo:IAO_0000115>
+        <obo:OBCS_0000221 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">𝑎 𝑥 + 𝑏 𝑦 + 𝑐 𝑧 + 𝑑 = 0</obo:OBCS_0000221>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The equation of a plane is 𝑎 𝑥 + 𝑏 𝑦 + 𝑐 𝑧 + 𝑑 = 0 , where 𝑎 , 𝑏 , and 𝑐 are the components of the normal vector ⃑ 𝑛 = ( 𝑎 , 𝑏 , 𝑐 ) , which is perpendicular to the plane or any vector parallel to the plane.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Plane</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/SimulationCell -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCell">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A simulation cell is a representation of the structure or system to be simulated. It is often a three-dimensional box (although not necessarily), where information about the crystal structure and material is contained.</obo:IAO_0000115>
+        <rdfs:label>Simulation Cell</rdfs:label>
+        <skos:altLabel>Box</skos:altLabel>
+        <skos:altLabel>Supercell</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Vector -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Vector">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Vector is a quantity that has a magnitude and direction.</obo:IAO_0000115>
+        <rdfs:label>Vector</rdfs:label>
     </owl:Class>
     
 
@@ -1485,12 +1824,31 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Andersen -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/Andersen">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Barostat"/>
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Thermostat"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Andersen</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/AtomicPositionRelaxation -->
 
     <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/AtomicPositionRelaxation">
         <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/RelaxationDOF"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Atomic positions are allowed to change in the calculation.</obo:IAO_0000115>
         <rdfs:label>Atomic Position Relaxation</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Berendsen -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/Berendsen">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Barostat"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Berendsen</rdfs:label>
     </owl:NamedIndividual>
     
 
@@ -1503,6 +1861,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRev.71.809</obo:IAO_0000119>
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://en.wikipedia.org/wiki/Birch%E2%80%93Murnaghan_equation_of_state</obo:IAO_0000119>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Birch-Murnaghan</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/BussiDonadioParrinello -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/BussiDonadioParrinello">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Thermostat"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Bussi-Donadio-Parrinello</rdfs:label>
     </owl:NamedIndividual>
     
 
@@ -1585,6 +1952,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Langevin -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/Langevin">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Thermostat"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Langevin</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/MicrocanonicalEnsemble -->
 
     <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/MicrocanonicalEnsemble">
@@ -1609,6 +1985,51 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/NoseHoover -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/NoseHoover">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Thermostat"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Nose-Hoover</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/ParrinelloRahman -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/ParrinelloRahman">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Barostat"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Parrinello-Rahman</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/PeriodicityInXdirection -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/PeriodicityInXdirection">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PeriodicBoundaryCondition"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Periodicity in X-direction</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/PeriodicityInYdirection -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/PeriodicityInYdirection">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PeriodicBoundaryCondition"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Periodicity in Y-direction</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/PeriodicityInZdirection -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/PeriodicityInZdirection">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PeriodicBoundaryCondition"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Periodicity in Z-direction</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/SubstituteAtom -->
 
     <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/SubstituteAtom">
@@ -1625,6 +2046,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/EquationOfStateFit"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">EOS calculation using a third-order polynomial fit.</obo:IAO_0000115>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Third-order polynomial fit</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/VelocityRescaling -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/VelocityRescaling">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Thermostat"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Velocity Rescaling</rdfs:label>
     </owl:NamedIndividual>
     
 
