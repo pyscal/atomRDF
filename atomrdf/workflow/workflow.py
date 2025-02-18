@@ -14,7 +14,7 @@ inform_graph
 See atomrdf.workflow.pyiron for more details
 """
 
-from rdflib import Namespace, XSD, RDF, RDFS, BNode, URIRef
+from rdflib import Namespace, XSD, RDF, RDFS, BNode, URIRef, Literal
 
 import warnings
 import numpy as np
@@ -153,6 +153,7 @@ class Workflow:
             self.kg.change_label(sample, new_label)
             self._get_lattice_properties(parent_sample, sample, structure,)
             self._add_inherited_properties(parent_sample, sample,)
+            self._add_cell_repetitions(parent_sample, sample,)
 
     def _get_lattice_properties(
         self, parent_sample, sample, structure,
@@ -200,7 +201,25 @@ class Workflow:
         ]
 
         structure._add_crystal_structure(targets=targets)
+
+    def _add_cell_repetitions(self, parent_sample, sample):
+        #add lattice repetitions when doing simulations
+
+        if sample is None:
+            return
         
+        old_simcell = self.kg.value(parent_sample, CMSO.hasSimulationCell)
+        x = self.kg.value(old_simcell, CMSO.hasRepetition_x)        
+        y = self.kg.value(old_simcell, CMSO.hasRepetition_y)
+        z = self.kg.value(old_simcell, CMSO.hasRepetition_z)
+        x = Literal(1) if x is None else x
+        y = Literal(1) if y is None else y
+        z = Literal(1) if z is None else z
+
+        new_simcell = self.kg.value(sample, CMSO.hasSimulationCell)
+        self.kg.add((new_simcell, CMSO.hasRepetition_x, x))
+        self.kg.add((new_simcell, CMSO.hasRepetition_y, y))
+        self.kg.add((new_simcell, CMSO.hasRepetition_z, z))
     
     def _add_inherited_properties(
         self, parent_sample, sample,
