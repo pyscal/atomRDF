@@ -93,14 +93,27 @@ class OntoParser:
             term.label = ""
         return term
 
+    def _unravel(self, d):
+        try:
+            return [x for x in d.Classes]
+        except:
+            return [d]
+
+    def _clean_domain_list(self, dm):
+        try:
+            dm_list = [d for d in dm[0].Classes]
+        except:
+            dm_list = []
+            for d in dm:
+                dm_list.extend(self._unravel(d))
+        return dm_list
+
     def _parse_data_property(self):
         for c in self.tree.data_properties():
             iri = c.iri
             dm = c.domain
-            try:
-                dm = [strip_name(d.iri, self.delimiter) for d in dm[0].Classes]
-            except:
-                dm = [strip_name(d.iri, self.delimiter) for d in dm]
+            dm_list = self._clean_domain_list(dm)
+            dm = [strip_name(d.iri, self.delimiter) for d in dm_list]
 
             # now get subclasses
             dm = [self._get_subclasses(d) for d in dm]
@@ -190,6 +203,7 @@ class OntoParser:
         classes = []
         for c in self.tree.classes():
             iri = c.iri
+            print(iri)
             # print(iri)
             # print(iri)
             # CHILDREN
