@@ -6,7 +6,6 @@ from rdflib import Namespace, URIRef
 import numbers
 import copy
 
-
 def _get_namespace_and_name(uri):
     uri_split = uri.split('#')
     if len(uri_split) > 1:
@@ -16,8 +15,12 @@ def _get_namespace_and_name(uri):
         namespace = namespace_split[-1]
     else:
         uri_split = uri.split('/')
-        name = uri_split[-1]
-        namespace = uri_split[-2]
+        if len(uri_split) > 1:
+            name = uri_split[-1]
+            namespace = uri_split[-2]
+        else:
+            name = uri_split[-1]
+            namespace = ""
     return namespace, name
 
 def strip_name(uri, get_what="name", namespace=None):
@@ -32,7 +35,7 @@ def strip_name(uri, get_what="name", namespace=None):
 class OntoTerm:
     def __init__(
         self,
-        uri,
+        uri = None,
         namespace=None,
         node_type=None,
         dm=[],
@@ -54,7 +57,10 @@ class OntoTerm:
         self.data_type = data_type
         # identifier
         self.node_id = node_id
+        self.associated_data_node = None
         self.subclasses = []
+        self.named_individuals = []
+        self.equivalent_classes = []
         self.subproperties = []
         self.delimiter = delimiter
         self.description = description
@@ -151,9 +157,15 @@ class OntoTerm:
         str
             The name of the term.
         """
+        if self._name is not None:
+            return self._name
         return strip_name(
             self.uri, get_what="name",
         )
+    
+    @name.setter
+    def name(self, val):
+        self._name = val
 
     @property
     def name_without_prefix(self):
