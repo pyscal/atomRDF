@@ -12,7 +12,6 @@ dependencies:
   - ase 
   - networkx
   - pandas
-  - owlready2
   - jupyter-book
   - plotly
   - ipywidgets

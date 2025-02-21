@@ -12,7 +12,6 @@ dependencies:
   - ase =3.23.0
   - networkx
   - pandas
-  - owlready2
   - plotly
   - ipywidgets
   #- atomman
