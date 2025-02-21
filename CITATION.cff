@@ -19,4 +19,4 @@ url: 'https://atomrdf.pyscal.org'
 license: "MIT"
 repository-code: https://github.com/pyscal/atomRDF
 type: software
-version: 0.9.20
+version: 0.10.0
