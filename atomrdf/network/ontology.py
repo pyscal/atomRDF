@@ -102,25 +102,18 @@ def read_ontology():
     combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:LineDefect"))
     combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:Dislocation"))
 
+    #CMSO -> PODO DISL paths
+    combo.add_path(("cmso:Material", "cmso:hasDefect", "pldo:GrainBoundary"))
 
-    combo.add_path(
-        ("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample")
-    )
+
+    combo.add_path(("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample"))
     combo.add_path(("cmso:ComputationalSample", "rdf:type", "prov:Entity"))
     combo.add_path(("cmso:AtomicScaleSample", "prov:wasGeneratedBy", "prov:Activity"))
     combo.add_path(("asmo:EnergyCalculation", "rdf:type", "prov:Activity"))
-    combo.add_path(
-        ("asmo:EnergyCalculation", "prov:wasAssociatedWith", "prov:SoftwareAgent")
-    )
-    combo.add_path(
-        (
-            "cmso:ComputationalSample",
-            "prov:wasGeneratedBy",
-            "asmo:EnergyCalculation",
-        )
-    )
+    combo.add_path(("asmo:EnergyCalculation", "prov:wasAssociatedWith", "prov:SoftwareAgent"))
+    combo.add_path(("cmso:ComputationalSample","prov:wasGeneratedBy","asmo:EnergyCalculation",))
     
-    combo.add_path(("cmso:CalculatedProperty", "asmo:hasValue", "float"))
+    combo.add_path(("cmso:CalculatedProperty", "cmso:hasValue", "float"))
     #combo.add_path(("cmso:CalculatedProperty", "asmo:hasUnit", "string"))
     combo.add_path(("cmso:CalculatedProperty", "rdfs:label", "string"))
     #how to handle units?
@@ -128,12 +121,19 @@ def read_ontology():
     #input parameters for ASMO
     combo.add_path(("asmo:InputParameter", "rdfs:label", "string"))
     #combo.add_path(("cmso:CalculatedProperty", "asmo:hasUnit", "string"))
-    combo.add_path(("asmo:InputParameter", "asmo:hasValue", "float"))
+    combo.add_path(("asmo:InputParameter", "cmso:hasValue", "float"))
 
     #software agent
     combo.add_path(("prov:SoftwareAgent", "rdfs:label", "string"))
     combo.add_path(("asmo:InteratomicPotential", "cmso:hasReference", "string"))
     combo.add_path(("asmo:InteratomicPotential", "rdfs:label", "string"))
+
+    #now more paths
+    combo.add_path(("prov:Activity", "asmo:hasInputParameter", "asmo:InputParameter"))
+    combo.add_path(("cmso:CalculatedProperty", "asmo:wasCalculatedBy", "prov:Activity"))
+    combo.add_path(("cmso:ComputationalSample", "cmso:hasCalculatedProperty", "cmso:CalculatedProperty"))
+    combo.add_path(("cmso:ComputationalSample", "cmso:hasCalculatedProperty", "asmo:PhysicalQuantity"))
+    combo.add_path(("cmso:ComputationalSample", "cmso:hasCalculatedProperty", "asmo:OutputParameter"))
 
 
     # return

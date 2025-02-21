@@ -61,16 +61,17 @@ class Namespace(AttrSetter, RDFLibNamespace):
             The delimiter used in the input file. Defaults to "/".
         """
         AttrSetter.__init__(self)
-        self.network = OntologyNetwork(infile, delimiter=delimiter)
-        RDFLibNamespace.__init__(self.network.onto.tree.base_iri)
-        self.name = self.network.onto.tree.name
+        self.network = OntologyNetwork(infile)
+        RDFLibNamespace.__init__(self.network.onto.base_iri)
+        self.name = self.network.onto.base_iri.split('/')[-1]
         mapdict = {}
 
         # now iterate over all attributes
         for k1 in ["class", "object_property", "data_property"]:
             for k2, val in self.network.onto.attributes[k1].items():
-                if val.namespace == self.name:
-                    mapdict[val.name_without_prefix] = val
+                #print(val.namespace, self.name)
+                #if val.namespace == self.name:
+                mapdict[val.name_without_prefix] = val
 
         # add attributes
         self._add_attribute(mapdict)

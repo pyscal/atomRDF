@@ -2,51 +2,58 @@
 https://docs.python.org/3/library/operator.html
 """
 
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 import numbers
 import copy
 
-def _get_name(uri, delimiter):
-    """
-    Just get name with namespace prefix
-    """
-    uri_split = uri.split(delimiter)
-    name = uri_split[-1]
-    return name
-
-
-def _get_namespace(uri, delimiter):
-    if delimiter == "/":
-        uri_split = uri.split(delimiter)
+def _get_namespace_and_name(uri):
+    uri_split = uri.split('#')
+    if len(uri_split) > 1:
+        #possible that delimiter is #
+        name = uri_split[-1]
+        namespace_split = uri_split[0].split('/')
+        namespace = namespace_split[-1]
+    else:
+        uri_split = uri.split('/')
         if len(uri_split) > 1:
+            name = uri_split[-1]
             namespace = uri_split[-2]
         else:
-            namespace = uri
+            name = uri_split[-1]
+            namespace = ""
+    return namespace, name
+
+def _get_namespace_with_prefix(uri):
+    uri_split = uri.split('#')
+    if len(uri_split) > 1:
+        #possible that delimiter is #
+        namespace = uri_split[0]
     else:
-        uri_split = uri.split(delimiter)
-        uri_split = uri_split[0].split("/")
-        if len(uri_split) > 0:
-            namespace = uri_split[-1]
+        uri_split = uri.split('/')
+        if len(uri_split) > 1:
+            namespace = "/".join(uri_split[:-1])
         else:
-            namespace = uri
+            namespace = ""
+        if namespace[-1] != "#":
+            namespace += "/"
     return namespace
 
-
-def strip_name(uri, delimiter, get_what="name", namespace=None):
+def strip_name(uri, get_what="name", namespace=None):
+    if namespace is None:
+        namespace, name = _get_namespace_and_name(uri)
+    else:
+        _, name = _get_namespace_and_name(uri)
     if get_what == "namespace":
-        return _get_namespace(uri, delimiter)
+        return namespace
 
     elif get_what == "name":
-        if namespace is None:
-            namespace = _get_namespace(uri, delimiter)
-        name = _get_name(uri, delimiter)
         return ":".join([namespace, name])
 
 
 class OntoTerm:
     def __init__(
         self,
-        uri,
+        uri = None,
         namespace=None,
         node_type=None,
         dm=[],
@@ -68,7 +75,10 @@ class OntoTerm:
         self.data_type = data_type
         # identifier
         self.node_id = node_id
+        self.associated_data_node = None
         self.subclasses = []
+        self.named_individuals = []
+        self.equivalent_classes = []
         self.subproperties = []
         self.delimiter = delimiter
         self.description = description
@@ -87,6 +97,11 @@ class OntoTerm:
         #condition parents are the parents that have conditions
         #these are accumulated when using the & or || operators
         self._condition_parents = []
+        self._object = None
+    
+    @property
+    def URIRef(self):
+        return URIRef(self._uri)
 
     @property
     def uri(self):
@@ -151,21 +166,6 @@ class OntoTerm:
         self._label = val
 
     @property
-    def name_without_prefix(self):
-        """
-        Get the name without the namespace prefix.
-
-        Returns
-        -------
-        str
-            The name of the term without the namespace prefix.
-        """
-        name = _get_name(self.uri, self.delimiter)
-        name = name.replace("–", "")
-        name = name.replace("-", "")
-        return name
-
-    @property
     def name(self):
         """
         Get the name of the term.
@@ -175,9 +175,31 @@ class OntoTerm:
         str
             The name of the term.
         """
+        if self._name is not None:
+            return self._name
         return strip_name(
-            self.uri, self.delimiter, namespace=self._namespace, get_what="name"
+            self.uri, get_what="name",namespace=self.namespace,
         )
+    
+    @name.setter
+    def name(self, val):
+        self._name = val
+
+    @property
+    def name_without_prefix(self):
+        """
+        Get the name without the namespace prefix.
+
+        Returns
+        -------
+        str
+            The name of the term without the namespace prefix.
+        """
+        name = self.name
+        name = name.replace("–", "")
+        name = name.replace("-", "")
+        name = name.split(':')[-1]
+        return name
 
     @property
     def namespace(self):
@@ -192,24 +214,19 @@ class OntoTerm:
         if self._namespace is not None:
             return self._namespace
         else:
-            return strip_name(self.uri, self.delimiter, get_what="namespace")
+            return strip_name(self.uri, get_what="namespace")
 
     @property
     def namespace_with_prefix(self):
         """
         Get the namespace of the term with the prefix.
-
+    
         Returns
         -------
         str
             The namespace of the term with the prefix.
         """
-        uri_split = self.uri.split(self.delimiter)
-        if len(uri_split) > 1:
-            namespace = self.delimiter.join(uri_split[:-1]) + self.delimiter
-            return namespace
-        else:
-            return self.uri
+        return _get_namespace_with_prefix(self.uri)
 
     @property
     def namespace_object(self):
@@ -222,13 +239,7 @@ class OntoTerm:
             The namespace object for the term.
 
         """
-        uri_split = self.uri.split(self.delimiter)
-        if len(uri_split) > 1:
-            namespace = self.delimiter.join(uri_split[:-1]) + self.delimiter
-            prop = uri_split[-1]
-            return getattr(Namespace(namespace), prop)
-        else:
-            return self.uri
+        return self.URIRef
 
     @property
     def query_name(self):
@@ -295,7 +306,10 @@ class OntoTerm:
         return self.uri
 
     def __repr__(self):
-        return str(self.name + '\n' + self.description)
+        if self.description is not None:
+            return str(self.name + '\n' + self.description)
+        else:
+            return str(self.name)
 
     def _clean_datatype(self, r):
         if r == "str":

@@ -842,7 +842,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasRepetition_x">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a simulation cell with its number of repetitions in the x direction.</obo:IAO_0000115>
         <rdfs:label>has repetition x</rdfs:label>
     </owl:DatatypeProperty>
@@ -853,7 +853,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasRepetition_y">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a simulation cell with its number of repetitions in the y direction.</obo:IAO_0000115>
         <rdfs:label>has repetition y</rdfs:label>
     </owl:DatatypeProperty>
@@ -864,7 +864,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasRepetition_z">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a simulation cell with its number of repetitions in the z direction.</obo:IAO_0000115>
         <rdfs:label>has repetition z</rdfs:label>
     </owl:DatatypeProperty>

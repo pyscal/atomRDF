@@ -1,6 +1,3 @@
-from owlready2 import get_ontology
-import owlready2
-
 import os
 import copy
 import numpy as np
@@ -8,29 +5,35 @@ import itertools
 
 from atomrdf.network.term import OntoTerm, strip_name
 from atomrdf.network.patch import patch_terms
-
+from rdflib import Graph, RDF, RDFS, OWL, BNode, URIRef
 
 class OntoParser:
-    def __init__(self, infile, delimiter="/"):
-        if os.path.exists(infile):
-            self.tree = get_ontology(f"file://{infile}").load()
-        elif infile[:4] == "http":
-            self.tree = get_ontology(infile)
-        else:
+    def __init__(self, infile, format='xml'):
+        if not os.path.exists(infile):
             raise FileNotFoundError(f"file {infile} not found!")
+        
+        self.graph = Graph()
+        self.graph.parse(infile, format=format)
+        self.classes = []
         self.attributes = {}
         self.attributes["class"] = {}
         self.attributes["object_property"] = {}
         self.attributes["data_property"] = {}
-        self.delimiter = delimiter
-        self.classes = None
-        self.namespaces = {self.tree.name: self.tree.base_iri}
+        self.attributes["data_nodes"] = {}
+        self.mappings = {}
+        self.namespaces = {}
         self.extra_namespaces = {}
-        self._parse_class()
-        # print(self.attributes)
-        self._parse_object_property()
-        self._parse_data_property()
-        self._recheck_namespaces()
+
+        self.extract_classes()
+        self.extract_relations(relation_type="union")
+        self.extract_relations(relation_type="intersection")
+        self.add_classes_to_attributes()
+        self.parse_subclasses()
+        self.parse_equivalents()
+        self.parse_named_individuals()
+        self.extract_object_properties()
+        self.extract_data_properties()
+        self.recheck_namespaces()        
 
     def __add__(self, ontoparser):
         """
@@ -58,23 +61,18 @@ class OntoParser:
 
     def __radd__(self, ontoparser):
         return self.__add__(ontoparser)
+    
+    @property
+    def base_iri(self):
+        base_iri = None
+        for s in self.graph.subjects(RDF.type, OWL.Ontology):
+            base_iri = str(s)
+        return base_iri
+    
 
-    def _strip_datatype(self, uri, delimiter="#"):
-        uri_split = uri.split(delimiter)
-        return uri_split[-1]
 
-    def _dict_to_lst(self, d):
-        return [val for key, val in d.items()]
-
-    def _get_subclasses(self, name):
-        arg = self._in_which_bin_is_class(name)
-        if arg is not None:
-            return self.classes[arg]
-        else:
-            return [name]
-
-    def _recheck_namespaces(self):
-        for mainkey in self.attributes.keys():
+    def recheck_namespaces(self):
+        for mainkey in ["class", "object_property", "data_property"]:
             for key, val in self.attributes[mainkey].items():
                 namespace = self.attributes[mainkey][key].namespace
                 if namespace not in self.namespaces.keys():
@@ -82,187 +80,167 @@ class OntoParser:
                         key
                     ].namespace_with_prefix
 
-    def _add_info(self, term, c):
-        try:
-            term.description = c.IAO_0000115
-        except:
-            term.description = ""
-        try:
-            term.label = c.label
-        except:
-            term.label = ""
-        return term
+    def extract_classes(self):
+        self.classes = list(self.graph.subjects(RDF.type, OWL.Class))
 
-    def _parse_data_property(self):
-        for c in self.tree.data_properties():
-            iri = c.iri
-            dm = c.domain
-            try:
-                dm = [strip_name(d.iri, self.delimiter) for d in dm[0].Classes]
-            except:
-                dm = [strip_name(d.iri, self.delimiter) for d in dm]
-
-            # now get subclasses
-            dm = [self._get_subclasses(d) for d in dm]
-            dm = list(itertools.chain(*dm))
-
-            rn = c.range
-            try:
-                rn = [r.__name__ for r in rn[0].Classes if r is not None]
-            except:
-                rn = [r.__name__ for r in rn if r is not None]
-
-            # Subproperties
-            # Commented out for now
-            # subprops = self.tree.search(subproperty_of=getattr(self.tree, c.name))
-            # for subprop in subprops:
-            #    if subprop.iri != iri:
-            #        #print(subprop.iri)
-            #        pass
-
-            # PATCH
-            # Here: we patch specific items specifically for pyscal rdf
-            rn = patch_terms(iri, rn)
-
-            # print(iri, rn)
-            # print(iri, dm)
-            term = OntoTerm(iri, delimiter=self.delimiter)
-            dm = [x.replace("07:owl#Thing", "owl:Thing") for x in dm]
-            term.domain = dm
-            term.range = rn
-            term.node_type = "data_property"
-            term = self._add_info(term, c)
-
-            self.attributes["data_property"][term.name] = term
-            # assign this data
-            for d in dm:
-                if d != "owl:Thing":
-                    self.attributes["class"][d].is_domain_of.append(term.name)
-
-            # subproperties should be treated the same
-
-    def _parse_object_property(self):
-        for c in self.tree.object_properties():
-            iri = c.iri
-            dm = c.domain
-            try:
-                dm = [strip_name(d.iri, self.delimiter) for d in dm[0].Classes]
-            except:
-                dmnew = []
-                for d in dm:
-                    if isinstance(d, owlready2.class_construct.Or):
-                        for x in d.Classes:
-                            dmnew.append(strip_name(x.iri, self.delimiter))
-                    else:
-                        dmnew.append(strip_name(d.iri, self.delimiter))
-                dm = dmnew
-
-            # now get subclasses
-            dm = [self._get_subclasses(d) for d in dm]
-            dm = list(itertools.chain(*dm))
-
-            rn = c.range
-            try:
-                rn = [strip_name(r.iri, self.delimiter) for r in rn[0].Classes]
-            except:
-                rn = [strip_name(r.iri, self.delimiter) for r in rn]
-
-            # now get subclasses
-            rn = [self._get_subclasses(d) for d in rn]
-            rn = list(itertools.chain(*rn))
-
-            term = OntoTerm(iri, delimiter=self.delimiter)
-            term.domain = dm
-            term.range = rn
-            term = self._add_info(term, c)
+    def extract_object_properties(self):
+        object_properties = list(self.graph.subjects(RDF.type, OWL.ObjectProperty))
+        for cls in object_properties:
+            term = self.create_term(cls)
+            term.domain = self.get_domain(cls)
+            term.range = self.get_range(cls)
             term.node_type = "object_property"
-            self.attributes["object_property"][term.name] = term
-            for d in dm:
-                if d != "07:owl#Thing":
-                    if d in self.attributes["class"]:
-                        self.attributes["class"][d].is_domain_of.append(term.name)
-            for r in rn:
-                if r != "07:owl#Thing":
-                    if r in self.attributes["class"]:
-                        self.attributes["class"][r].is_range_of.append(term.name)
+            self.attributes["object_property"][term.name] = term            
 
-    def _parse_class_basic(self):
-        classes = []
-        for c in self.tree.classes():
-            iri = c.iri
-            # print(iri)
-            # print(iri)
-            # CHILDREN
-            children = self.tree.get_children_of(c)
-            named_instances = self.tree.get_instances_of(c)
-            equiv_classes = c.equivalent_to
-            subclasses = [*children, *named_instances, *equiv_classes]
-            subclasses.append(c)
-            for sb in subclasses:
-                term = OntoTerm(sb.iri, delimiter=self.delimiter)
-                term = self._add_info(term, sb)
-                term.node_type = "class"
-                self.attributes["class"][term.name] = term
-            subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
-            classes.append(subclasses)
+    def extract_data_properties(self):
+        data_properties = list(self.graph.subjects(RDF.type, OWL.DatatypeProperty))
+        for cls in data_properties:
+            term = self.create_term(cls)
+            term.domain = self.get_domain(cls)
+            rrange = self.get_range(cls)
+            rrange = [x.split(":")[-1] for x in rrange]
+            rrange = patch_terms(term.uri, rrange)
 
-            # try:
-            #    subclasses = self.tree.search(subclass_of=getattr(self.tree, c.name))
-            #    for sb in subclasses:
-            #        term = OntoTerm(sb.iri, delimiter=self.delimiter)
-            #        term.node_type ='class'
-            #        self.attributes['class'][term.name] = term
-            #    subclasses = [strip_name(sb.iri, self.delimiter) for sb in subclasses]
-            #    classes.append(subclasses)
-            # except:
-            #    term = OntoTerm(c.iri, delimiter=self.delimiter)
-            #    term.node_type ='class'
-            #    self.attributes['class'][term.name] = term
-            #    classes.append([strip_name(c.iri, self.delimiter)])
-        return classes
+            term.range = rrange
+            term.node_type = "data_property"
+            self.attributes["data_property"][term.name] = term
 
-    def _aggregate_keys(self, dd):
-        lst = copy.deepcopy(dd)
-        # choose the first list
-        large_list = []
-        start = lst[0]
-        # delete it from the main list
-        nruns = len(lst)
-        del lst[0]
-        # now loop, if there is intersection add to this list
-        while True:
-            found = False
-            index_to_delete = []
-            for count, ls in enumerate(lst):
-                common = len(list(set(start) & set(ls)))
-                # print(common)
-                if common > 0:
-                    # common elements found! merge them
-                    for l in ls:
-                        start.append(l)
-                    found = True
-                    index_to_delete.append(count)
-            if found:
-                for ii in index_to_delete[::-1]:
-                    del lst[ii]
-            else:
-                large_list.append(np.unique(start))
-                if len(lst) == 0:
-                    break
-                else:
-                    start = lst[0]
-                    del lst[0]
-        return large_list
-
-    def _parse_class(self):
-        sub_classes = self._parse_class_basic()
-        # now we have to go through and clean up sub classes
-        sub_classes = self._aggregate_keys(sub_classes)
-        self.classes = sub_classes
-
-    def _in_which_bin_is_class(self, name):
-        for count, lst in enumerate(self.classes):
-            if name in lst:
-                return count
+            #now create data nodes
+            data_term = OntoTerm()
+            data_term.name = term.name + "value"
+            data_term.node_type = "data_node"
+            self.attributes["data_property"][term.name].associated_data_node = data_term.name
+            self.attributes["data_nodes"][data_term.name] = data_term   
+    
+    def extract_values(self, subject, predicate):
+        vallist = list([x[2] for x in self.graph.triples((subject, predicate, None))])
+        if len(vallist) > 0:
+            return vallist[0]
         else:
             return None
+            
+    def extract_relations(self, relation_type):
+        if relation_type == "union":
+            owl_term = OWL.unionOf
+        elif relation_type == "intersection":
+            owl_term = OWL.intersectionOf
+            
+        to_delete = []
+        for term in self.classes:
+            if isinstance(term, BNode):
+                union_term = self.extract_values(term, owl_term)
+                if union_term is not None:
+                    unravel_list = []
+                    self.unravel_relation(union_term, unravel_list)
+                    self.mappings[term.toPython()] = {"type": relation_type, "items": [strip_name(item.toPython()) for item in unravel_list]}
+                    to_delete.append(term)
+        for term in to_delete:
+            self.classes.remove(term)
+
+    def add_classes_to_attributes(self):
+        for cls in self.classes:
+            term = self.create_term(cls)
+            term.node_type = "class"
+            self.attributes["class"][term.name] = term
+
+    def get_description(self, cls):
+        comment = self.graph.value(cls, URIRef('http://purl.obolibrary.org/obo/IAO_0000115'))
+        if comment is None:
+            comment = self.graph.value(cls, URIRef('http://www.w3.org/2000/01/rdf-schema#comment'))
+        if comment is None:
+            comment = ""
+        return comment
+
+    def lookup_node(self, term):
+        if isinstance(term, BNode):
+            #lookup needed
+            term_name = term.toPython()
+            if term_name in self.mappings:
+                terms = self.mappings[term_name]['items']
+            else:
+                terms = [strip_name(term.toPython())]
+        else:
+            terms = [strip_name(term.toPython())]
+        #so here we map the domain and range wrt to other heirarchies
+        additional_terms = []
+        #first get subclasses which will share the domain and range
+        for term in terms:
+            #check if such a thing exists in the class 
+            if term in self.attributes['class']:
+                #get the subclasses
+                additional_terms += self.attributes['class'][term].subclasses
+                #get the equivalent classes
+                additional_terms += self.attributes['class'][term].equivalent_classes
+                #get the named individuals
+                additional_terms += self.attributes['class'][term].named_individuals
+        #add additiona terms to terms
+        terms += additional_terms
+        return terms
+
+    def lookup_class(self, term):
+        if isinstance(term, BNode):
+            term = term.toPython()
+        else:
+            term = strip_name(term.toPython())
+        #print(term)
+        if term in self.attributes['class']:
+            return [self.attributes['class'][term].name]
+        elif term in self.mappings:
+            return self.mappings[term]['items']
+
+    def get_domain(self, cls):
+        domain = []
+        for triple in self.graph.triples((cls, URIRef('http://www.w3.org/2000/01/rdf-schema#domain'), None)):
+            domain_term = self.lookup_node(triple[2])
+            for term in domain_term:
+                domain.append(term)
+        return domain
+
+    def get_range(self, cls):
+        rrange = []
+        for triple in self.graph.triples((cls, URIRef('http://www.w3.org/2000/01/rdf-schema#range'), None)):
+            range_term = self.lookup_node(triple[2])
+            for term in range_term:
+                rrange.append(term)
+        return rrange
+        
+    def create_term(self, cls):
+        iri = cls.toPython()
+        term = OntoTerm(iri)
+        term.description = self.get_description(cls)
+        term._object = cls
+        return term
+                    
+    def unravel_relation(self, term, unravel_list):
+        if term == RDF.nil:
+            return 
+        first_term = self.graph.value(term, RDF.first)
+        if first_term not in unravel_list:
+            unravel_list.append(first_term)
+        second_term =  self.graph.value(term, RDF.rest)
+        self.unravel_relation(second_term, unravel_list)
+
+    def parse_subclasses(self):
+        for key, cls in self.attributes['class'].items():
+            for triple in self.graph.triples((cls._object, RDFS.subClassOf, None)):
+                superclasses = self.lookup_class(triple[2])
+                for superclass in superclasses:
+                    self.attributes['class'][superclass].subclasses.append(cls.name)
+    
+    def parse_equivalents(self):
+        for key, cls in self.attributes['class'].items():
+            for triple in self.graph.triples((cls._object, OWL.equivalentClass, None)):
+                equivalent = triple[2]
+                self.attributes['class'][strip_name(equivalent)].equivalent_classes.append(cls.name)
+                cls.equivalent_classes.append(strip_name(equivalent))
+    
+    def parse_named_individuals(self):
+        named_individuals = list(self.graph.subjects(RDF.type, OWL.NamedIndividual))
+        for cls in named_individuals:
+            #find parent
+            term = self.create_term(cls)
+            self.attributes["class"][term.name] = term
+            parents = list(self.graph.objects(cls, RDF.type))
+            for parent in parents:
+                if parent != OWL.NamedIndividual:
+                    self.attributes["class"][strip_name(parent.toPython())].named_individuals.append(term.name)
