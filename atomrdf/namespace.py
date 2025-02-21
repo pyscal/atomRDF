@@ -61,7 +61,7 @@ class Namespace(AttrSetter, RDFLibNamespace):
             The delimiter used in the input file. Defaults to "/".
         """
         AttrSetter.__init__(self)
-        self.network = OntologyNetwork(infile, delimiter=delimiter)
+        self.network = OntologyNetwork(infile)
         RDFLibNamespace.__init__(self.network.onto.tree.base_iri)
         self.name = self.network.onto.tree.name
         mapdict = {}

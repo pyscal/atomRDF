@@ -31,7 +31,8 @@ class OntoParser:
         self.parse_equivalents()
         self.parse_named_individuals()
         self.extract_object_properties()
-        self.extract_data_properties()        
+        self.extract_data_properties()
+        self.recheck_namespaces()        
 
     def __add__(self, ontoparser):
         """
@@ -60,7 +61,7 @@ class OntoParser:
     def __radd__(self, ontoparser):
         return self.__add__(ontoparser)
 
-    def _recheck_namespaces(self):
+    def recheck_namespaces(self):
         for mainkey in self.attributes.keys():
             for key, val in self.attributes[mainkey].items():
                 namespace = self.attributes[mainkey][key].namespace
