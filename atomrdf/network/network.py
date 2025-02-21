@@ -30,8 +30,6 @@ class OntologyNetwork:
 
         self.g = nx.DiGraph()
         self.onto = OntoParser(infile)
-        self.onto.attributes["data_node"] = []
-        self.data_prefix = "value"
         self.terms = AttrSetter()
         self._parse_all()
 
@@ -87,13 +85,19 @@ class OntologyNetwork:
     def _add_class_nodes(self):
         for key, val in self.onto.attributes["class"].items():
             self.g.add_node(val.name, node_type="class")
+    
+    def _add_data_nodes(self):
+        for key, val in self.onto.attributes["data_node"].items():
+            self.g.add_node(val.name, node_type="literal", data_type=val.data_type)
 
     def _add_object_properties(self):
         for key, val in self.onto.attributes["object_property"].items():
             self.g.add_node(val.name, node_type="object_property")
-            # find domain
+
+            #add edges between them
             for d in val.domain:
                 self.g.add_edge(d, val.name)
+
             for r in val.range:
                 self.g.add_edge(val.name, r)
 
@@ -102,11 +106,9 @@ class OntologyNetwork:
             self.g.add_node(val.name, node_type="data_property")
             for d in val.domain:
                 self.g.add_edge(d, val.name)
+
             for r in val.range:
-                data_node = f"{val.name}{self.data_prefix}"
-                self.onto.attributes["data_node"].append(data_node)
-                self.g.add_node(data_node, node_type="literal", data_type=r)
-                self.g.add_edge(val.name, data_node)
+                self.g.add_edge(val.name, val.associated_data_node)
 
     def add_namespace(self, namespace_name, namespace_iri):
         """
@@ -127,7 +129,6 @@ class OntologyNetwork:
         """
         if namespace_name not in self.onto.namespaces.keys():
             self.onto.namespaces[namespace_name] = namespace_iri
-   
 
     def add_term(
         self,
@@ -211,21 +212,20 @@ class OntologyNetwork:
             raise ValueError(f"{sub} not found in self.attributes")
 
         # now add
-        subclasses = self.onto._get_subclasses(sub)
-        for subclass in subclasses:
+        for subclass in self.onto.attributes['class'][sub].subclasses:
             self.g.add_edge(subclass, pred)
 
         # now add pred
         if pred in self.onto.attributes["object_property"].keys():
             if obj not in self.onto.attributes["class"].keys():
                 raise ValueError(f"{obj} not found in self.attributes")
-            subclasses = self.onto._get_subclasses(obj)
-            for subclass in subclasses:
+            #subclasses = self.onto._get_subclasses(obj)
+            for subclass in self.onto.attributes['class'][obj].subclasses:
                 self.g.add_edge(pred, subclass)
 
         # another possibility it is data property
         elif pred in self.onto.attributes["data_property"].keys():
-            data_node = f"{pred}{self.data_prefix}"
+            data_node = f"{pred}value"
             self.g.add_node(data_node, node_type="literal", data_type=obj)
             self.g.add_edge(pred, data_node)
 
