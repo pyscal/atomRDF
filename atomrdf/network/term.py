@@ -23,6 +23,19 @@ def _get_namespace_and_name(uri):
             namespace = ""
     return namespace, name
 
+def _get_namespace_with_prefix(uri):
+    uri_split = uri.split('#')
+    if len(uri_split) > 1:
+        #possible that delimiter is #
+        namespace = uri_split[0]
+    else:
+        uri_split = uri.split('/')
+        if len(uri_split) > 1:
+            namespace = "/".join(uri_split[-1])
+        else:
+            namespace = ""
+    return namespace
+
 def strip_name(uri, get_what="name", namespace=None):
     namespace, name = _get_namespace_and_name(uri)
     if get_what == "namespace":
@@ -198,23 +211,18 @@ class OntoTerm:
         else:
             return strip_name(self.uri, get_what="namespace")
 
-    #@property
-    #def namespace_with_prefix(self):
-    #    """
-    #    Get the namespace of the term with the prefix.
-    #
-    #    Returns
-    #    -------
-    #    str
-    #        The namespace of the term with the prefix.
-    #    """
-    #    uri_split = self.uri.split(self.delimiter)
-    #    if len(uri_split) > 1:
-    #        namespace = self.delimiter.join(uri_split[:-1]) + self.delimiter
-    #        return namespace
-    #    else:
-    #        return self.uri
-
+    @property
+    def namespace_with_prefix(self):
+        """
+        Get the namespace of the term with the prefix.
+    
+        Returns
+        -------
+        str
+            The namespace of the term with the prefix.
+        """
+        return _get_namespace_with_prefix(self.uri)
+        
     @property
     def namespace_object(self):
         """

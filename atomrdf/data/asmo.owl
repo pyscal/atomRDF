@@ -773,7 +773,6 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
 
     <owl:ObjectProperty rdf:about="https://w3id.org/mdo/calculation/hasXCFunctional">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/DensityFunctionalTheory"/>
-        <rdfs:domain rdf:resource="https://w3id.org/mdo/calculation/DensityFunctionalTheoryMethod"/>
         <rdfs:range rdf:resource="https://w3id.org/mdo/calculation/ExchangeCorrelationEnergyFunctional"/>
         <rdfs:comment xml:lang="en">hasXCFunctional represents the relationship between a density functional theory method and the exchange-correlation energy functionals it takes.</rdfs:comment>
         <rdfs:label xml:lang="en">has XC functional</rdfs:label>
@@ -1027,7 +1026,6 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     <!-- http://purls.helmholtz-metadaten.de/asmo/DensityFunctionalTheory -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/DensityFunctionalTheory">
-        <owl:equivalentClass rdf:resource="https://w3id.org/mdo/calculation/DensityFunctionalTheoryMethod"/>
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/ComputationalMethod"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Density functional theory is a computational method used to study the electronic structure and ground state of atoms, molecules, and, solids. This technique determines the properties of a many-electron system thorugh functionals of the spatially dependent electron density.</obo:IAO_0000115>
         <rdfs:label>Density Functional Theory</rdfs:label>
@@ -1707,29 +1705,6 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <prov:definition xml:lang="en">A software agent is running software.</prov:definition>
         <prov:dm rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">http://www.w3.org/TR/2013/REC-prov-dm-20130430/#term-agent</prov:dm>
         <prov:n rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">http://www.w3.org/TR/2013/REC-prov-n-20130430/#expression-types</prov:n>
-    </owl:Class>
-    
-
-
-    <!-- https://w3id.org/mdo/calculation/DensityFunctionalTheoryMethod -->
-
-    <owl:Class rdf:about="https://w3id.org/mdo/calculation/DensityFunctionalTheoryMethod">
-        <rdfs:subClassOf>
-            <owl:Class>
-                <owl:intersectionOf rdf:parseType="Collection">
-                    <owl:Restriction>
-                        <owl:onProperty rdf:resource="https://w3id.org/mdo/calculation/hasXCFunctional"/>
-                        <owl:someValuesFrom rdf:resource="https://w3id.org/mdo/calculation/ExchangeCorrelationEnergyFunctional"/>
-                    </owl:Restriction>
-                    <owl:Restriction>
-                        <owl:onProperty rdf:resource="https://w3id.org/mdo/calculation/hasXCFunctional"/>
-                        <owl:allValuesFrom rdf:resource="https://w3id.org/mdo/calculation/ExchangeCorrelationEnergyFunctional"/>
-                    </owl:Restriction>
-                </owl:intersectionOf>
-            </owl:Class>
-        </rdfs:subClassOf>
-        <rdfs:comment xml:lang="en">A DFT method is a computational quantum mechanical modelling method used to investigate the electronic structure based on optimization of the energy over electronic densities.</rdfs:comment>
-        <rdfs:label xml:lang="en">Density Functional Theory Method</rdfs:label>
     </owl:Class>
     
 

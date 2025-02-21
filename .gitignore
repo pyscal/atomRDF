@@ -12,6 +12,8 @@ wf*
 *.in
 *.dot
 *.png
+examples/workflow_examples/t*
+examples/workflow_examples/y*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -5,7 +5,7 @@ import itertools
 
 from atomrdf.network.term import OntoTerm, strip_name
 from atomrdf.network.patch import patch_terms
-
+from rdflib import Graph, RDF, RDFS, OWL, BNode, URIRef
 
 class OntoParser:
     def __init__(self, infile, format='xml'):
@@ -19,13 +19,14 @@ class OntoParser:
         self.attributes["class"] = {}
         self.attributes["object_property"] = {}
         self.attributes["data_property"] = {}
-        self.delimiter = delimiter
+        self.attributes["data_nodes"] = {}
         self.mappings = {}
         self.namespaces = {}
         self.extra_namespaces = {}
 
         self.extract_classes()
         self.extract_relations(relation_type="union")
+        self.extract_relations(relation_type="intersection")
         self.add_classes_to_attributes()
         self.parse_subclasses()
         self.parse_equivalents()
@@ -60,9 +61,18 @@ class OntoParser:
 
     def __radd__(self, ontoparser):
         return self.__add__(ontoparser)
+    
+    @property
+    def base_iri(self):
+        base_iri = None
+        for s in self.graph.subjects(RDF.type, OWL.Ontology):
+            base_iri = str(s)
+        return base_iri
+    
+
 
     def recheck_namespaces(self):
-        for mainkey in self.attributes.keys():
+        for mainkey in ["class", "object_property", "data_property"]:
             for key, val in self.attributes[mainkey].items():
                 namespace = self.attributes[mainkey][key].namespace
                 if namespace not in self.namespaces.keys():
@@ -164,7 +174,18 @@ class OntoParser:
         #add additiona terms to terms
         terms += additional_terms
         return terms
-        
+
+    def lookup_class(self, term):
+        if isinstance(term, BNode):
+            term = term.toPython()
+        else:
+            term = strip_name(term.toPython())
+        #print(term)
+        if term in self.attributes['class']:
+            return [self.attributes['class'][term].name]
+        elif term in self.mappings:
+            return self.mappings[term]['items']
+
     def get_domain(self, cls):
         domain = []
         for triple in self.graph.triples((cls, URIRef('http://www.w3.org/2000/01/rdf-schema#domain'), None)):
@@ -183,7 +204,7 @@ class OntoParser:
         
     def create_term(self, cls):
         iri = cls.toPython()
-        term = OntoTerm(iri, delimiter=self.delimiter)
+        term = OntoTerm(iri)
         term.description = self.get_description(cls)
         term._object = cls
         return term
@@ -200,8 +221,9 @@ class OntoParser:
     def parse_subclasses(self):
         for key, cls in self.attributes['class'].items():
             for triple in self.graph.triples((cls._object, RDFS.subClassOf, None)):
-                superclass = triple[2]
-                self.attributes['class'][strip_name(superclass)].subclasses.append(cls.name)
+                superclasses = self.lookup_class(triple[2])
+                for superclass in superclasses:
+                    self.attributes['class'][superclass].subclasses.append(cls.name)
     
     def parse_equivalents(self):
         for key, cls in self.attributes['class'].items():

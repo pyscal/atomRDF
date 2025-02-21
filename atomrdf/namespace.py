@@ -62,8 +62,8 @@ class Namespace(AttrSetter, RDFLibNamespace):
         """
         AttrSetter.__init__(self)
         self.network = OntologyNetwork(infile)
-        RDFLibNamespace.__init__(self.network.onto.tree.base_iri)
-        self.name = self.network.onto.tree.name
+        RDFLibNamespace.__init__(self.network.onto.base_iri)
+        self.name = self.network.onto.base_iri.split('/')[-1]
         mapdict = {}
 
         # now iterate over all attributes
