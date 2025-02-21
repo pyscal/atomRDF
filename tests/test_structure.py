@@ -99,14 +99,14 @@ def test_gb():
                         gb_plane=[3, -1, 0],
                         element='Fe',
                         graph=kg)
-	res = kg.query_sample(kg.ontology.terms.pldo.SymmetricalTiltGrainBoundary)
+	res = kg.query_sample(kg.ontology.terms.pldo.GrainBoundary)
 	assert len(res.AtomicScaleSample.values) == 1
 	
 	new = struct_gb_1.repeat((2,2,2))
-	res = kg.query_sample(kg.ontology.terms.pldo.SymmetricalTiltGrainBoundary)
+	res = kg.query_sample(kg.ontology.terms.pldo.GrainBoundary)
 	assert len(res.AtomicScaleSample.values) == 2
 
 	ss = kg.get_sample(new.sample)
-	res = ss.query_sample(ss.ontology.terms.pldo.SymmetricalTiltGrainBoundary)
+	res = ss.query_sample(ss.ontology.terms.pldo.GrainBoundary)
 	assert len(res.AtomicScaleSample.values) == 1
 

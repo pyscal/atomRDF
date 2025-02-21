@@ -102,6 +102,9 @@ def read_ontology():
     combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:LineDefect"))
     combo.add_path(("cmso:Material", "cmso:hasDefect", "ldo:Dislocation"))
 
+    #CMSO -> PODO DISL paths
+    combo.add_path(("cmso:Material", "cmso:hasDefect", "pldo:GrainBoundary"))
+
 
     combo.add_path(("cmso:ComputationalSample", "prov:wasDerivedFrom", "cmso:ComputationalSample"))
     combo.add_path(("cmso:ComputationalSample", "rdf:type", "prov:Entity"))
