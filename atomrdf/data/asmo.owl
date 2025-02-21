@@ -1891,6 +1891,24 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/ExplicitKPointMesh -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/ExplicitKPointMesh">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/KPointMesh"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Explicit KPoint Mesh</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/GammaCenteredKPointMesh -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/GammaCenteredKPointMesh">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/KPointMesh"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Gamma-Centered KPoint Mesh</rdfs:label>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/GrandCanonicalEnsemble -->
 
     <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/GrandCanonicalEnsemble">
@@ -1944,6 +1962,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ISBN-13: 978-0323902922</obo:IAO_0000119>
         <rdfs:label>Microcanonical Ensemble</rdfs:label>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NVE ensemble</skos:altLabel>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/MonkhorstPackKPointMesh -->
+
+    <owl:NamedIndividual rdf:about="http://purls.helmholtz-metadaten.de/asmo/MonkhorstPackKPointMesh">
+        <rdf:type rdf:resource="http://purls.helmholtz-metadaten.de/asmo/KPointMesh"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Monkhorst Pack KPoint Mesh</rdfs:label>
     </owl:NamedIndividual>
     
 

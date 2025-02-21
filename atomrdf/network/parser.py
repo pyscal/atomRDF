@@ -99,11 +99,7 @@ class OntoParser:
             term.domain = self.get_domain(cls)
             rrange = self.get_range(cls)
             rrange = [x.split(":")[-1] for x in rrange]
-            for i in range(len(rrange)):
-                if rrange[i] == "string":
-                    rrange[i] = "str"
-                elif rrange[i] == "integer":
-                    rrange[i] = "int"
+            rrange = patch_terms(term.uri, rrange)
 
             term.range = rrange
             term.node_type = "data_property"
