@@ -127,8 +127,7 @@ class OntologyNetwork:
         """
         if namespace_name not in self.onto.namespaces.keys():
             self.onto.namespaces[namespace_name] = namespace_iri
-        else:
-            raise KeyError("namespace is already there!")
+   
 
     def add_term(
         self,
