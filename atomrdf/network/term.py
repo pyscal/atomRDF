@@ -31,13 +31,18 @@ def _get_namespace_with_prefix(uri):
     else:
         uri_split = uri.split('/')
         if len(uri_split) > 1:
-            namespace = "/".join(uri_split[-1])
+            namespace = "/".join(uri_split[:-1])
         else:
             namespace = ""
+        if namespace[-1] != "#":
+            namespace += "/"
     return namespace
 
 def strip_name(uri, get_what="name", namespace=None):
-    namespace, name = _get_namespace_and_name(uri)
+    if namespace is None:
+        namespace, name = _get_namespace_and_name(uri)
+    else:
+        _, name = _get_namespace_and_name(uri)
     if get_what == "namespace":
         return namespace
 
@@ -173,7 +178,7 @@ class OntoTerm:
         if self._name is not None:
             return self._name
         return strip_name(
-            self.uri, get_what="name",
+            self.uri, get_what="name",namespace=self.namespace,
         )
     
     @name.setter
@@ -222,7 +227,7 @@ class OntoTerm:
             The namespace of the term with the prefix.
         """
         return _get_namespace_with_prefix(self.uri)
-        
+
     @property
     def namespace_object(self):
         """

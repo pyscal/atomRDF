@@ -110,7 +110,7 @@ def read_ontology():
     combo.add_path(("asmo:EnergyCalculation", "prov:wasAssociatedWith", "prov:SoftwareAgent"))
     combo.add_path(("cmso:ComputationalSample","prov:wasGeneratedBy","asmo:EnergyCalculation",))
     
-    combo.add_path(("cmso:CalculatedProperty", "asmo:hasValue", "float"))
+    combo.add_path(("cmso:CalculatedProperty", "cmso:hasValue", "float"))
     #combo.add_path(("cmso:CalculatedProperty", "asmo:hasUnit", "string"))
     combo.add_path(("cmso:CalculatedProperty", "rdfs:label", "string"))
     #how to handle units?
@@ -118,7 +118,7 @@ def read_ontology():
     #input parameters for ASMO
     combo.add_path(("asmo:InputParameter", "rdfs:label", "string"))
     #combo.add_path(("cmso:CalculatedProperty", "asmo:hasUnit", "string"))
-    combo.add_path(("asmo:InputParameter", "asmo:hasValue", "float"))
+    combo.add_path(("asmo:InputParameter", "cmso:hasValue", "float"))
 
     #software agent
     combo.add_path(("prov:SoftwareAgent", "rdfs:label", "string"))

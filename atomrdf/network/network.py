@@ -212,6 +212,7 @@ class OntologyNetwork:
             raise ValueError(f"{sub} not found in self.attributes")
 
         # now add
+        self.g.add_edge(sub, pred)
         for subclass in self.onto.attributes['class'][sub].subclasses:
             self.g.add_edge(subclass, pred)
 
@@ -220,6 +221,7 @@ class OntologyNetwork:
             if obj not in self.onto.attributes["class"].keys():
                 raise ValueError(f"{obj} not found in self.attributes")
             #subclasses = self.onto._get_subclasses(obj)
+            self.g.add_edge(pred, obj)
             for subclass in self.onto.attributes['class'][obj].subclasses:
                 self.g.add_edge(pred, subclass)
 
