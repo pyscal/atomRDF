@@ -17,6 +17,7 @@ import shutil
 import tarfile
 import warnings
 from ase.io import write
+from ase.build import cut
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
@@ -190,6 +191,129 @@ def _make_general_lattice(
     s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     
     return s
+
+def _convert_to_hkl(vector_uvtw):
+    """
+    Convert from uvtw to hkl systems
+    """
+    h = 2*vector_uvtw[0] + vector_uvtw[1]
+    k = vector_uvtw[0] + 2*vector_uvtw[1]
+    l = vector_uvtw[3]
+    return np.array([h,k,l])
+
+def _make_stacking_fault(
+    slip_system,
+    distance=1,
+    vacuum=0,
+    structure=None,
+    element=None,
+    lattice_constant=1.00,
+    repetitions=None,
+    ca_ratio=1.633,
+    noise=0,
+    primitive=False,
+    graph=None,
+    names=False,
+    label=None,
+):
+    """
+    Generate a stacking fault structure.
+
+    Parameters
+    ----------
+    slip_system : list of lists, shape (2 x 3) or (2 x 4)
+        the slip system for the given system. The input should of type [[u, v, w], [h, k, l]].
+        [u, v, w] is the slip direction and [h, k, l] is the slip plane.
+
+        For HCP systems, the input should be [[u, v, w, z], [h, k, l, m]].
+    
+    distance : float
+        Distance for translating one half of the cell along the [h k l] direction. Default is 1.
+    """
+    slip_plane = slip_system[1]
+    slip_direction = slip_system[0]
+
+    if len(slip_plane) == 4:
+        #hcp
+        slip_plane = _convert_to_hkl(slip_plane)
+        slip_direction = _convert_to_hkl(slip_direction)
+    
+    third_direction = np.cross(slip_plane, slip_direction)
+
+    #now reduce the slip direction
+    slip_magnitude = np.gcd.reduce(slip_direction)
+    if slip_magnitude > 1:
+        slip_direction = slip_direction/slip_magnitude
+    
+    #we are good to go now
+    if structure is not None:
+        # create a structure with the info
+        input_structure = _make_crystal(
+            structure,
+            lattice_constant=_declass(lattice_constant),
+            repetitions=repetitions,
+            ca_ratio=_declass(ca_ratio),
+            noise=noise,
+            element=element,
+            primitive=primitive,
+        )
+    elif element is not None:
+        if element in element_dict.keys():
+            structure = element_dict[element]["structure"]
+            lattice_constant = element_dict[element]["lattice_constant"]
+        else:
+            raise ValueError("Please provide structure")
+        input_structure = _make_crystal(
+            structure,
+            lattice_constant=_declass(lattice_constant),
+            repetitions=repetitions,
+            ca_ratio=_declass(ca_ratio),
+            noise=noise,
+            element=element,
+            primitive=primitive,
+        )
+    else:
+        raise ValueError("Provide either structure or element")
+
+    structure_dict = copy.deepcopy(input_structure._structure_dict)
+
+    #convert inp struct to ase
+    ase_struct = input_structure.write.ase()
+    ase_struct = cut(ase_struct, a=slip_direction, b=third_direction, c=slip_plane)
+    ase_struct.center(vacuum=vacuum, axis=2)
+
+    #convert back to pyscal
+    input_structure = System.read.ase(ase_struct)
+    positions = input_structure.atoms.positions
+    box = input_structure.box
+    types = input_structure.atoms.types
+    species = input_structure.atoms.species
+    mid_distance = input_structure.boxdims[2]/2
+
+    unitsd = slip_direction/np.linalg.norm(slip_direction)
+    plane_norm = np.linalg.norm(slip_plane)
+
+    for count, position in enumerate(positions):
+        dist = (np.dot(position, slip_plane)/plane_norm)
+        if dist > mid_distance:
+            old_position = copy.deepcopy(position)
+            positions[count][0] += unitsd[0]*distance
+            positions[count][1] += unitsd[1]*distance
+            positions[count][2] += unitsd[2]*distance
+
+    output_structure = System()
+    output_structure.box = box
+    atoms = Atoms()
+    output_structure.from_dict({"positions": positions, "species": species, "types": types})
+    output_structure.atoms = atoms        
+    output_structure._structure_dict = structure_dict
+    output_structure.label = label
+    output_structure.graph = graph
+    output_structure.to_graph()
+    #output_structure.add_dislocation(disl_dict)
+    output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
+    return output_structure
 
 
 def _make_dislocation(
@@ -2573,7 +2697,7 @@ class System(pc.System):
                 selection.append(False)
         if reverse_orientation:
             selection = np.invert(selection)
-        return selection        
+        return selection             
 
     def select_by_plane(self, plane, distance, reverse_orientation=False):
         selection = self._select_by_plane(plane, distance, 
