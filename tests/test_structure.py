@@ -110,3 +110,28 @@ def test_gb():
 	res = ss.query_sample(ss.ontology.terms.pldo.GrainBoundary)
 	assert len(res.AtomicScaleSample.values) == 1
 
+def test_sf():
+	kg = KnowledgeGraph()
+	slip_plane = np.array([0,0,0,1])
+	slip_direction = np.array([1,0,-1,0])
+	sf = System.create.defect.stacking_fault(slip_plane, 
+    1.0,
+    slip_direction_a=slip_direction,
+    element="Mg", 
+    repetitions=(2,2,2),
+    vacuum=10.0,
+    graph=kg)
+	assert sf.natoms == 96
+
+	slip_plane = np.array([1,1,1])
+	sf, sfa, ssa, fsa = System.create.defect.stacking_fault(slip_plane, 
+		0.5,
+		element="Cu", 
+		repetitions=(1,1,1),
+		vacuum=0.0,
+		graph=kg,
+		return_atomman_dislocation=True)
+	assert sfa.system.natoms == 48
+	assert sfa.abovefault.sum() == 24
+	assert np.abs(sfa.faultpos_rel - 0.5) < 1e-6
+	assert np.abs(sfa.faultpos_cart - 12.505406830647294) < 1e-6

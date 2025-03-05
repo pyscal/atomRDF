@@ -213,6 +213,7 @@ def _make_stacking_fault(
     graph=None,
     names=False,
     label=None,
+    return_atomman_dislocation=False,
 ):
     """
     Generate a stacking fault structure.
@@ -263,7 +264,7 @@ def _make_stacking_fault(
         vectors = _declass(lattice_constant)*np.array(sd["box"])
         #positions
         positions = np.array(sd["positions"])
-        types = np.array(sd["types"])
+        types = np.array(sd["species"])
         
         # create a structure with the info
         box = am.Box(
@@ -331,6 +332,7 @@ def _make_stacking_fault(
     atoms = Atoms()
     atoms.from_dict({"positions": positions, "species": species, "types": types})
     output_structure.atoms = atoms
+    #output_structure = output_structure.modify.remap_to_box()
     output_structure.lattice_properties = datadict
     output_structure.label = label
     output_structure.graph = graph
@@ -338,6 +340,9 @@ def _make_stacking_fault(
     output_structure.add_stacking_fault({"plane":slip_plane, "displacement":sf.a1vect_uvw})
     output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
+
+    if return_atomman_dislocation:
+        return output_structure, sf, surfacesystem, faultsystem
     return output_structure
 
 
