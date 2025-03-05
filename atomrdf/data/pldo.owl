@@ -269,6 +269,30 @@ We also have the outstanding issue of how to aim different definitions to differ
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/pldo/hasGrainBoundaryEnergy -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/pldo/hasGrainBoundaryEnergy">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/ComputationalSample"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundary"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundaryEnergy"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a grain boundary and the corresponding energy.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has grain boundary energy</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/hasStackingFaultEnergy -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/pldo/hasStackingFaultEnergy">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/ComputationalSample"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFault"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFaultEnergy"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a stacking fault and the corresponding energy.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has stacking fault energy</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/pldo/hasTiltComponent -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/pldo/hasTiltComponent">
@@ -312,13 +336,25 @@ We also have the outstanding issue of how to aim different definitions to differ
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/pldo/hasDisplacementVector -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/pldo/hasDisplacementVector">
+        <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/hasSFplane"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFault"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the displacement vector associated with the stacking fault.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has displacement vector</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/pldo/hasGBplane -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/pldo/hasGBplane">
         <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/macroscopicDegreesOfFreedom"/>
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundary"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the grain boundary (GB) plane using Miller Indices.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the grain boundary (GB) plane using Miller indices.</obo:IAO_0000115>
         <rdfs:label>has GB plane</rdfs:label>
     </owl:DatatypeProperty>
     
@@ -344,8 +380,20 @@ We also have the outstanding issue of how to aim different definitions to differ
         <rdfs:subPropertyOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/macroscopicDegreesOfFreedom"/>
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundary"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indication the rotation axis [uvw].</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the rotation axis [uvw].</obo:IAO_0000115>
         <rdfs:label>has rotation axis</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/hasSFplane -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/pldo/hasSFplane">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFault"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the stacking fault (SF) plane using Miller indices.</obo:IAO_0000115>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The SF plane defines the crystallographic plane along which a stacking fault occurs, disrupting the ideal stacking sequence of the crystal structure.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has SF plane</rdfs:label>
     </owl:DatatypeProperty>
     
 
@@ -356,8 +404,19 @@ We also have the outstanding issue of how to aim different definitions to differ
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundary"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a GB with its sigma value.</obo:IAO_0000115>
-        <rdfs:comment>Sigma value of a GB is the coincidence index, calculated as the coincidence unit cell volume by the crystal primitive unit cell volume. The coincidence index refers to the Coincidence Site Lattice (CSL).</rdfs:comment>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Sigma value of a GB is the coincidence index, calculated as the ratio of the coincidence unit cell volume by the crystal primitive unit cell volume. The coincidence index refers to the Coincidence Site Lattice (CSL).</rdfs:comment>
         <rdfs:label>has sigma value</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/hasStackingSequence -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/pldo/hasStackingSequence">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFault"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property indicating the stacking sequence in a crystal structure. For the ideal hcp structure, this sequence is •••ABABAB••• and for fcc •••ABCABC•••.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has stacking sequence</rdfs:label>
     </owl:DatatypeProperty>
     
 
@@ -401,9 +460,83 @@ We also have the outstanding issue of how to aim different definitions to differ
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/AntiphaseBoundary">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/PlanarDefect"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An antiphase boundary is a planar defect which occurs in ordered alloys. The boundary separates two domains of the same ordered phase.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An antiphase boundary is a planar defect that occurs in ordered alloys. The boundary separates two domains of the same ordered phase.</obo:IAO_0000115>
         <rdfs:label>Antiphase Boundary</rdfs:label>
         <skos:altLabel>APB</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/CalculatedProperty -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/CalculatedProperty">
+        <rdfs:label>Calculated Property</rdfs:label>
+        <skos:definition>A calculated property is a property of a material resulting from a calculation or simulation.</skos:definition>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/ComputationalSample -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/ComputationalSample">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A computational sample is a representative system of a material for analysis through computational methods in the context of materials science.</obo:IAO_0000115>
+        <rdfs:label>Computational Sample</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/Energy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/Energy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/PhysicalQuantity"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy is a physical quantity characterizing the ability of a system to do work.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1351/goldbook.E02101</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Energy</rdfs:label>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://qudt.org/vocab/quantitykind/Energy</rdfs:seeAlso>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://si-digital-framework.org/quantities/ENGY</rdfs:seeAlso>
+        <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">E</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/ExtrinsicStackingFault -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/ExtrinsicStackingFault">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFault"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An extrinsic stacking fault is a stacking fault produced by the change in sequence resulting from the introduction of an extra layer.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Extrinsic Stacking Fault</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/ExtrinsicStackingFaultEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/ExtrinsicStackingFaultEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFaultEnergy"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Extrinsic Stacking Fault Energy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/Gamma-Surface -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/Gamma-Surface">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/CalculatedProperty"/>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/Energy"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The gamma-surface is the excess interlayer energy, γ, as a function of an imposed rigid-body translation, t, parallel to the interface.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1080/14786436808227500</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Gamma-Surface</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/GeneralizedStackingFaultEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/GeneralizedStackingFaultEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFaultEnergy"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The generalized stacking fault (GSF) energy is a measure of the energy penalty between two adjacent planes during shear deformation in a specific slip direction on a given slip plane, representing the nature of slip and involving the stable and unstable stacking and twin fault energies.</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1016/j.actamat.2013.12.019</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Generalized Stacking Fault Energy</rdfs:label>
     </owl:Class>
     
 
@@ -419,11 +552,55 @@ We also have the outstanding issue of how to aim different definitions to differ
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/pldo/GrainBoundaryEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/GrainBoundaryEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/CalculatedProperty"/>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/Energy"/>
+        <obo:IAO_0000115>Grain boundary energy is the excess energy due to the presence of a grain boundary, with the perfect lattice (bulk) as the reference.</obo:IAO_0000115>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Usually expressed in units of energy per area.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Grain Boundary Energy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/I1StackingFaultEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/I1StackingFaultEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFaultEnergy"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The I1 stacking fault, or growth fault, is a type of intrinsic stacking fault in hcp systems due to the removal of a plane above the B plane, and then shearing of the remaining planes above the B plane by the displacement 1/3[-1-100].</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRevB.56.10844</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">I1 Stacking Fault Energy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/I2StackingFaultEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/I2StackingFaultEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFaultEnergy"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The I2 stacking fault, or deformation fault, is a type of intrinsic stacking fault in hcp systems due to directly shearing the hcp lattice by the displacement 1/3[-1-100].</obo:IAO_0000115>
+        <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRevB.56.10844</obo:IAO_0000119>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">I2 Stacking Fault Energy</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/IntrinsicStackingFault -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/IntrinsicStackingFault">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFault"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An intrinsic stacking fault is a stacking fault produced by the change in sequence resulting from the removal of an extra layer.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Intrinsic Stacking Fault</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/pldo/LowAngleGrainBoundary -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/LowAngleGrainBoundary">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundary"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A low angle GB is a grain boundary with a misorientation angle lower than 15 degrees.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A low angle grain boundary is a grain boundary with a misorientation angle lower than 15 degrees.</obo:IAO_0000115>
         <obo:IAO_0000119>ISBN 978-94-007-4968-9</obo:IAO_0000119>
         <rdfs:label>Low Angle Grain Boundary</rdfs:label>
         <skos:altLabel>Low-Angle Grain Boundary</skos:altLabel>
@@ -439,6 +616,12 @@ We also have the outstanding issue of how to aim different definitions to differ
         <obo:IAO_0000119>ISBN 978-94-007-4968-9</obo:IAO_0000119>
         <rdfs:label>Mixed Grain Boundary</rdfs:label>
     </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/PhysicalQuantity -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/PhysicalQuantity"/>
     
 
 
@@ -462,11 +645,23 @@ We also have the outstanding issue of how to aim different definitions to differ
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/pldo/StackingFaultEnergy -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/StackingFaultEnergy">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/CalculatedProperty"/>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/Energy"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stacking fault energy is the excess energy due to the presence of a stacking fault, with the perfect lattice (bulk) as the reference.</obo:IAO_0000115>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Usually expressed in units of energy per area.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stacking Fault Energy</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/pldo/Surface -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/Surface">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/PlanarDefect"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The free surface (or external surface) of the material is a planar defect where the surface atoms have no neighbours or cohesive bonds on the external side.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The free surface (or external surface) of the material is a planar defect where the surface atoms have no neighbors or cohesive bonds on the external side.</obo:IAO_0000115>
         <rdfs:label>Surface</rdfs:label>
     </owl:Class>
     
@@ -487,10 +682,20 @@ We also have the outstanding issue of how to aim different definitions to differ
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/TiltGrainBoundary">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/GrainBoundary"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A twist boundary is a grain boundary with a [uvw] rotation axis perpendicular to the boundary plane.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A tilt boundary is a grain boundary with a [uvw] rotation axis perpendicular to the boundary plane.</obo:IAO_0000115>
         <obo:IAO_0000119>ISBN 978-94-007-4968-9</obo:IAO_0000119>
         <rdfs:label>Tilt Grain Boundary</rdfs:label>
         <skos:altLabel>Tilt Boundary</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/pldo/Twin-likeStackingFault -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/Twin-likeStackingFault">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/StackingFault"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A twin-like stacking fault is a type of stacking fault that possesses mirror symmetry about the fault plane.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Twin-like Stacking Fault</rdfs:label>
     </owl:Class>
     
 
@@ -499,7 +704,7 @@ We also have the outstanding issue of how to aim different definitions to differ
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/pldo/TwinBoundary">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/pldo/PlanarDefect"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A twin boundary is a planar defect that occurs between two separate crystals which are mirror images of each other, both crystals should have the same crystal structure.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A twin boundary is a planar defect that occurs between two separate crystals which are mirror images of each other. Both crystals have the same crystal structure.</obo:IAO_0000115>
         <rdfs:label>Twin Boundary</rdfs:label>
     </owl:Class>
     

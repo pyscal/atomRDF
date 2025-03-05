@@ -17,6 +17,7 @@ import shutil
 import tarfile
 import warnings
 from ase.io import write
+from ase.build import cut
 
 import pyscal3.structure_creator as pcs
 from pyscal3.grain_boundary import GrainBoundary
@@ -190,6 +191,159 @@ def _make_general_lattice(
     s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     
     return s
+
+def _make_stacking_fault(
+    slip_plane,
+    displacement_a,
+    displacement_b=0,
+    slip_direction_a=None,
+    slip_direction_b=None,
+    vacuum=0,
+    minwidth=15,
+    even=True,
+    minimum_r=None,
+    relative_fault_position=0.5,
+    structure=None,
+    element=None,
+    lattice_constant=1.00,
+    repetitions=None,
+    ca_ratio=1.633,
+    noise=0,
+    primitive=False,
+    graph=None,
+    names=False,
+    label=None,
+    return_atomman_dislocation=False,
+):
+    """
+    Generate a stacking fault structure.
+
+    Parameters
+    ----------
+    slip_system : list of lists, shape (2 x 3) or (2 x 4)
+        the slip system for the given system. The input should of type [[u, v, w], [h, k, l]].
+        [u, v, w] is the slip direction and [h, k, l] is the slip plane.
+
+        For HCP systems, the input should be [[u, v, w, z], [h, k, l, m]].
+    
+    distance : float
+        Distance for translating one half of the cell along the [h k l] direction. Default is 1.
+    """
+    try:
+        import atomman as am
+        import atomman.unitconvert as uc
+    except ImportError:
+        raise ImportError("This function requires the atomman package to be installed")
+
+    
+    #we are good to go now
+    #we proceed with the atomman code
+    if element is None:
+        raise ValueError("Please provide element")
+    if element in element_dict.keys():
+        structure = element_dict[element]["structure"]
+        lattice_constant = element_dict[element]["lattice_constant"]
+    else:
+        raise ValueError("Please provide structure")
+    if structure == "hcp":
+        if len(slip_plane) != 4:
+            raise ValueError("For hcp systems, slip plane should be of length 4")
+        #routine for hcp
+        a = uc.set_in_units(_declass(lattice_constant), 'angstrom')
+        c = uc.set_in_units(_declass(ca_ratio), 'angstrom')
+        atoms = am.Atoms(pos=[[0.0, 0.0, 0.0], [1/3, 2/3, 0.5]])        
+        ucell = am.System(atoms=atoms, box=am.Box.hexagonal(a, c), scale=True, symbols=element)
+        sd = structure_dict["hcp"]["primitive"]
+    else:
+        #routine for others
+        #extract the structure vectors
+        if primitive:
+            sd = structure_dict[structure]["primitive"]
+        else:
+            sd = structure_dict[structure]["conventional"]
+        vectors = _declass(lattice_constant)*np.array(sd["box"])
+        #positions
+        positions = np.array(sd["positions"])
+        types = np.array(sd["species"])
+        
+        # create a structure with the info
+        box = am.Box(
+            avect=vectors[0],
+            bvect=vectors[1],
+            cvect=vectors[2],
+        )
+
+        atoms = am.Atoms(
+            atype=types, pos=positions,
+        )
+        ucell = am.System(atoms=atoms, box=box, scale=True, symbols=element)
+    
+    #seupersize
+    if repetitions is not None:
+        if isinstance(repetitions, int):
+            repetitions = [repetitions, repetitions, repetitions]
+        ucell = ucell.supersize(*repetitions)
+
+    sf = am.defect.StackingFault(slip_plane, ucell)
+    if slip_direction_a is not None:
+        sf.a1vect_uvw = slip_direction_a
+    if slip_direction_b is not None:
+        sf.a2vect_uvw = slip_direction_b
+    surfacesystem = sf.surface(shift=sf.shifts[0], 
+                            minwidth=minwidth, 
+                            even=even,
+                            vacuumwidth=vacuum)
+    if relative_fault_position != 0.5:
+        sf.faultpos_rel = relative_fault_position
+    faultsystem = sf.fault(a1=displacement_a, 
+                        a2=displacement_b)
+
+    #get displacements
+    displ = am.displacement(surfacesystem, faultsystem)
+
+    box = [faultsystem.box.avect, faultsystem.box.bvect, faultsystem.box.cvect]
+    atom_df = faultsystem.atoms_df()
+    types = [int(x) for x in atom_df.atype.values]
+    if element is not None:
+        if isinstance(element, str):
+            element = [element]
+        species = []
+        for t in types:
+            species.append(element[int(t) - 1])
+    else:
+        species = [None for x in range(len(types))]
+
+    positions = np.column_stack(
+        (atom_df["pos[0]"].values, atom_df["pos[1]"].values, atom_df["pos[2]"].values)
+    )
+
+    positions = positions + displ
+
+    #create datadict
+    datadict = {}
+    datadict["lattice"] = structure
+    datadict["lattice_constant"] = _declass(lattice_constant)
+    datadict["box"] = sd["box"]
+    datadict["positions"] = sd["positions"]
+    datadict["repetitions"] = repetitions
+
+    output_structure = System()
+    output_structure.box = box
+    atoms = Atoms()
+    atoms.from_dict({"positions": positions, "species": species, "types": types})
+    output_structure.atoms = atoms
+    #output_structure = output_structure.modify.remap_to_box()
+    output_structure.lattice_properties = datadict
+    output_structure.label = label
+    output_structure.graph = graph
+    output_structure.to_graph()
+    output_structure.add_stacking_fault({"plane":slip_plane, "displacement":sf.a1vect_uvw})
+    output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
+
+    if return_atomman_dislocation:
+        return output_structure, sf, surfacesystem, faultsystem
+    return output_structure
 
 
 def _make_dislocation(
@@ -852,6 +1006,7 @@ class System(pc.System):
     mapdict["defect"] = {}
     mapdict["defect"]["grain_boundary"] = _make_grain_boundary
     mapdict["defect"]["dislocation"] = _make_dislocation
+    mapdict["defect"]["stacking_fault"] = _make_stacking_fault
     create._add_attribute(mapdict)
 
     read = AttrSetter()
@@ -2380,6 +2535,16 @@ class System(pc.System):
         self.graph.add((line_defect, LDO.movesOn, slip_system))
 
 
+    def add_stacking_fault(self, sf_dict):
+        if self.graph is None:
+            return
+        plane = " ".join(np.array(sf_dict["plane"]).astype(str))
+        displ = " ".join(np.array(sf_dict["displacement"]).astype(str))
+        sf = self.graph.create_node(f"{self._name}_StackingFault", PLDO.StackingFault)
+        self.graph.add((self.material, CMSO.hasDefect, sf))
+        self.graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
+        self.graph.add((sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string)))
+
     def add_gb(self, gb_dict):
         """
         Add GB details which will be annotated using PLDO
@@ -2573,7 +2738,7 @@ class System(pc.System):
                 selection.append(False)
         if reverse_orientation:
             selection = np.invert(selection)
-        return selection        
+        return selection             
 
     def select_by_plane(self, plane, distance, reverse_orientation=False):
         selection = self._select_by_plane(plane, distance, 
