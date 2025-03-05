@@ -335,7 +335,7 @@ def _make_stacking_fault(
     output_structure.label = label
     output_structure.graph = graph
     output_structure.to_graph()
-    #output_structure.add_dislocation(disl_dict)
+    output_structure.add_stacking_fault({"plane":slip_plane, "displacement":sf.a1vect_uvw})
     output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
     return output_structure
@@ -2529,6 +2529,16 @@ class System(pc.System):
         self.graph.add((slip_plane, LDO.belongsToSystem, slip_system))
         self.graph.add((line_defect, LDO.movesOn, slip_system))
 
+
+    def add_stacking_fault(self, sf_dict):
+        if self.graph is None:
+            return
+        plane = " ".join(np.array(sf_dict["plane"]).astype(str))
+        displ = " ".join(np.array(sf_dict["displacement"]).astype(str))
+        sf = self.graph.create_node(f"{self._name}_StackingFault", PLDO.StackingFault)
+        self.graph.add((self.material, CMSO.hasDefect, sf))
+        self.graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
+        self.graph.add((sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string)))
 
     def add_gb(self, gb_dict):
         """
