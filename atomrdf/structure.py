@@ -192,19 +192,17 @@ def _make_general_lattice(
     
     return s
 
-def _convert_to_hkl(vector_uvtw):
-    """
-    Convert from uvtw to hkl systems
-    """
-    h = 2*vector_uvtw[0] + vector_uvtw[1]
-    k = vector_uvtw[0] + 2*vector_uvtw[1]
-    l = vector_uvtw[3]
-    return np.array([h,k,l])
-
 def _make_stacking_fault(
-    slip_system,
-    distance=1,
+    slip_plane,
+    displacement_a,
+    displacement_b=0,
+    slip_direction_a=None,
+    slip_direction_b=None,
     vacuum=0,
+    minwidth=15,
+    even=True,
+    minimum_r=None,
+    relative_fault_position=0.5,
     structure=None,
     element=None,
     lattice_constant=1.00,
@@ -230,21 +228,6 @@ def _make_stacking_fault(
     distance : float
         Distance for translating one half of the cell along the [h k l] direction. Default is 1.
     """
-    slip_plane = slip_system[1]
-    slip_direction = slip_system[0]
-
-    if len(slip_plane) == 4:
-        #hcp
-        slip_plane = _convert_to_hkl(slip_plane)
-        slip_direction = _convert_to_hkl(slip_direction)
-    
-    third_direction = np.cross(slip_plane, slip_direction)
-
-    #now reduce the slip direction
-    slip_magnitude = np.gcd.reduce(slip_direction)
-    if slip_magnitude > 1:
-        slip_direction = slip_direction/slip_magnitude
-    
     #we are good to go now
     if structure is not None:
         # create a structure with the info
@@ -277,34 +260,55 @@ def _make_stacking_fault(
 
     structure_dict = copy.deepcopy(input_structure._structure_dict)
 
-    #convert inp struct to ase
-    ase_struct = input_structure.write.ase()
-    ase_struct = cut(ase_struct, a=slip_direction, b=third_direction, c=slip_plane)
-    ase_struct.center(vacuum=vacuum, axis=2)
+    box = am.Box(
+        avect=input_structure.box[0],
+        bvect=input_structure.box[1],
+        cvect=input_structure.box[2],
+    )
+    atoms = am.Atoms(
+        atype=input_structure.atoms.types, pos=input_structure.atoms.positions
+    )
+    ucell = am.System(
+        atoms=atoms, box=box, pbc=[True, True, True], symbols=element, scale=False
+    )
 
-    #convert back to pyscal
-    input_structure = System.read.ase(ase_struct)
-    positions = input_structure.atoms.positions
-    box = input_structure.box
-    types = input_structure.atoms.types
-    species = input_structure.atoms.species
-    mid_distance = input_structure.boxdims[2]/2
+    sf = am.defect.StackingFault(slip_plane, ucell)
+    if slip_direction_a is not None:
+        sf.a1vect_uvw = slip_direction_a
+    if slip_direction_b is not None:
+        sf.a2vect_uvw = slip_direction_b
+    surfacesystem = sf.surface(shift=sf.shifts[0], 
+                            minwidth=minwidth, 
+                            even=even,
+                            vacuumwidth=vacuumwidth)
+    if relative_fault_position != 0.5:
+        sf.faultpos_rel = relative_fault_position
+    faultsystem = sf.fault(a1=displacement_a, 
+                        a2=displacement_b)
 
-    unitsd = slip_direction/np.linalg.norm(slip_direction)
-    plane_norm = np.linalg.norm(slip_plane)
+    #get displacements
+    displ = am.displacement(surfacesystem, faultsystem)
 
-    for count, position in enumerate(positions):
-        dist = (np.dot(position, slip_plane)/plane_norm)
-        if dist > mid_distance:
-            old_position = copy.deepcopy(position)
-            positions[count][0] += unitsd[0]*distance
-            positions[count][1] += unitsd[1]*distance
-            positions[count][2] += unitsd[2]*distance
+    box = [disl_system.box.avect, disl_system.box.bvect, disl_system.box.cvect]
+    atom_df = disl_system.atoms_df()
+    types = [int(x) for x in atom_df.atype.values]
+    if element is not None:
+        species = []
+        for t in types:
+            species.append(element[int(t) - 1])
+    else:
+        species = [None for x in range(len(types))]
+
+    positions = np.column_stack(
+        (atom_df["pos[0]"].values, atom_df["pos[1]"].values, atom_df["pos[2]"].values)
+    )
+
+    positions = positions + displ
 
     output_structure = System()
     output_structure.box = box
     atoms = Atoms()
-    output_structure.from_dict({"positions": positions, "species": species, "types": types})
+    atoms.from_dict({"positions": positions, "species": species, "types": types})
     output_structure.atoms = atoms        
     output_structure._structure_dict = structure_dict
     output_structure.label = label
@@ -976,6 +980,7 @@ class System(pc.System):
     mapdict["defect"] = {}
     mapdict["defect"]["grain_boundary"] = _make_grain_boundary
     mapdict["defect"]["dislocation"] = _make_dislocation
+    mapdict["defect"]["stacking_fault"] = _make_stacking_fault
     create._add_attribute(mapdict)
 
     read = AttrSetter()
