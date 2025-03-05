@@ -234,49 +234,54 @@ def _make_stacking_fault(
     except ImportError:
         raise ImportError("This function requires the atomman package to be installed")
 
+    
     #we are good to go now
-    if structure is not None:
-        # create a structure with the info
-        input_structure = _make_crystal(
-            structure,
-            lattice_constant=_declass(lattice_constant),
-            repetitions=repetitions,
-            ca_ratio=_declass(ca_ratio),
-            noise=noise,
-            element=element,
-            primitive=primitive,
-        )
-    elif element is not None:
-        if element in element_dict.keys():
-            structure = element_dict[element]["structure"]
-            lattice_constant = element_dict[element]["lattice_constant"]
-        else:
-            raise ValueError("Please provide structure")
-        input_structure = _make_crystal(
-            structure,
-            lattice_constant=_declass(lattice_constant),
-            repetitions=repetitions,
-            ca_ratio=_declass(ca_ratio),
-            noise=noise,
-            element=element,
-            primitive=primitive,
-        )
+    #we proceed with the atomman code
+    if element is None:
+        raise ValueError("Please provide element")
+    if element in element_dict.keys():
+        structure = element_dict[element]["structure"]
+        lattice_constant = element_dict[element]["lattice_constant"]
     else:
-        raise ValueError("Provide either structure or element")
+        raise ValueError("Please provide structure")
+    if structure == "hcp":
+        if len(slip_plane) != 4:
+            raise ValueError("For hcp systems, slip plane should be of length 4")
+        #routine for hcp
+        a = uc.set_in_units(_declass(lattice_constant), 'angstrom')
+        c = uc.set_in_units(_declass(ca_ratio), 'angstrom')
+        atoms = am.Atoms(pos=[[0.0, 0.0, 0.0], [1/3, 2/3, 0.5]])        
+        ucell = am.System(atoms=atoms, box=am.Box.hexagonal(a, c), scale=True, symbols=element)
+        sd = structure_dict["hcp"]["primitive"]
+    else:
+        #routine for others
+        #extract the structure vectors
+        if primitive:
+            sd = structure_dict[structure]["primitive"]
+        else:
+            sd = structure_dict[structure]["conventional"]
+        vectors = _declass(lattice_constant)*np.array(sd["box"])
+        #positions
+        positions = np.array(sd["positions"])
+        types = np.array(sd["types"])
+        
+        # create a structure with the info
+        box = am.Box(
+            avect=vectors[0],
+            bvect=vectors[1],
+            cvect=vectors[2],
+        )
 
-    structure_dict = copy.deepcopy(input_structure._structure_dict)
-
-    box = am.Box(
-        avect=input_structure.box[0],
-        bvect=input_structure.box[1],
-        cvect=input_structure.box[2],
-    )
-    atoms = am.Atoms(
-        atype=input_structure.atoms.types, pos=input_structure.atoms.positions
-    )
-    ucell = am.System(
-        atoms=atoms, box=box, pbc=[True, True, True], symbols=element, scale=False
-    )
+        atoms = am.Atoms(
+            atype=types, pos=positions,
+        )
+        ucell = am.System(atoms=atoms, box=box, scale=True, symbols=element)
+    
+    #seupersize
+    if repetitions is not None:
+        if isinstance(repetitions, int):
+            repetitions = [repetitions, repetitions, repetitions]
+        ucell = ucell.supersize(*repetitions)
 
     sf = am.defect.StackingFault(slip_plane, ucell)
     if slip_direction_a is not None:
@@ -286,7 +291,7 @@ def _make_stacking_fault(
     surfacesystem = sf.surface(shift=sf.shifts[0], 
                             minwidth=minwidth, 
                             even=even,
-                            vacuumwidth=vacuumwidth)
+                            vacuumwidth=vacuum)
     if relative_fault_position != 0.5:
         sf.faultpos_rel = relative_fault_position
     faultsystem = sf.fault(a1=displacement_a, 
@@ -295,10 +300,12 @@ def _make_stacking_fault(
     #get displacements
     displ = am.displacement(surfacesystem, faultsystem)
 
-    box = [disl_system.box.avect, disl_system.box.bvect, disl_system.box.cvect]
-    atom_df = disl_system.atoms_df()
+    box = [faultsystem.box.avect, faultsystem.box.bvect, faultsystem.box.cvect]
+    atom_df = faultsystem.atoms_df()
     types = [int(x) for x in atom_df.atype.values]
     if element is not None:
+        if isinstance(element, str):
+            element = [element]
         species = []
         for t in types:
             species.append(element[int(t) - 1])
@@ -311,12 +318,20 @@ def _make_stacking_fault(
 
     positions = positions + displ
 
+    #create datadict
+    datadict = {}
+    datadict["lattice"] = structure
+    datadict["lattice_constant"] = _declass(lattice_constant)
+    datadict["box"] = sd["box"]
+    datadict["positions"] = sd["positions"]
+    datadict["repetitions"] = repetitions
+
     output_structure = System()
     output_structure.box = box
     atoms = Atoms()
     atoms.from_dict({"positions": positions, "species": species, "types": types})
-    output_structure.atoms = atoms        
-    output_structure._structure_dict = structure_dict
+    output_structure.atoms = atoms
+    output_structure.lattice_properties = datadict
     output_structure.label = label
     output_structure.graph = graph
     output_structure.to_graph()
