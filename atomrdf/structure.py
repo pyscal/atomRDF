@@ -228,6 +228,12 @@ def _make_stacking_fault(
     distance : float
         Distance for translating one half of the cell along the [h k l] direction. Default is 1.
     """
+    try:
+        import atomman as am
+        import atomman.unitconvert as uc
+    except ImportError:
+        raise ImportError("This function requires the atomman package to be installed")
+
     #we are good to go now
     if structure is not None:
         # create a structure with the info
