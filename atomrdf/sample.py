@@ -217,6 +217,8 @@ class Property:
         if isinstance(value, str):
             if (value[0] == '[') and (value[-1] == ']'):
                 value = np.array(json.loads(value))
+        if isinstance(value, list):
+            value = np.array(value)
         return value
     
     def __repr__(self):
