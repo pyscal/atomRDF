@@ -213,10 +213,24 @@ class Property:
         self._label = None
         self._sample_parent = sample_parent
     
+    def __getitem__(self, index):
+        if isinstance(self._value, (list, np.ndarray)):
+            if isinstance(index, slice):
+                value = self._value[index.start:index.stop:index.step]
+            else:
+                value = self._value[index]
+            return Property(value, unit=self._unit, graph=self._graph, parent=self._parent, sample_parent=self._sample_parent)
+            
+        else:
+            raise TypeError('This property is not a list or array, therefore not subscriptable.')
+    
+
     def _clean_value(self, value):
         if isinstance(value, str):
             if (value[0] == '[') and (value[-1] == ']'):
                 value = np.array(json.loads(value))
+        if isinstance(value, (list, np.ndarray)):
+            value = np.array(value)
         return value
     
     def __repr__(self):
@@ -224,6 +238,7 @@ class Property:
             return f"{self._value} {self._unit}"
         return f"{self._value}"
     
+    #
     @property
     def value(self):
         return self._value
@@ -274,6 +289,13 @@ class Property:
         if self._unit is not None:
             self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{self._unit}")))
         return parent
+
+    def update_physical_quantity(self, ontoterm):
+        if self._graph is not None:
+            if self._parent is not None:
+                self._graph.remove((self._parent, RDF.type, None))
+            #remove the old type
+            self._graph.add((self._parent, RDF.type, ontoterm.URIRef))
 
     #overloaded operations
     def __add__(self, value):
