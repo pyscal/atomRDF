@@ -158,7 +158,7 @@ def extract_calculated_quantities(job, method_dict):
     )
     outputs.append(
         {
-            "label": "Volume",
+            "label": "SimulationCellVolume",
             "value": np.round(struct.get_volume(), decimals=5),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
