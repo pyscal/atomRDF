@@ -53,11 +53,11 @@ def process_job(job):
     )
     outputs.append(
         {
-            "label": "Volume",
+            "label": "SimulationCellVolume",
             "value": np.round(job['output/volume'], decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
-            "base": "Volume",
+            "base": "SimulationCellVolume",
         }
     )
     outputs.append(
