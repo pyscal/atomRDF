@@ -687,7 +687,7 @@ class KnowledgeGraph:
         if has_computational_method is not None:
             self.add((simulation_node, ASMO.hasComputationalMethod, has_computational_method))
         if base_quantity is None:
-            base_quantity = CMSO.ComputedProperty
+            base_quantity = ASMO.CalculatedProperty
         prop = self.create_node(f"simulation:{main_id}_{property_label}", base_quantity)
         self.add((prop, ASMO.wasCalculatedBy, simulation_node))
         self.add((prop, RDFS.label, Literal(property_label)))
@@ -728,7 +728,7 @@ class KnowledgeGraph:
         >>> graph.add_calculated_quantity(sample, "energy", "10.5", "eV")
         """
         if base_quantity is None:
-            base_quantity = CMSO.ComputedProperty
+            base_quantity = ASMO.CalculatedProperty
 
         prop = self.create_node(f"{sample}_{propertyname}", base_quantity)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
