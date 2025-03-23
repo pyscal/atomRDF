@@ -290,6 +290,13 @@ class Property:
             self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{self._unit}")))
         return parent
 
+    def update_physical_quantity(self, ontoterm):
+        if self._graph is not None:
+            if self._parent is not None:
+                self._graph.remove((self._parent, RDF.type, None))
+            #remove the old type
+            self._graph.add((self._parent, RDF.type, ontoterm.URIRef))
+
     #overloaded operations
     def __add__(self, value):
         res = self._value + self._declass(value)
