@@ -645,7 +645,7 @@ class KnowledgeGraph:
                                 base_quantity=None,
                                 unit=None,
                                 has_simulation_algorithm=None,
-                                has_computational_method=None)
+                                has_computational_method=None):
         """
         Create a new output of simulation in the graph. The types of different terms are defined in the ontology.
         Those should be access by kg.terms.ontolog.ontology_term.
