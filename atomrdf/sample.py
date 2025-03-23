@@ -217,8 +217,10 @@ class Property:
         if isinstance(self._value, (list, np.ndarray)):
             if isinstance(index, slice):
                 value = self._value[index.start:index.stop:index.step]
-                return Property(value, unit=self._unit, graph=self._graph, parent=self._parent, sample_parent=self._sample_parent)
-            return self._value[index]
+            else:
+                value = self._value[index]
+            return Property(value, unit=self._unit, graph=self._graph, parent=self._parent, sample_parent=self._sample_parent)
+            
         else:
             raise TypeError('This property is not a list or array, therefore not subscriptable.')
     
