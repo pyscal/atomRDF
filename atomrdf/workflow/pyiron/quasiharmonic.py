@@ -32,7 +32,7 @@ def process_job(job):
             "value": np.round(job['output/volumes'].T, decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
-            "base": "Volume",
+            "base": "SimulationCellVolume",
         }
     )
     outputs.append(
