@@ -639,7 +639,65 @@ class KnowledgeGraph:
             (CMSO.Vector, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/ANGSTROM"))
         )
 
-    def add_calculated_quantity(self, sample, propertyname, value, unit=None):
+    def create_output_of_simulation(self, simulation_term,
+                                value,
+                                property_label,
+                                base_quantity=None,
+                                unit=None,
+                                has_simulation_algorithm=None,
+                                has_computational_method=None)
+        """
+        Create a new output of simulation in the graph. The types of different terms are defined in the ontology.
+        Those should be access by kg.terms.ontolog.ontology_term.
+
+        Parameters
+        ----------
+        simulation_term : OntoTerm
+            The term representing the simulation.
+        
+        value : float
+            The value of the output.
+        
+        property_label : str
+            The label of the property.
+        
+        base_quantity : OntoTerm, optional
+            The base quantity of the output. Default is None.
+        
+        unit : OntoTerm, optional
+            The unit of the output. Default is None.
+        
+        
+        has_simulation_algorithm : OntoTerm, optional
+            The simulation algorithm used. Default is None.
+        
+        has_computational_method : OntoTerm, optional
+            The computational method used. Default is None.
+        
+        Returns
+        -------
+        URIRef
+            The newly created output of simulation.
+
+        """
+        main_id = str(uuid.uuid4())
+        simulation_node = self.create_node(f"simulation:{main_id}", simulation_term)
+        if has_simulation_algorithm is not None:
+            self.add((simulation_node, ASMO.usesSimulationAlgorithm, has_simulation_algorithm))
+        if has_computational_method is not None:
+            self.add((simulation_node, ASMO.hasComputationalMethod, has_computational_method))
+        if base_quantity is None:
+            base_quantity = CMSO.ComputedProperty
+        prop = self.create_node(f"simulation:{main_id}_{property_label}", base_quantity)
+        self.add((prop, ASMO.wasCalculatedBy, simulation_node))
+        self.add((prop, RDFS.label, Literal(property_label)))
+        self.add((prop, ASMO.hasValue, Literal(value)))
+        if unit is not None:
+            self.add((prop, ASMO.hasUnit, unit))
+        return prop
+
+
+    def add_calculated_quantity(self, sample, propertyname, value, base_quantity=None, unit=None):
         """
         Add a calculated quantity to a sample.
 
@@ -669,8 +727,10 @@ class KnowledgeGraph:
         >>> sample = graph.create_node("Sample1", CMSO.Sample)
         >>> graph.add_calculated_quantity(sample, "energy", "10.5", "eV")
         """
+        if base_quantity is None:
+            base_quantity = CMSO.ComputedProperty
 
-        prop = self.create_node(f"{sample}_{propertyname}", CMSO.CalculatedProperty)
+        prop = self.create_node(f"{sample}_{propertyname}", base_quantity)
         self.add((sample, CMSO.hasCalculatedProperty, prop))
         self.add((prop, RDFS.label, Literal(propertyname)))
         self.add((prop, ASMO.hasValue, Literal(value)))
