@@ -639,7 +639,7 @@ class KnowledgeGraph:
             (CMSO.Vector, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/ANGSTROM"))
         )
 
-    def create_output_of_simulation(self, simulation_term,
+    def add_output_of_simulation(self, simulation_term,
                                 value,
                                 property_label,
                                 base_quantity=None,
