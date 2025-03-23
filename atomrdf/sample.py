@@ -213,11 +213,20 @@ class Property:
         self._label = None
         self._sample_parent = sample_parent
     
+    def __getitem__(self, index):
+        if isinstance(self._value, (list, np.ndarray)):
+            if isinstance(index, slice):
+                return Property(self._value[index.start:index.stop:index.step])
+            return self._value[index]
+        else:
+            raise TypeError('This property is not a list or array, therefore not subscriptable.')
+    
+
     def _clean_value(self, value):
         if isinstance(value, str):
             if (value[0] == '[') and (value[-1] == ']'):
                 value = np.array(json.loads(value))
-        if isinstance(value, list):
+        if isinstance(value, (list, np.ndarray)):
             value = np.array(value)
         return value
     
@@ -226,6 +235,7 @@ class Property:
             return f"{self._value} {self._unit}"
         return f"{self._value}"
     
+    #
     @property
     def value(self):
         return self._value
