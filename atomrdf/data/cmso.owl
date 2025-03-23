@@ -342,6 +342,17 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cdos/cdco/hasCrystallographicDefect -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cdos/cdco/hasCrystallographicDefect">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cdos/cdco/CrystallineMaterial"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cdos/cdco/CrystallographicDefect"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a crystalline material and a crystallographic defect, such as vacancies, interstitials, or dislocations.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has crystallographic defect</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasAngle -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasAngle">
@@ -382,30 +393,6 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty -->
-
-    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty">
-        <owl:inverseOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/isCalculatedPropertyOf"/>
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/ComputationalSample"/>
-        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a computational sample and the calculated property.</obo:IAO_0000115>
-        <rdfs:label>has calculated property</rdfs:label>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://purls.helmholtz-metadaten.de/cmso/hasDefect -->
-
-    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasDefect">
-        <owl:inverseOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/isDefectOf"/>
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CrystallineMaterial"/>
-        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CrystalDefect"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between  a crystalline material and the crystal defects it contains.</obo:IAO_0000115>
-        <rdfs:label>has defect</rdfs:label>
-    </owl:ObjectProperty>
-    
-
-
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasElement -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasElement">
@@ -428,13 +415,13 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     
 
 
-    <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength -->
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSimulationCellLength -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
-        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Length"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a simulation cell and its length.</obo:IAO_0000115>
-        <rdfs:label>has length</rdfs:label>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has simulation cell length</rdfs:label>
     </owl:ObjectProperty>
     
 
@@ -470,6 +457,17 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an atomic scale sample and the simulation cell.</obo:IAO_0000115>
         <rdfs:label>has simulation cell</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasSimulationCellVolume -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasSimulationCellVolume">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellVolume"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a simulation cell and its volume.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has simulation cell volume</rdfs:label>
     </owl:ObjectProperty>
     
 
@@ -510,17 +508,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasUnit -->
 
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasUnit">
-        <rdfs:domain>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/AtomAttribute"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
-                </owl:unionOf>
-            </owl:Class>
-        </rdfs:domain>
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
         <rdfs:range rdf:resource="http://qudt.org/schema/qudt/Unit"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A relation indicating the unit.</obo:IAO_0000115>
         <rdfs:label>has unit</rdfs:label>
@@ -551,7 +539,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
             </owl:Class>
         </rdfs:domain>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a simulation or unit cell and its vectors.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between an entity and its vectors.</obo:IAO_0000115>
         <rdfs:label>has vector</rdfs:label>
     </owl:ObjectProperty>
     
@@ -742,14 +730,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength_x -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_x">
-        <rdfs:domain>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
-                </owl:unionOf>
-            </owl:Class>
-        </rdfs:domain>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a length to the measurement in the x axis.</obo:IAO_0000115>
         <rdfs:label>has length x</rdfs:label>
@@ -760,14 +741,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength_y -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_y">
-        <rdfs:domain>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
-                </owl:unionOf>
-            </owl:Class>
-        </rdfs:domain>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a length to the measurement in the y axis.</obo:IAO_0000115>
         <rdfs:label>has length y</rdfs:label>
@@ -778,14 +752,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasLength_z -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_z">
-        <rdfs:domain>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
-                </owl:unionOf>
-            </owl:Class>
-        </rdfs:domain>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a length to the measurement in the z axis.</obo:IAO_0000115>
         <rdfs:label>has length z</rdfs:label>
@@ -905,12 +872,34 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasVacuumDirection -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasVacuumDirection">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property defining the parameter that indicates the specific direction(s) in which vacuum space is added in a simulation cell</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has vacuum direction</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/hasVacuumLength -->
+
+    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasVacuumLength">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCell"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property defining the distance or thickness of vacuum space included in a simulation cell, often used to separate periodic images of a system to prevent interactions between them, especially in slab or surface simulations.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has vacuum length</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cmso/hasValue -->
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasValue">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty"/>
+        <rdfs:domain rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a calculated property to its value.</obo:IAO_0000115>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking an entity to its value.</obo:IAO_0000115>
         <rdfs:label>has value</rdfs:label>
     </owl:DatatypeProperty>
     
@@ -947,6 +936,24 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/cdco/CrystallineMaterial -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/cdco/CrystallineMaterial">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Crystalline material is material characterized by a periodic arrangement of the constituent atoms. The arrangement could be described its crystal structure.</obo:IAO_0000115>
+        <rdfs:label>Crystalline Material</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/cdco/CrystallographicDefect -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/cdco/CrystallographicDefect">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Lattice irregularity having one or more of its dimensions on the order of an atomic diameter.</obo:IAO_0000115>
+        <rdfs:label>Crystallographic Defect</rdfs:label>
+    </owl:Class>
     
 
 
@@ -1037,15 +1044,6 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Basis">
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The basis of a crystal indicates the arrangement or position of atoms in the crystal lattice.</obo:IAO_0000115>
         <rdfs:label>Basis</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty -->
-
-    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/CalculatedProperty">
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A calculated property is a property of a material resulting from a calculation or simulation.</obo:IAO_0000115>
-        <rdfs:label>Calculated Property</rdfs:label>
     </owl:Class>
     
 
@@ -1146,14 +1144,6 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/cmso/LatticeParameter -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/LatticeParameter">
-        <rdfs:subClassOf>
-            <owl:Class>
-                <owl:unionOf rdf:parseType="Collection">
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length"/>
-                    <rdf:Description rdf:about="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
-                </owl:unionOf>
-            </owl:Class>
-        </rdfs:subClassOf>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The lattice parameter is the measurement of length of the unit cell of the crystal lattice.</obo:IAO_0000115>
         <rdfs:comment>The lattice angles can also be considered lattice parameters (see Lattice Angle)</rdfs:comment>
         <rdfs:label>Lattice Parameter</rdfs:label>
@@ -1179,15 +1169,6 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A lattice vector is a vector that defines the lattice of the crystal structure.</obo:IAO_0000115>
         <rdfs:comment>Note that it differs from the simulation cell vector.</rdfs:comment>
         <rdfs:label>Lattice Vector</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://purls.helmholtz-metadaten.de/cmso/Length -->
-
-    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Length">
-        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Length is a measure of distance.</obo:IAO_0000115>
-        <rdfs:label>Length</rdfs:label>
     </owl:Class>
     
 
@@ -1322,7 +1303,6 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength">
-        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Length"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The simulation cell length refers to the length (dimension) of the simulation cell or box.</obo:IAO_0000115>
         <rdfs:label>Simulation Cell Length</rdfs:label>
         <skos:altLabel>Box length</skos:altLabel>
@@ -1337,6 +1317,15 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The simulation cell vector is a vector that defines the simulation cell or box.</obo:IAO_0000115>
         <rdfs:comment>Note that it differs from the lattice vector.</rdfs:comment>
         <rdfs:label>Simulation Cell Vector</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/SimulationCellVolume -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/SimulationCellVolume">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The simulation cell volume refers to the volume of the simulation cell or box.</obo:IAO_0000115>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Simulation Cell Volume</rdfs:label>
     </owl:Class>
     
 
