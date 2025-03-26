@@ -961,6 +961,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <!-- http://purls.helmholtz-metadaten.de/cdos/cdco/Material -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/cdco/Material">
+        <owl:equivalentClass rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Material"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Materials are substances in the condensed states (liquid, solid, colloidal) designed or manipulated for technological ends.</obo:IAO_0000115>
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://web.archive.org/web/20100801234616/http://www.nature.com/nmat/authors/index.html</obo:IAO_0000119>
         <rdfs:label>Material</rdfs:label>
@@ -1179,6 +1180,16 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Macroscale sample is a computational sample in the macroscale.</obo:IAO_0000115>
         <rdfs:label>Macroscale Sample</rdfs:label>
         <skos:altLabel>Macro Scale Sample</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cmso/Material -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cmso/Material">
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Materials are substances in the condensed states (liquid, solid, colloidal) designed or manipulated for technological ends.</obo:IAO_0000115>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In the CMSO context, &apos;Material&apos; refers to a theoretical entity and not necessarily a tangible object.</rdfs:comment>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Material</rdfs:label>
     </owl:Class>
     
 
