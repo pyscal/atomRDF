@@ -37,7 +37,7 @@ from atomrdf.sample import Property
 import atomrdf.io as aio
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, LDO, PLDO, PODO, UNSAFEASMO, UNSAFECMSO, PROV, Literal, ASMO
+from atomrdf.namespace import CMSO, LDO, PLDO, PODO, CDCO, UNSAFEASMO, UNSAFECMSO, PROV, Literal, ASMO
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -53,74 +53,7 @@ def _declass(item):
     else:
         return item
         
-def _make_crystal(
-    structure,
-    lattice_constant=1.00,
-    repetitions=None,
-    ca_ratio=1.633,
-    noise=0,
-    element=None,
-    primitive=False,
-    graph=None,
-    names=False,
-    label=None,
-):
-    """
-    Create a crystal structure using the specified parameters.
 
-    Parameters:
-    -----------
-    structure : str
-        The crystal structure to create.
-    lattice_constant : float, optional
-        The lattice constant of the crystal. Default is 1.00.
-    repetitions : tuple or None, optional
-        The number of repetitions of the crystal structure in each direction. Default is None.
-    ca_ratio : float, optional
-        The c/a ratio of the crystal. Default is 1.633.
-    noise : float, optional
-        The amount of noise to add to each atom position. Default is 0.
-    element : str or None, optional
-        The element to use for the crystal. Default is None.
-    primitive : bool, optional
-        Whether to create a primitive cell. Default is False.
-    graph : atomrdf.KnowledgeGraph, optional
-        The graph object to use for the crystal. Default is None.
-        The structure is added to the KnowledgeGraph only if this option is provided.
-    names : bool, optional
-        If provided, human-readable names will be assigned to each property. If False, random IDs will be used. Default is False.
-
-    Returns:
-    --------
-    s : object
-        The atomrdf.Structure object representing the generated crystal structure.
-    """
-    if repetitions is None:
-        repetitions = [1, 1, 1]
-    atoms, box, sdict = pcs.make_crystal(
-        structure,
-        lattice_constant = _declass(lattice_constant),
-        repetitions=repetitions,
-        ca_ratio = _declass(ca_ratio),
-        noise=noise,
-        element=element,
-        return_structure_dict=True,
-        primitive=primitive,
-    )
-    if 'repetitions' not in sdict.keys():
-        sdict['repetitions'] = repetitions
-
-    s = System(graph=graph, names=names)
-    s.box = box
-    s.atoms = atoms
-    s.atoms._lattice = structure
-    s.atoms._lattice_constant = _declass(lattice_constant)
-    s._structure_dict = sdict
-    s.label = label
-    s.to_graph()
-    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
-    s.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')    
-    return s
 
 
 def _make_general_lattice(
@@ -1340,7 +1273,7 @@ class System(pc.System):
             return
         
         #if the property is a directly calculated value
-        parent_samples = list([x[0] for x in self.graph.triples((None, CMSO.hasCalculatedProperty, output_property._parent))])
+        parent_samples = list([x[0] for x in self.graph.triples((None, ASMO.hasCalculatedProperty, output_property._parent))])
         if len(parent_samples)>0:
             for parent_sample in parent_samples:
                 self.graph.add((self.sample, PROV.wasDerivedFrom, parent_sample))
@@ -1358,7 +1291,7 @@ class System(pc.System):
 
             #also get activity
             activity = self.graph.value(output_property._parent, ASMO.wasCalculatedBy)
-            self.graph.add((lattice_parameter, UNSAFEASMO.wasCalculatedBy, activity))
+            self.graph.add((lattice_parameter, ASMO.wasCalculatedBy, activity))
 
 
     def add_vacancy(self, concentration, number=None):
@@ -1381,7 +1314,7 @@ class System(pc.System):
             return
 
         vacancy = self.graph.create_node(f"{self._name}_Vacancy", PODO.Vacancy)
-        self.graph.add((self.material, CMSO.hasDefect, vacancy))
+        self.graph.add((self.material, CDCO.hasCrystallographicDefect, vacancy))
         self.graph.add(
             (
                 self.sample,
@@ -1548,7 +1481,7 @@ class System(pc.System):
 
     def add_triples_for_substitutional_impurities(self, conc_of_impurities, no_of_impurities=None):
         defect = self.graph.create_node(f"{self._name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity)
-        self.graph.add((self.material, CMSO.hasDefect, defect))
+        self.graph.add((self.material, CDCO.hasCrystallographicDefect, defect))
         self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
         if no_of_impurities is not None:
             self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
@@ -1747,7 +1680,7 @@ class System(pc.System):
             defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity, label=label)
         else:
             defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity)
-        self.graph.add((self.material, CMSO.hasDefect, defect))
+        self.graph.add((self.material, CDCO.hasCrystallographicDefect, defect))
         self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
         if no_of_impurities is not None:
             self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
@@ -2500,7 +2433,7 @@ class System(pc.System):
             disl_name = "MixedDislocation"
 
         line_defect = self.graph.create_node(f"{self._name}_Dislocation", disl_type)
-        self.graph.add((self.material, CMSO.hasDefect, line_defect))
+        self.graph.add((self.material, CDCO.hasCrystallographicDefect, line_defect))
 
         line_direction = self.graph.create_node(f"{self._name}_DislocationLineDirection", LDO.LineDirection)
         self.graph.add((line_direction, CMSO.hasComponent_x, Literal(disl_dict['DislocationLine'][0], datatype=XSD.float)))
@@ -2541,7 +2474,7 @@ class System(pc.System):
         plane = " ".join(np.array(sf_dict["plane"]).astype(str))
         displ = " ".join(np.array(sf_dict["displacement"]).astype(str))
         sf = self.graph.create_node(f"{self._name}_StackingFault", PLDO.StackingFault)
-        self.graph.add((self.material, CMSO.hasDefect, sf))
+        self.graph.add((self.material, CDCO.hasCrystallographicDefect, sf))
         self.graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
         self.graph.add((sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string)))
 
@@ -2597,7 +2530,7 @@ class System(pc.System):
                 f"{self._name}_MixedGrainBoundary", PLDO.MixedGrainBoundary
             )
 
-        self.graph.add((self.material, CMSO.hasDefect, plane_defect))
+        self.graph.add((self.material, CDCO.hasCrystallographicDefect, plane_defect))
         self.graph.add(
             (
                 plane_defect,
