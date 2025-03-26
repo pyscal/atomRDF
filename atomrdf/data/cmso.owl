@@ -731,6 +731,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_x">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a length to the measurement in the x axis.</obo:IAO_0000115>
         <rdfs:label>has length x</rdfs:label>
@@ -742,6 +743,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_y">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a length to the measurement in the y axis.</obo:IAO_0000115>
         <rdfs:label>has length y</rdfs:label>
@@ -753,6 +755,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
 
     <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cmso/hasLength_z">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/SimulationCellLength"/>
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cmso/UnitCell"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data property linking a length to the measurement in the z axis.</obo:IAO_0000115>
         <rdfs:label>has length z</rdfs:label>

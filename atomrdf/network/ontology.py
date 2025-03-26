@@ -61,6 +61,7 @@ def read_ontology():
     combo.add_path(("asmo:InputParameter", "rdfs:label", "string"))
     combo.add_path(("prov:SoftwareAgent", "rdfs:label", "string"))
     combo.add_path(("asmo:InteratomicPotential", "rdfs:label", "string"))
+    combo.add_path(("cmso:CrystalStructure", "cmso:hasAltName", "string"))
     
     # return
     return combo

@@ -721,7 +721,7 @@ class KnowledgeGraph:
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[
             0
         ]
-        defects = list([k[2] for k in self.triples((material, CMSO.hasDefect, None))])
+        defects = list([k[2] for k in self.triples((material, CDCO.hasCrystallographicDefect, None))])
         composition = list(
             [
                 k[2].toPython()
@@ -1489,7 +1489,7 @@ class KnowledgeGraph:
         if label is not None:
             prop_list = list(self.graph.triples((None, RDFS.label, label)))
         elif propertytype is not None:
-            prop_list = list(self.graph.triples((None, RDF.type, propertytype.URIRef))
+            prop_list = list(self.graph.triples((None, RDF.type, propertytype.URIRef)))
         else:
             raise RuntimeError('Either label or propertytype should be provided')
         if len(prop_list) == 0:
