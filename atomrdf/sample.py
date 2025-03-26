@@ -75,12 +75,12 @@ class Sample:
         volume_value = self._graph.value(volume, ASMO.hasValue)
 
         #find there are already volume attached as calculated property
-        inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
+        inps = [k[2] for k in self._graph.triples((self._sample_id, ASMO.hasCalculatedProperty, None))]
         #initially query if there is property with label volume
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
         if not "SimulationCellVolume" in labels:
             #add this as a calculated property
-            self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, volume))
+            self._graph.add((self._sample_id, ASMO.hasCalculatedProperty, volume))
             parent = volume            
         else:
             parent = inps[labels.index("SimulationCellVolume")]
@@ -89,13 +89,13 @@ class Sample:
     @property
     def _no_of_atoms(self):
         no_atoms = self._graph.value(self._sample_id, CMSO.hasNumberOfAtoms)
-        inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
+        inps = [k[2] for k in self._graph.triples((self._sample_id, ASMO.hasCalculatedProperty, None))]
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
         if not "NumberOfAtoms" in labels:
-            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), UNSAFEASMO.InputParameter)
+            parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), ASMO.InputParameter)
             self._graph.add((parent, ASMO.hasValue, Literal(no_atoms.toPython())))
             self._graph.add((parent, RDFS.label, Literal("NumberOfAtoms")))
-            self._graph.add((self._sample_id, CMSO.hasCalculatedProperty, parent))
+            self._graph.add((self._sample_id, ASMO.hasCalculatedProperty, parent))
         else:
             parent = inps[labels.index("NumberOfAtoms")]
         return Property(no_atoms.toPython(), graph=self._graph, parent=parent, sample_parent=self._sample_id)
@@ -193,7 +193,7 @@ class Sample:
     
     @property
     def _output_properties(self):
-        inps = [k[2] for k in self._graph.triples((self._sample_id, CMSO.hasCalculatedProperty, None))]
+        inps = [k[2] for k in self._graph.triples((self._sample_id, ASMO.hasCalculatedProperty, None))]
         labels = [self._graph.value(inp, RDFS.label) for inp in inps]
         labels = [label if label is None else label.toPython() for label in labels]
         values = [self._graph.value(inp, ASMO.hasValue) for inp in inps]
@@ -284,7 +284,7 @@ class Property:
 
     #create node with units
     def _create_node(self, res):
-        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), CMSO.CalculatedProperty)
+        parent = self._graph.create_node(URIRef(f'property:{uuid.uuid4()}'), ASMO.CalculatedProperty)
         self._graph.add((parent, ASMO.hasValue, Literal(res)))
         if self._unit is not None:
             self._graph.add((parent, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{self._unit}")))
@@ -305,13 +305,11 @@ class Property:
         res_prop.label = self._create_label(self, value, '+')
         res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
-            operation = URIRef(f'operation:{uuid.uuid4()}')
-            self._graph.add((operation, RDF.type, MATH.Addition))
-            self._graph.add((operation, RDF.type, PROV.Activity))
+            operation = self._graph.create_node(URIRef(f'operation:{uuid.uuid4()}'), MATH.Addition)
             self._graph.add((operation, MATH.hasAddend, self._wrap(value)))
             self._graph.add((operation, MATH.hasAddend, self._wrap(self)))
             self._graph.add((operation, MATH.hasSum, self._wrap(res_prop)))
-            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop
     
     def __radd__(self, value):
@@ -324,13 +322,11 @@ class Property:
         res_prop.label = self._create_label(self, value, '-') 
         res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
-            operation = URIRef(f'operation:{uuid.uuid4()}')
-            self._graph.add((operation, RDF.type, MATH.Subtraction))
-            self._graph.add((operation, RDF.type, PROV.Activity))
+            operation = self._graph.create_node(URIRef(f'operation:{uuid.uuid4()}'), MATH.Subtraction)
             self._graph.add((operation, MATH.hasMinuend, self._wrap(self)))
             self._graph.add((operation, MATH.hasSubtrahend, self._wrap(value)))
             self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
-            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop
 
     def __rsub__(self, value):
@@ -340,13 +336,11 @@ class Property:
         res_prop.label = self._create_label(self, value, '-') 
         res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
-            operation = URIRef(f'operation:{uuid.uuid4()}')
-            self._graph.add((operation, RDF.type, MATH.Subtraction))
-            self._graph.add((operation, RDF.type, PROV.Activity))
+            operation = self._graph.create_node(URIRef(f'operation:{uuid.uuid4()}'), MATH.Subtraction)
             self._graph.add((operation, MATH.hasMinuend, self._wrap(value)))
             self._graph.add((operation, MATH.hasSubtrahend, self._wrap(self)))
             self._graph.add((operation, MATH.hasDifference, self._wrap(res_prop)))
-            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop  
     
     def __mul__(self, value):
@@ -356,13 +350,11 @@ class Property:
         res_prop.label = self._create_label(self, value, '*') 
         res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
-            operation = URIRef(f'operation:{uuid.uuid4()}')
-            self._graph.add((operation, RDF.type, MATH.Multiplication))
-            self._graph.add((operation, RDF.type, PROV.Activity))
+            operation = self._graph.create_node(URIRef(f'operation:{uuid.uuid4()}'), MATH.Multiplication)
             self._graph.add((operation, MATH.hasFactor, self._wrap(self)))
             self._graph.add((operation, MATH.hasFactor, self._wrap(value)))
             self._graph.add((operation, MATH.hasProduct, self._wrap(res_prop)))
-            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop
     
     def __rmul__(self, value):
@@ -375,13 +367,11 @@ class Property:
         res_prop.label = self._create_label(self, value, '/') 
         res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
-            operation = URIRef(f'operation:{uuid.uuid4()}')
-            self._graph.add((operation, RDF.type, MATH.Division))
-            self._graph.add((operation, RDF.type, PROV.Activity))
+            operation = self._graph.create_node(URIRef(f'operation:{uuid.uuid4()}'), MATH.Division)
             self._graph.add((operation, MATH.hasDivisor, self._wrap(self)))
             self._graph.add((operation, MATH.hasDividend, self._wrap(value)))
             self._graph.add((operation, MATH.hasQuotient, self._wrap(res_prop)))
-            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop
 
     def __pow__(self, value):
@@ -391,13 +381,11 @@ class Property:
         res_prop.label = self._create_label(self, value, '^') 
         res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
-            operation = URIRef(f'operation:{uuid.uuid4()}')
-            self._graph.add((operation, RDF.type, MATH.Exponentiation))
-            self._graph.add((operation, RDF.type, PROV.Activity))
+            operation = self._graph.create_node(URIRef(f'operation:{uuid.uuid4()}'), MATH.Exponentiation)
             self._graph.add((operation, MATH.hasBase, self._wrap(self)))
             self._graph.add((operation, MATH.hasExponent, self._wrap(value)))
             self._graph.add((operation, MATH.hasPower, self._wrap(res_prop)))
-            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop
 
     def __rpow__(self, value):
@@ -407,13 +395,11 @@ class Property:
         res_prop.label = self._create_label(self, value, '^') 
         res_prop._sample_parent = self._sample_parent
         if self._graph is not None:
-            operation = URIRef(f'operation:{uuid.uuid4()}')
-            self._graph.add((operation, RDF.type, MATH.Exponentiation))
-            self._graph.add((operation, RDF.type, PROV.Activity))
+            operation = self._graph.create_node(URIRef(f'operation:{uuid.uuid4()}'), MATH.Exponentiation)
             self._graph.add((operation, MATH.hasBase, self._wrap(value)))
             self._graph.add((operation, MATH.hasExponent, self._wrap(self)))
             self._graph.add((operation, MATH.hasPower, self._wrap(res_prop)))
-            self._graph.add((parent, MATH.wasCalculatedBy, operation))
+            self._graph.add((parent, ASMO.wasCalculatedBy, operation))
         return res_prop
     
     def __eq__(self, value):
