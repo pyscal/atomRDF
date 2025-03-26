@@ -42,7 +42,7 @@ def read_ontology():
     cdco = OntologyNetwork(os.path.join(file_location, "data/cdco.owl")) 
 
     # combine them
-    combo = cmso + pldo + podo + asmo + ldo + cdco
+    combo = cmso + cdco + pldo + podo + asmo + ldo
 
     # add namespaces
     combo.add_namespace("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
@@ -62,6 +62,9 @@ def read_ontology():
     combo.add_path(("prov:SoftwareAgent", "rdfs:label", "string"))
     combo.add_path(("asmo:InteratomicPotential", "rdfs:label", "string"))
     combo.add_path(("cmso:CrystalStructure", "cmso:hasAltName", "string"))
-    
+    combo.add_path(("cmso:CrystalStructure", "cmso:hasAltName", "string"))
+    combo.add_path(("cdco:CrystallineMaterial", "cdco:hasCrystallographicDefect", "pldo:GrainBoundary"))
+    combo.add_path(("cdco:CrystallineMaterial", "cdco:hasCrystallographicDefect", "ldo:ScrewDislocation"))
+
     # return
     return combo

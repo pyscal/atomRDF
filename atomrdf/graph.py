@@ -1317,7 +1317,7 @@ class KnowledgeGraph:
         for defect in parent_defects:
             new_defect, defect_triples = self.iterate_and_rename_triples(defect)
             #add the new defect to the new material
-            self.add((material, CDCO.hasCrystallineDefect, new_defect))
+            self.add((material, CDCO.hasCrystallographicDefect, new_defect))
             #add the triples to the graph
             for triple in defect_triples:
                 #print(triple)
