@@ -274,7 +274,7 @@ class Workflow:
             self._add_md(job_dict, simulation)
 
         elif job_dict["method"] == "MolecularDynamics":
-            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
             self.kg.add((simulation, ASMO.hasComputationalMethod, ASMO.MolecularDynamics))
             self._add_dof(job_dict, simulation)
             self._add_md(job_dict, simulation)
@@ -302,14 +302,14 @@ class Workflow:
         # add that structure was generated
         self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, simulation))
         if 'path' in job_dict.keys():
-            self.kg.add((activity, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
+            self.kg.add((simulation, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
         self._add_inputs(job_dict, simulation)
         self._add_outputs(job_dict, simulation)
         self._add_software(job_dict, method)
 
     def _add_dof(self, job_dict, activity):
         for dof in job_dict["dof"]:
-            self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
+            self.kg.add((activity, UNSAFEASMO.hasRelaxationDOF, getattr(ASMO, dof)))
     
     def _select_base_property(self, out, main_id, default_class):
         if "base" in out.keys():

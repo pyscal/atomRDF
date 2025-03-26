@@ -1310,7 +1310,7 @@ class KnowledgeGraph:
         Copy defects from one sample to another
         """
         parent_material = list([k[2] for k in self.triples((parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_defects = list([x[2] for x in self.triples((parent_material, CMSO.hasDefect, None))])
+        parent_defects = list([x[2] for x in self.triples((parent_material, CDCO.hasCrystallographicDefect, None))])
 
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
 
