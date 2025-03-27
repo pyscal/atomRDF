@@ -1976,13 +1976,13 @@ class System(pc.System):
         )
         self.graph.add((self.sample, CMSO.hasSimulationCell, simulation_cell))
         volume = self.graph.create_node(
-            f"{self._name}_Volume", ASMO.Volume, label="SimulationCellVolume"
+            f"{self._name}_Volume", UNSAFEASMO.Volume, label="SimulationCellVolume"
         )
-        self.graph.add((simulation_cell, CMSO.hasVolume, volume))
+        self.graph.add((simulation_cell, UNSAFECMSO.hasVolume, volume))
         self.graph.add(
             (
                 volume,
-                ASMO.hasValue,
+                UNSAFEASMO.hasValue,
                 Literal(
                     np.round(self.schema.simulation_cell.volume(), decimals=2),
                     datatype=XSD.float,
@@ -1992,7 +1992,7 @@ class System(pc.System):
         self.graph.add(
             (
                 volume,
-                ASMO.hasUnit,
+                UNSAFEASMO.hasUnit,
                 URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
             )
         )

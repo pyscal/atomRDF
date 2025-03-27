@@ -5,7 +5,7 @@ structure:
   initial: System obj
   final: System obj 
 intermediate: False
-method: MolecularStatics/MolecularDynamics/DensityFunctionalTheory/EquationOfState/QuasiHarmonicModel/ThermodynamicIntegration
+method: MolecularStatics/MolecularDynamics/DensityFunctionalTheory/EquationOfState/QuasiHarmonicModel
 path: job path folder
 dof:
   - AtomicPositionRelaxation
