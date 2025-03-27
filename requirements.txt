@@ -7,4 +7,4 @@ networkx
 pyscal3
 spglib
 pandas
-owlready2
+tools4rdf
