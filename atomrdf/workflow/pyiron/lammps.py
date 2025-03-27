@@ -135,12 +135,12 @@ def identify_method(job, method_dict):
 
 def add_software(method_dict):
     method_dict["workflow_manager"] = {}
-    method_dict["workflow_manager"]["uri"] = "http://demo.fiz-karlsruhe.de/matwerk/E457491"
+    method_dict["workflow_manager"]["uri"] = "https://doi.org/10.1016/j.commatsci.2018.07.043"
     method_dict["workflow_manager"]["label"] = "pyiron"
     # and finally code details
 
     software = {
-        "uri": "http://demo.fiz-karlsruhe.de/matwerk/E447986",
+        "uri": "https://doi.org/10.1016/j.cpc.2021.108171",
         "label": "LAMMPS",
     }
     method_dict["software"] = [software]
@@ -197,7 +197,7 @@ def extract_calculated_quantities(job, method_dict):
             "value": np.round(volume, decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
-            "base": "Volume",
+            "base": "SimulationCellVolume",
         }
     )
     

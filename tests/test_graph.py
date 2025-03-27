@@ -1,7 +1,7 @@
 import pytest
 import os
 from atomrdf import KnowledgeGraph, System
-from atomrdf.namespace import CMSO, PLDO, ASMO
+from atomrdf.namespace import CMSO, PLDO, ASMO, CDCO
 import shutil
 
 def test_structuregraph():
@@ -44,7 +44,7 @@ def test_add_cross_triple():
 	
 	s = KnowledgeGraph(enable_log=True)
 	sys = System.create.element.Fe(graph=s)
-	status, _ = s._check_domain_if_uriref((sys.material, CMSO.hasDefect, PLDO.AntiphaseBoundary))
+	status, _ = s._check_domain_if_uriref((sys.material, CDCO.hasCrystallographicDefect, PLDO.AntiphaseBoundary))
 	assert status == True
 	
 
@@ -55,7 +55,7 @@ def test_add_quantity():
 		'Energy',
 		str(23),
 		unit='eV')
-	cp = s.value(sys.sample, CMSO.hasCalculatedProperty)
+	cp = s.value(sys.sample, ASMO.hasCalculatedProperty)
 	val = s.value(cp, ASMO.hasValue)
 	assert val.toPython() == '23'
 

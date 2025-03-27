@@ -44,6 +44,24 @@ def process_job(job):
     )
     outputs.append(
         {
+            "label": "TotalEnergy",
+            "value": np.round(job['output/energy'], decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+            "base": "TotalEnergy",
+        }
+    )
+    outputs.append(
+        {
+            "label": "SimulationCellVolume",
+            "value": np.round(job['output/volume'], decimals=4),
+            "unit": "ANGSTROM3",
+            "associate_to_sample": True,
+            "base": "SimulationCellVolume",
+        }
+    )
+    outputs.append(
+        {
             "label": "BulkModulus",
             "value": np.round(job['output/equilibrium_bulk_modulus'], decimals=2),
             "unit": "GigaPA",

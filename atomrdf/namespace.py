@@ -85,6 +85,7 @@ PLDO = Namespace(os.path.join(file_location, "data/pldo.owl"))
 PODO = Namespace(os.path.join(file_location, "data/podo.owl"))
 ASMO = Namespace(os.path.join(file_location, "data/asmo.owl"))
 MATH = Namespace(os.path.join(file_location, "data/asmo.owl"))
+CDCO = Namespace(os.path.join(file_location, "data/cdco.owl"))
 
 PROV = RDFLibNamespace("http://www.w3.org/ns/prov#")
 MDO = RDFLibNamespace("https://w3id.org/mdo/calculation/")

@@ -9,11 +9,21 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
-     xmlns:terms="http://purl.org/dc/terms/">
+     xmlns:terms="http://purl.org/dc/terms/"
+     xmlns:schema="https://schema.org/">
     <owl:Ontology rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo">
+        <owl:versionIRI rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/1.0.0"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0001-9560-4728"/>
+        <terms:contributor rdf:resource="https://orcid.org/0000-0002-6776-1213"/>
         <terms:creator rdf:resource="https://orcid.org/0000-0001-7564-7990"/>
         <terms:description rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Line Defect Ontology (LDO)</terms:description>
         <terms:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Line Defect Ontology</terms:title>
+        <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/OCDO/ldo</rdfs:seeAlso>
+        <owl:versionInfo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.0.0</owl:versionInfo>
+        <schema:citation rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Abril Azocar Guzman. (2025). Line Defect Ontology. </schema:citation>
+        <schema:creativeWorkStatus rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Pre-release</schema:creativeWorkStatus>
+        <schema:funder rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org/05qj6w324</schema:funder>
+        <schema:logo rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://raw.githubusercontent.com/OCDO/.github/refs/heads/main/profile/ocdo_logo.png</schema:logo>
     </owl:Ontology>
     
 
@@ -164,6 +174,30 @@
     
 
 
+    <!-- https://schema.org/citation -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/citation"/>
+    
+
+
+    <!-- https://schema.org/creativeWorkStatus -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/creativeWorkStatus"/>
+    
+
+
+    <!-- https://schema.org/funder -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/funder"/>
+    
+
+
+    <!-- https://schema.org/logo -->
+
+    <owl:AnnotationProperty rdf:about="https://schema.org/logo"/>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -198,6 +232,15 @@
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/Dislocation"/>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/BurgersVector"/>
         <rdfs:label>has Burgers vector</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/hasCharacterAngle -->
+
+    <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/hasCharacterAngle">
+        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/MixedDislocation"/>
+        <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/CharacterAngle"/>
     </owl:ObjectProperty>
     
 
@@ -250,15 +293,6 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
-
-
-    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/hasCharacterAngle -->
-
-    <owl:DatatypeProperty rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/hasCharacterAngle">
-        <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/MixedDislocation"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-    </owl:DatatypeProperty>
     
 
 
@@ -337,6 +371,7 @@
     <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/CharacterAngle -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/CharacterAngle">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Angle"/>
         <rdfs:label>Character Angle</rdfs:label>
     </owl:Class>
     
@@ -360,11 +395,45 @@
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/DislocationClimb -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/DislocationClimb">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dislocation Climb</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/DislocationGlide -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/DislocationGlide">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Dislocation Glide</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/EdgeDislocation -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/EdgeDislocation">
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/Dislocation"/>
         <rdfs:label>Edge Dislocation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/GeometricallyNecessaryDislocations -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/GeometricallyNecessaryDislocations">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/Dislocation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Geometrically Necessary Dislocations</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/GlissileDislocation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/GlissileDislocation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/Dislocation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Glissile Dislocation</rdfs:label>
     </owl:Class>
     
 
@@ -392,6 +461,15 @@
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Vector"/>
         <rdfs:label>Line Direction</rdfs:label>
         <skos:altLabel>Line Vector</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/Lomer-CottrellDislocation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/Lomer-CottrellDislocation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/SessileDislocation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Lomer-Cottrell Dislocation</rdfs:label>
     </owl:Class>
     
 
@@ -433,6 +511,15 @@
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/SessileDislocation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/SessileDislocation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/Dislocation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Sessile Dislocation</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/Slip -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/Slip">
@@ -463,6 +550,24 @@
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/SlipSystem">
         <rdfs:label>Slip System</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/Stair-rodDislocation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/Stair-rodDislocation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/SessileDislocation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stair-rod Dislocation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/cdos/ldo/StatisticallyStoredDislocations -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/cdos/ldo/StatisticallyStoredDislocations">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/cdos/ldo/Dislocation"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Statistically Stored Dislocations</rdfs:label>
     </owl:Class>
     
 

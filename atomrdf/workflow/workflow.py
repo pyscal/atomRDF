@@ -260,56 +260,56 @@ class Workflow:
         # add activity
         # ----------------------------------------------------------
         main_id = uuid.uuid4()
-        main_id = f'activity:{main_id}'
+        main_id = f'simulation:{main_id}'
         job_dict['id'] = main_id
-        activity = URIRef(main_id)
-        self.kg.add((activity, RDF.type, PROV.Activity))
+        simulation = self.kg.create_node(main_id, ASMO.Simulation)
         
         # add method
         # ----------------------------------------------------------
         method = URIRef(f"{main_id}_method")
         if job_dict["method"] == "MolecularStatics":
-            self.kg.add((activity, RDF.type, ASMO.EnergyCalculation))
-            self.kg.add((method, RDF.type, ASMO.MolecularStatics))
-            self._add_dof(job_dict, activity)
-            self._add_md(job_dict, activity)
+            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
+            self.kg.add((simulation, ASMO.hasComputationalMethod, ASMO.MolecularStatics))
+            self._add_dof(job_dict, simulation)
+            self._add_md(job_dict, simulation)
 
         elif job_dict["method"] == "MolecularDynamics":
-            self.kg.add((activity, RDF.type, ASMO.EnergyCalculation))
-            self.kg.add((method, RDF.type, ASMO.MolecularDynamics))
-            self._add_dof(job_dict, activity)
-            self._add_md(job_dict, activity)
+            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
+            self.kg.add((simulation, ASMO.hasComputationalMethod, ASMO.MolecularDynamics))
+            self._add_dof(job_dict, simulation)
+            self._add_md(job_dict, simulation)
 
         elif job_dict["method"] == "DensityFunctionalTheory":
-            self.kg.add((activity, RDF.type, ASMO.EnergyCalculation))
-            self.kg.add((method, RDF.type, ASMO.DensityFunctionalTheory))
-            self._add_dof(job_dict, activity)
-            self._add_dft(job_dict, method, activity)
+            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
+            self.kg.add((simulation, ASMO.hasComputationalMethod, ASMO.DensityFunctionalTheory))
+            self._add_dof(job_dict, simulation)
+            self._add_dft(job_dict, method, simulation)
 
         elif job_dict["method"] == "EquationOfState":            
-            #special type of EOS should be initialised!
-            self.kg.add((activity, RDF.type, ASMO.EquationOfStateFit))
+            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            self.kg.add((simulation, ASMO.usesSimulationAlgorithm, ASMO.EquationOfStateFit))
 
-        elif job_dict["method"] == "QuasiHarmonicModel":            
-            self.kg.add((activity, RDF.type, ASMO.QuasiHarmonicModel))
+        elif job_dict["method"] == "QuasiHarmonicModel":
+            simulation = self.kg.create_node(main_id, ASMO.Simulation)            
+            self.kg.add((simulation, ASMO.usesSimulationAlgorithm, ASMO.QuasiHarmonicApproximation))
 
-        elif job_dict["method"] == "ThermodynamicIntegration":     
-            self._add_dof(job_dict, activity)
-            self._add_md(job_dict, activity)       
-            self.kg.add((activity, RDF.type, ASMO.ThermodynamicIntegration))
+        elif job_dict["method"] == "ThermodynamicIntegration": 
+            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            self.kg.add((simulation, ASMO.usesSimulationAlgorithm, ASMO.ThermodynamicIntegration))    
+            self._add_dof(job_dict, simulation)
+            self._add_md(job_dict, simulation)       
 
         # add that structure was generated
-        self.kg.add((activity, ASMO.hasComputationalMethod, method))
-        self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, activity))
+        self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, simulation))
         if 'path' in job_dict.keys():
-            self.kg.add((activity, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
-        self._add_inputs(job_dict, activity)
-        self._add_outputs(job_dict, activity)
+            self.kg.add((simulation, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
+        self._add_inputs(job_dict, simulation)
+        self._add_outputs(job_dict, simulation)
         self._add_software(job_dict, method)
 
     def _add_dof(self, job_dict, activity):
         for dof in job_dict["dof"]:
-            self.kg.add((activity, ASMO.hasRelaxationDOF, getattr(ASMO, dof)))
+            self.kg.add((activity, UNSAFEASMO.hasRelaxationDOF, getattr(ASMO, dof)))
     
     def _select_base_property(self, out, main_id, default_class):
         if "base" in out.keys():
@@ -339,7 +339,7 @@ class Workflow:
             )
         elif base == 'Pressure':
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.Pressure,
+                f'{main_id}_{out["label"]}', UNSAFEASMO.VirialPressure,
                 label=out["label"],
             )
         elif base == 'Temperature':
@@ -388,7 +388,7 @@ class Workflow:
                 label=out["label"],
             )
         
-        self.kg.add((prop, CMSO.hasValue, Literal(out["value"])))
+        self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
         if "unit" in out.keys():
             unit = out["unit"]
             self.kg.add(
@@ -414,11 +414,11 @@ class Workflow:
             for out in job_dict["outputs"]:
                 #here we add the classes by property
                 #call func here
-                prop = self._select_base_property(out, main_id, CMSO.CalculatedProperty)
+                prop = self._select_base_property(out, main_id, ASMO.CalculatedProperty)
                 self.kg.add((prop, ASMO.wasCalculatedBy, activity))
                 
                 if out["associate_to_sample"]:
-                    self.kg.add((job_dict['sample']['final'], CMSO.hasCalculatedProperty, prop))
+                    self.kg.add((job_dict['sample']['final'], ASMO.hasCalculatedProperty, prop))
 
     def _add_software(self, job_dict, method):
         # finally add software
@@ -460,15 +460,15 @@ class Workflow:
         # potentials need to be mapped
         potential = URIRef(f"{main_id}_potential")
         if "meam" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.ModifiedEmbeddedAtomModel))
+            potential = self.kg.create_node(potential, ASMO.ModifiedEmbeddedAtomModel)
         elif "eam" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.EmbeddedAtomModel))
+            potential = self.kg.create_node(potential, ASMO.EmbeddedAtomModel)
         elif "lj" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.LennardJonesPotential))
+            potential = self.kg.create_node(potential, ASMO.LennardJonesPotential)
         elif "ace" in job_dict["potential"]["type"]:
-            self.kg.add((potential, RDF.type, ASMO.MachineLearningPotential))
+            potential = self.kg.create_node(potential, ASMO.MachineLearningPotential)
         else:
-            self.kg.add((potential, RDF.type, ASMO.InteratomicPotential))
+            potential = self.kg.create_node(potential, ASMO.InteratomicPotential)
 
         if "uri" in job_dict["potential"].keys():
             self.kg.add(

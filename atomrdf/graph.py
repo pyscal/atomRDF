@@ -50,7 +50,7 @@ from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
 import atomrdf.mp as amp 
 
-from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, UNSAFECMSO, UNSAFEASMO, Literal
+from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, CDCO, UNSAFECMSO, UNSAFEASMO, Literal
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -229,7 +229,6 @@ class KnowledgeGraph:
         self.terms = self.ontology.terms
         self.store = store
         self._n_triples = 0
-        self._initialize_graph()
         self.workflow = Workflow(self)
 
     def purge(self, force=False):
@@ -605,41 +604,66 @@ class KnowledgeGraph:
             self.add((item, RDFS.label, Literal(_clean_string(label))))
         return item
 
-    def _initialize_graph(self):
+    def add_output_of_simulation(self, 
+                                simulation_term,
+                                value,
+                                property_label,
+                                base_quantity=None,
+                                unit=None,
+                                has_simulation_algorithm=None,
+                                has_computational_method=None):
         """
-        Create the RDF Graph from the data stored
+        Create a new output of simulation in the graph. The types of different terms are defined in the ontology.
+        Those should be access by kg.terms.ontolog.ontology_term.
 
         Parameters
         ----------
-        names: bool
-            if True, alphanumeric names will be used instead of random BNodes
-
-        name_index: string
-            Prefix to be added to identifiers, default 01
-
+        simulation_term : OntoTerm
+            The term representing the simulation.
+        
+        value : float
+            The value of the output.
+        
+        property_label : str
+            The label of the property.
+        
+        base_quantity : OntoTerm, optional
+            The base quantity of the output. Default is None.
+        
+        unit : OntoTerm, optional
+            The unit of the output. Default is None.
+        
+        
+        has_simulation_algorithm : OntoTerm, optional
+            The simulation algorithm used. Default is None.
+        
+        has_computational_method : OntoTerm, optional
+            The computational method used. Default is None.
+        
         Returns
         -------
-        None
+        URIRef
+            The newly created output of simulation.
+
         """
-        # extra triples
-        self.add((CMSO.SimulationCellLength, RDFS.subClassOf, CMSO.Length))
-        self.add((CMSO.LatticeParameter, RDFS.subClassOf, CMSO.Length))
-        self.add(
-            (CMSO.Length, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/ANGSTROM"))
-        )
+        main_id = str(uuid.uuid4())
+        simulation_node = self.create_node(f"simulation:{main_id}", simulation_term)
+        if has_simulation_algorithm is not None:
+            self.add((simulation_node, ASMO.usesSimulationAlgorithm, has_simulation_algorithm))
+        if has_computational_method is not None:
+            self.add((simulation_node, ASMO.hasComputationalMethod, has_computational_method))
+        if base_quantity is None:
+            base_quantity = ASMO.CalculatedProperty
+        prop = self.create_node(f"simulation:{main_id}_{property_label}", base_quantity)
+        self.add((prop, ASMO.wasCalculatedBy, simulation_node))
+        self.add((prop, RDFS.label, Literal(property_label)))
+        self.add((prop, ASMO.hasValue, Literal(value)))
+        if unit is not None:
+            self.add((prop, ASMO.hasUnit, unit))
+        return prop
 
-        self.add((CMSO.SimulationCellAngle, RDFS.subClassOf, CMSO.Angle))
-        self.add((CMSO.LatticeAngle, RDFS.subClassOf, CMSO.Angle))
-        self.add((CMSO.Angle, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/DEG")))
 
-        self.add((CMSO.LatticeVector, RDFS.subClassOf, CMSO.Vector))
-        self.add((CMSO.SimulationCellVector, RDFS.subClassOf, CMSO.Vector))
-        # self.add((CMSO.PositionVector, RDFS.subClassOf, CMSO.Vector))
-        self.add(
-            (CMSO.Vector, CMSO.hasUnit, URIRef("http://qudt.org/vocab/unit/ANGSTROM"))
-        )
-
-    def add_calculated_quantity(self, sample, propertyname, value, unit=None):
+    def add_calculated_quantity(self, sample, propertyname, value, base_quantity=None, unit=None):
         """
         Add a calculated quantity to a sample.
 
@@ -669,9 +693,11 @@ class KnowledgeGraph:
         >>> sample = graph.create_node("Sample1", CMSO.Sample)
         >>> graph.add_calculated_quantity(sample, "energy", "10.5", "eV")
         """
+        if base_quantity is None:
+            base_quantity = ASMO.CalculatedProperty
 
-        prop = self.create_node(f"{sample}_{propertyname}", CMSO.CalculatedProperty)
-        self.add((sample, CMSO.hasCalculatedProperty, prop))
+        prop = self.create_node(f"{sample}_{propertyname}", base_quantity)
+        self.add((sample, ASMO.hasCalculatedProperty, prop))
         self.add((prop, RDFS.label, Literal(propertyname)))
         self.add((prop, ASMO.hasValue, Literal(value)))
         if unit is not None:
@@ -695,7 +721,7 @@ class KnowledgeGraph:
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[
             0
         ]
-        defects = list([k[2] for k in self.triples((material, CMSO.hasDefect, None))])
+        defects = list([k[2] for k in self.triples((material, CDCO.hasCrystallographicDefect, None))])
         composition = list(
             [
                 k[2].toPython()
@@ -708,7 +734,7 @@ class KnowledgeGraph:
         lattice = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
         defect_types = list([self.value(d, RDF.type).toPython() for d in defects])
         prop_nodes = list(
-            [k[2] for k in self.triples((sample, CMSO.hasCalculatedProperty, None))]
+            [k[2] for k in self.triples((sample, ASMO.hasCalculatedProperty, None))]
         )
         props = list([self.value(prop_node, RDFS.label) for prop_node in prop_nodes])
         propvals = list([self.value(d, ASMO.hasValue).toPython() for d in prop_nodes])
@@ -1162,13 +1188,12 @@ class KnowledgeGraph:
             sample_objects.append(Sample(name, ids, self))
         return sample_objects
 
-    @property
-    def activity_ids(self):
+    def list_quantities_of_type(self, typeclass):
         """
         Returns a list of all Samples in the graph
         """
 
-        return [x[0] for x in self.triples((None, RDF.type, PROV.Activity))]
+        return [x[0] for x in self.triples((None, RDF.type, typeclass.URIRef))]
 
     def _is_of_type(self, item, target_item):
         """
@@ -1285,14 +1310,14 @@ class KnowledgeGraph:
         Copy defects from one sample to another
         """
         parent_material = list([k[2] for k in self.triples((parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_defects = list([x[2] for x in self.triples((parent_material, CMSO.hasDefect, None))])
+        parent_defects = list([x[2] for x in self.triples((parent_material, CDCO.hasCrystallographicDefect, None))])
 
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
 
         for defect in parent_defects:
             new_defect, defect_triples = self.iterate_and_rename_triples(defect)
             #add the new defect to the new material
-            self.add((material, CMSO.hasDefect, new_defect))
+            self.add((material, CDCO.hasCrystallographicDefect, new_defect))
             #add the triples to the graph
             for triple in defect_triples:
                 #print(triple)
@@ -1300,23 +1325,19 @@ class KnowledgeGraph:
 
         #we need to add special items which are mapped to the sample directly
         # now add the special props for vacancy, interstitial &substitional
+        #this is a bit of a slippery slope, the defect compositions also has to change when
+        #number of atoms change - lets leave it like this for now
         for triple in self.triples(
             (parent_sample, PODO.hasVacancyConcentration, None)
         ):
             self.add((sample, triple[1], triple[2]))
-        #for triple in self.graph.triples(
-        #    (parent_sample, PODO.hasNumberOfVacancies, None)
-        #):
-        #    self.graph.add((self.sample, triple[1], triple[2]))
+
         for triple in self.triples(
             (parent_sample, PODO.hasImpurityConcentration, None)
         ):
             self.add((sample, triple[1], triple[2]))
-        #for triple in self.graph.triples(
-        #    (parent_sample, PODO.hasNumberOfImpurityAtoms, None)
-        #):
-        #    self.graph.add((self.sample, triple[1], triple[2]))                                    
-    
+
+
     def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """
         Get the Sample as a KnowledgeGraph
@@ -1464,11 +1485,16 @@ class KnowledgeGraph:
                             job_dicts=job_dicts,
                             add_intermediate_jobs=add_intermediate_jobs)
     
-    def find_property(self, label):
-        prop_list = list(self.graph.triples((None, RDFS.label, label)))
+    def find_property(self, label=None, propertytype=None):
+        if label is not None:
+            prop_list = list(self.graph.triples((None, RDFS.label, label)))
+        elif propertytype is not None:
+            prop_list = list(self.graph.triples((None, RDF.type, propertytype.URIRef)))
+        else:
+            raise RuntimeError('Either label or propertytype should be provided')
         if len(prop_list) == 0:
             raise RuntimeError(f'Property {label} not found in the graph')
-        prop = prop_list[0][0]
+        prop = [x[0] for x in prop_list]
         return prop        
 
     def get_string_label(self, item):
@@ -1480,7 +1506,7 @@ class KnowledgeGraph:
             except:
                 label = str(item)
         
-        if "activity" in label:
+        if "simulation" in label:
             method = self.value(item, ASMO.hasComputationalMethod)
             if method is not None:
                 method_name = self.value(method, RDF.type)

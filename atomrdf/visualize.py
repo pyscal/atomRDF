@@ -48,6 +48,11 @@ def get_string_from_URI(x):
         if len(rawsplit) > 1:
             return "_".join(rawsplit), "BNode"
 
+    if "simulation:" in raw:
+        rawsplit = raw.split(":")
+        if len(rawsplit) > 1:
+            return "_".join(rawsplit), "BNode"
+
     if "operation:" in raw:
         rawsplit = raw.split(":")
         if len(rawsplit) > 1:
