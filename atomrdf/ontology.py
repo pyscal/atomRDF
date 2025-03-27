@@ -4,8 +4,7 @@ from tools4rdf.network.network import OntologyNetworkBase
 import os
 
 def read_ontology():
-    file_location = os.path.dirname(__file__).split("/")
-    file_location = "/".join(file_location[:-1])
+    file_location = os.path.dirname(__file__)
 
     cmso = parse_ontology(os.path.join(file_location, "data/cmso.owl")) 
     pldo = parse_ontology(os.path.join(file_location, "data/pldo.owl")) 
