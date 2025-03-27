@@ -17,16 +17,11 @@ def read_ontology():
     cmso.attributes['data_property']['cmso:hasSymbol'].range.append("str")
     asmo.attributes['data_property']['asmo:hasValue'].range.extend(["float", "double", "int", "str"])
 
-    #now combine the ontologies
-    cmso = OntologyNetworkBase(cmso)
-    pldo = OntologyNetworkBase(pldo)
-    podo = OntologyNetworkBase(podo)
-    asmo = OntologyNetworkBase(asmo)
-    ldo = OntologyNetworkBase(ldo)
-    cdco = OntologyNetworkBase(cdco)
-
     #now sum them up
     combo = cmso + cdco + pldo + podo + asmo + ldo
+
+    #now combine the ontologies
+    combo = OntologyNetworkBase(combo)
 
     #add sring labels as needed
     combo.add_namespace("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
