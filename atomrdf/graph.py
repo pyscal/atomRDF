@@ -40,8 +40,7 @@ import pickle
 from pyscal3.atoms import Atoms
 
 from atomrdf.visualize import visualize_graph, visualize_provenance
-from atomrdf.network.network import OntologyNetwork
-from atomrdf.network.ontology import read_ontology
+from atomrdf.ontology import read_ontology
 from atomrdf.structure import System
 import atomrdf.properties as prp
 from atomrdf.stores import create_store, purge
@@ -417,10 +416,10 @@ class KnowledgeGraph:
 
         destination_range = triple[2].datatype.toPython().split("#")[-1]
 
-        if destination_range == "string":
-            destination_range = "str"
-        elif destination_range == "integer":
-            destination_range = "int"
+        #if destination_range == "string":
+        #    destination_range = "str"
+        #elif destination_range == "integer":
+        #    destination_range = "int"
 
         rang = triple[1].range
         if len(rang) > 0:

@@ -16,8 +16,7 @@ from rdflib import URIRef
 from rdflib import Namespace as RDFLibNamespace
 from rdflib import Literal as RDFLibLiteral
 from pyscal3.atoms import AttrSetter
-
-from atomrdf.network.network import OntologyNetwork
+from tools4rdf.network.network import OntologyNetwork
 
 def Literal(value, datatype=None):
     if datatype is not None:

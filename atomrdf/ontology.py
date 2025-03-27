@@ -13,12 +13,11 @@ def read_ontology():
     ldo = parse_ontology(os.path.join(file_location, "data/ldo.owl")) 
     cdco = parse_ontology(os.path.join(file_location, "data/cdco.owl"))
 
-    #patch the terms needed
-    cmso.attributes['data_property']['cmso:hasSymbol'].range.append("str")
-    asmo.attributes['data_property']['asmo:hasValue'].range.extend(["float", "double", "int", "str"])
 
     #now sum them up
     combo = cmso + cdco + pldo + podo + asmo + ldo
+    combo.attributes['data_property']['cmso:hasSymbol'].range.append("str")
+    combo.attributes['data_property']['asmo:hasValue'].range.extend(["float", "double", "int", "str"])
 
     #now combine the ontologies
     combo = OntologyNetworkBase(combo)

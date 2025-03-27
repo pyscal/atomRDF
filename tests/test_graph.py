@@ -98,12 +98,9 @@ def test_sparql_query():
 	res = kg.query(query)
 	assert res.symbol.values[0].toPython() == 'Pm-3m'
 
-	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName=='bcc')
-	assert res.hasAltNamevalue.values[0].toPython() == 'bcc'
-
-	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName=='bcc',
+	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName@kg.terms.cmso.Structure=='bcc',
 	             enforce_types=True)
-	assert res.hasAltNamevalue.values[0].toPython() == 'bcc'
+	assert res.Structure_hasAltNamevalue.values[0].toPython() == 'bcc'
 
 def test_extract_sample():
 	kg = KnowledgeGraph()
