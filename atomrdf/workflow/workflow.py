@@ -388,7 +388,7 @@ class Workflow:
                 label=out["label"],
             )
         
-        self.kg.add((prop, ASMO.hasValue, Literal(out["value"])))
+        self.kg.add((prop, ASMO.hasValue, Literal(out["value"], datatype=XSD.float)))
         if "unit" in out.keys():
             unit = out["unit"]
             self.kg.add(
