@@ -5,7 +5,7 @@ dependencies:
   - python >3.8, <3.12
   - pyscal3 >=3.1.12
   - rdflib
-  - tools4rdf >=0.2.0
+  #- tools4rdf >=0.2.0
   - pyyaml
   - jupyterlab
   - graphviz
@@ -23,3 +23,4 @@ dependencies:
   - mendeleev
   - pip:
     - "git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"
+    - tools4rdf
