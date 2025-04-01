@@ -4,7 +4,6 @@ from atomrdf.build.buildutils import _declass
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
 
-def vacancy()
 
 def _delete_atom(system, 
     ids=None, 
@@ -59,6 +58,7 @@ def _delete_atom(system,
         sys.update_system_for_defect_creation(vacancy_no,
             actual_natoms,copy_structure=copy_structure)
         return sys
+def vacancy()
         
 def stacking_fault(
     slip_plane,
