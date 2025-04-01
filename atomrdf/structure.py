@@ -56,43 +56,6 @@ with open(file_location, "r") as fin:
 
 
 class System(pc.System):
-
-    create = AttrSetter()
-    # create.head = pcs
-    mapdict = {}
-    mapdict["lattice"] = {}
-    for key in structure_dict.keys():
-        mapdict["lattice"][key] = update_wrapper(
-            partial(_make_crystal, key), _make_crystal
-        )
-    mapdict["lattice"]["custom"] = _make_general_lattice
-
-    mapdict["element"] = {}
-    for key in element_dict.keys():
-        mapdict["element"][key] = update_wrapper(
-            partial(
-                _make_crystal,
-                element_dict[key]["structure"],
-                lattice_constant=element_dict[key]["lattice_constant"],
-                element=key,
-            ),
-            pcs.make_crystal,
-        )
-
-    mapdict["defect"] = {}
-    mapdict["defect"]["grain_boundary"] = _make_grain_boundary
-    mapdict["defect"]["dislocation"] = _make_dislocation
-    mapdict["defect"]["stacking_fault"] = _make_stacking_fault
-    create._add_attribute(mapdict)
-
-    read = AttrSetter()
-    mapdict = {}
-    mapdict["file"] = _read_structure
-    mapdict["ase"] = update_wrapper(
-        partial(_read_structure, format="ase"), _read_structure
-    )
-    read._add_attribute(mapdict)
-
     def __init__(
         self,
         filename=None,
@@ -108,7 +71,7 @@ class System(pc.System):
 
         if (filename is not None) and warn_read_in:
             warnings.warn(
-                "To provide additional information, use the System.read.file method"
+                "To provide additional information, use the read method"
             )
 
         super().__init__(
@@ -132,33 +95,7 @@ class System(pc.System):
         if source is not None:
             self.__dict__.update(source.__dict__)
 
-        self.write = AttrSetter()
-        mapdict = {}
-        mapdict['ase'] = update_wrapper(partial(self.to_file, format='ase'), self.to_file)
-        mapdict['pyiron'] = update_wrapper(partial(self.to_file, format='pyiron'), self.to_file)
-        mapdict['quantum_espresso'] = update_wrapper(partial(self.to_file, format='quantum-espresso'), self.to_file)
-        mapdict['file'] = self.to_file
-        self.write._add_attribute(mapdict)
-
-        self.show = AttrSetter()
-        mapdict = {}
-        mapdict['all'] = update_wrapper(partial(self._plot_system, plot_style='all'), self._plot_system)
-        mapdict['continuous_property'] = update_wrapper(partial(self._plot_system, plot_style='continuous_property'), self._plot_system)
-        mapdict['boolean_property'] = update_wrapper(partial(self._plot_system, plot_style='boolean_property'), self._plot_system)
-        mapdict['selection'] = update_wrapper(partial(self._plot_system, plot_style='selection'), self._plot_system)
-        self.show._add_attribute(mapdict)
-
-        self.modify = AttrSetter()
-        mapdict = {}
-        mapdict["repeat"] = self.repeat
-        mapdict["delete"] = self.delete
-        mapdict["transform_to_cubic_cell"] = update_wrapper(partial(operations.extract_cubic_representation, self), operations.extract_cubic_representation)
-        mapdict["remap_to_box"] = update_wrapper(partial(operations.remap_to_box, self), operations.remap_to_box)
-        mapdict["remap_position_to_box"] = update_wrapper(partial(operations.remap_position_to_box, self), operations.remap_position_to_box)
-        mapdict["embed_in_cubic_box"] = update_wrapper(partial(operations.embed_in_cubic_box, self), operations.embed_in_cubic_box)
-        self.modify._add_attribute(mapdict)
-
-        self.schema = AttrSetter()
+       self.schema = AttrSetter()
         mapdict = {
             "material": {
                 "element_ratio": partial(prp.get_chemical_composition, self),
@@ -220,168 +157,8 @@ class System(pc.System):
         new_system.atoms = atoms
         new_system.graph = self.graph
         new_system.sample = None
-
         return new_system
 
-    def repeat(self, repetitions):
-        """
-        Repeat the system in each direction by the specified number of times.
-
-        Parameters
-        ----------
-        repetitions : tuple
-            The number of times to repeat the system in each direction.
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-        The system is repeated in each direction by the specified number of times.
-        """
-        new_system = self.duplicate()
-        new_system = operations.repeat(new_system, repetitions)
-        if new_system._structure_dict is None:
-            new_system._structure_dict = {}
-        new_system._structure_dict["repetitions"] = repetitions
-        new_system.to_graph()
-        new_system.copy_defects(self.sample)
-        return new_system
-    
-    def delete(self, ids=None, indices=None, condition=None, selection=False, copy_structure=False):
-        """
-        Delete atoms from the structure.
-
-        Parameters
-        ----------
-        ids : list, optional
-            A list of atom IDs to delete. Default is None.
-        indices : list, optional
-            A list of atom indices to delete. Default is None.
-        condition : str, optional
-            A condition to select atoms to delete. Default is None.
-        selection : bool, optional
-            If True, delete atoms based on the current selection. Default is False.
-        copy_structure: bool, optional
-            If True, a copy of the structure will be returned. Default is False.
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-        Deletes atoms from the structure based on the provided IDs, indices, condition, or selection.
-        If the structure has a graph associated with it, the graph will be updated accordingly.
-        """
-        if copy_structure:
-            sys = self.duplicate()
-            #and add this new structure to the graph
-            sys.to_graph()
-            sys.copy_defects(self.sample)
-        else:
-            sys = self
-        
-        masks = sys.atoms._generate_bool_list(
-            ids=ids, indices=indices, condition=condition, selection=selection
-        )
-        
-        delete_list = [masks[sys.atoms["head"][x]] for x in range(sys.atoms.ntotal)]
-        delete_ids = [x for x in range(sys.atoms.ntotal) if delete_list[x]]
-        actual_natoms = sys.natoms
-        sys.atoms._delete_atoms(delete_ids)
-
-        if sys.graph is not None:
-            # first annotate graph
-            val = len([x for x in masks if x])
-            c = val / actual_natoms
-            sys.add_vacancy(c, number=val)
-            # now we need to re-add atoms, so at to remove
-            sys.graph.remove((sys.sample, CMSO.hasNumberOfAtoms, None))
-            sys.graph.add(
-                (
-                    sys.sample,
-                    CMSO.hasNumberOfAtoms,
-                    Literal(actual_natoms - val, datatype=XSD.integer),
-                )
-            )
-            # revamp composition
-            # remove existing chem composution
-
-            chemical_species = sys.graph.value(sys.sample, CMSO.hasSpecies)
-            # start by cleanly removing elements
-            for s in sys.graph.triples((chemical_species, CMSO.hasElement, None)):
-                element = s[2]
-                sys.graph.remove((element, None, None))
-            sys.graph.remove((chemical_species, None, None))
-            sys.graph.remove((sys.sample, CMSO.hasSpecies, None))
-
-            # now recalculate and add it again
-            composition = sys.schema.material.element_ratio()
-            valid = False
-            for e, r in composition.items():
-                if e in element_indetifiers.keys():
-                    valid = True
-                    break
-
-            if valid:
-                chemical_species = sys.graph.create_node(
-                    f"{sys._name}_ChemicalSpecies", CMSO.ChemicalSpecies
-                )
-                sys.graph.add((sys.sample, CMSO.hasSpecies, chemical_species))
-
-                for e, r in composition.items():
-                    if e in element_indetifiers.keys():
-                        element = sys.graph.create_node(
-                            element_indetifiers[e], CMSO.ChemicalElement
-                        )
-                        sys.graph.add((chemical_species, CMSO.hasElement, element))
-                        sys.graph.add(
-                            (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
-                        )
-                        sys.graph.add(
-                            (
-                                element,
-                                CMSO.hasElementRatio,
-                                Literal(r, datatype=XSD.float),
-                            )
-                        )
-
-            # we also have to read in file and clean it up
-            filepath = sys.graph.value(
-                URIRef(f"{sys.sample}_Position"), CMSO.hasPath
-            ).toPython()
-            position_identifier = sys.graph.value(
-                URIRef(f"{sys.sample}_Position"), CMSO.hasIdentifier
-            ).toPython()
-            species_identifier = sys.graph.value(
-                URIRef(f"{sys.sample}_Species"), CMSO.hasIdentifier
-            ).toPython()
-
-            # clean up items
-            datadict = {
-                position_identifier: {
-                    "value": sys.schema.atom_attribute.position(),
-                    "label": "position",
-                },
-                species_identifier: {
-                    "value": sys.schema.atom_attribute.species(),
-                    "label": "species",
-                },
-            }
-            outfile = os.path.join(
-                sys.graph.structure_store, str(sys._name).split(":")[-1]
-            )
-            json_io.write_file(outfile, datadict)
-
-            #write mapping for the operation
-            if self.sample.toPython() != sys.sample.toPython():
-                activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.DeleteAtom)
-                sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
-                sys.graph.add((sys.sample, PROV.wasGeneratedBy, activity))
-
-        return sys
         
     def add_property_mappings(self, output_property, mapping_quantity=None):
         if self.graph is None:
@@ -409,7 +186,6 @@ class System(pc.System):
             #also get activity
             activity = self.graph.value(output_property._parent, ASMO.wasCalculatedBy)
             self.graph.add((lattice_parameter, ASMO.wasCalculatedBy, activity))
-
 
     def add_vacancy(self, concentration, number=None):
         """
@@ -447,6 +223,93 @@ class System(pc.System):
                     Literal(number, datatype=XSD.integer),
                 )
             )
+
+    def update_system_for_defect_creation(self, vacancy_no, actual_natoms, copy_structure=False):
+        if self.graph is None:
+            return
+
+        # now we need to re-add atoms, so at to remove
+        self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
+        self.graph.add(
+            (
+                self.sample,
+                CMSO.hasNumberOfAtoms,
+                Literal(actual_natoms - vacancy_no, datatype=XSD.integer),
+            )
+        )
+
+        chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
+        # start by cleanly removing elements
+        for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
+            element = s[2]
+            self.graph.remove((element, None, None))
+        self.graph.remove((chemical_species, None, None))
+        self.graph.remove((self.sample, CMSO.hasSpecies, None))
+
+        # now recalculate and add it again
+        composition = self.schema.material.element_ratio()
+        valid = False
+        for e, r in composition.items():
+            if e in element_indetifiers.keys():
+                valid = True
+                break
+
+        if valid:
+            chemical_species = self.graph.create_node(
+                f"{self._name}_ChemicalSpecies", CMSO.ChemicalSpecies
+            )
+            self.graph.add((self.sample, CMSO.hasSpecies, chemical_species))
+
+            for e, r in composition.items():
+                if e in element_indetifiers.keys():
+                    element = self.graph.create_node(
+                        element_indetifiers[e], CMSO.ChemicalElement
+                    )
+                    self.graph.add((chemical_species, CMSO.hasElement, element))
+                    self.graph.add(
+                        (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
+                    )
+                    self.graph.add(
+                        (
+                            element,
+                            CMSO.hasElementRatio,
+                            Literal(r, datatype=XSD.float),
+                        )
+                    )
+
+        # we also have to read in file and clean it up
+        filepath = self.graph.value(
+            URIRef(f"{self.sample}_Position"), CMSO.hasPath
+        ).toPython()
+        position_identifier = self.graph.value(
+            URIRef(f"{self.sample}_Position"), CMSO.hasIdentifier
+        ).toPython()
+        species_identifier = self.graph.value(
+            URIRef(f"{self.sample}_Species"), CMSO.hasIdentifier
+        ).toPython()
+
+        # clean up items
+        datadict = {
+            position_identifier: {
+                "value": self.schema.atom_attribute.position(),
+                "label": "position",
+            },
+            species_identifier: {
+                "value": self.schema.atom_attribute.species(),
+                "label": "species",
+            },
+        }
+        outfile = os.path.join(
+            self.graph.structure_store, str(self._name).split(":")[-1]
+        )
+        json_io.write_file(outfile, datadict)
+
+        #write mapping for the operation
+        if copy_structure:
+            activity = self.graph.create_node(f"structuremanipulation:{uuid.uuid4()}", ASMO.DeleteAtom)
+            self.graph.add((self.sample, PROV.wasDerivedFrom, self.sample))
+            self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
+
 
     def substitute_atoms(
         self,
@@ -823,98 +686,7 @@ class System(pc.System):
         # now the graph has to be updated accordingly
         self.delete(indices=list(val))
 
-    def write_poscar_id(self, outfile):
-        lines = []
-        with open(outfile, "r") as fin:
-            for line in fin:
-                lines.append(line)
-        lines[0] = self.sample.toPython() + "\n"
-        with open(outfile, "w") as fout:
-            for line in lines:
-                fout.write(line)
 
-    def to_file(self, filename=None, 
-                format='lammps-dump', 
-                customkeys=None, customvals=None,
-                compressed=False, timestep=0, species=None,  add_sample_id=True,
-                copy_from=None, pseudo_files=None):
-        """
-        Write the structure to a file in the specified format.
-
-        Parameters
-        ----------
-        outfile : str
-            The path to the output file.
-        format : str, optional
-            The format of the output file. Defaults to 'lammps-dump'.
-        customkeys : list, optional
-            A list of custom keys to include in the output file. Defaults to None.
-            Only valid if format is 'lammps-dump'.
-        customvals : list, optional
-            A list of custom values corresponding to the custom keys. Defaults to None.
-            Only valid if format is 'lammps-dump'.
-        compressed : bool, optional
-            Whether to compress the output file. Defaults to False.
-        timestep : int, optional
-            The timestep value to include in the output file. Defaults to 0.
-            Only valid if format is 'lammps-dump'.
-        species : list, optional
-            A list of species to include in the output file. Defaults to None.
-            Only valid for ASE, if species is not specified.
-        add_sample_id : bool, optional
-            Whether to add a sample ID to the output file. Defaults to True.
-            Only valid for poscar and quantum-espresso formats.
-        copy_from : str, optional
-            If provided, input options for quantum-espresso format will be copied from
-            the given file. Structure specific information will be replaced.
-            Note that the validity of input file is not checked.
-        pseudo_files : list, optional
-            if provided, add the pseudopotential filenames to file.
-            Should be in alphabetical order of chemical species symbols.        
-
-        Returns
-        -------
-        None
-        """
-        if filename is None:
-            outfile = f"structure.out"
-        else:
-            outfile = filename
-
-        if format == "ase":
-            asesys = convert_snap(self)
-            if self.sample is not None:
-                asesys.info["sample_id"] = self.sample
-            return asesys
-        
-        elif format == "pyiron":
-            from pyiron_atomistics.atomistics.structure.atoms import ase_to_pyiron
-            asesys = convert_snap(self)
-            pyironsys = ase_to_pyiron(asesys)
-            if self.sample is not None:
-                pyironsys.info["sample_id"] = self.sample            
-            return pyironsys
-
-        elif format == "poscar":
-            asesys = convert_snap(self)
-            write(outfile, asesys, format="vasp")
-            if add_sample_id and (self.sample is not None):
-                self.write_poscar_id(outfile)
-        
-        elif format == "lammps-dump":
-            inputmethods.to_file(self, outfile, format='lammps-dump', customkeys=customkeys, customvals=customvals,
-                compressed=compressed, timestep=timestep, species=species)
-        
-        elif format == "lammps-data":
-            asesys = convert_snap(self)
-            write(outfile, asesys, format='lammps-data', atom_style='atomic')
-        
-        elif format == "quantum-espresso":
-            aio.write_espresso(self, filename, copy_from=copy_from, pseudo_files=pseudo_files)
-        
-        else:
-            asesys = convert_snap(self)
-            write(outfile, asesys, format=format)
 
     def to_graph(self):
         """

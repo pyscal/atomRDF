@@ -4,6 +4,62 @@ from atomrdf.build.buildutils import _declass
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
 
+def vacancy()
+
+def _delete_atom(system, 
+    ids=None, 
+    indices=None, 
+    condition=None, 
+    selection=False, 
+    copy_structure=False):
+       """
+        Delete atoms from the structure.
+
+        Parameters
+        ----------
+        ids : list, optional
+            A list of atom IDs to delete. Default is None.
+        indices : list, optional
+            A list of atom indices to delete. Default is None.
+        condition : str, optional
+            A condition to select atoms to delete. Default is None.
+        selection : bool, optional
+            If True, delete atoms based on the current selection. Default is False.
+        copy_structure: bool, optional
+            If True, a copy of the structure will be returned. Default is False.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        Deletes atoms from the structure based on the provided IDs, indices, condition, or selection.
+        If the structure has a graph associated with it, the graph will be updated accordingly.
+        """
+        if copy_structure:
+            sys = self.duplicate()
+            #and add this new structure to the graph
+            sys.to_graph()
+            sys.copy_defects(self.sample)
+        else:
+            sys = self
+        
+        masks = sys.atoms._generate_bool_list(
+            ids=ids, indices=indices, condition=condition, selection=selection
+        )
+        
+        delete_list = [masks[sys.atoms["head"][x]] for x in range(sys.atoms.ntotal)]
+        delete_ids = [x for x in range(sys.atoms.ntotal) if delete_list[x]]
+        actual_natoms = sys.natoms
+        sys.atoms._delete_atoms(delete_ids)
+        vacancy_no = len([x for x in masks if x])
+        concentration = vacancy_no / actual_natoms
+        sys.add_vacancy(concentration, number=vacancy_no)
+        sys.update_system_for_defect_creation(vacancy_no,
+            actual_natoms,copy_structure=copy_structure)
+        return sys
+        
 def stacking_fault(
     slip_plane,
     displacement_a,
