@@ -48,6 +48,16 @@ def bulk(
     """
     if repetitions is None:
         repetitions = [1, 1, 1]
+    if element in element_dict.keys():
+        if structure is None:
+            structure = element_dict[element]["structure"]
+        if structure != element_dict[element]["structure"]:
+            if lattice_constant is None:
+                raise ValueError(
+                    f"lattice_constant must be provided for {element} with structure {structure}"
+                )
+        lattice_constant = element_dict[element]["lattice_constant"]
+    
     atoms, box, sdict = pcs.make_crystal(
         structure,
         lattice_constant = _declass(lattice_constant),
