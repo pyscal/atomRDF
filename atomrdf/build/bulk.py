@@ -151,4 +151,3 @@ def lattice(
     s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
     
     return s
-ls
