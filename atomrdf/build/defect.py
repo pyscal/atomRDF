@@ -194,6 +194,116 @@ def substitutional(
     return sys
 
 
+def interstitial(
+    self, element, void_type="tetrahedral",
+    lattice_constant=None,
+    threshold=0.01,
+    copy_structure=False,
+    ):
+    """
+    Add interstitial impurities to the System
+
+    Parameters
+    ----------
+    element: string or list
+        Chemical symbol of the elements/elements to be added
+        `element = 'Al'` will add one interstitial while `element = ['Al', 'Al']` or `element = ['Al', 'Li']` will add
+        two impurities
+
+    void_type: string
+        type of void to be added.  {`tetrahedral`, `octahedral`}
+
+    lattice_constant: float, optional
+        lattice constant of the system. Required only for octahedral voids
+
+    threshold: float, optional
+        threshold for the distance from the lattice constant for octahedral voids to account for fluctuations in atomic positions
+    
+    copy_structure: bool, optional
+        If True, a copy of the structure will be returned. Defaults to False.
+
+    Returns
+    -------
+    System:
+        system with the added impurities
+
+    Notes
+    -----
+    The validity of the void positions are not checked! This means that temperature, presence of vacancies or other
+    interstitials could affect the addition.
+    """
+    if None in self.atoms.species:
+        raise ValueError("Assign species!")
+
+    sys = self.duplicate()
+
+    if void_type == "tetrahedral":
+        element = np.atleast_1d(element)
+        self.find.neighbors(method="voronoi", cutoff=0.1)
+        verts = self.unique_vertices
+        randindex = np.random.randint(0, len(verts), len(element))
+        randpos = np.array(verts)[randindex]
+
+
+    elif void_type == "octahedral":
+        if lattice_constant is None:
+            if "lattice_constant" in self.lattice_properties.keys():
+                lattice_constant = self.lattice_properties["lattice_constant"]
+            else:
+                raise ValueError(
+                    "lattice constant is needed for octahedral voids, please provide"
+                )
+
+        cutoff = lattice_constant + threshold * 2
+        self.find.neighbors(method="cutoff", cutoff=cutoff)
+        octa_pos = []
+        for count, dist in enumerate(self.atoms.neighbors.distance):
+            diffs = np.abs(np.array(dist) - lattice_constant)
+            # print(diffs)
+            indices = np.where(diffs < 1e-2)[0]
+            # index_neighbor = np.array(self.atoms["neighbors"][count])[indices]
+            # real_indices = np.array(self.atoms.neighbors.index[count])[indices]
+            # create a dict
+            # index_dict = {str(x):y for x,y in zip(real_indices, ghost_indices)}
+            vector = np.array(self.atoms["diff"][count])[indices]
+            vector = self.atoms.positions[count] + vector / 2
+            for vect in vector:
+                vect = self.modify.remap_position_to_box(vect)
+                # print(vect)
+                octa_pos.append(vect)
+
+        octa_pos = np.unique(octa_pos, axis=0)
+        randindex = np.random.randint(0, len(octa_pos), len(element))
+        randpos = octa_pos[randindex]
+
+        if not len(randpos) == len(element):
+            raise ValueError("not enough octahedral positions found!")
+
+    else:
+        raise ValueError("void_type can only be tetrahedral/octahedral")
+
+    # create new system with the atoms added
+    no_of_impurities = len(randpos)
+    conc_of_impurities = no_of_impurities/self.natoms
+
+    if copy_structure:
+        #sys = self.duplicate()
+        sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))
+        sys.graph = self.graph        
+        sys.to_graph()
+        sys.copy_defects(self.sample)
+    else:
+        #sys = self.duplicate()
+        sys = System(source=self.add_atoms({"positions": randpos, "species": element}))
+        sys.graph = self.graph
+        sys.sample = self.sample
+
+    # now we have to verify the triples correctly and add them in
+    sys.update_system_for_interstitial_impurity(copy_structure=copy_structure)
+    sys.add_interstitial_impurities(conc_of_impurities,
+                                    no_of_impurities=no_of_impurities)
+    return sys
+
 def stacking_fault(
     slip_plane,
     displacement_a,
