@@ -496,29 +496,6 @@ class System(pc.System):
             self.graph.add((self.sample, PROV.wasDerivedFrom, self.sample))
             self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
-
-    def __delitem__(self, val):
-        """
-        Delete item(s) from the structure.
-
-        Parameters
-        ----------
-        val : int or list of int
-            The index(es) of the item(s) to be deleted.
-
-        Notes
-        -----
-        If `val` is an integer, it is converted to a list with a single element.
-        The graph is then updated accordingly based on the deleted indices.
-
-        """
-        if isinstance(val, int):
-            val = [val]
-        # now the graph has to be updated accordingly
-        self.delete(indices=list(val))
-
-
-
     def to_graph(self):
         """
         Converts the structure object to a graph representation.

@@ -5,7 +5,9 @@ from atomrdf.build.bulk import bulk
 import numpy as np
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
-
+from pyscal3.grain_boundary import GrainBoundary
+from pyscal3.atoms import AttrSetter, Atoms
+import copy
 
 def _delete_atom(system, 
     ids=None, 
@@ -559,13 +561,13 @@ def dislocation(
 
     if structure is not None:
         # create a structure with the info
-        input_structure = _make_crystal(
-            structure,
+        input_structure = bulk(
+            element,
+            structure=structure,
             lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
             ca_ratio=_declass(ca_ratio),
             noise=noise,
-            element=element,
             primitive=primitive,
         )
     elif element is not None:
@@ -574,13 +576,13 @@ def dislocation(
             lattice_constant = element_dict[element]["lattice_constant"]
         else:
             raise ValueError("Please provide structure")
-        input_structure = _make_crystal(
-            structure,
+        input_structure = bulk(
+            element,
+            structure=structure,
             lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
             ca_ratio=_declass(ca_ratio),
             noise=noise,
-            element=element,
             primitive=primitive,
         )
     else:
@@ -838,13 +840,13 @@ def _make_grain_boundary_aimsgb(
 
     if structure is not None:
         # create a structure with the info
-        init_sys = _make_crystal(
-            structure,
+        init_sys = bulk(
+            element,
+            structure=structure,
             lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
             ca_ratio=_declass(ca_ratio),
             noise=0,
-            element=element,
             primitive=primitive,
         )
     elif element is not None:
@@ -853,13 +855,13 @@ def _make_grain_boundary_aimsgb(
             lattice_constant = element_dict[element]["lattice_constant"]
         else:
             raise ValueError("Please provide structure")
-        init_sys = _make_crystal(
-            structure,
+        init_sys = bulk(
+            element,
+            structure=structure,
             lattice_constant=_declass(lattice_constant),
             repetitions=repetitions,
             ca_ratio=_declass(ca_ratio),
             noise=0,
-            element=element,
             primitive=primitive,
         )
     else:
