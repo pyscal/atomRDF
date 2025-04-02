@@ -1,4 +1,6 @@
 import pyscal3.operations.operations as operations
+from pyscal3.atoms import AttrSetter, Atoms
+from atomrdf.structure import System
 
 def repeat(system, repetitions):
     """
@@ -26,3 +28,76 @@ def repeat(system, repetitions):
     new_system.copy_defects(system.sample)
     return new_system
 
+def rotate(sys, rotation_vectors, graph=None, label=None):
+    try:
+        from atomman.defect.Dislocation import Dislocation
+        import atomman as am
+        import atomman.unitconvert as uc
+    except ImportError:
+        raise ImportError("This function requires the atomman package to be installed")
+
+    box = am.Box(
+        avect=sys.box[0],
+        bvect=sys.box[1],
+        cvect=sys.box[2],
+    )
+    
+    atoms = am.Atoms(
+        atype=sys.atoms.types, pos=sys.atoms.positions
+    )
+    
+    element = [val for key, val in sys.atoms._type_dict.items()]
+
+    system = am.System(
+        atoms=atoms, 
+        box=box, 
+        pbc=[True, True, True], 
+        symbols=element, 
+        scale=False,
+    )
+
+    #now rotate with atomman
+    system = system.rotate(rotation_vectors)
+
+    #now convert back and return the system
+    box = [system.box.avect, 
+        system.box.bvect, 
+        system.box.cvect]
+    
+    atom_df = system.atoms_df()
+    types = [int(x) for x in atom_df.atype.values]
+    
+    species = []
+    for t in types:
+        species.append(element[int(t) - 1])
+
+    positions = np.column_stack(
+        (atom_df["pos[0]"].values, 
+        atom_df["pos[1]"].values, 
+        atom_df["pos[2]"].values)
+    )
+
+    atom_dict = {"positions": positions, "types": types, "species": species}
+    atom_obj = Atoms()
+    atom_obj.from_dict(atom_dict)
+    
+    output_structure = System()
+    output_structure.box = box
+    output_structure.atoms = atom_obj
+    #output_structure = output_structure.modify.remap_to_box()
+    if graph is not None:
+        output_structure.graph = graph
+    else:
+        output_structure.graph = sys.graph
+    output_structure.atoms._lattice = sys.atoms._lattice
+    output_structure.atoms._lattice_constant = sys.atoms._lattice_constant
+    output_structure._structure_dict = sys._structure_dict
+    if label is not None:
+        output_structure.label = label
+    else:
+        output_structure.label = sys.label
+    output_structure.to_graph()
+    output_structure.copy_defects(sys.sample)
+    if output_structure.graph is not None:
+        sys.add_rotation_triples(rotation_vectors, output_structure.sample)
+    return output_structure
