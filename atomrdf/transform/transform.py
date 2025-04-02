@@ -1,6 +1,7 @@
 import pyscal3.operations.operations as operations
 from pyscal3.atoms import AttrSetter, Atoms
 from atomrdf.structure import System
+import numpy as np
 
 def repeat(system, repetitions):
     """
@@ -101,3 +102,42 @@ def rotate(sys, rotation_vectors, graph=None, label=None):
     if output_structure.graph is not None:
         sys.add_rotation_triples(rotation_vectors, output_structure.sample)
     return output_structure
+
+def translate(system,
+                translation_vector, 
+                plane=None, distance=None, 
+                reverse_orientation=False, 
+                copy_structure=True,
+                add_triples=True):
+    if copy_structure:
+        sys = system.duplicate()
+        #and add this new structure to the graph
+        sys.to_graph()
+        sys.copy_defects(system.sample)
+    else:
+        sys = system
+
+    if plane is not None:
+        if distance is None:
+            raise ValueError('distance needs to be provided')
+    
+    if plane is not None:
+        sys.select_by_plane(plane, distance, reverse_orientation=reverse_orientation)
+
+    if not len(translation_vector) == 3:
+        raise ValueError("translation vector must be of length 3")
+    
+    translation_vector = np.array(translation_vector)
+
+    for x in range(len(sys.atoms['positions'])):
+        if sys.atoms['condition'][x]:
+            sys.atoms['positions'][x] += translation_vector
+    
+    if plane is not None:
+        sys.remove_selection()
+
+    if (sys.graph is not None) and add_triples:
+        sys.add_translation_triples(translation_vector, plane, distance)
+        if copy_structure:
+            sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
+    return sys
