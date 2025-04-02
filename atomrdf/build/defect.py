@@ -1,6 +1,8 @@
 import pyscal3.structure_creator as pcs
 from atomrdf.system import System
 from atomrdf.build.buildutils import _declass
+from atomrdf.build.bulk import bulk
+import numpy as np
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
 
@@ -11,55 +13,107 @@ def _delete_atom(system,
     condition=None, 
     selection=False, 
     copy_structure=False):
-       """
-        Delete atoms from the structure.
+    """
+    Delete atoms from the structure.
 
-        Parameters
-        ----------
-        ids : list, optional
-            A list of atom IDs to delete. Default is None.
-        indices : list, optional
-            A list of atom indices to delete. Default is None.
-        condition : str, optional
-            A condition to select atoms to delete. Default is None.
-        selection : bool, optional
-            If True, delete atoms based on the current selection. Default is False.
-        copy_structure: bool, optional
-            If True, a copy of the structure will be returned. Default is False.
+    Parameters
+    ----------
+    ids : list, optional
+        A list of atom IDs to delete. Default is None.
+    indices : list, optional
+        A list of atom indices to delete. Default is None.
+    condition : str, optional
+        A condition to select atoms to delete. Default is None.
+    selection : bool, optional
+        If True, delete atoms based on the current selection. Default is False.
+    copy_structure: bool, optional
+        If True, a copy of the structure will be returned. Default is False.
 
-        Returns
-        -------
-        None
+    Returns
+    -------
+    None
 
-        Notes
-        -----
-        Deletes atoms from the structure based on the provided IDs, indices, condition, or selection.
-        If the structure has a graph associated with it, the graph will be updated accordingly.
-        """
-        if copy_structure:
-            sys = self.duplicate()
-            #and add this new structure to the graph
-            sys.to_graph()
-            sys.copy_defects(self.sample)
-        else:
-            sys = self
-        
-        masks = sys.atoms._generate_bool_list(
-            ids=ids, indices=indices, condition=condition, selection=selection
+    Notes
+    -----
+    Deletes atoms from the structure based on the provided IDs, indices, condition, or selection.
+    If the structure has a graph associated with it, the graph will be updated accordingly.
+    """
+    if copy_structure:
+        sys = system.duplicate()
+        #and add this new structure to the graph
+        sys.to_graph()
+        sys.copy_defects(system.sample)
+    else:
+        sys = system
+    
+    masks = sys.atoms._generate_bool_list(
+        ids=ids, indices=indices, condition=condition, selection=selection
+    )
+    
+    delete_list = [masks[sys.atoms["head"][x]] for x in range(sys.atoms.ntotal)]
+    delete_ids = [x for x in range(sys.atoms.ntotal) if delete_list[x]]
+    actual_natoms = sys.natoms
+    sys.atoms._delete_atoms(delete_ids)
+    vacancy_no = len([x for x in masks if x])
+    concentration = vacancy_no / actual_natoms
+    sys.add_vacancy(concentration, number=vacancy_no)
+    sys.update_system_for_defect_creation(vacancy_no,
+        actual_natoms,copy_structure=copy_structure)
+    return sys
+
+def vacancy(
+    ids=None,
+    indices=None,
+    no_of_vacancies=None,
+    structure_object = None,
+    structure=None,
+    element=None,
+    lattice_constant=1.00,
+    repetitions=None,
+    ca_ratio=1.633,
+    noise=0,
+    primitive=False,
+    graph=None,
+    names=False,
+    label=None,
+    copy_structure=False,
+):
+    if all(v is None for v in [ids, indices, no_of_vacancies]):
+        raise ValueError("Please provide ids, indices or no_of_vacancies")
+
+    if structure_object is not None:
+        #structure is given, so we use that for further work
+        sys = structure_object
+    else:
+        #we try creating a structure, in that case, we call bulk        
+        sys = bulk(
+            element=element,
+            structure=structure,
+            lattice_constant=lattice_constant,
+            repetitions=repetitions,
+            ca_ratio=ca_ratio,
+            noise=noise,
+            primitive=primitive,
+            graph=graph,
+            names=names,
+            label=label,
         )
-        
-        delete_list = [masks[sys.atoms["head"][x]] for x in range(sys.atoms.ntotal)]
-        delete_ids = [x for x in range(sys.atoms.ntotal) if delete_list[x]]
-        actual_natoms = sys.natoms
-        sys.atoms._delete_atoms(delete_ids)
-        vacancy_no = len([x for x in masks if x])
-        concentration = vacancy_no / actual_natoms
-        sys.add_vacancy(concentration, number=vacancy_no)
-        sys.update_system_for_defect_creation(vacancy_no,
-            actual_natoms,copy_structure=copy_structure)
-        return sys
-def vacancy()
-        
+    
+    if no_of_vacancies is not None:
+        indices = np.random.randit(0, sys.natoms, no_of_vacancies)
+    
+    #get actual natoms
+    actual_natoms = sys.natoms
+
+    #we are good to go now
+    sys = _delete_atom(sys, 
+                ids=ids, 
+                indices=indices, 
+                condition=None, 
+                selection=False, 
+                copy_structure=copy_structure)
+    return sys
+
 def stacking_fault(
     slip_plane,
     displacement_a,
