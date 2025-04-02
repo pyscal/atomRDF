@@ -57,7 +57,7 @@ def _delete_atom(system,
     vacancy_no = len([x for x in masks if x])
     concentration = vacancy_no / actual_natoms
     sys.add_vacancy(concentration, number=vacancy_no)
-    sys.update_system_for_defect_creation(vacancy_no,
+    sys.update_system_for_vacancy_creation(vacancy_no,
         actual_natoms,copy_structure=copy_structure)
     return sys
 
@@ -113,6 +113,86 @@ def vacancy(
                 selection=False, 
                 copy_structure=copy_structure)
     return sys
+
+
+def substitutional(
+    system,
+    substitution_element,
+    ids=None,
+    indices=None,
+    condition=None,
+    selection=False,
+    copy_structure=False,    
+):
+    """
+    Substitute atoms in the structure with a given element.
+
+    Parameters
+    ----------
+    substitution_element : str
+        The element to substitute the atoms with.
+    ids : list, optional
+        A list of atom IDs to consider for substitution. Defaults to None.
+    indices : list, optional
+        A list of atom indices to consider for substitution. Defaults to None.
+    condition : callable, optional
+        A callable that takes an atom as input and returns a boolean indicating whether the atom should be considered for substitution. Defaults to None.
+    selection : bool, optional
+        If True, only selected atoms will be considered for substitution. Defaults to False.
+    copy_structure: bool, optional
+        If True, a copy of the structure will be returned. Defaults to False.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    - This method substitutes atoms in the structure with a given element.
+    - The substitution is performed based on the provided IDs, indices, condition, and selection parameters.
+    - The substituted atoms will have their species and types updated accordingly.
+    - If the graph is not None, the method also operates on the graph by removing existing elements and adding new ones based on the composition of the substituted atoms.
+    - The method also cleans up items in the file associated with the graph.
+
+    Examples
+    --------
+    # Substitute selected atoms with nitrogen
+    structure.substitute_atoms("N", ids=[1, 3, 5])
+    """
+    if copy_structure:
+        sys = system.duplicate()
+        #and add this new structure to the graph
+        sys.to_graph()
+        sys.copy_defects(system.sample)
+    else:
+        sys = system
+    
+    masks = sys.atoms._generate_bool_list(
+        ids=ids, indices=indices, condition=condition, selection=selection
+    )
+    delete_list = [masks[sys.atoms["head"][x]] for x in range(sys.atoms.ntotal)]
+    delete_ids = [x for x in range(sys.atoms.ntotal) if delete_list[x]]
+    type_dict = sys.atoms._type_dict
+    rtype_dict = {val: key for key, val in type_dict.items()}
+    if substitution_element in rtype_dict.keys():
+        atomtype = rtype_dict[substitution_element]
+        maxtype = atomtype
+    else:
+        maxtype = max(sys.atoms["types"]) + 1
+
+    for x in delete_ids:
+        sys.atoms["species"][x] = substitution_element
+        sys.atoms["types"][x] = maxtype
+    #impurity metrics
+    no_of_impurities = len(delete_ids)
+    conc_of_impurities = no_of_impurities/sys.natoms
+    sys.update_system_for_substitutional_impurities(no_of_impurities,
+                    actual_natoms=sys.natoms, copy_structure=copy_structure)
+    sys.add_substitutional_impurities(conc_of_impurities,
+                                      no_of_impurities=no_of_impurities)
+
+    return sys
+
 
 def stacking_fault(
     slip_plane,
