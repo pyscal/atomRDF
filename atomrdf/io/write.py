@@ -194,7 +194,7 @@ def write(system, filename=None,
         asesys = convert_snap(system)
         ase_write(outfile, asesys, format="vasp")
         if add_sample_id and (system.sample is not None):
-            system.write_poscar_id(outfile)
+            _write_poscar_id(system, outfile)
     
     elif format == "lammps-dump":
         inputmethods.to_file(system, outfile, format='lammps-dump', customkeys=customkeys, customvals=customvals,
