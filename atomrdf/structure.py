@@ -1291,7 +1291,9 @@ class System(pc.System):
         self.apply_selection(condition=selection)
         
     
-    def add_translation_triples(self, translation_vector, plane, distance, ):
+    def add_translation_triples(self, translation_vector, plane, distance, original_sample):
+        if self.graph is None:
+            return
         activity_id = f"operation:{uuid.uuid4()}"
         activity = self.graph.create_node(activity_id, ASMO.Translation)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
@@ -1303,6 +1305,9 @@ class System(pc.System):
         self.graph.add((t_vector, CMSO.hasComponent_x, Literal(translation_vector[0], datatype=XSD.float),))
         self.graph.add((t_vector, CMSO.hasComponent_y, Literal(translation_vector[1], datatype=XSD.float),))
         self.graph.add((t_vector, CMSO.hasComponent_z, Literal(translation_vector[2], datatype=XSD.float),))
+
+        if self.sample != original_sample:
+            sys.graph.add((sys.sample, PROV.wasDerivedFrom, original_sample))
 
     def shear(self, shear_vector, 
                     plane, 

@@ -109,6 +109,7 @@ def translate(system,
                 reverse_orientation=False, 
                 copy_structure=True,
                 add_triples=True):
+    original_sample = system.sample
     if copy_structure:
         sys = system.duplicate()
         #and add this new structure to the graph
@@ -136,8 +137,6 @@ def translate(system,
     if plane is not None:
         sys.remove_selection()
 
-    if (sys.graph is not None) and add_triples:
-        sys.add_translation_triples(translation_vector, plane, distance)
-        if copy_structure:
-            sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
+    if add_triples:
+        sys.add_translation_triples(translation_vector, plane, distance, original_sample)
     return sys
