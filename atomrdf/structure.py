@@ -1308,35 +1308,10 @@ class System(pc.System):
 
         if self.sample != original_sample:
             sys.graph.add((sys.sample, PROV.wasDerivedFrom, original_sample))
-
-    def shear(self, shear_vector, 
-                    plane, 
-                    distance, 
-                    reverse_orientation=False, 
-                    copy_structure=True):
-        
-        if copy_structure:
-            sys = self.duplicate()
-            #and add this new structure to the graph
-            sys.to_graph()
-            sys.copy_defects(self.sample)
-        else:
-            sys = self
-
-        if not np.dot(shear_vector, plane) == 0:
-            raise ValueError("shear vector must be perpendicular to the plane")
-        
-        sys = sys.translate(shear_vector, plane=plane, distance=distance, 
-                            reverse_orientation=reverse_orientation, copy_structure=False,
-                            add_triples=False)
-
-        if sys.graph is not None:
-            sys.add_shear_triples(shear_vector, plane, distance)
-            if self.sample.toPython() != sys.sample.toPython():
-                sys.graph.add((sys.sample, PROV.wasDerivedFrom, self.sample))
-        return sys
     
-    def add_shear_triples(self, translation_vector, plane, distance, ):
+    def add_shear_triples(self, translation_vector, plane, distance, original_sample):
+        if self.graph is None:
+            return
         activity_id = f"operation:{uuid.uuid4()}"
         activity = self.graph.create_node(activity_id, ASMO.Shear)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
@@ -1359,6 +1334,8 @@ class System(pc.System):
             self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
             self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
             self.graph.add((plane, CMSO.hasDistanceFromOrigin, Literal(distance, datatype=XSD.float)))
+        if original_sample != self.sample:
+            sys.graph.add((sys.sample, PROV.wasDerivedFrom, original_sample))
 
     def copy_defects(self, parent_sample):
         if self.sample is None:

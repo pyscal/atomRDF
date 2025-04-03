@@ -140,3 +140,27 @@ def translate(system,
     if add_triples:
         sys.add_translation_triples(translation_vector, plane, distance, original_sample)
     return sys
+
+def shear(self, shear_vector, 
+                plane, 
+                distance, 
+                reverse_orientation=False, 
+                copy_structure=True):
+    original_sample = self.sample
+    if copy_structure:
+        sys = self.duplicate()
+        #and add this new structure to the graph
+        sys.to_graph()
+        sys.copy_defects(self.sample)
+    else:
+        sys = self
+
+    if not np.dot(shear_vector, plane) == 0:
+        raise ValueError("shear vector must be perpendicular to the plane")
+    
+    sys = sys.translate(shear_vector, plane=plane, distance=distance, 
+                        reverse_orientation=reverse_orientation, copy_structure=False,
+                        add_triples=False)
+
+    sys.add_shear_triples(shear_vector, plane, distance, original_sample)
+    return sys
