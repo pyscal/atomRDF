@@ -48,6 +48,7 @@ import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
 import atomrdf.mp as amp 
+from atomrdf.io.write import write
 
 from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, CDCO, UNSAFECMSO, UNSAFEASMO, Literal
 
@@ -1466,7 +1467,7 @@ class KnowledgeGraph:
             filename = os.path.join(os.getcwd(), "out")
 
         sys = self.get_system_from_sample(sample)
-        sys.to_file(filename=filename, 
+        write(sys, filename=filename, 
                     format=format, 
                     add_sample_id=add_sample_id, 
                     copy_from=copy_from,

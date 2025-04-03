@@ -5,10 +5,11 @@ from atomrdf.namespace import CMSO, PLDO, ASMO, CDCO
 import shutil
 
 import atomrdf.build as build
+import atomrdf.io.write as write
 
 def test_structuregraph():
 	s = KnowledgeGraph()
-	sys = build.bulk.bulk("Fe", graph=s)
+	sys = build.bulk("Fe", graph=s)
 
 	vis = s.visualise()
 	assert(vis != None)
@@ -19,10 +20,10 @@ def test_structuregraph():
 	s.write("temp.ttl", format="turtle")
 	s = KnowledgeGraph(graph_file="temp.ttl")
 
-	sys = build.bulk.defect.vacancy("Fe", graph=s, no_of_vacancies=1)
+	sys = build.defect.vacancy(element="Fe", graph=s, no_of_vacancies=1)
 
 	s = KnowledgeGraph()
-	sys = build.bulk.bulk("Fe", graph=s)
+	sys = build.bulk("Fe", graph=s)
 	assert s.n_samples == 1
 	#res = s.query_sample("NumberOfAtoms", 2)
 	#assert(len(res) == 1)
@@ -37,21 +38,21 @@ def test_logger():
  
 def test_add_structure():
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe()
+	sys = build.bulk("Fe", graph=s)
 	s.add_structure(sys)
 	assert sys.sample in s.sample_ids
 
 def test_add_cross_triple():
 	
 	s = KnowledgeGraph(enable_log=True)
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	status, _ = s._check_domain_if_uriref((sys.material, CDCO.hasCrystallographicDefect, PLDO.AntiphaseBoundary))
 	assert status == True
 	
 
 def test_add_quantity():
 	s = KnowledgeGraph(enable_log=True)
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	s.add_calculated_quantity(sys.sample,
 		'Energy',
 		str(23),
@@ -66,8 +67,8 @@ def test_add_quantity():
 
 def test_archive():
 	s = KnowledgeGraph(enable_log=True)
-	sys = System.create.element.Fe(graph=s)
-	sys = System.create.element.Cu(graph=s)
+	sys = build.bulk("Fe", graph=s)
+	sys = build.bulk("Cu", graph=s)
 	if os.path.exists('test_archive.tar.gz'):
 		os.remove('test_archive.tar.gz')
 	if os.path.exists('test_archive'):
@@ -82,10 +83,10 @@ def test_archive():
 
 def test_sparql_query():
 	kg = KnowledgeGraph()
-	struct_Fe = System.create.element.Fe(graph=kg)
-	struct_Si = System.create.element.Si(graph=kg)
-	struct_l12 = System.create.lattice.l12(element=['Al', 'Ni'], 
-                         lattice_constant=3.57, graph=kg)
+	struct_Fe = build.bulk("Fe", graph=kg)
+	struct_Si = build.bulk("Si", graph=kg)
+	struct_l12 = build.bulk(['Al', 'Ni'], structure="l12", 
+                        lattice_constant=3.57, graph=kg)
 	query = """
 	PREFIX cmso: <http://purls.helmholtz-metadaten.de/cmso/>
 	SELECT DISTINCT ?symbol
@@ -105,7 +106,7 @@ def test_sparql_query():
 
 def test_extract_sample():
 	kg = KnowledgeGraph()
-	struct_Fe = System.create.element.Fe(graph=kg)
+	struct_Fe = build.bulk("Fe", graph=kg)
 	sample_graph, no_atoms = kg.get_sample(struct_Fe.sample, no_atoms=True)
 	assert no_atoms == 2
 	assert sample_graph.sample_ids[0] == struct_Fe.sample
@@ -131,11 +132,11 @@ def test_extract_sample():
 
 def test_purge():
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	s.purge(force=True)
 	assert s.n_samples == 0
 
 	s = KnowledgeGraph(store='db', store_file=f'testr.db')
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	s.purge(force=True)
 	assert s.n_samples == 0

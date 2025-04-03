@@ -1,3 +1,3 @@
-import atomrdf.io.plot as plot
-import atomrdf.io.write as write
-import atomrdf.io.read as read
+from atomrdf.io.plot import plot, plot3d
+from atomrdf.io.write import write
+from atomrdf.io.read import read

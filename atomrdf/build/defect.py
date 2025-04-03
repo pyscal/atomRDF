@@ -104,7 +104,7 @@ def vacancy(
         )
     
     if no_of_vacancies is not None:
-        indices = np.random.randit(0, sys.natoms, no_of_vacancies)
+        indices = np.random.randint(0, sys.natoms, no_of_vacancies)
     
     #get actual natoms
     actual_natoms = sys.natoms
