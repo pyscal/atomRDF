@@ -40,6 +40,8 @@ def _delete_atom(system,
     Deletes atoms from the structure based on the provided IDs, indices, condition, or selection.
     If the structure has a graph associated with it, the graph will be updated accordingly.
     """
+    original_sample = system.sample
+
     if copy_structure:
         sys = system.duplicate()
         #and add this new structure to the graph
@@ -60,7 +62,7 @@ def _delete_atom(system,
     concentration = vacancy_no / actual_natoms
     sys.add_vacancy(concentration, number=vacancy_no)
     sys.update_system_for_vacancy_creation(vacancy_no,
-        actual_natoms,copy_structure=copy_structure)
+        actual_natoms,original_sample)
     return sys
 
 def vacancy(
@@ -161,6 +163,8 @@ def substitutional(
     # Substitute selected atoms with nitrogen
     structure.substitute_atoms("N", ids=[1, 3, 5])
     """
+    original_sample = system.sample
+
     if copy_structure:
         sys = system.duplicate()
         #and add this new structure to the graph
@@ -189,15 +193,17 @@ def substitutional(
     no_of_impurities = len(delete_ids)
     conc_of_impurities = no_of_impurities/sys.natoms
     sys.update_system_for_substitutional_impurities(no_of_impurities,
-                    actual_natoms=sys.natoms, copy_structure=copy_structure)
+                    sys.natoms, original_sample)
     sys.add_substitutional_impurities(conc_of_impurities,
-                                      no_of_impurities=no_of_impurities)
+                                    no_of_impurities=no_of_impurities)
 
     return sys
 
 
 def interstitial(
-    self, element, void_type="tetrahedral",
+    system, 
+    element, 
+    void_type="tetrahedral",
     lattice_constant=None,
     threshold=0.01,
     copy_structure=False,
@@ -234,32 +240,34 @@ def interstitial(
     The validity of the void positions are not checked! This means that temperature, presence of vacancies or other
     interstitials could affect the addition.
     """
-    if None in self.atoms.species:
+    original_sample = system.sample
+
+    if None in system.atoms.species:
         raise ValueError("Assign species!")
 
-    sys = self.duplicate()
+    sys = system.duplicate()
 
     if void_type == "tetrahedral":
         element = np.atleast_1d(element)
-        self.find.neighbors(method="voronoi", cutoff=0.1)
-        verts = self.unique_vertices
+        system.find.neighbors(method="voronoi", cutoff=0.1)
+        verts = system.unique_vertices
         randindex = np.random.randint(0, len(verts), len(element))
         randpos = np.array(verts)[randindex]
 
 
     elif void_type == "octahedral":
         if lattice_constant is None:
-            if "lattice_constant" in self.lattice_properties.keys():
-                lattice_constant = self.lattice_properties["lattice_constant"]
+            if "lattice_constant" in system.lattice_properties.keys():
+                lattice_constant = system.lattice_properties["lattice_constant"]
             else:
                 raise ValueError(
                     "lattice constant is needed for octahedral voids, please provide"
                 )
 
         cutoff = lattice_constant + threshold * 2
-        self.find.neighbors(method="cutoff", cutoff=cutoff)
+        system.find.neighbors(method="cutoff", cutoff=cutoff)
         octa_pos = []
-        for count, dist in enumerate(self.atoms.neighbors.distance):
+        for count, dist in enumerate(system.atoms.neighbors.distance):
             diffs = np.abs(np.array(dist) - lattice_constant)
             # print(diffs)
             indices = np.where(diffs < 1e-2)[0]
@@ -267,10 +275,10 @@ def interstitial(
             # real_indices = np.array(self.atoms.neighbors.index[count])[indices]
             # create a dict
             # index_dict = {str(x):y for x,y in zip(real_indices, ghost_indices)}
-            vector = np.array(self.atoms["diff"][count])[indices]
-            vector = self.atoms.positions[count] + vector / 2
+            vector = np.array(system.atoms["diff"][count])[indices]
+            vector = system.atoms.positions[count] + vector / 2
             for vect in vector:
-                vect = self.modify.remap_position_to_box(vect)
+                vect = system.modify.remap_position_to_box(vect)
                 # print(vect)
                 octa_pos.append(vect)
 
@@ -286,22 +294,22 @@ def interstitial(
 
     # create new system with the atoms added
     no_of_impurities = len(randpos)
-    conc_of_impurities = no_of_impurities/self.natoms
+    conc_of_impurities = no_of_impurities/system.natoms
 
     if copy_structure:
         #sys = self.duplicate()
         sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))
-        sys.graph = self.graph        
+        sys.graph = system.graph        
         sys.to_graph()
-        sys.copy_defects(self.sample)
+        sys.copy_defects(system.sample)
     else:
         #sys = self.duplicate()
         sys = System(source=self.add_atoms({"positions": randpos, "species": element}))
-        sys.graph = self.graph
-        sys.sample = self.sample
+        sys.graph = system.graph
+        sys.sample = system.sample
 
     # now we have to verify the triples correctly and add them in
-    sys.update_system_for_interstitial_impurity(copy_structure=copy_structure)
+    sys.update_system_for_interstitial_impurity(original_sample)
     sys.add_interstitial_impurities(conc_of_impurities,
                                     no_of_impurities=no_of_impurities)
     return sys

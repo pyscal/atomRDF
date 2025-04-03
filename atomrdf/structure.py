@@ -215,7 +215,7 @@ class System(pc.System):
                 )
             )
 
-    def update_system_for_vacancy_creation(self, vacancy_no, actual_natoms, copy_structure=False):
+    def update_system_for_vacancy_creation(self, vacancy_no, actual_natoms, original_sample):
         if self.graph is None:
             return
 
@@ -296,9 +296,9 @@ class System(pc.System):
         json_io.write_file(outfile, datadict)
 
         #write mapping for the operation
-        if copy_structure:
+        if original_sample != self.sample:
             activity = self.graph.create_node(f"structuremanipulation:{uuid.uuid4()}", ASMO.DeleteAtom)
-            self.graph.add((self.sample, PROV.wasDerivedFrom, self.sample))
+            self.graph.add((self.sample, PROV.wasDerivedFrom, original_sample))
             self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
     def add_substitutional_impurities(self, 
@@ -313,7 +313,7 @@ class System(pc.System):
     def update_system_for_substitutional_impurity(self, 
                 impurity_no, 
                 actual_natoms,
-                copy_structure=False):
+                original_sample):
         # operate on the graph
         if self.graph is None:
             return
@@ -384,9 +384,9 @@ class System(pc.System):
         json_io.write_file(outfile, datadict)
 
         #write mapping for the operation
-        if copy_structure:
+        if original_sample != self.sample:
             activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.SubstituteAtom)
-            self.graph.add((self.sample, PROV.wasDerivedFrom, self.sample))
+            self.graph.add((self.sample, PROV.wasDerivedFrom, original_sample))
             self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
     def add_interstitial_impurities(self, 
@@ -403,7 +403,7 @@ class System(pc.System):
             self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
 
     def update_system_for_interstitial_impurity(self,
-        copy_structure=False):
+        original_sample):
         if self.graph is None:
             return
         self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
@@ -482,7 +482,7 @@ class System(pc.System):
         json_io.write_file(outfile, datadict)
 
         #write mapping for the operation
-        if copy_structure:
+        if original_sample != self.sample:
             activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.AddAtom)
             self.graph.add((self.sample, PROV.wasDerivedFrom, self.sample))
             self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
