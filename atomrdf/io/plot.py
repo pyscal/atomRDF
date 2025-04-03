@@ -1,4 +1,5 @@
 import pyscal3.operations.visualize as visualize
+from atomrdf.io.write import write
 
 def plot(system, plot_style='all', colorby=None, 
     cmap = 'viridis', 
@@ -26,3 +27,15 @@ def plot(system, plot_style='all', colorby=None,
             radius=radius, 
             opacity=opacity,
             hide_zero=hide_zero)
+
+def plot3d(system, *args, **kwargs):
+    try:
+        from pyiron_atomistics.atomistics.structure.atoms import (
+            ase_to_pyiron,
+            pyiron_to_ase,
+        )
+    except ImportError:
+        raise ImportError("Please install pyiron_atomistics")
+    ase_structure = write(system, format='ase')
+    pyiron_structure = ase_to_pyiron(ase_structure)
+    return pyiron_structure.plot3d(*args, **kwargs)
