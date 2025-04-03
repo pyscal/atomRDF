@@ -1,4 +1,4 @@
-from atomrdf.system import System
+from atomrdf.structure import System
 
 def read(
     filename,

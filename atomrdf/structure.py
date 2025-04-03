@@ -34,7 +34,6 @@ import pyscal3.operations.operations as operations
 import atomrdf.json_io as json_io
 import atomrdf.properties as prp
 from atomrdf.sample import Property
-import atomrdf.io as aio
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import CMSO, LDO, PLDO, PODO, CDCO, UNSAFEASMO, UNSAFECMSO, PROV, Literal, ASMO

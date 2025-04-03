@@ -1,5 +1,5 @@
 import pyscal3.structure_creator as pcs
-from atomrdf.system import System
+from atomrdf.structure import System
 from atomrdf.build.buildutils import _declass
 from atomrdf.build.bulk import bulk
 import numpy as np
