@@ -4,9 +4,11 @@ from atomrdf import KnowledgeGraph, System
 from atomrdf.namespace import CMSO, PLDO, ASMO, CDCO
 import shutil
 
+import atomrdf.build as build
+
 def test_structuregraph():
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk.bulk("Fe", graph=s)
 
 	vis = s.visualise()
 	assert(vis != None)
@@ -17,11 +19,10 @@ def test_structuregraph():
 	s.write("temp.ttl", format="turtle")
 	s = KnowledgeGraph(graph_file="temp.ttl")
 
-	sys = System.create.element.Fe(graph=s)
-	sys.add_vacancy(0.5, number=1)
+	sys = build.bulk.defect.vacancy("Fe", graph=s, no_of_vacancies=1)
 
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk.bulk("Fe", graph=s)
 	assert s.n_samples == 1
 	#res = s.query_sample("NumberOfAtoms", 2)
 	#assert(len(res) == 1)
