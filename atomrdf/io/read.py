@@ -1,4 +1,6 @@
 from atomrdf.structure import System
+from pyscal3.core import structure_dict, element_dict
+from atomrdf.build.buildutils import _declass
 
 def read(
     filename,

@@ -60,14 +60,13 @@ def test_read_in():
 def test_delete():
 	s = KnowledgeGraph()
 	sys = build.bulk("Fe", graph=s)
-	sys = build.defect.vacancy(structure_objectindices=[0])
+	sys = build.defect.vacancy(sys, indices=[0])
 	assert sys.natoms == 1
 	ss, n= s.get_sample(sys.sample, no_atoms=True)
 	assert n==1
 
 	s = KnowledgeGraph()
-	sys = build.bulk("Fe", graph=s)
-	del sys[0]
+	sys = build.defect.vacancy("Fe", no_of_vacancies=1, graph=s)
 	assert sys.natoms == 1
 	ss, n= s.get_sample(sys.sample, no_atoms=True)
 	assert n==1
