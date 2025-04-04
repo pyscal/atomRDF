@@ -4,17 +4,19 @@ import numpy as np
 from atomrdf import KnowledgeGraph, System
 from atomrdf.namespace import CMSO, PLDO
 import shutil
+import atomrdf.build as build
+import atomrdf.io.read as read
 
 def test_custom():
 	kg = KnowledgeGraph()
-	struct = System.create.lattice.custom([[0.   , 0.   , 0.   ],
-	       [1.435, 1.435, 1.435]],
+	struct = build.lattice("Fe",
+		[[0.   , 0.   , 0.   ],
+	    [1.435, 1.435, 1.435]],
 	    [1, 1], 
 	    [[2.87, 0.  , 0.  ],
-	       [0.  , 2.87, 0.  ],
-	       [0.  , 0.  , 2.87]],
+	    [0.  , 2.87, 0.  ],
+	    [0.  , 0.  , 2.87]],
 	    lattice_constant = 2.87, 
-	    element='Fe',
 	    graph=kg)
 	assert kg.value(struct.sample, CMSO.hasNumberOfAtoms).toPython() == 2
 
@@ -26,7 +28,7 @@ def test_dislocation():
 	dislocation_line = np.array([1, 0, -1])
 	elastic_constant_dict = {'C11': 169, 'C12': 122, 'C44': 75.4}
 	kg = KnowledgeGraph()
-	sys = System.create.defect.dislocation(slip_system,
+	sys = build.defect.dislocation(slip_system,
                                         dislocation_line,
                                         elastic_constant_dict,
                                         burgers_vector=burgers_vector,
@@ -36,7 +38,7 @@ def test_dislocation():
                                         ) 
 	assert sys.natoms == 96
 
-	sys = System.create.defect.dislocation(slip_system,
+	sys = build.defect.dislocation(slip_system,
                                         dislocation_line,
                                         elastic_constant_dict,
                                         burgers_vector=burgers_vector,
@@ -52,19 +54,19 @@ def test_dislocation():
 
 def test_read_in():
 	kg = KnowledgeGraph()
-	struct = System.read.file('tests/conf.dump', graph=kg, lattice='bcc', lattice_constant=2.861)
+	struct = read('tests/conf.dump', graph=kg, lattice='bcc', lattice_constant=2.861)
 	assert kg.n_samples == 1
 
 def test_delete():
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe(graph=s)
-	sys.delete(indices=[0])
+	sys = build.bulk("Fe", graph=s)
+	sys = build.defect.vacancy(structure_objectindices=[0])
 	assert sys.natoms == 1
 	ss, n= s.get_sample(sys.sample, no_atoms=True)
 	assert n==1
 
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	del sys[0]
 	assert sys.natoms == 1
 	ss, n= s.get_sample(sys.sample, no_atoms=True)
@@ -72,7 +74,7 @@ def test_delete():
 
 def test_substitute():
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	sys.substitute_atoms('Li', indices=[0])
 	species = s.value(sys.sample, CMSO.hasSpecies)
 	elements = [k[2] for k in s.triples((species, CMSO.hasElement, None))]
@@ -80,13 +82,13 @@ def test_substitute():
 
 def test_interstitials():
 	s = KnowledgeGraph()
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	sys = sys.add_interstitial_impurities(['Li', 'Au'], void_type='tetrahedral')
 	species = s.value(sys.sample, CMSO.hasSpecies)
 	elements = [k[2] for k in s.triples((species, CMSO.hasElement, None))]
 	assert len(elements) == 3
 
-	sys = System.create.element.Fe(graph=s)
+	sys = build.bulk("Fe", graph=s)
 	sys = sys.add_interstitial_impurities(['Li', 'Au'], void_type='octahedral')
 	species = s.value(sys.sample, CMSO.hasSpecies)
 	elements = [k[2] for k in s.triples((species, CMSO.hasElement, None))]

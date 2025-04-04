@@ -66,12 +66,12 @@ def _delete_atom(system,
     return sys
 
 def vacancy(
+    element_or_structure,
     ids=None,
     indices=None,
     no_of_vacancies=None,
     structure_object = None,
     structure=None,
-    element=None,
     lattice_constant=1.00,
     repetitions=None,
     ca_ratio=1.633,
@@ -85,13 +85,14 @@ def vacancy(
     if all(v is None for v in [ids, indices, no_of_vacancies]):
         raise ValueError("Please provide ids, indices or no_of_vacancies")
 
-    if structure_object is not None:
+    if isinstance(element_or_structure, System):
         #structure is given, so we use that for further work
-        sys = structure_object
+        sys = element_or_structure
     else:
-        #we try creating a structure, in that case, we call bulk        
+        #we try creating a structure, in that case, we call bulk
+        element = element_or_structure        
         sys = bulk(
-            element=element,
+            element,
             structure=structure,
             lattice_constant=lattice_constant,
             repetitions=repetitions,

@@ -89,13 +89,13 @@ def bulk(
     return s
 
 def lattice(
+    element,
     positions,
     types,
     box,
     lattice_constant=1.00,
     repetitions=None,
     noise=0,
-    element=None,
     graph=None,
     names=False,
     label=None,
