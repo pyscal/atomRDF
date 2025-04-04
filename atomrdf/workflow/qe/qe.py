@@ -5,10 +5,11 @@ import os
 import numpy as np
 import ast
 
-from ase.io import read
+from ase.io import read as ase_read
 from atomrdf.structure import System
+import atomrdf.io.read as read
 from ase.io.espresso import read_fortran_namelist
-from atomrdf.io import _convert_tab_to_dict
+from atomrdf.io.write import _convert_tab_to_dict
 
 def _parse_inp(file):
     sample = None
@@ -50,14 +51,14 @@ def get_structures(job, method_dict):
     infile = job[0]
     outfile = job[1]
 
-    initial_ase_structure = read(infile, format='espresso-in')
-    initial_pyscal_structure = System.read.ase(initial_ase_structure)
+    initial_ase_structure = ase_read(infile, format='espresso-in')
+    initial_pyscal_structure = read(initial_ase_structure, format="ase")
 
     #try to get initial sample id
     initial_sample_id = _parse_inp(infile)
 
-    final_ase_structure = read(outfile, format='espresso-out')
-    final_pyscal_structure = System.read.ase(final_ase_structure)
+    final_ase_structure = ase_read(outfile, format='espresso-out')
+    final_pyscal_structure = read(final_ase_structure, format="ase")
     method_dict['structure'] = {'initial': initial_pyscal_structure, 
                 'final': final_pyscal_structure,} 
     method_dict['sample'] =  {'initial':initial_sample_id, 
@@ -146,7 +147,7 @@ def extract_calculated_quantities(job, method_dict):
     infile = job[0]
     outfile = job[1]   
     
-    struct = read(outfile, format='espresso-out')
+    struct = ase_read(outfile, format='espresso-out')
     outputs = []
     outputs.append(
         {

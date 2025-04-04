@@ -2,9 +2,9 @@ from ase.io import write as ase_write
 from pyscal3.formats.ase import convert_snap
 import mendeleev
 import numpy as np
-from ase.io.espresso import read_fortran_namelist
 import os
 import warnings
+from ase.io.espresso import read_fortran_namelist
 
 def _convert_tab_to_dict(tab):
     keywords = ["ATOMIC_SPECIES",
