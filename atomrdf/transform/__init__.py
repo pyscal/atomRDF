@@ -1,1 +1,1 @@
-import atomrdf.transform.transform as transform
+from atomrdf.transform.transform import *
