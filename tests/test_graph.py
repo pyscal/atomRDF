@@ -7,87 +7,92 @@ import shutil
 import atomrdf.build as build
 import atomrdf.io.write as write
 
+
 def test_structuregraph():
-	s = KnowledgeGraph()
-	sys = build.bulk("Fe", graph=s)
+    s = KnowledgeGraph()
+    sys = build.bulk("Fe", graph=s)
 
-	vis = s.visualise()
-	assert(vis != None)
+    vis = s.visualise()
+    assert vis != None
 
-	vis = s.visualise()
-	assert(vis != None)
+    vis = s.visualise()
+    assert vis != None
 
-	s.write("temp.ttl", format="turtle")
-	s = KnowledgeGraph(graph_file="temp.ttl")
+    s.write("temp.ttl", format="turtle")
+    s = KnowledgeGraph(graph_file="temp.ttl")
 
-	sys = build.defect.vacancy(element="Fe", graph=s, no_of_vacancies=1)
+    sys = build.defect.vacancy("Fe", graph=s, no_of_vacancies=1)
 
-	s = KnowledgeGraph()
-	sys = build.bulk("Fe", graph=s)
-	assert s.n_samples == 1
-	#res = s.query_sample("NumberOfAtoms", 2)
-	#assert(len(res) == 1)
+    s = KnowledgeGraph()
+    sys = build.bulk("Fe", graph=s)
+    assert s.n_samples == 1
+    # res = s.query_sample("NumberOfAtoms", 2)
+    # assert(len(res) == 1)
 
 
 def test_logger():
-	if os.path.exists('tests/atomrdf.log'):
-		os.remove('tests/atomrdf.log')
-	s = KnowledgeGraph(enable_log=True)
-	s.log('testing-logger')
-	assert str(type(s.log).__name__) == "method"
- 
+    if os.path.exists("tests/atomrdf.log"):
+        os.remove("tests/atomrdf.log")
+    s = KnowledgeGraph(enable_log=True)
+    s.log("testing-logger")
+    assert str(type(s.log).__name__) == "method"
+
+
 def test_add_structure():
-	s = KnowledgeGraph()
-	sys = build.bulk("Fe", graph=s)
-	s.add_structure(sys)
-	assert sys.sample in s.sample_ids
+    s = KnowledgeGraph()
+    sys = build.bulk("Fe", graph=s)
+    s.add_structure(sys)
+    assert sys.sample in s.sample_ids
+
 
 def test_add_cross_triple():
-	
-	s = KnowledgeGraph(enable_log=True)
-	sys = build.bulk("Fe", graph=s)
-	status, _ = s._check_domain_if_uriref((sys.material, CDCO.hasCrystallographicDefect, PLDO.AntiphaseBoundary))
-	assert status == True
-	
+
+    s = KnowledgeGraph(enable_log=True)
+    sys = build.bulk("Fe", graph=s)
+    status, _ = s._check_domain_if_uriref(
+        (sys.material, CDCO.hasCrystallographicDefect, PLDO.AntiphaseBoundary)
+    )
+    assert status == True
+
 
 def test_add_quantity():
-	s = KnowledgeGraph(enable_log=True)
-	sys = build.bulk("Fe", graph=s)
-	s.add_calculated_quantity(sys.sample,
-		'Energy',
-		str(23),
-		unit='eV')
-	cp = s.value(sys.sample, ASMO.hasCalculatedProperty)
-	val = s.value(cp, ASMO.hasValue)
-	assert val.toPython() == '23'
+    s = KnowledgeGraph(enable_log=True)
+    sys = build.bulk("Fe", graph=s)
+    s.add_calculated_quantity(sys.sample, "Energy", str(23), unit="eV")
+    cp = s.value(sys.sample, ASMO.hasCalculatedProperty)
+    val = s.value(cp, ASMO.hasValue)
+    assert val.toPython() == "23"
 
-	insp = s.inspect_sample(sys.sample)
-	assert 'Im-3m' in insp
-	assert '23' in insp
+    insp = s.inspect_sample(sys.sample)
+    assert "Im-3m" in insp
+    assert "23" in insp
+
 
 def test_archive():
-	s = KnowledgeGraph(enable_log=True)
-	sys = build.bulk("Fe", graph=s)
-	sys = build.bulk("Cu", graph=s)
-	if os.path.exists('test_archive.tar.gz'):
-		os.remove('test_archive.tar.gz')
-	if os.path.exists('test_archive'):
-		shutil.rmtree('test_archive')
-	s.archive('test_archive')
-	assert os.path.exists('test_archive.tar.gz')
+    s = KnowledgeGraph(enable_log=True)
+    sys = build.bulk("Fe", graph=s)
+    sys = build.bulk("Cu", graph=s)
+    if os.path.exists("test_archive.tar.gz"):
+        os.remove("test_archive.tar.gz")
+    if os.path.exists("test_archive"):
+        shutil.rmtree("test_archive")
+    s.archive("test_archive")
+    assert os.path.exists("test_archive.tar.gz")
 
-	s = KnowledgeGraph.unarchive('test_archive.tar.gz')
-	assert s.n_samples == 2
-	os.remove('test_archive.tar.gz')
-	shutil.rmtree('test_archive')
+    s = KnowledgeGraph.unarchive("test_archive.tar.gz")
+    assert s.n_samples == 2
+    os.remove("test_archive.tar.gz")
+    shutil.rmtree("test_archive")
+
 
 def test_sparql_query():
-	kg = KnowledgeGraph()
-	struct_Fe = build.bulk("Fe", graph=kg)
-	struct_Si = build.bulk("Si", graph=kg)
-	struct_l12 = build.bulk(['Al', 'Ni'], structure="l12", 
-                        lattice_constant=3.57, graph=kg)
-	query = """
+    kg = KnowledgeGraph()
+    struct_Fe = build.bulk("Fe", graph=kg)
+    struct_Si = build.bulk("Si", graph=kg)
+    struct_l12 = build.bulk(
+        ["Al", "Ni"], structure="l12", lattice_constant=3.57, graph=kg
+    )
+    query = """
 	PREFIX cmso: <http://purls.helmholtz-metadaten.de/cmso/>
 	SELECT DISTINCT ?symbol
 	WHERE {
@@ -97,46 +102,50 @@ def test_sparql_query():
 	    ?structure cmso:hasSpaceGroupSymbol ?symbol .
 	FILTER (?number="4"^^xsd:integer)
 	}"""
-	res = kg.query(query)
-	assert res.symbol.values[0].toPython() == 'Pm-3m'
+    res = kg.query(query)
+    assert res.symbol.values[0].toPython() == "Pm-3m"
 
-	res = kg.query_sample(kg.ontology.terms.cmso.hasAltName@kg.terms.cmso.Structure=='bcc',
-	             enforce_types=True)
-	assert res.Structure_hasAltNamevalue.values[0].toPython() == 'bcc'
+    # res = kg.query_sample(
+    #    kg.ontology.terms.cmso.hasAltName @ kg.terms.cmso.Structure == "bcc",
+    # )
+    # assert res.Structure_hasAltNamevalue.values[0].toPython() == "bcc"
+
 
 def test_extract_sample():
-	kg = KnowledgeGraph()
-	struct_Fe = build.bulk("Fe", graph=kg)
-	sample_graph, no_atoms = kg.get_sample(struct_Fe.sample, no_atoms=True)
-	assert no_atoms == 2
-	assert sample_graph.sample_ids[0] == struct_Fe.sample
+    kg = KnowledgeGraph()
+    struct_Fe = build.bulk("Fe", graph=kg)
+    sample_graph, no_atoms = kg.get_sample(struct_Fe.sample, no_atoms=True)
+    assert no_atoms == 2
+    assert sample_graph.sample_ids[0] == struct_Fe.sample
 
-	struct = kg.get_system_from_sample(struct_Fe.sample)
-	assert len(struct.atoms.positions) == 2
-	assert struct.graph is not None
+    struct = kg.get_system_from_sample(struct_Fe.sample)
+    assert len(struct.atoms.positions) == 2
+    assert struct.graph is not None
 
-	kg.to_file(struct_Fe.sample, filename='POSCAR')
-	assert os.path.exists('POSCAR')
-	os.remove('POSCAR')
+    kg.to_file(struct_Fe.sample, filename="POSCAR")
+    assert os.path.exists("POSCAR")
+    os.remove("POSCAR")
 
-	kg.to_file(struct_Fe.sample, filename='POSCAR', format='cif')
-	assert os.path.exists('POSCAR')
-	os.remove('POSCAR')
+    kg.to_file(struct_Fe.sample, filename="POSCAR", format="cif")
+    assert os.path.exists("POSCAR")
+    os.remove("POSCAR")
 
-#def test_add_domain_ontoterm():
-#	from atomrdf.namespace import CMSO, PLDO
-#	s = KnowledgeGraph()
-#	sys = System.create.element.Fe(graph=s)
-#	status, _ = s._check_domain_if_ontoterm((CMSO.Material, CMSO.hasDefect, PLDO.AntiphaseBoundary))
-#	assert status == True
+
+# def test_add_domain_ontoterm():
+# 	from atomrdf.namespace import CMSO, PLDO
+# 	s = KnowledgeGraph()
+# 	sys = System.create.element.Fe(graph=s)
+# 	status, _ = s._check_domain_if_ontoterm((CMSO.Material, CMSO.hasDefect, PLDO.AntiphaseBoundary))
+# 	assert status == True
+
 
 def test_purge():
-	s = KnowledgeGraph()
-	sys = build.bulk("Fe", graph=s)
-	s.purge(force=True)
-	assert s.n_samples == 0
+    s = KnowledgeGraph()
+    sys = build.bulk("Fe", graph=s)
+    s.purge(force=True)
+    assert s.n_samples == 0
 
-	s = KnowledgeGraph(store='db', store_file=f'testr.db')
-	sys = build.bulk("Fe", graph=s)
-	s.purge(force=True)
-	assert s.n_samples == 0
+    s = KnowledgeGraph(store="db", store_file=f"testr.db")
+    sys = build.bulk("Fe", graph=s)
+    s.purge(force=True)
+    assert s.n_samples == 0

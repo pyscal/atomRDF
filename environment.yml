@@ -21,6 +21,7 @@ dependencies:
   - aimsgb
   - pymatgen
   - mendeleev
+  - tools4rdf
   - pip:
     - "git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"
-    - tools4rdf
+ 

@@ -17,7 +17,6 @@ Attributes
 
 """
 
-
 from rdflib import Graph, XSD, RDF, RDFS, BNode, URIRef
 
 import os
@@ -47,10 +46,22 @@ from atomrdf.stores import create_store, purge
 import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
-import atomrdf.mp as amp 
+import atomrdf.mp as amp
 from atomrdf.io.write import write
 
-from atomrdf.namespace import Namespace, CMSO, PLDO, PODO, ASMO, PROV, MATH, CDCO, UNSAFECMSO, UNSAFEASMO, Literal
+from atomrdf.namespace import (
+    Namespace,
+    CMSO,
+    PLDO,
+    PODO,
+    ASMO,
+    PROV,
+    MATH,
+    CDCO,
+    UNSAFECMSO,
+    UNSAFEASMO,
+    Literal,
+)
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -85,11 +96,13 @@ defstyledict = {
     },
 }
 
+
 def _clean_string(input_string):
-    input_string = re.sub(r'\W', '_', input_string)
+    input_string = re.sub(r"\W", "_", input_string)
     if input_string[0].isdigit():
         input_string = "s" + input_string
     return input_string
+
 
 def _replace_keys(refdict, indict):
     for key, val in indict.items():
@@ -104,12 +117,14 @@ def _replace_keys(refdict, indict):
 def _dummy_log(str):
     pass
 
+
 def _name(term):
     try:
         return str(term.toPython())
     except:
         return str(term)
-    
+
+
 def _prepare_log(file):
     logger = logging.getLogger(__name__)
     handler = logging.FileHandler(file)
@@ -119,6 +134,7 @@ def _prepare_log(file):
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
     return logger
+
 
 class KnowledgeGraph:
     """
@@ -239,7 +255,7 @@ class KnowledgeGraph:
         ----------
         force : bool, optional
             Whether to proceed with purging the graph. Default is False.
-        
+
         Returns
         -------
         None
@@ -249,10 +265,12 @@ class KnowledgeGraph:
         This method removes all information from the KnowledgeGraph. If the `force` parameter is set to False, a warning is issued before proceeding with the purging.
         """
         if not force:
-            warnings.warn('This will remove all information from the KnowledgeGraph. Call with force=True to proceed.')
+            warnings.warn(
+                "This will remove all information from the KnowledgeGraph. Call with force=True to proceed."
+            )
             return
         else:
-            #clean up files
+            # clean up files
             sample_files = self.sample_files
             for file in sample_files:
                 if os.path.exists(file):
@@ -299,13 +317,13 @@ class KnowledgeGraph:
 
     def _is_ontoterm(self, term):
         return type(term).__name__ == "OntoTerm"
-    
+
     def _is_uriref(self, term):
         return type(term).__name__ == "URIRef"
-    
+
     def _is_bnode(self, term):
         return not term.toPython().startswith("http")
-    
+
     def _modify_triple(self, triple):
         modified_triple = []
         for term in triple:
@@ -417,9 +435,9 @@ class KnowledgeGraph:
 
         destination_range = triple[2].datatype.toPython().split("#")[-1]
 
-        #if destination_range == "string":
+        # if destination_range == "string":
         #    destination_range = "str"
-        #elif destination_range == "integer":
+        # elif destination_range == "integer":
         #    destination_range = "int"
 
         rang = triple[1].range
@@ -541,7 +559,7 @@ class KnowledgeGraph:
 
         Notes
         -----
-        This method retrieves the value of a triple in the knowledge graph. The triple is specified by providing the subject and predicate as arguments. 
+        This method retrieves the value of a triple in the knowledge graph. The triple is specified by providing the subject and predicate as arguments.
         If the triple exists in the graph, the corresponding value is returned. If the triple does not exist, None is returned.
 
         Examples
@@ -604,14 +622,16 @@ class KnowledgeGraph:
             self.add((item, RDFS.label, Literal(_clean_string(label))))
         return item
 
-    def add_output_of_simulation(self, 
-                                simulation_term,
-                                value,
-                                property_label,
-                                base_quantity=None,
-                                unit=None,
-                                has_simulation_algorithm=None,
-                                has_computational_method=None):
+    def add_output_of_simulation(
+        self,
+        simulation_term,
+        value,
+        property_label,
+        base_quantity=None,
+        unit=None,
+        has_simulation_algorithm=None,
+        has_computational_method=None,
+    ):
         """
         Create a new output of simulation in the graph. The types of different terms are defined in the ontology.
         Those should be access by kg.terms.ontolog.ontology_term.
@@ -620,26 +640,26 @@ class KnowledgeGraph:
         ----------
         simulation_term : OntoTerm
             The term representing the simulation.
-        
+
         value : float
             The value of the output.
-        
+
         property_label : str
             The label of the property.
-        
+
         base_quantity : OntoTerm, optional
             The base quantity of the output. Default is None.
-        
+
         unit : OntoTerm, optional
             The unit of the output. Default is None.
-        
-        
+
+
         has_simulation_algorithm : OntoTerm, optional
             The simulation algorithm used. Default is None.
-        
+
         has_computational_method : OntoTerm, optional
             The computational method used. Default is None.
-        
+
         Returns
         -------
         URIRef
@@ -649,9 +669,17 @@ class KnowledgeGraph:
         main_id = str(uuid.uuid4())
         simulation_node = self.create_node(f"simulation:{main_id}", simulation_term)
         if has_simulation_algorithm is not None:
-            self.add((simulation_node, ASMO.usesSimulationAlgorithm, has_simulation_algorithm))
+            self.add(
+                (
+                    simulation_node,
+                    ASMO.usesSimulationAlgorithm,
+                    has_simulation_algorithm,
+                )
+            )
         if has_computational_method is not None:
-            self.add((simulation_node, ASMO.hasComputationalMethod, has_computational_method))
+            self.add(
+                (simulation_node, ASMO.hasComputationalMethod, has_computational_method)
+            )
         if base_quantity is None:
             base_quantity = ASMO.CalculatedProperty
         prop = self.create_node(f"simulation:{main_id}_{property_label}", base_quantity)
@@ -662,8 +690,9 @@ class KnowledgeGraph:
             self.add((prop, ASMO.hasUnit, unit))
         return prop
 
-
-    def add_calculated_quantity(self, sample, propertyname, value, base_quantity=None, unit=None):
+    def add_calculated_quantity(
+        self, sample, propertyname, value, base_quantity=None, unit=None
+    ):
         """
         Add a calculated quantity to a sample.
 
@@ -721,7 +750,12 @@ class KnowledgeGraph:
         material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[
             0
         ]
-        defects = list([k[2] for k in self.triples((material, CDCO.hasCrystallographicDefect, None))])
+        defects = list(
+            [
+                k[2]
+                for k in self.triples((material, CDCO.hasCrystallographicDefect, None))
+            ]
+        )
         composition = list(
             [
                 k[2].toPython()
@@ -729,7 +763,9 @@ class KnowledgeGraph:
             ]
         )
         crystalstructure = self.value(material, CMSO.hasStructure)
-        spacegroupsymbol = self.value(crystalstructure, CMSO.hasSpaceGroupSymbol).toPython()
+        spacegroupsymbol = self.value(
+            crystalstructure, CMSO.hasSpaceGroupSymbol
+        ).toPython()
 
         lattice = self.value(sample, CMSO.hasNumberOfAtoms).toPython()
         defect_types = list([self.value(d, RDF.type).toPython() for d in defects])
@@ -892,7 +928,9 @@ class KnowledgeGraph:
         """
         self.write(filename, format=format)
 
-    def archive(self, package_name, format="turtle", compress=True, add_simulations=False):
+    def archive(
+        self, package_name, format="turtle", compress=True, add_simulations=False
+    ):
         """
         Publish a dataset from graph including per atom quantities.
 
@@ -942,7 +980,7 @@ class KnowledgeGraph:
         # now go through each sample, and copy the file, at the same time fix the paths
         for sample in self.sample_ids:
             filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath).toPython()
-            #filepath has to fixed with the correct prefix as needed
+            # filepath has to fixed with the correct prefix as needed
             filepath = os.path.join(self.structure_store, os.path.basename(filepath))
             shutil.copy(filepath, structure_store)
 
@@ -959,7 +997,7 @@ class KnowledgeGraph:
                         Literal(new_relpath, datatype=XSD.string),
                     )
                 )
-        #copy simulation files if needed
+        # copy simulation files if needed
         if add_simulations:
             sim_store = f"{package_name}/simulation_store"
             os.mkdir(sim_store)
@@ -970,9 +1008,11 @@ class KnowledgeGraph:
                     newpath = "/".join([sim_store, activity.toPython()])
                     shutil.copytree(path, newpath)
 
-                    #remove old path
+                    # remove old path
                     self.remove((activity, CMSO.hasPath, None))
-                    self.add((activity, CMSO.hasPath, Literal(newpath, datatype=XSD.string)))
+                    self.add(
+                        (activity, CMSO.hasPath, Literal(newpath, datatype=XSD.string))
+                    )
 
         triple_file = os.path.join(package_name, "triples")
         self.write(triple_file, format=format)
@@ -1074,7 +1114,6 @@ class KnowledgeGraph:
         source,
         destination,
         return_query=False,
-        enforce_types=True,
         return_df=True,
     ):
         """
@@ -1100,7 +1139,8 @@ class KnowledgeGraph:
             Otherwise, returns the result of the query execution as a pandas DataFrame.
         """
         query = self.ontology.create_query(
-            source, destination, enforce_types=enforce_types
+            source,
+            destination,
         )
         if return_query:
             return query
@@ -1110,9 +1150,7 @@ class KnowledgeGraph:
     #################################
     # Methods to interact with sample
     #################################
-    def query_sample(
-        self, destination, return_query=False, enforce_types=None
-    ):
+    def query_sample(self, destination, return_query=False):
         """
         Query the knowledge graph for atomic scale samples.
 
@@ -1132,10 +1170,9 @@ class KnowledgeGraph:
 
         """
         return self.auto_query(
-            self.ontology.terms.cmso.AtomicScaleSample,
+            self.ontology.terms.cmso.AtomicScaleSample.any,
             destination,
             return_query=return_query,
-            enforce_types=enforce_types,
         )
 
     @property
@@ -1198,7 +1235,7 @@ class KnowledgeGraph:
     def _is_of_type(self, item, target_item):
         """
         Check if an item is of a specific type
-        
+
         item - direct from graph, comparison only makes sense if it is URIRef
             if item is node with https - direct comparison
             if not - check the type of the item
@@ -1217,9 +1254,10 @@ class KnowledgeGraph:
 
         target_type = target_item.toPython()
         return rdftype == target_type
-                
-    def iterate_graph(self, item, create_new_graph=False, create_new_list=False,
-                    stop_at_sample=False):
+
+    def iterate_graph(
+        self, item, create_new_graph=False, create_new_list=False, stop_at_sample=False
+    ):
         """
         Iterate through the graph starting from the given item.
 
@@ -1238,20 +1276,24 @@ class KnowledgeGraph:
         -------
         None
         """
-        if not type(item).__name__ == 'URIRef':
+        if not type(item).__name__ == "URIRef":
             return
-        
+
         if create_new_list:
             self.slist = []
-            stop_at_sample = stop_at_sample and self._is_of_type(item, CMSO.AtomicScaleSample)
-        
+            stop_at_sample = stop_at_sample and self._is_of_type(
+                item, CMSO.AtomicScaleSample
+            )
+
         triples = list(self.triples((item, None, None)))
-        
+
         for triple in triples:
-            if not (stop_at_sample and self._is_of_type(triple[1], PROV.wasDerivedFrom)):
+            if not (
+                stop_at_sample and self._is_of_type(triple[1], PROV.wasDerivedFrom)
+            ):
                 self.slist.append(triple)
                 self.iterate_graph(triple[2], stop_at_sample=stop_at_sample)
-    
+
     def iterate_and_create_graph(self, item, stop_at_sample=False):
         self.iterate_graph(item, create_new_list=True, stop_at_sample=stop_at_sample)
         triples = copy.deepcopy(self.slist)
@@ -1265,78 +1307,88 @@ class KnowledgeGraph:
         """
         take a given uriref string name and create one in similar fashion
         """
-        raw = uristring.split(':')
+        raw = uristring.split(":")
         if len(raw) > 1:
-            prologue = raw[0]+':'
+            prologue = raw[0] + ":"
         else:
-            prologue = ''
-        
-        raw = uristring.split('_')
+            prologue = ""
+
+        raw = uristring.split("_")
         if len(raw) > 1:
-            epilogue = '_'+"_".join(raw[1:])
+            epilogue = "_" + "_".join(raw[1:])
         else:
-            epilogue = ''
+            epilogue = ""
         return f"{prologue}{uuid.uuid4()}{epilogue}"
 
     def iterate_and_rename_triples(self, item):
         self.iterate_graph(item, create_new_list=True)
         triples = copy.deepcopy(self.slist)
-        #now we have to edit this triples, and reapply them
-        #for that we make a dict of all URIRef values in this graph
+        # now we have to edit this triples, and reapply them
+        # for that we make a dict of all URIRef values in this graph
         uri_dict = {}
         for triple in triples:
             if isinstance(triple[0], URIRef):
                 if triple[0].toPython() not in uri_dict.keys():
                     if self._is_bnode(triple[0]):
-                        uri_dict[triple[0].toPython()] = self._create_a_new_name(triple[0].toPython())
+                        uri_dict[triple[0].toPython()] = self._create_a_new_name(
+                            triple[0].toPython()
+                        )
                     else:
                         uri_dict[triple[0].toPython()] = triple[0].toPython()
-        
+
         new_triples = []
         for triple in triples:
             subject = triple[0]
             if subject.toPython() in uri_dict.keys():
                 subject = URIRef(uri_dict[subject.toPython()])
-            predicate  = triple[1]
+            predicate = triple[1]
             object = triple[2]
             if object.toPython() in uri_dict.keys():
                 object = URIRef(uri_dict[object.toPython()])
             new_triples.append((subject, predicate, object))
-        
+
         return URIRef(uri_dict[item.toPython()]), new_triples
 
     def copy_defects(self, sample, parent_sample):
         """
         Copy defects from one sample to another
         """
-        parent_material = list([k[2] for k in self.triples((parent_sample, CMSO.hasMaterial, None))])[0]
-        parent_defects = list([x[2] for x in self.triples((parent_material, CDCO.hasCrystallographicDefect, None))])
+        parent_material = list(
+            [k[2] for k in self.triples((parent_sample, CMSO.hasMaterial, None))]
+        )[0]
+        parent_defects = list(
+            [
+                x[2]
+                for x in self.triples(
+                    (parent_material, CDCO.hasCrystallographicDefect, None)
+                )
+            ]
+        )
 
-        material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[0]
+        material = list([k[2] for k in self.triples((sample, CMSO.hasMaterial, None))])[
+            0
+        ]
 
         for defect in parent_defects:
             new_defect, defect_triples = self.iterate_and_rename_triples(defect)
-            #add the new defect to the new material
+            # add the new defect to the new material
             self.add((material, CDCO.hasCrystallographicDefect, new_defect))
-            #add the triples to the graph
+            # add the triples to the graph
             for triple in defect_triples:
-                #print(triple)
+                # print(triple)
                 self.add(triple)
 
-        #we need to add special items which are mapped to the sample directly
+        # we need to add special items which are mapped to the sample directly
         # now add the special props for vacancy, interstitial &substitional
-        #this is a bit of a slippery slope, the defect compositions also has to change when
-        #number of atoms change - lets leave it like this for now
-        for triple in self.triples(
-            (parent_sample, PODO.hasVacancyConcentration, None)
-        ):
+        # this is a bit of a slippery slope, the defect compositions also has to change when
+        # number of atoms change - lets leave it like this for now
+        for triple in self.triples((parent_sample, PODO.hasVacancyConcentration, None)):
             self.add((sample, triple[1], triple[2]))
 
         for triple in self.triples(
             (parent_sample, PODO.hasImpurityConcentration, None)
         ):
             self.add((sample, triple[1], triple[2]))
-
 
     def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
         """
@@ -1357,7 +1409,7 @@ class KnowledgeGraph:
         -------
         sgraph: :py:class:`RDFGraph`
             the RDFGraph of the queried sample
-        
+
         na: int, only retured if no_atoms is True
 
         """
@@ -1369,7 +1421,7 @@ class KnowledgeGraph:
             na = sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
             return sgraph, na
         return sgraph
-    
+
     def get_label(self, item):
         label = self.graph.value(item, RDFS.label)
         if label is not None:
@@ -1378,11 +1430,11 @@ class KnowledgeGraph:
     def get_sample_label(self, sample):
         label = self.get_label(sample)
         return label
-    
+
     def change_label(self, sample, label):
         self.graph.remove((sample, RDFS.label, None))
         self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
-    
+
     def get_system_from_sample(self, sample):
         """
         Get a pyscal :py:class:`atomrdf.structure.System` from the selected sample
@@ -1429,13 +1481,18 @@ class KnowledgeGraph:
         sys.atoms = at
         sys.sample = sample
         sys.graph = self
-        sys._name = sample.toPython().split('sample:')[-1]
+        sys._name = sample.toPython().split("sample:")[-1]
         return sys
 
-    def to_file(self, sample, filename=None, format="poscar", 
-                add_sample_id=True,
-                copy_from=None, 
-                pseudo_files=None):
+    def to_file(
+        self,
+        sample,
+        filename=None,
+        format="poscar",
+        add_sample_id=True,
+        copy_from=None,
+        pseudo_files=None,
+    ):
         """
         Save a given sample to a file
 
@@ -1456,7 +1513,7 @@ class KnowledgeGraph:
             Note that the validity of input file is not checked.
         pseudo_files : list, optional
             if provided, add the pseudopotential filenames to file.
-            Should be in alphabetical order of chemical species symbols. 
+            Should be in alphabetical order of chemical species symbols.
 
         Returns
         -------
@@ -1467,35 +1524,51 @@ class KnowledgeGraph:
             filename = os.path.join(os.getcwd(), "out")
 
         sys = self.get_system_from_sample(sample)
-        write(sys, filename=filename, 
-                    format=format, 
-                    add_sample_id=add_sample_id, 
-                    copy_from=copy_from,
-                    pseudo_files=pseudo_files)
+        write(
+            sys,
+            filename=filename,
+            format=format,
+            add_sample_id=add_sample_id,
+            copy_from=copy_from,
+            pseudo_files=pseudo_files,
+        )
 
-    def enable_workflow(self, workflow_object, workflow_environment=None, workflow_module=None):
-        self.workflow.inform_graph(workflow_object, 
-                        workflow_environment=workflow_environment, 
-                        workflow_module=workflow_module)
-        
-    def add_workflow(self, job, workflow_environment=None, workflow_module=None, job_dicts=None,
-                    add_intermediate_jobs=False):
-        self.workflow.to_graph(job, workflow_environment=workflow_environment, 
-                            workflow_module=workflow_module, 
-                            job_dicts=job_dicts,
-                            add_intermediate_jobs=add_intermediate_jobs)
-    
+    def enable_workflow(
+        self, workflow_object, workflow_environment=None, workflow_module=None
+    ):
+        self.workflow.inform_graph(
+            workflow_object,
+            workflow_environment=workflow_environment,
+            workflow_module=workflow_module,
+        )
+
+    def add_workflow(
+        self,
+        job,
+        workflow_environment=None,
+        workflow_module=None,
+        job_dicts=None,
+        add_intermediate_jobs=False,
+    ):
+        self.workflow.to_graph(
+            job,
+            workflow_environment=workflow_environment,
+            workflow_module=workflow_module,
+            job_dicts=job_dicts,
+            add_intermediate_jobs=add_intermediate_jobs,
+        )
+
     def find_property(self, label=None, propertytype=None):
         if label is not None:
             prop_list = list(self.graph.triples((None, RDFS.label, label)))
         elif propertytype is not None:
             prop_list = list(self.graph.triples((None, RDF.type, propertytype.URIRef)))
         else:
-            raise RuntimeError('Either label or propertytype should be provided')
+            raise RuntimeError("Either label or propertytype should be provided")
         if len(prop_list) == 0:
-            raise RuntimeError(f'Property {label} not found in the graph')
+            raise RuntimeError(f"Property {label} not found in the graph")
         prop = [x[0] for x in prop_list]
-        return prop        
+        return prop
 
     def get_string_label(self, item):
         label = self.get_label(item)
@@ -1505,7 +1578,7 @@ class KnowledgeGraph:
                 label = str(item.toPython())
             except:
                 label = str(item)
-        
+
         if "simulation" in label:
             method = self.value(item, ASMO.hasComputationalMethod)
             if method is not None:
@@ -1518,111 +1591,125 @@ class KnowledgeGraph:
         name = _name(prop)
         if name not in indict.keys():
             indict[name] = {}
-            indict[name]['found'] = False
-            indict[name]['label'] = self.get_string_label(prop)
+            indict[name]["found"] = False
+            indict[name]["label"] = self.get_string_label(prop)
 
     def _get_ancestor(self, prop, prov):
-        #note that only one operation and parent are present!
+        # note that only one operation and parent are present!
         if isinstance(prop, str):
             prop = URIRef(prop)
         propname = _name(prop)
 
         operation = [x[1] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
-        
+
         if len(operation) > 0:
             parent = [x[2] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
             operation = operation[0]
-            parent = parent[0]      
-            prov[propname]['operation'] = 'output_parameter'
-            prov[propname]['inputs'] = {}
-            prov[propname]['inputs']['0'] = _name(parent)
+            parent = parent[0]
+            prov[propname]["operation"] = "output_parameter"
+            prov[propname]["inputs"] = {}
+            prov[propname]["inputs"]["0"] = _name(parent)
             self._add_to_dict(parent, prov)
-            prov[_name(parent)]['inputs'] = {}
-            associated_samples = [x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))]
+            prov[_name(parent)]["inputs"] = {}
+            associated_samples = [
+                x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))
+            ]
             for count, sample in enumerate(associated_samples):
-                prov[_name(parent)]['inputs'][str(count)] = _name(sample)
+                prov[_name(parent)]["inputs"][str(count)] = _name(sample)
                 self._add_to_dict(sample, prov)
-            prov[_name(parent)]['found'] = True
-            prov[_name(parent)]['operation'] = 'sample_for_activity'
-                
+            prov[_name(parent)]["found"] = True
+            prov[_name(parent)]["operation"] = "sample_for_activity"
+
         else:
             operation = [x[1] for x in self.triples((None, None, prop))]
             parent = [list(self.triples((None, op, prop)))[0][0] for op in operation]
             if len(operation) == 0:
-                prov[propname]['found'] = True
+                prov[propname]["found"] = True
                 return prov
             operation = operation[0]
             parent = parent[0]
 
-            if operation.toPython() == "http://purls.helmholtz-metadaten.de/asmo/hasInputParameter":
-                #print(f'we ran 1 for {operation.toPython()}')
-                prov[propname]['operation'] = 'input_parameter'
-                prov[propname]['inputs'] = {}
-                prov[propname]['inputs']['0'] = _name(parent)
+            if (
+                operation.toPython()
+                == "http://purls.helmholtz-metadaten.de/asmo/hasInputParameter"
+            ):
+                # print(f'we ran 1 for {operation.toPython()}')
+                prov[propname]["operation"] = "input_parameter"
+                prov[propname]["inputs"] = {}
+                prov[propname]["inputs"]["0"] = _name(parent)
                 self._add_to_dict(parent, prov)
-                prov[_name(parent)]['inputs'] = {}
-                associated_samples = [x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))]
+                prov[_name(parent)]["inputs"] = {}
+                associated_samples = [
+                    x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))
+                ]
                 for count, sample in enumerate(associated_samples):
-                    prov[_name(parent)]['inputs'][str(count)] = _name(sample)
+                    prov[_name(parent)]["inputs"][str(count)] = _name(sample)
                     self._add_to_dict(sample, prov)
-                prov[_name(parent)]['found'] = True
-                prov[_name(parent)]['operation'] = 'sample_for_activity'
+                prov[_name(parent)]["found"] = True
+                prov[_name(parent)]["operation"] = "sample_for_activity"
 
-            elif operation.toPython() == "http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty":
-                #print(f'we ran 2 for {operation.toPython()}')
-                prov[propname]['operation'] = 'output_parameter'
-                prov[propname]['inputs'] = {}
-                prov[propname]['inputs']['0'] = _name(parent)
-                self._add_to_dict(parent, prov)            
-                prov[_name(parent)]['found'] = True
-                prov[_name(parent)]['operation'] = 'sample_output'
-            
+            elif (
+                operation.toPython()
+                == "http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty"
+            ):
+                # print(f'we ran 2 for {operation.toPython()}')
+                prov[propname]["operation"] = "output_parameter"
+                prov[propname]["inputs"] = {}
+                prov[propname]["inputs"]["0"] = _name(parent)
+                self._add_to_dict(parent, prov)
+                prov[_name(parent)]["found"] = True
+                prov[_name(parent)]["operation"] = "sample_output"
+
             elif operation == MATH.hasSum:
-                addends = list(x[2] for x in self.triples((parent, MATH.hasAddend, None)))
-                prov[propname]['operation'] = 'addition'
-                prov[propname]['inputs'] = {}
+                addends = list(
+                    x[2] for x in self.triples((parent, MATH.hasAddend, None))
+                )
+                prov[propname]["operation"] = "addition"
+                prov[propname]["inputs"] = {}
                 for count, term in enumerate(addends):
-                    prov[propname]['inputs'][f'{count}'] = _name(term)
+                    prov[propname]["inputs"][f"{count}"] = _name(term)
                     self._add_to_dict(term, prov)
-            
+
             elif operation == MATH.hasDifference:
                 minuend = self.value(parent, MATH.hasMinuend)
                 subtrahend = self.value(parent, MATH.hasSubtrahend)
-                prov[propname]['operation'] = 'subtraction'
-                prov[propname]['inputs'] = {}
-                prov[propname]['inputs']['0'] = _name(minuend)
-                prov[propname]['inputs']['1'] = _name(subtrahend)
+                prov[propname]["operation"] = "subtraction"
+                prov[propname]["inputs"] = {}
+                prov[propname]["inputs"]["0"] = _name(minuend)
+                prov[propname]["inputs"]["1"] = _name(subtrahend)
                 self._add_to_dict(minuend, prov)
                 self._add_to_dict(subtrahend, prov)
-            
+
             elif operation == MATH.hasProduct:
-                factors = list(x[2] for x in self.triples((parent, MATH.hasFactor, None)))
-                prov[propname]['operation'] = 'multiplication'
-                prov[propname]['inputs'] = {}
+                factors = list(
+                    x[2] for x in self.triples((parent, MATH.hasFactor, None))
+                )
+                prov[propname]["operation"] = "multiplication"
+                prov[propname]["inputs"] = {}
                 for count, term in enumerate(factors):
-                    prov[propname]['inputs'][f'{count}'] = _name(term)
+                    prov[propname]["inputs"][f"{count}"] = _name(term)
                     self._add_to_dict(term, prov)
-            
+
             elif operation == MATH.hasQuotient:
                 divisor = self.value(parent, MATH.hasDivisor)
                 dividend = self.value(parent, MATH.hasDividend)
-                prov[propname]['operation'] = 'division'
-                prov[propname]['inputs'] = {}
-                prov[propname]['inputs']['0'] = _name(divisor)
-                prov[propname]['inputs']['1'] = _name(dividend)
+                prov[propname]["operation"] = "division"
+                prov[propname]["inputs"] = {}
+                prov[propname]["inputs"]["0"] = _name(divisor)
+                prov[propname]["inputs"]["1"] = _name(dividend)
                 self._add_to_dict(divisor, prov)
                 self._add_to_dict(dividend, prov)
         print(operation)
-        prov[propname]['found'] = True
+        prov[propname]["found"] = True
         return prov
-    
+
     def generate_provenance(self, prop=None, label=None, visualize=False):
         if (prop is None) and (label is None):
-            raise ValueError('Either prop or label must be provided')
-        
+            raise ValueError("Either prop or label must be provided")
+
         if prop is None:
             prop = self.find_property(label)
-        
+
         name = _name(prop)
         prov = {}
         self._add_to_dict(prop, prov)
@@ -1630,49 +1717,62 @@ class KnowledgeGraph:
         done = False
         while not done:
             done = True
-            keys = list(prov.keys()) 
+            keys = list(prov.keys())
             for prop in keys:
-                if not prov[prop]['found']:
+                if not prov[prop]["found"]:
                     prov = self._get_ancestor(prop, prov)
                     done = False
-        
+
         if visualize:
             return visualize_provenance(prov)
-        
-        return prov
-    
 
-    def query_structure_from_mp(self, api_key, chemical_system=None, material_ids=None, is_stable=True,
-                        conventional=True,
-                        add_to_graph=True):
-        docs = amp.query_mp(api_key, 
-                            chemical_system = chemical_system, 
-                            material_ids = material_ids, 
-                            is_stable = is_stable)
+        return prov
+
+    def query_structure_from_mp(
+        self,
+        api_key,
+        chemical_system=None,
+        material_ids=None,
+        is_stable=True,
+        conventional=True,
+        add_to_graph=True,
+    ):
+        docs = amp.query_mp(
+            api_key,
+            chemical_system=chemical_system,
+            material_ids=material_ids,
+            is_stable=is_stable,
+        )
         structures = []
         for doc in docs:
-            struct = doc['structure']
+            struct = doc["structure"]
             if conventional:
                 aseatoms = struct.to_conventional().to_ase_atoms()
             else:
                 aseatoms = struct.to_primitive().to_ase_atoms()
-            
+
             sys = System.read.ase(aseatoms)
-            
-            symmetry = doc['symmetry']
+
+            symmetry = doc["symmetry"]
 
             if add_to_graph:
                 sys.graph = self
                 sys.to_graph()
-                
-                targets = [None, symmetry['symbol'], symmetry['number'], None, None, None]
+
+                targets = [
+                    None,
+                    symmetry["symbol"],
+                    symmetry["number"],
+                    None,
+                    None,
+                    None,
+                ]
                 sys._add_crystal_structure(targets=targets)
 
-                #add energy
-                self.add_calculated_quantity(sys.sample, 
-                                            'EnergyPerAtom', 
-                                            doc['energy_per_atom'], 
-                                            unit='EV')  
+                # add energy
+                self.add_calculated_quantity(
+                    sys.sample, "EnergyPerAtom", doc["energy_per_atom"], unit="EV"
+                )
                 structures.append(sys)
         if len(structures) == 1:
             return structures[0]
@@ -1725,7 +1825,11 @@ class KnowledgeGraph:
                     )
                     self.add((chemical_species, CMSO.hasElement, element))
                     self.add(
-                        (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
+                        (
+                            element,
+                            CMSO.hasChemicalSymbol,
+                            Literal(e, datatype=XSD.string),
+                        )
                     )
                     self.add(
                         (
@@ -1736,9 +1840,7 @@ class KnowledgeGraph:
                     )
 
         # we also have to read in file and clean it up
-        filepath = self.value(
-            URIRef(f"{sample_id}_Position"), CMSO.hasPath
-        ).toPython()
+        filepath = self.value(URIRef(f"{sample_id}_Position"), CMSO.hasPath).toPython()
         position_identifier = self.value(
             URIRef(f"{sample_id}_Position"), CMSO.hasIdentifier
         ).toPython()
@@ -1757,15 +1859,13 @@ class KnowledgeGraph:
                 "label": "species",
             },
         }
-        outfile = os.path.join(
-            self.structure_store, str(sample_id).split(":")[-1]
-        )
+        outfile = os.path.join(self.structure_store, str(sample_id).split(":")[-1])
         json_io.write_file(outfile, datadict)
 
-        #now the only thing that needs to be updated is the cell                    
+        # now the only thing that needs to be updated is the cell
         simulation_cell = self.value(sample, CMSO.hasSimulationCell)
 
-        #readd volume
+        # readd volume
         self.remove((simulation_cell, CMSO.hasVolume, None))
         self.add(
             (
@@ -1778,17 +1878,20 @@ class KnowledgeGraph:
             )
         )
 
-        #readd number of atoms
+        # readd number of atoms
         self.remove((sample, CMSO.hasNumberOfAtoms, None))
         self.add(
             (
                 sample,
                 CMSO.hasNumberOfAtoms,
-                Literal(struct.schema.simulation_cell.number_of_atoms(), datatype=XSD.integer),
+                Literal(
+                    struct.schema.simulation_cell.number_of_atoms(),
+                    datatype=XSD.integer,
+                ),
             )
         )
 
-        #update simulation cell length
+        # update simulation cell length
         simulation_cell_length = self.value(simulation_cell, CMSO.hasLength)
         self.remove((simulation_cell_length, None, None))
         data = struct.schema.simulation_cell.length()
@@ -1814,13 +1917,13 @@ class KnowledgeGraph:
             )
         )
 
-        #simulation cell vectors
+        # simulation cell vectors
         simvecs = [x[2] for x in self.triples((simulation_cell, CMSO.hasVector, None))]
 
         for simvec in simvecs:
             self.remove((simvec, None, None))
-        
-        #now re-add
+
+        # now re-add
         data = struct.schema.simulation_cell.vector()
         self.add(
             (
@@ -1888,7 +1991,7 @@ class KnowledgeGraph:
             )
         )
 
-        #angle
+        # angle
         simangle = self.value(simulation_cell, CMSO.hasAngle)
         self.remove((simangle, None, None))
         data = struct.schema.simulation_cell.angle()
@@ -1912,4 +2015,4 @@ class KnowledgeGraph:
                 CMSO.hasAngle_gamma,
                 Literal(data[2], datatype=XSD.float),
             )
-        )        
+        )
