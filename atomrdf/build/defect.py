@@ -2,6 +2,8 @@ import pyscal3.structure_creator as pcs
 from atomrdf.structure import System
 from atomrdf.build.buildutils import _declass
 from atomrdf.build.bulk import bulk
+import atomrdf.transform as atr
+import atomrdf.io as aio
 import numpy as np
 import pyscal3.core as pc
 from pyscal3.core import structure_dict, element_dict
@@ -9,12 +11,15 @@ from pyscal3.grain_boundary import GrainBoundary
 from pyscal3.atoms import AttrSetter, Atoms
 import copy
 
-def _delete_atom(system, 
-    ids=None, 
-    indices=None, 
-    condition=None, 
-    selection=False, 
-    copy_structure=False):
+
+def _delete_atom(
+    system,
+    ids=None,
+    indices=None,
+    condition=None,
+    selection=False,
+    copy_structure=False,
+):
     """
     Delete atoms from the structure.
 
@@ -44,16 +49,16 @@ def _delete_atom(system,
 
     if copy_structure:
         sys = system.duplicate()
-        #and add this new structure to the graph
+        # and add this new structure to the graph
         sys.to_graph()
         sys.copy_defects(system.sample)
     else:
         sys = system
-    
+
     masks = sys.atoms._generate_bool_list(
         ids=ids, indices=indices, condition=condition, selection=selection
     )
-    
+
     delete_list = [masks[sys.atoms["head"][x]] for x in range(sys.atoms.ntotal)]
     delete_ids = [x for x in range(sys.atoms.ntotal) if delete_list[x]]
     actual_natoms = sys.natoms
@@ -61,16 +66,16 @@ def _delete_atom(system,
     vacancy_no = len([x for x in masks if x])
     concentration = vacancy_no / actual_natoms
     sys.add_vacancy(concentration, number=vacancy_no)
-    sys.update_system_for_vacancy_creation(vacancy_no,
-        actual_natoms,original_sample)
+    sys.update_system_for_vacancy_creation(vacancy_no, actual_natoms, original_sample)
     return sys
+
 
 def vacancy(
     element_or_structure,
     ids=None,
     indices=None,
     no_of_vacancies=None,
-    structure_object = None,
+    structure_object=None,
     structure=None,
     lattice_constant=1.00,
     repetitions=None,
@@ -86,11 +91,11 @@ def vacancy(
         raise ValueError("Please provide ids, indices or no_of_vacancies")
 
     if isinstance(element_or_structure, System):
-        #structure is given, so we use that for further work
+        # structure is given, so we use that for further work
         sys = element_or_structure
     else:
-        #we try creating a structure, in that case, we call bulk
-        element = element_or_structure        
+        # we try creating a structure, in that case, we call bulk
+        element = element_or_structure
         sys = bulk(
             element,
             structure=structure,
@@ -103,20 +108,22 @@ def vacancy(
             names=names,
             label=label,
         )
-    
+
     if no_of_vacancies is not None:
         indices = np.random.randint(0, sys.natoms, no_of_vacancies)
-    
-    #get actual natoms
+
+    # get actual natoms
     actual_natoms = sys.natoms
 
-    #we are good to go now
-    sys = _delete_atom(sys, 
-                ids=ids, 
-                indices=indices, 
-                condition=None, 
-                selection=False, 
-                copy_structure=copy_structure)
+    # we are good to go now
+    sys = _delete_atom(
+        sys,
+        ids=ids,
+        indices=indices,
+        condition=None,
+        selection=False,
+        copy_structure=copy_structure,
+    )
     return sys
 
 
@@ -127,7 +134,7 @@ def substitutional(
     indices=None,
     condition=None,
     selection=False,
-    copy_structure=False,    
+    copy_structure=False,
 ):
     """
     Substitute atoms in the structure with a given element.
@@ -168,12 +175,12 @@ def substitutional(
 
     if copy_structure:
         sys = system.duplicate()
-        #and add this new structure to the graph
+        # and add this new structure to the graph
         sys.to_graph()
         sys.copy_defects(system.sample)
     else:
         sys = system
-    
+
     masks = sys.atoms._generate_bool_list(
         ids=ids, indices=indices, condition=condition, selection=selection
     )
@@ -190,25 +197,27 @@ def substitutional(
     for x in delete_ids:
         sys.atoms["species"][x] = substitution_element
         sys.atoms["types"][x] = maxtype
-    #impurity metrics
+    # impurity metrics
     no_of_impurities = len(delete_ids)
-    conc_of_impurities = no_of_impurities/sys.natoms
-    sys.update_system_for_substitutional_impurities(no_of_impurities,
-                    sys.natoms, original_sample)
-    sys.add_substitutional_impurities(conc_of_impurities,
-                                    no_of_impurities=no_of_impurities)
+    conc_of_impurities = no_of_impurities / sys.natoms
+    sys.update_system_for_substitutional_impurity(
+        no_of_impurities, sys.natoms, original_sample
+    )
+    sys.add_substitutional_impurities(
+        conc_of_impurities, no_of_impurities=no_of_impurities
+    )
 
     return sys
 
 
 def interstitial(
-    system, 
-    element, 
+    system,
+    element,
     void_type="tetrahedral",
     lattice_constant=None,
     threshold=0.01,
     copy_structure=False,
-    ):
+):
     """
     Add interstitial impurities to the System
 
@@ -227,7 +236,7 @@ def interstitial(
 
     threshold: float, optional
         threshold for the distance from the lattice constant for octahedral voids to account for fluctuations in atomic positions
-    
+
     copy_structure: bool, optional
         If True, a copy of the structure will be returned. Defaults to False.
 
@@ -254,7 +263,6 @@ def interstitial(
         verts = system.unique_vertices
         randindex = np.random.randint(0, len(verts), len(element))
         randpos = np.array(verts)[randindex]
-
 
     elif void_type == "octahedral":
         if lattice_constant is None:
@@ -295,25 +303,27 @@ def interstitial(
 
     # create new system with the atoms added
     no_of_impurities = len(randpos)
-    conc_of_impurities = no_of_impurities/system.natoms
+    conc_of_impurities = no_of_impurities / system.natoms
 
     if copy_structure:
-        #sys = self.duplicate()
+        # sys = self.duplicate()
         sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))
-        sys.graph = system.graph        
+        sys.graph = system.graph
         sys.to_graph()
         sys.copy_defects(system.sample)
     else:
-        #sys = self.duplicate()
-        sys = System(source=self.add_atoms({"positions": randpos, "species": element}))
+        # sys = self.duplicate()
+        sys = System(source=sys.add_atoms({"positions": randpos, "species": element}))
         sys.graph = system.graph
         sys.sample = system.sample
 
     # now we have to verify the triples correctly and add them in
     sys.update_system_for_interstitial_impurity(original_sample)
-    sys.add_interstitial_impurities(conc_of_impurities,
-                                    no_of_impurities=no_of_impurities)
+    sys.add_interstitial_impurities(
+        conc_of_impurities, no_of_impurities=no_of_impurities
+    )
     return sys
+
 
 def stacking_fault(
     slip_plane,
@@ -348,7 +358,7 @@ def stacking_fault(
         [u, v, w] is the slip direction and [h, k, l] is the slip plane.
 
         For HCP systems, the input should be [[u, v, w, z], [h, k, l, m]].
-    
+
     distance : float
         Distance for translating one half of the cell along the [h k l] direction. Default is 1.
     """
@@ -358,9 +368,8 @@ def stacking_fault(
     except ImportError:
         raise ImportError("This function requires the atomman package to be installed")
 
-    
-    #we are good to go now
-    #we proceed with the atomman code
+    # we are good to go now
+    # we proceed with the atomman code
     if element is None:
         raise ValueError("Please provide element")
     if element in element_dict.keys():
@@ -371,24 +380,26 @@ def stacking_fault(
     if structure == "hcp":
         if len(slip_plane) != 4:
             raise ValueError("For hcp systems, slip plane should be of length 4")
-        #routine for hcp
-        a = uc.set_in_units(_declass(lattice_constant), 'angstrom')
-        c = uc.set_in_units(_declass(ca_ratio), 'angstrom')
-        atoms = am.Atoms(pos=[[0.0, 0.0, 0.0], [1/3, 2/3, 0.5]])        
-        ucell = am.System(atoms=atoms, box=am.Box.hexagonal(a, c), scale=True, symbols=element)
+        # routine for hcp
+        a = uc.set_in_units(_declass(lattice_constant), "angstrom")
+        c = uc.set_in_units(_declass(ca_ratio), "angstrom")
+        atoms = am.Atoms(pos=[[0.0, 0.0, 0.0], [1 / 3, 2 / 3, 0.5]])
+        ucell = am.System(
+            atoms=atoms, box=am.Box.hexagonal(a, c), scale=True, symbols=element
+        )
         sd = structure_dict["hcp"]["primitive"]
     else:
-        #routine for others
-        #extract the structure vectors
+        # routine for others
+        # extract the structure vectors
         if primitive:
             sd = structure_dict[structure]["primitive"]
         else:
             sd = structure_dict[structure]["conventional"]
-        vectors = _declass(lattice_constant)*np.array(sd["box"])
-        #positions
+        vectors = _declass(lattice_constant) * np.array(sd["box"])
+        # positions
         positions = np.array(sd["positions"])
         types = np.array(sd["species"])
-        
+
         # create a structure with the info
         box = am.Box(
             avect=vectors[0],
@@ -397,11 +408,12 @@ def stacking_fault(
         )
 
         atoms = am.Atoms(
-            atype=types, pos=positions,
+            atype=types,
+            pos=positions,
         )
         ucell = am.System(atoms=atoms, box=box, scale=True, symbols=element)
-    
-    #seupersize
+
+    # seupersize
     if repetitions is not None:
         if isinstance(repetitions, int):
             repetitions = [repetitions, repetitions, repetitions]
@@ -412,16 +424,14 @@ def stacking_fault(
         sf.a1vect_uvw = slip_direction_a
     if slip_direction_b is not None:
         sf.a2vect_uvw = slip_direction_b
-    surfacesystem = sf.surface(shift=sf.shifts[0], 
-                            minwidth=minwidth, 
-                            even=even,
-                            vacuumwidth=vacuum)
+    surfacesystem = sf.surface(
+        shift=sf.shifts[0], minwidth=minwidth, even=even, vacuumwidth=vacuum
+    )
     if relative_fault_position != 0.5:
         sf.faultpos_rel = relative_fault_position
-    faultsystem = sf.fault(a1=displacement_a, 
-                        a2=displacement_b)
+    faultsystem = sf.fault(a1=displacement_a, a2=displacement_b)
 
-    #get displacements
+    # get displacements
     displ = am.displacement(surfacesystem, faultsystem)
 
     box = [faultsystem.box.avect, faultsystem.box.bvect, faultsystem.box.cvect]
@@ -442,7 +452,7 @@ def stacking_fault(
 
     positions = positions + displ
 
-    #create datadict
+    # create datadict
     datadict = {}
     datadict["lattice"] = structure
     datadict["lattice_constant"] = _declass(lattice_constant)
@@ -455,14 +465,20 @@ def stacking_fault(
     atoms = Atoms()
     atoms.from_dict({"positions": positions, "species": species, "types": types})
     output_structure.atoms = atoms
-    #output_structure = output_structure.modify.remap_to_box()
+    # output_structure = output_structure.modify.remap_to_box()
     output_structure.lattice_properties = datadict
     output_structure.label = label
     output_structure.graph = graph
     output_structure.to_graph()
-    output_structure.add_stacking_fault({"plane":slip_plane, "displacement":sf.a1vect_uvw})
-    output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
-    output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
+    output_structure.add_stacking_fault(
+        {"plane": slip_plane, "displacement": sf.a1vect_uvw}
+    )
+    output_structure.add_property_mappings(
+        lattice_constant, mapping_quantity="lattice_constant"
+    )
+    output_structure.add_property_mappings(
+        ca_ratio, mapping_quantity="lattice_constant"
+    )
 
     if return_atomman_dislocation:
         return output_structure, sf, surfacesystem, faultsystem
@@ -557,7 +573,7 @@ def dislocation(
         import atomman.unitconvert as uc
     except ImportError:
         raise ImportError("This function requires the atomman package to be installed")
-    
+
     slip_direction = slip_system[0]
     slip_plane = slip_system[1]
     if burgers_vector is None:
@@ -565,8 +581,7 @@ def dislocation(
     elif np.isscalar(burgers_vector):
         burgers_vector = burgers_vector * np.array(slip_direction)
     elif len(burgers_vector) != 3:
-        raise ValueError('burgers vector should be None, scalar, or of length 3')
-
+        raise ValueError("burgers vector should be None, scalar, or of length 3")
 
     if structure is not None:
         # create a structure with the info
@@ -639,17 +654,19 @@ def dislocation(
         (atom_df["pos[0]"].values, atom_df["pos[1]"].values, atom_df["pos[2]"].values)
     )
 
-    #find dislocation character
-    angle = np.dot(dislocation_line, burgers_vector)/(np.linalg.norm(dislocation_line)*np.linalg.norm(burgers_vector))
+    # find dislocation character
+    angle = np.dot(dislocation_line, burgers_vector) / (
+        np.linalg.norm(dislocation_line) * np.linalg.norm(burgers_vector)
+    )
     angle_rad = np.arccos(angle)
     angle_deg = np.degrees(angle_rad)
 
     disl_dict = {
-        'BurgersVector': burgers_vector,
-        'SlipPlane': slip_plane,
-        'SlipDirection': slip_direction,
-        'DislocationLine': dislocation_line,
-        'DislocationCharacter': angle_deg,
+        "BurgersVector": burgers_vector,
+        "SlipPlane": slip_plane,
+        "SlipDirection": slip_direction,
+        "DislocationLine": dislocation_line,
+        "DislocationCharacter": angle_deg,
     }
 
     # here we dont add repetitions, since we cannot guarantee
@@ -664,12 +681,17 @@ def dislocation(
     output_structure.graph = graph
     output_structure.to_graph()
     output_structure.add_dislocation(disl_dict)
-    output_structure.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
-    output_structure.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
+    output_structure.add_property_mappings(
+        lattice_constant, mapping_quantity="lattice_constant"
+    )
+    output_structure.add_property_mappings(
+        ca_ratio, mapping_quantity="lattice_constant"
+    )
 
     if return_atomman_dislocation:
         return output_structure, disc
     return output_structure
+
 
 def grain_boundary(
     axis,
@@ -684,15 +706,15 @@ def grain_boundary(
     gap=0.0,
     vacuum=0.0,
     delete_layer="0b0t0b0t",
-    tolerance=  0.25,
+    tolerance=0.25,
     primitive=False,
     uc_a=1,
     uc_b=1,
     graph=None,
     names=False,
     label=None,
-    backend='aimsgb',
-    add_extras=False,         
+    backend="aimsgb",
+    add_extras=False,
 ):
     """
     Create a grain boundary system. GB can be created either with AIMSGB or GBCode.
@@ -771,7 +793,7 @@ def grain_boundary(
     -----
     This function requires the aimsgb and pymatgen packages to be installed to use the 'aimsgb' backend.
 
-    `repetitions` is used only with the 'gbcode' backend. 
+    `repetitions` is used only with the 'gbcode' backend.
     For similar functionality in 'aimsgb', use `uc_a` and `uc_b`. However, repetition in the third direction
     is not supported in 'aimsgb'. For a similar effect, after reaching the GB, `system.modify.repeat` function
     could be used with (1, 1, u_c).
@@ -779,8 +801,8 @@ def grain_boundary(
     If 'gbcode' is used as backend, the specific type of GB is determined using the `find_gb_character` function
     When backend 'aimsgb' is used, this is attempted. If the type could not be found, a normal GB will be added in the annotation.
 
-    """ 
-    if backend == 'aimsgb':
+    """
+    if backend == "aimsgb":
         return _make_grain_boundary_aimsgb(
             axis,
             sigma,
@@ -793,14 +815,14 @@ def grain_boundary(
             gap=gap,
             vacuum=vacuum,
             delete_layer=delete_layer,
-            tolerance=  tolerance,
+            tolerance=tolerance,
             primitive=primitive,
             uc_a=uc_a,
             uc_b=uc_b,
             graph=graph,
             names=names,
-            label=label, 
-            add_extras=add_extras,              
+            label=label,
+            add_extras=add_extras,
         )
     else:
         return _make_grain_boundary_gbcode(
@@ -818,6 +840,7 @@ def grain_boundary(
             add_extras=add_extras,
         )
 
+
 def _make_grain_boundary_aimsgb(
     axis,
     sigma,
@@ -830,22 +853,23 @@ def _make_grain_boundary_aimsgb(
     gap=0.0,
     vacuum=0.0,
     delete_layer="0b0t0b0t",
-    tolerance=  0.25,
+    tolerance=0.25,
     primitive=False,
     uc_a=1,
     uc_b=1,
     graph=None,
     names=False,
     label=None,
-    add_extras=False,  
-): 
+    add_extras=False,
+):
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
         from aimsgb import GrainBoundary as AIMSGrainBoundary
         from aimsgb import Grain as AIMSGrain
     except ImportError:
-        raise ImportError("This function requires the aimsgb and pymatgen packages to be installed")
-    
+        raise ImportError(
+            "This function requires the aimsgb and pymatgen packages to be installed"
+        )
 
     if structure is not None:
         # create a structure with the info
@@ -881,31 +905,34 @@ def _make_grain_boundary_aimsgb(
     asesys = init_sys.write.ase()
     pmsys = AseAtomsAdaptor().get_structure(atoms=asesys)
     grain = AIMSGrain(pmsys.lattice, pmsys.species, pmsys.frac_coords)
-    gb = AIMSGrainBoundary(axis=axis, sigma=sigma, 
-                    plane=gb_plane, 
-                    initial_struct=grain, 
-                    uc_a=uc_a, 
-                    uc_b=uc_b)
+    gb = AIMSGrainBoundary(
+        axis=axis,
+        sigma=sigma,
+        plane=gb_plane,
+        initial_struct=grain,
+        uc_a=uc_a,
+        uc_b=uc_b,
+    )
     gb_struct = AIMSGrain.stack_grains(
-                grain_a = gb.grain_a,
-                grain_b = gb.grain_b,
-                vacuum = vacuum,
-                gap=gap,
-                direction = gb.direction,
-                delete_layer=delete_layer,
-                tol=tolerance,
-                to_primitive=primitive,
-            )
+        grain_a=gb.grain_a,
+        grain_b=gb.grain_b,
+        vacuum=vacuum,
+        gap=gap,
+        direction=gb.direction,
+        delete_layer=delete_layer,
+        tol=tolerance,
+        to_primitive=primitive,
+    )
     asestruct = AseAtomsAdaptor().get_atoms(structure=gb_struct)
-    sys = System.read.ase(asestruct, graph=None, names=names, label=label)
+    sys = aio.read(asestruct, graph=None, names=names, label=label, format="ase")
     sys.atoms._lattice = structure
     sys.atoms._lattice_constant = _declass(lattice_constant)
     sys._structure_dict = sdict
     sys.label = label
     sys.graph = graph
     sys.to_graph()
-    sys.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
-    sys.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')
+    sys.add_property_mappings(lattice_constant, mapping_quantity="lattice_constant")
+    sys.add_property_mappings(ca_ratio, mapping_quantity="lattice_constant")
 
     try:
         gb_inb = GrainBoundary()
@@ -930,7 +957,6 @@ def _make_grain_boundary_aimsgb(
     return sys
 
 
-
 def _make_grain_boundary_gbcode(
     axis,
     sigma,
@@ -943,7 +969,7 @@ def _make_grain_boundary_gbcode(
     graph=None,
     names=False,
     label=None,
-    add_extras=False,  
+    add_extras=False,
 ):
     """
     Create a grain boundary system.
@@ -993,9 +1019,9 @@ def _make_grain_boundary_gbcode(
             element, repetitions=repetitions, overlap=overlap
         )
 
-    if 'repetitions' not in sdict.keys():
-        sdict['repetitions'] = repetitions
-    
+    if "repetitions" not in sdict.keys():
+        sdict["repetitions"] = repetitions
+
     s = System(graph=None, names=names)
     s.box = box
     s.atoms = atoms
@@ -1005,8 +1031,8 @@ def _make_grain_boundary_gbcode(
     s.label = label
     s.graph = graph
     s.to_graph()
-    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
-    
+    s.add_property_mappings(lattice_constant, mapping_quantity="lattice_constant")
+
     gb_dict = {
         "GBPlane": " ".join(np.array(gb_plane).astype(str)),
         "RotationAxis": axis,
