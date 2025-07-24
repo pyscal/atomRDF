@@ -36,7 +36,18 @@ import atomrdf.properties as prp
 from atomrdf.sample import Property
 
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
-from atomrdf.namespace import CMSO, LDO, PLDO, PODO, CDCO, UNSAFEASMO, UNSAFECMSO, PROV, Literal, ASMO
+from atomrdf.namespace import (
+    CMSO,
+    LDO,
+    PLDO,
+    PODO,
+    CDCO,
+    UNSAFEASMO,
+    UNSAFECMSO,
+    PROV,
+    Literal,
+    ASMO,
+)
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -44,7 +55,8 @@ file_location = "/".join(file_location[:-1])
 file_location = os.path.join(os.path.dirname(__file__), "data/element.yml")
 with open(file_location, "r") as fin:
     element_indetifiers = yaml.safe_load(fin)
-    
+
+
 class System(pc.System):
     def __init__(
         self,
@@ -60,9 +72,7 @@ class System(pc.System):
     ):
 
         if (filename is not None) and warn_read_in:
-            warnings.warn(
-                "To provide additional information, use the read method"
-            )
+            warnings.warn("To provide additional information, use the read method")
 
         super().__init__(
             filename=filename,
@@ -116,7 +126,6 @@ class System(pc.System):
 
         self.schema._add_attribute(mapdict)
 
-
     @property
     def material(self):
         if self._material is None:
@@ -130,14 +139,19 @@ class System(pc.System):
     def duplicate(self, only_essential=False):
         new_system = System()
         if only_essential:
-            n_dict = {'positions': copy.deepcopy(self.atoms.positions),
-                    'species': copy.deepcopy(self.atoms.species),
-                    'types': copy.deepcopy(self.atoms.types),}
+            n_dict = {
+                "positions": copy.deepcopy(self.atoms.positions),
+                "species": copy.deepcopy(self.atoms.species),
+                "types": copy.deepcopy(self.atoms.types),
+            }
         else:
-            n_dict = {key: copy.deepcopy(val)[:self.natoms] for key, val in self.atoms.items()}
+            n_dict = {
+                key: copy.deepcopy(val)[: self.natoms]
+                for key, val in self.atoms.items()
+            }
             new_system.label = self.label
             new_system._name = self._name
-        
+
         atoms = Atoms()
         atoms.from_dict(n_dict)
         atoms._lattice = self.atoms._lattice
@@ -149,31 +163,39 @@ class System(pc.System):
         new_system.sample = None
         return new_system
 
-        
     def add_property_mappings(self, output_property, mapping_quantity=None):
         if self.graph is None:
             return
         if not isinstance(output_property, Property):
             return
-        
-        #if the property is a directly calculated value
-        parent_samples = list([x[0] for x in self.graph.triples((None, ASMO.hasCalculatedProperty, output_property._parent))])
-        if len(parent_samples)>0:
+
+        # if the property is a directly calculated value
+        parent_samples = list(
+            [
+                x[0]
+                for x in self.graph.triples(
+                    (None, ASMO.hasCalculatedProperty, output_property._parent)
+                )
+            ]
+        )
+        if len(parent_samples) > 0:
             for parent_sample in parent_samples:
                 self.graph.add((self.sample, PROV.wasDerivedFrom, parent_sample))
         else:
-            #this is quantity that is derived -> for example volume/3 -> it has only sample parent, but no direct connection
+            # this is quantity that is derived -> for example volume/3 -> it has only sample parent, but no direct connection
             if output_property._sample_parent is not None:
-                self.graph.add((self.sample, PROV.wasDerivedFrom, output_property._sample_parent))
+                self.graph.add(
+                    (self.sample, PROV.wasDerivedFrom, output_property._sample_parent)
+                )
 
-        if mapping_quantity=='lattice_constant':
-            #add lattice constant mapping
+        if mapping_quantity == "lattice_constant":
+            # add lattice constant mapping
             material = self.graph.value(self.sample, CMSO.hasMaterial)
             crystal_structure = self.graph.value(material, CMSO.hasStructure)
             unit_cell = self.graph.value(crystal_structure, CMSO.hasUnitCell)
             lattice_parameter = self.graph.value(unit_cell, CMSO.hasLatticeParameter)
 
-            #also get activity
+            # also get activity
             activity = self.graph.value(output_property._parent, ASMO.wasCalculatedBy)
             self.graph.add((lattice_parameter, ASMO.wasCalculatedBy, activity))
 
@@ -214,7 +236,9 @@ class System(pc.System):
                 )
             )
 
-    def update_system_for_vacancy_creation(self, vacancy_no, actual_natoms, original_sample):
+    def update_system_for_vacancy_creation(
+        self, vacancy_no, actual_natoms, original_sample
+    ):
         if self.graph is None:
             return
 
@@ -257,7 +281,11 @@ class System(pc.System):
                     )
                     self.graph.add((chemical_species, CMSO.hasElement, element))
                     self.graph.add(
-                        (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
+                        (
+                            element,
+                            CMSO.hasChemicalSymbol,
+                            Literal(e, datatype=XSD.string),
+                        )
                     )
                     self.graph.add(
                         (
@@ -294,29 +322,42 @@ class System(pc.System):
         )
         json_io.write_file(outfile, datadict)
 
-        #write mapping for the operation
+        # write mapping for the operation
         if original_sample != self.sample:
-            activity = self.graph.create_node(f"structuremanipulation:{uuid.uuid4()}", ASMO.DeleteAtom)
+            activity = self.graph.create_node(
+                f"structuremanipulation:{uuid.uuid4()}", ASMO.DeleteAtom
+            )
             self.graph.add((self.sample, PROV.wasDerivedFrom, original_sample))
             self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
-    def add_substitutional_impurities(self, 
-                conc_of_impurities, 
-                no_of_impurities=None):
-        defect = self.graph.create_node(f"{self._name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity)
+    def add_substitutional_impurities(self, conc_of_impurities, no_of_impurities=None):
+        defect = self.graph.create_node(
+            f"{self._name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity
+        )
         self.graph.add((self.material, CDCO.hasCrystallographicDefect, defect))
-        self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
+        self.graph.add(
+            (
+                self.sample,
+                PODO.hasImpurityConcentration,
+                Literal(conc_of_impurities, datatype=XSD.float),
+            )
+        )
         if no_of_impurities is not None:
-            self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
+            self.graph.add(
+                (
+                    self.sample,
+                    PODO.hasNumberOfImpurityAtoms,
+                    Literal(no_of_impurities, datatype=XSD.integer),
+                )
+            )
 
-    def update_system_for_substitutional_impurity(self, 
-                impurity_no, 
-                actual_natoms,
-                original_sample):
+    def update_system_for_substitutional_impurity(
+        self, impurity_no, actual_natoms, original_sample
+    ):
         # operate on the graph
         if self.graph is None:
             return
-        
+
         chemical_species = self.graph.value(self.sample, CMSO.hasSpecies)
         # start by cleanly removing elements
         for s in self.graph.triples((chemical_species, CMSO.hasElement, None)):
@@ -345,7 +386,11 @@ class System(pc.System):
                     )
                     self.graph.add((chemical_species, CMSO.hasElement, element))
                     self.graph.add(
-                        (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
+                        (
+                            element,
+                            CMSO.hasChemicalSymbol,
+                            Literal(e, datatype=XSD.string),
+                        )
                     )
                     self.graph.add(
                         (
@@ -382,27 +427,45 @@ class System(pc.System):
         )
         json_io.write_file(outfile, datadict)
 
-        #write mapping for the operation
+        # write mapping for the operation
         if original_sample != self.sample:
-            activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.SubstituteAtom)
+            activity = self.graph.create_node(
+                f"activity:{uuid.uuid4()}", ASMO.SubstituteAtom
+            )
             self.graph.add((self.sample, PROV.wasDerivedFrom, original_sample))
             self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
-    def add_interstitial_impurities(self, 
-            conc_of_impurities, 
-            no_of_impurities=None, 
-            label=None):
+    def add_interstitial_impurities(
+        self, conc_of_impurities, no_of_impurities=None, label=None
+    ):
         if label is not None:
-            defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity, label=label)
+            defect = self.graph.create_node(
+                f"{self._name}_InterstitialImpurity",
+                PODO.InterstitialImpurity,
+                label=label,
+            )
         else:
-            defect = self.graph.create_node(f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity)
+            defect = self.graph.create_node(
+                f"{self._name}_InterstitialImpurity", PODO.InterstitialImpurity
+            )
         self.graph.add((self.material, CDCO.hasCrystallographicDefect, defect))
-        self.graph.add((self.sample, PODO.hasImpurityConcentration, Literal(conc_of_impurities, datatype=XSD.float)))
+        self.graph.add(
+            (
+                self.sample,
+                PODO.hasImpurityConcentration,
+                Literal(conc_of_impurities, datatype=XSD.float),
+            )
+        )
         if no_of_impurities is not None:
-            self.graph.add((self.sample, PODO.hasNumberOfImpurityAtoms, Literal(no_of_impurities, datatype=XSD.integer)))
+            self.graph.add(
+                (
+                    self.sample,
+                    PODO.hasNumberOfImpurityAtoms,
+                    Literal(no_of_impurities, datatype=XSD.integer),
+                )
+            )
 
-    def update_system_for_interstitial_impurity(self,
-        original_sample):
+    def update_system_for_interstitial_impurity(self, original_sample):
         if self.graph is None:
             return
         self.graph.remove((self.sample, CMSO.hasNumberOfAtoms, None))
@@ -443,7 +506,11 @@ class System(pc.System):
                     )
                     self.graph.add((chemical_species, CMSO.hasElement, element))
                     self.graph.add(
-                        (element, CMSO.hasChemicalSymbol, Literal(e, datatype=XSD.string))
+                        (
+                            element,
+                            CMSO.hasChemicalSymbol,
+                            Literal(e, datatype=XSD.string),
+                        )
                     )
                     self.graph.add(
                         (
@@ -480,7 +547,7 @@ class System(pc.System):
         )
         json_io.write_file(outfile, datadict)
 
-        #write mapping for the operation
+        # write mapping for the operation
         if original_sample != self.sample:
             activity = self.graph.create_node(f"activity:{uuid.uuid4()}", ASMO.AddAtom)
             self.graph.add((self.sample, PROV.wasDerivedFrom, self.sample))
@@ -515,7 +582,9 @@ class System(pc.System):
             self._name = f"sample:{str(uuid.uuid4())}"
 
     def _add_sample(self):
-        sample = self.graph.create_node(self._name, CMSO.AtomicScaleSample, label=self.label)
+        sample = self.graph.create_node(
+            self._name, CMSO.AtomicScaleSample, label=self.label
+        )
         self.sample = sample
 
     def _add_material(self):
@@ -625,11 +694,29 @@ class System(pc.System):
                 ),
             )
         )
-        
+
         repetitions = self.schema.simulation_cell.repetitions()
-        self.graph.add((simulation_cell, CMSO.hasRepetition_x, Literal(repetitions[0], datatype=XSD.integer)))
-        self.graph.add((simulation_cell, CMSO.hasRepetition_y, Literal(repetitions[1], datatype=XSD.integer)))
-        self.graph.add((simulation_cell, CMSO.hasRepetition_z, Literal(repetitions[2], datatype=XSD.integer)))
+        self.graph.add(
+            (
+                simulation_cell,
+                CMSO.hasRepetition_x,
+                Literal(repetitions[0], datatype=XSD.integer),
+            )
+        )
+        self.graph.add(
+            (
+                simulation_cell,
+                CMSO.hasRepetition_y,
+                Literal(repetitions[1], datatype=XSD.integer),
+            )
+        )
+        self.graph.add(
+            (
+                simulation_cell,
+                CMSO.hasRepetition_z,
+                Literal(repetitions[2], datatype=XSD.integer),
+            )
+        )
         self.simulation_cell = simulation_cell
 
     def _add_simulation_cell_properties(self):
@@ -806,8 +893,8 @@ class System(pc.System):
                 self.schema.material.crystal_structure.unit_cell.angle(),
             ]
 
-        #fix for lattice angle of HCP
-        if targets[0] == 'hcp':
+        # fix for lattice angle of HCP
+        if targets[0] == "hcp":
             targets[5] = [90.0, 90.0, 120.0]
 
         valid = self.graph._is_valid(targets)
@@ -850,8 +937,8 @@ class System(pc.System):
         Returns
         -------
         """
-        #space_group = URIRef(f"{self._name}_SpaceGroup")
-        #self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
+        # space_group = URIRef(f"{self._name}_SpaceGroup")
+        # self.graph.add((self.crystal_structure, CMSO.hasSpaceGroup, space_group))
         self.graph.add(
             (
                 self.crystal_structure,
@@ -1105,13 +1192,17 @@ class System(pc.System):
     def add_dislocation(self, disl_dict):
         if self.graph is None:
             return
-        
-        #find what kind of disl is present
-        angle_deg = disl_dict['DislocationCharacter']
-        if (np.abs(angle_deg-0) < 1E-3) or (np.abs(angle_deg-180) < 1E-3) or (np.abs(angle_deg-360) < 1E-3):
+
+        # find what kind of disl is present
+        angle_deg = disl_dict["DislocationCharacter"]
+        if (
+            (np.abs(angle_deg - 0) < 1e-3)
+            or (np.abs(angle_deg - 180) < 1e-3)
+            or (np.abs(angle_deg - 360) < 1e-3)
+        ):
             disl_type = LDO.ScrewDislocation
             disl_name = "ScrewDislocation"
-        elif (np.abs(angle_deg-90) < 1E-3) or (np.abs(angle_deg-270) < 1E-3):
+        elif (np.abs(angle_deg - 90) < 1e-3) or (np.abs(angle_deg - 270) < 1e-3):
             disl_type = LDO.EdgeDislocation
             disl_name = "EdgeDislocation"
         else:
@@ -1121,38 +1212,127 @@ class System(pc.System):
         line_defect = self.graph.create_node(f"{self._name}_Dislocation", disl_type)
         self.graph.add((self.material, CDCO.hasCrystallographicDefect, line_defect))
 
-        line_direction = self.graph.create_node(f"{self._name}_DislocationLineDirection", LDO.LineDirection)
-        self.graph.add((line_direction, CMSO.hasComponent_x, Literal(disl_dict['DislocationLine'][0], datatype=XSD.float)))
-        self.graph.add((line_direction, CMSO.hasComponent_y, Literal(disl_dict['DislocationLine'][1], datatype=XSD.float)))
-        self.graph.add((line_direction, CMSO.hasComponent_z, Literal(disl_dict['DislocationLine'][2], datatype=XSD.float)))
-        self.graph.add((line_defect, LDO.hasLineDirection, line_direction))                
+        line_direction = self.graph.create_node(
+            f"{self._name}_DislocationLineDirection", LDO.LineDirection
+        )
+        self.graph.add(
+            (
+                line_direction,
+                CMSO.hasComponent_x,
+                Literal(disl_dict["DislocationLine"][0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                line_direction,
+                CMSO.hasComponent_y,
+                Literal(disl_dict["DislocationLine"][1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                line_direction,
+                CMSO.hasComponent_z,
+                Literal(disl_dict["DislocationLine"][2], datatype=XSD.float),
+            )
+        )
+        self.graph.add((line_defect, LDO.hasLineDirection, line_direction))
 
-        burgers_vector = self.graph.create_node(f"{self._name}_DislocationBurgersVector", LDO.BurgersVector)
-        self.graph.add((burgers_vector, CMSO.hasComponent_x, Literal(disl_dict['BurgersVector'][0], datatype=XSD.float)))
-        self.graph.add((burgers_vector, CMSO.hasComponent_y, Literal(disl_dict['BurgersVector'][1], datatype=XSD.float)))
-        self.graph.add((burgers_vector, CMSO.hasComponent_z, Literal(disl_dict['BurgersVector'][2], datatype=XSD.float)))
+        burgers_vector = self.graph.create_node(
+            f"{self._name}_DislocationBurgersVector", LDO.BurgersVector
+        )
+        self.graph.add(
+            (
+                burgers_vector,
+                CMSO.hasComponent_x,
+                Literal(disl_dict["BurgersVector"][0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                burgers_vector,
+                CMSO.hasComponent_y,
+                Literal(disl_dict["BurgersVector"][1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                burgers_vector,
+                CMSO.hasComponent_z,
+                Literal(disl_dict["BurgersVector"][2], datatype=XSD.float),
+            )
+        )
         self.graph.add((line_defect, LDO.hasBurgersVector, burgers_vector))
 
         if disl_name == "MixedDislocation":
-            self.graph.add((line_defect, LDO.hasCharacterAngle, Literal(angle_deg, datatype=XSD.float)))
+            self.graph.add(
+                (
+                    line_defect,
+                    LDO.hasCharacterAngle,
+                    Literal(angle_deg, datatype=XSD.float),
+                )
+            )
 
-        slip_direction = self.graph.create_node(f"{self._name}_DislocationSlipDirection", LDO.SlipDirection)
-        self.graph.add((slip_direction, CMSO.hasComponent_x, Literal(disl_dict['SlipDirection'][0], datatype=XSD.float)))
-        self.graph.add((slip_direction, CMSO.hasComponent_y, Literal(disl_dict['SlipDirection'][1], datatype=XSD.float)))
-        self.graph.add((slip_direction, CMSO.hasComponent_z, Literal(disl_dict['SlipDirection'][2], datatype=XSD.float)))
-        
-        slip_plane = self.graph.create_node(f"{self._name}_DislocationSlipPlane", LDO.SlipPlane)
-        normal_vector = self.graph.create_node(f"{self._name}_DislocationNormalVector", LDO.NormalVector)
-        self.graph.add((normal_vector, CMSO.hasComponent_x, Literal(disl_dict['SlipPlane'][0], datatype=XSD.float)))
-        self.graph.add((normal_vector, CMSO.hasComponent_y, Literal(disl_dict['SlipPlane'][1], datatype=XSD.float)))
-        self.graph.add((normal_vector, CMSO.hasComponent_z, Literal(disl_dict['SlipPlane'][2], datatype=XSD.float)))
+        slip_direction = self.graph.create_node(
+            f"{self._name}_DislocationSlipDirection", LDO.SlipDirection
+        )
+        self.graph.add(
+            (
+                slip_direction,
+                CMSO.hasComponent_x,
+                Literal(disl_dict["SlipDirection"][0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                slip_direction,
+                CMSO.hasComponent_y,
+                Literal(disl_dict["SlipDirection"][1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                slip_direction,
+                CMSO.hasComponent_z,
+                Literal(disl_dict["SlipDirection"][2], datatype=XSD.float),
+            )
+        )
+
+        slip_plane = self.graph.create_node(
+            f"{self._name}_DislocationSlipPlane", LDO.SlipPlane
+        )
+        normal_vector = self.graph.create_node(
+            f"{self._name}_DislocationNormalVector", LDO.NormalVector
+        )
+        self.graph.add(
+            (
+                normal_vector,
+                CMSO.hasComponent_x,
+                Literal(disl_dict["SlipPlane"][0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                normal_vector,
+                CMSO.hasComponent_y,
+                Literal(disl_dict["SlipPlane"][1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                normal_vector,
+                CMSO.hasComponent_z,
+                Literal(disl_dict["SlipPlane"][2], datatype=XSD.float),
+            )
+        )
         self.graph.add((slip_plane, LDO.hasNormalVector, normal_vector))
 
-        slip_system = self.graph.create_node(f"{self._name}_DislocationSlipSystem", LDO.SlipSystem)
+        slip_system = self.graph.create_node(
+            f"{self._name}_DislocationSlipSystem", LDO.SlipSystem
+        )
         self.graph.add((slip_direction, LDO.belongsToSystem, slip_system))
         self.graph.add((slip_plane, LDO.belongsToSystem, slip_system))
         self.graph.add((line_defect, LDO.movesOn, slip_system))
-
 
     def add_stacking_fault(self, sf_dict):
         if self.graph is None:
@@ -1162,7 +1342,9 @@ class System(pc.System):
         sf = self.graph.create_node(f"{self._name}_StackingFault", PLDO.StackingFault)
         self.graph.add((self.material, CDCO.hasCrystallographicDefect, sf))
         self.graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
-        self.graph.add((sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string)))
+        self.graph.add(
+            (sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string))
+        )
 
     def add_gb(self, gb_dict):
         """
@@ -1193,7 +1375,9 @@ class System(pc.System):
             return
 
         if gb_dict["GBType"] is None:
-            plane_defect = self.graph.create_node(f"{self._name}_GrainBoundary", PLDO.GrainBoundary)
+            plane_defect = self.graph.create_node(
+                f"{self._name}_GrainBoundary", PLDO.GrainBoundary
+            )
 
         elif gb_dict["GBType"] == "Twist":
             plane_defect = self.graph.create_node(
@@ -1252,62 +1436,142 @@ class System(pc.System):
         self.graph.add((child_sample_id, PROV.wasGeneratedBy, activity))
         self.graph.add((child_sample_id, PROV.wasDerivedFrom, self.sample))
 
-        rot_vector_01 = self.graph.create_node(f"{activity_id}_RotationVector_1", CMSO.Vector)
+        rot_vector_01 = self.graph.create_node(
+            f"{activity_id}_RotationVector_1", CMSO.Vector
+        )
         self.graph.add((activity, CMSO.hasVector, rot_vector_01))
-        self.graph.add((rot_vector_01, CMSO.hasComponent_x, Literal(rotation_vectors[0][0], datatype=XSD.float),))
-        self.graph.add((rot_vector_01, CMSO.hasComponent_y, Literal(rotation_vectors[0][1], datatype=XSD.float),))
-        self.graph.add((rot_vector_01, CMSO.hasComponent_z, Literal(rotation_vectors[0][2], datatype=XSD.float),))
+        self.graph.add(
+            (
+                rot_vector_01,
+                CMSO.hasComponent_x,
+                Literal(rotation_vectors[0][0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                rot_vector_01,
+                CMSO.hasComponent_y,
+                Literal(rotation_vectors[0][1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                rot_vector_01,
+                CMSO.hasComponent_z,
+                Literal(rotation_vectors[0][2], datatype=XSD.float),
+            )
+        )
 
-        rot_vector_02 = self.graph.create_node(f"{activity_id}_RotationVector_2", CMSO.Vector)
+        rot_vector_02 = self.graph.create_node(
+            f"{activity_id}_RotationVector_2", CMSO.Vector
+        )
         self.graph.add((activity, CMSO.hasVector, rot_vector_02))
-        self.graph.add((rot_vector_02, CMSO.hasComponent_x, Literal(rotation_vectors[1][0], datatype=XSD.float),))
-        self.graph.add((rot_vector_02, CMSO.hasComponent_y, Literal(rotation_vectors[1][1], datatype=XSD.float),))
-        self.graph.add((rot_vector_02, CMSO.hasComponent_z, Literal(rotation_vectors[1][2], datatype=XSD.float),))
+        self.graph.add(
+            (
+                rot_vector_02,
+                CMSO.hasComponent_x,
+                Literal(rotation_vectors[1][0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                rot_vector_02,
+                CMSO.hasComponent_y,
+                Literal(rotation_vectors[1][1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                rot_vector_02,
+                CMSO.hasComponent_z,
+                Literal(rotation_vectors[1][2], datatype=XSD.float),
+            )
+        )
 
-        rot_vector_03 = self.graph.create_node(f"{activity_id}_RotationVector_3", CMSO.Vector)
+        rot_vector_03 = self.graph.create_node(
+            f"{activity_id}_RotationVector_3", CMSO.Vector
+        )
         self.graph.add((activity, CMSO.hasVector, rot_vector_03))
-        self.graph.add((rot_vector_03, CMSO.hasComponent_x, Literal(rotation_vectors[2][0], datatype=XSD.float),))
-        self.graph.add((rot_vector_03, CMSO.hasComponent_y, Literal(rotation_vectors[2][1], datatype=XSD.float),))
-        self.graph.add((rot_vector_03, CMSO.hasComponent_z, Literal(rotation_vectors[2][2], datatype=XSD.float),))
+        self.graph.add(
+            (
+                rot_vector_03,
+                CMSO.hasComponent_x,
+                Literal(rotation_vectors[2][0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                rot_vector_03,
+                CMSO.hasComponent_y,
+                Literal(rotation_vectors[2][1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                rot_vector_03,
+                CMSO.hasComponent_z,
+                Literal(rotation_vectors[2][2], datatype=XSD.float),
+            )
+        )
 
     def _select_by_plane(self, plane, distance, reverse_orientation=False):
         plane_norm = np.linalg.norm(plane)
         selection = []
         for pos in self.atoms.positions:
-            dist = np.dot(plane, pos)/plane_norm
-            
+            dist = np.dot(plane, pos) / plane_norm
+
             if dist < distance:
                 selection.append(True)
             else:
                 selection.append(False)
         if reverse_orientation:
             selection = np.invert(selection)
-        return selection             
+        return selection
 
     def select_by_plane(self, plane, distance, reverse_orientation=False):
-        selection = self._select_by_plane(plane, distance, 
-                        reverse_orientation=reverse_orientation)
+        selection = self._select_by_plane(
+            plane, distance, reverse_orientation=reverse_orientation
+        )
         self.apply_selection(condition=selection)
-        
-    
-    def add_translation_triples(self, translation_vector, plane, distance, original_sample):
+
+    def add_translation_triples(
+        self, translation_vector, plane, distance, original_sample
+    ):
         if self.graph is None:
             return
         activity_id = f"operation:{uuid.uuid4()}"
         activity = self.graph.create_node(activity_id, ASMO.Translation)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
-        #now add specifics
-        #shear is a vector
-        t_vector = self.graph.create_node(f"{activity_id}_TranslationVector", CMSO.Vector)
+        # now add specifics
+        # shear is a vector
+        t_vector = self.graph.create_node(
+            f"{activity_id}_TranslationVector", CMSO.Vector
+        )
         self.graph.add((activity, CMSO.hasVector, t_vector))
-        self.graph.add((t_vector, CMSO.hasComponent_x, Literal(translation_vector[0], datatype=XSD.float),))
-        self.graph.add((t_vector, CMSO.hasComponent_y, Literal(translation_vector[1], datatype=XSD.float),))
-        self.graph.add((t_vector, CMSO.hasComponent_z, Literal(translation_vector[2], datatype=XSD.float),))
+        self.graph.add(
+            (
+                t_vector,
+                CMSO.hasComponent_x,
+                Literal(translation_vector[0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                t_vector,
+                CMSO.hasComponent_y,
+                Literal(translation_vector[1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                t_vector,
+                CMSO.hasComponent_z,
+                Literal(translation_vector[2], datatype=XSD.float),
+            )
+        )
+        self.graph.add((self.sample, PROV.wasDerivedFrom, original_sample))
 
-        if self.sample != original_sample:
-            sys.graph.add((sys.sample, PROV.wasDerivedFrom, original_sample))
-    
     def add_shear_triples(self, translation_vector, plane, distance, original_sample):
         if self.graph is None:
             return
@@ -1315,26 +1579,69 @@ class System(pc.System):
         activity = self.graph.create_node(activity_id, ASMO.Shear)
         self.graph.add((self.sample, PROV.wasGeneratedBy, activity))
 
-        #now add specifics
-        #shear is a vector
+        # now add specifics
+        # shear is a vector
         t_vector = self.graph.create_node(f"{activity_id}_ShearVector", CMSO.Vector)
         self.graph.add((activity, CMSO.hasVector, t_vector))
-        self.graph.add((t_vector, CMSO.hasComponent_x, Literal(translation_vector[0], datatype=XSD.float),))
-        self.graph.add((t_vector, CMSO.hasComponent_y, Literal(translation_vector[1], datatype=XSD.float),))
-        self.graph.add((t_vector, CMSO.hasComponent_z, Literal(translation_vector[2], datatype=XSD.float),))
+        self.graph.add(
+            (
+                t_vector,
+                CMSO.hasComponent_x,
+                Literal(translation_vector[0], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                t_vector,
+                CMSO.hasComponent_y,
+                Literal(translation_vector[1], datatype=XSD.float),
+            )
+        )
+        self.graph.add(
+            (
+                t_vector,
+                CMSO.hasComponent_z,
+                Literal(translation_vector[2], datatype=XSD.float),
+            )
+        )
 
-        #if plane is provided, add that as well
+        # if plane is provided, add that as well
         if plane is not None:
             plane = self.graph.create_node(f"{activity_id}_Plane", CMSO.Plane)
-            plane_vector = self.graph.create_node(f"{activity_id}_PlaneVector", CMSO.NormalVector)
+            plane_vector = self.graph.create_node(
+                f"{activity_id}_PlaneVector", CMSO.NormalVector
+            )
             self.graph.add((activity, UNSAFECMSO.hasPlane, plane))
             self.graph.add((plane, CMSO.hasNormalVector, plane_vector))
-            self.graph.add((plane_vector, CMSO.hasComponent_x, Literal(plane[0], datatype=XSD.float),))
-            self.graph.add((plane_vector, CMSO.hasComponent_y, Literal(plane[1], datatype=XSD.float),))
-            self.graph.add((plane_vector, CMSO.hasComponent_z, Literal(plane[2], datatype=XSD.float),))
-            self.graph.add((plane, CMSO.hasDistanceFromOrigin, Literal(distance, datatype=XSD.float)))
-        if original_sample != self.sample:
-            sys.graph.add((sys.sample, PROV.wasDerivedFrom, original_sample))
+            self.graph.add(
+                (
+                    plane_vector,
+                    CMSO.hasComponent_x,
+                    Literal(plane[0], datatype=XSD.float),
+                )
+            )
+            self.graph.add(
+                (
+                    plane_vector,
+                    CMSO.hasComponent_y,
+                    Literal(plane[1], datatype=XSD.float),
+                )
+            )
+            self.graph.add(
+                (
+                    plane_vector,
+                    CMSO.hasComponent_z,
+                    Literal(plane[2], datatype=XSD.float),
+                )
+            )
+            self.graph.add(
+                (
+                    plane,
+                    CMSO.hasDistanceFromOrigin,
+                    Literal(distance, datatype=XSD.float),
+                )
+            )
+            self.graph.add((self.sample, PROV.wasDerivedFrom, original_sample))
 
     def copy_defects(self, parent_sample):
         if self.sample is None:
