@@ -39,3 +39,12 @@ class DataProperty(BaseModel, Generic[T]):
     unit: Optional[str] = Field(default=None, description="Unit of measure")
     id: Optional[str] = Field(default=None, description="ID in the graph")
     label: Optional[str] = Field(default=None, description="Label in the graph")
+
+
+class RDFMixin:
+    def to_graph(self, graph, sample):
+        raise NotImplementedError
+
+    @classmethod
+    def from_graph(cls, graph, sample):
+        raise NotImplementedError

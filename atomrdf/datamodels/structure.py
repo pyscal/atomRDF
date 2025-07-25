@@ -1,10 +1,16 @@
+"""
+Module defines the basic structure of atomic scale samples, including materials, crystal structures, unit cells, and simulation cells.
+It also includes the definition of atom attributes and various types of defects.
+"""
+
 from typing import List, Optional, Union
 import os
 import numpy as np
 import yaml
 import uuid
+import json
 from pydantic import BaseModel, Field
-from atomrdf.datamodels.basemodels import TemplateMixin, DataProperty
+from atomrdf.datamodels.basemodels import TemplateMixin, DataProperty, RDFMixin
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
     CMSO,
@@ -18,6 +24,7 @@ from atomrdf.namespace import (
 )
 import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
+from atomrdf.utils import get_material, get_sample_id
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -33,12 +40,12 @@ class UnitCell(BaseModel, TemplateMixin):
     lattice_parameter: Optional[DataProperty[List[float]]] = None
     angle: Optional[DataProperty[List[float]]] = None
 
-    def to_graph(self, graph, name, crystal_structure):
-        unit_cell = graph.create_node(f"{name}_UnitCell", CMSO.UnitCell)
+    def to_graph(self, graph, sample_id, crystal_structure):
+        unit_cell = graph.create_node(f"{sample_id}_UnitCell", CMSO.UnitCell)
         graph.add((crystal_structure, CMSO.hasUnitCell, unit_cell))
 
         bv = graph.create_node(
-            f"{name}_BravaisLattice", URIRef(self.bravais_lattice.value)
+            f"{sample_id}_BravaisLattice", URIRef(self.bravais_lattice.value)
         )
         graph.add(
             (
@@ -48,7 +55,7 @@ class UnitCell(BaseModel, TemplateMixin):
             )
         )
         lattice_parameter = graph.create_node(
-            f"{name}_LatticeParameter", CMSO.LatticeParameter
+            f"{sample_id}_LatticeParameter", CMSO.LatticeParameter
         )
         graph.add(
             (
@@ -72,7 +79,9 @@ class UnitCell(BaseModel, TemplateMixin):
             )
         )
 
-        lattice_angle = graph.create_node(f"{name}_LatticeAngle", CMSO.LatticeAngle)
+        lattice_angle = graph.create_node(
+            f"{sample_id}_LatticeAngle", CMSO.LatticeAngle
+        )
         graph.add((unit_cell, CMSO.hasAngle, lattice_angle))
         graph.add(
             (
@@ -96,6 +105,30 @@ class UnitCell(BaseModel, TemplateMixin):
             )
         )
 
+    @classmethod
+    def from_graph(cls, graph, crystal_structure):
+        unit_cell = graph.value(crystal_structure, CMSO.hasUnitCell)
+        bv = graph.value(unit_cell, CMSO.hasBravaisLattice)
+        x = graph.value(unit_cell, CMSO.hasLength_x)
+        y = graph.value(unit_cell, CMSO.hasLength_y)
+        z = graph.value(unit_cell, CMSO.hasLength_z)
+        angle = graph.value(unit_cell, CMSO.hasAngle)
+        alpha = graph.value(angle, CMSO.hasAngle_alpha)
+        beta = graph.value(angle, CMSO.hasAngle_beta)
+        gamma = graph.value(angle, CMSO.hasAngle_gamma)
+        datadict = {
+            "bravais_lattice": {
+                "value": str(bv),
+            },
+            "lattice_parameter": {
+                "value": [x, y, z],
+            },
+            "angle": {
+                "value": [alpha, beta, gamma],
+            },
+        }
+        return cls(**datadict)
+
 
 class CrystalStructure(BaseModel, TemplateMixin):
     pid: Optional[str] = None
@@ -104,11 +137,16 @@ class CrystalStructure(BaseModel, TemplateMixin):
     spacegroup_number: Optional[DataProperty[int]] = None
     unit_cell: Optional[UnitCell] = None
 
-    def to_graph(self, graph, name):
+    def to_graph(self, graph, sample):
         # Custom logic to convert UnitCell to graph representation
+        sample_id = get_sample_id(sample)
+        material = get_material(sample)
+
         crystal_structure = graph.create_node(
-            f"{name}_CrystalStructure", CMSO.CrystalStructure
+            f"{sample_id}_CrystalStructure", CMSO.CrystalStructure
         )
+        graph.add((material, CMSO.hasStructure, crystal_structure))
+
         graph.add(
             (
                 crystal_structure,
@@ -123,7 +161,24 @@ class CrystalStructure(BaseModel, TemplateMixin):
                 Literal(self.spacegroup_number.value, datatype=XSD.integer),
             )
         )
-        self.unit_cell.to_graph(graph, name, crystal_structure)
+
+        self.unit_cell.to_graph(graph, sample_id, crystal_structure)
+
+    @classmethod
+    def from_graph(cls, graph, sample):
+        sample_id = get_sample_id(sample)
+        material = get_material(sample)
+        crystal_structure = graph.value(material, CMSO.hasStructure)
+        spacegroup_symbol = graph.value(crystal_structure, CMSO.hasSpaceGroupSymbol)
+        spacegroup_number = graph.value(crystal_structure, CMSO.hasSpaceGroupNumber)
+        unit_cell = UnitCell.from_graph(graph, crystal_structure)
+
+        datadict = {
+            "spacegroup_symbol": {"value": str(spacegroup_symbol)},
+            "spacegroup_number": {"value": int(spacegroup_number)},
+            "unit_cell": unit_cell,
+        }
+        return cls(**datadict)
 
 
 class Material(BaseModel, TemplateMixin):
@@ -131,8 +186,9 @@ class Material(BaseModel, TemplateMixin):
     element_ratio: Optional[DataProperty[dict]] = None
     crystal_structure: Optional[CrystalStructure] = None
 
-    def to_graph(self, graph, name, sample):
-        material = graph.create_node(f"{name}_Material", CMSO.CrystallineMaterial)
+    def to_graph(self, graph, sample):
+        sample_id = get_sample_id(sample)
+        material = graph.create_node(f"{sample_id}_Material", CMSO.CrystallineMaterial)
         graph.add((sample, CMSO.hasMaterial, material))
 
         composition = self.element_ratio.value
@@ -144,7 +200,7 @@ class Material(BaseModel, TemplateMixin):
 
         if valid:
             chemical_species = graph.create_node(
-                f"{name}_ChemicalSpecies", CMSO.ChemicalSpecies
+                f"{sample_id}_ChemicalSpecies", CMSO.ChemicalSpecies
             )
             graph.add((sample, CMSO.hasSpecies, chemical_species))
 
@@ -165,7 +221,24 @@ class Material(BaseModel, TemplateMixin):
                         (element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float))
                     )
 
-        self.crystal_structure.to_graph(graph, name)
+        self.crystal_structure.to_graph(graph, sample)
+
+    @classmethod
+    def from_graph(cls, graph, sample):
+        material = get_material(graph, sample)
+        element_ratio = {}
+        for element in graph.objects(material, CMSO.hasElement):
+            symbol = graph.value(element, CMSO.hasChemicalSymbol)
+            ratio = graph.value(element, CMSO.hasElementRatio)
+            element_ratio[str(symbol)] = float(ratio)
+
+        crystal_structure = CrystalStructure.from_graph(graph, sample)
+
+        datadict = {
+            "element_ratio": {"value": element_ratio},
+            "crystal_structure": crystal_structure,
+        }
+        return cls(**datadict)
 
 
 class SimulationCell(BaseModel, TemplateMixin):
@@ -177,13 +250,14 @@ class SimulationCell(BaseModel, TemplateMixin):
     angle: Optional[DataProperty[List[float]]] = None
     repetitions: Optional[DataProperty[List[int]]] = None
 
-    def to_graph(self, graph, name, sample):
+    def to_graph(self, graph, sample):
+        sample_id = get_sample_id(sample)
         simulation_cell = graph.create_node(
-            f"{name}_SimulationCell", CMSO.SimulationCell
+            f"{sample_id}_SimulationCell", CMSO.SimulationCell
         )
         graph.add((sample, CMSO.hasSimulationCell, simulation_cell))
         volume = graph.create_node(
-            f"{name}_Volume", ASMO.Volume, label="SimulationCellVolume"
+            f"{sample_id}_Volume", ASMO.Volume, label="SimulationCellVolume"
         )
         graph.add((simulation_cell, CMSO.hasVolume, volume))
         graph.add(
@@ -235,7 +309,7 @@ class SimulationCell(BaseModel, TemplateMixin):
         )
 
         simulation_cell_length = graph.create_node(
-            f"{name}_SimulationCellLength", CMSO.SimulationCellLength
+            f"{sample_id}_SimulationCellLength", CMSO.SimulationCellLength
         )
         graph.add((simulation_cell, CMSO.hasLength, simulation_cell_length))
         data = self.length.value
@@ -262,7 +336,7 @@ class SimulationCell(BaseModel, TemplateMixin):
         )
 
         simulation_cell_vector_01 = graph.create_node(
-            f"{name}_SimulationCellVector_1", CMSO.SimulationCellVector
+            f"{sample_id}_SimulationCellVector_1", CMSO.SimulationCellVector
         )
         data = self.vector.value
         graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
@@ -289,7 +363,7 @@ class SimulationCell(BaseModel, TemplateMixin):
         )
 
         simulation_cell_vector_02 = graph.create_node(
-            f"{name}_SimulationCellVector_2", CMSO.SimulationCellVector
+            f"{sample_id}_SimulationCellVector_2", CMSO.SimulationCellVector
         )
         graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
         graph.add(
@@ -315,7 +389,7 @@ class SimulationCell(BaseModel, TemplateMixin):
         )
 
         simulation_cell_vector_03 = graph.create_node(
-            f"{name}_SimulationCellVector_3", CMSO.SimulationCellVector
+            f"{sample_id}_SimulationCellVector_3", CMSO.SimulationCellVector
         )
         graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
         graph.add(
@@ -341,7 +415,7 @@ class SimulationCell(BaseModel, TemplateMixin):
         )
 
         simulation_cell_angle = graph.create_node(
-            f"{name}_SimulationCellAngle", CMSO.SimulationCellAngle
+            f"{sample_id}_SimulationCellAngle", CMSO.SimulationCellAngle
         )
         data = self.angle.value
         graph.add((simulation_cell, CMSO.hasAngle, simulation_cell_angle))
@@ -367,13 +441,55 @@ class SimulationCell(BaseModel, TemplateMixin):
             )
         )
 
+    @classmethod
+    def from_graph(cls, graph, sample):
+        simulation_cell = graph.value(sample, CMSO.hasSimulationCell)
+        volume = graph.value(simulation_cell, CMSO.hasVolume)
+        number_of_atoms = graph.value(sample, CMSO.hasNumberOfAtoms)
+        repetitions = [
+            int(graph.value(simulation_cell, CMSO.hasRepetition_x)),
+            int(graph.value(simulation_cell, CMSO.hasRepetition_y)),
+            int(graph.value(simulation_cell, CMSO.hasRepetition_z)),
+        ]
+        length = [
+            float(graph.value(simulation_cell, CMSO.hasLength_x)),
+            float(graph.value(simulation_cell, CMSO.hasLength_y)),
+            float(graph.value(simulation_cell, CMSO.hasLength_z)),
+        ]
+        vector = []
+        for v in graph.objects(simulation_cell, CMSO.hasVector):
+            vector.append(
+                [
+                    float(graph.value(v, CMSO.hasComponent_x)),
+                    float(graph.value(v, CMSO.hasComponent_y)),
+                    float(graph.value(v, CMSO.hasComponent_z)),
+                ]
+            )
+        angle = [
+            float(graph.value(simulation_cell, CMSO.hasAngle_alpha)),
+            float(graph.value(simulation_cell, CMSO.hasAngle_beta)),
+            float(graph.value(simulation_cell, CMSO.hasAngle_gamma)),
+        ]
+
+        datadict = {
+            "volume": {"value": float(volume)},
+            "number_of_atoms": {"value": int(number_of_atoms)},
+            "repetitions": {"value": repetitions},
+            "length": {"value": length},
+            "vector": {"value": vector},
+            "angle": {"value": angle},
+        }
+        return cls(**datadict)
+
 
 class AtomAttribute(BaseModel, TemplateMixin):
     pid: Optional[str] = None
     position: Optional[DataProperty[List[List[float]]]] = None
     species: Optional[DataProperty[List[str]]] = None
 
-    def write_attributes(self, graph, name, position_identifier, species_identifier):
+    def write_attributes(
+        self, graph, sample_id, position_identifier, species_identifier
+    ):
         datadict = {
             position_identifier: {
                 "value": self.position.value,
@@ -384,21 +500,22 @@ class AtomAttribute(BaseModel, TemplateMixin):
                 "label": "species",
             },
         }
-        outfile = os.path.join(graph.structure_store, str(name).split(":")[-1])
+        outfile = os.path.join(graph.structure_store, str(sample_id).split(":")[-1])
         json_io.write_file(outfile, datadict)
         return os.path.relpath(outfile + ".json")
 
-    def to_graph(self, graph, name, sample):
+    def to_graph(self, graph, sample):
         # now we write out file
+        sample_id = get_sample_id(sample)
         position_identifier = str(uuid.uuid4())
         species_identifier = str(uuid.uuid4())
 
         outfile = self.write_attributes(
-            graph, name, position_identifier, species_identifier
+            graph, sample_id, position_identifier, species_identifier
         )
 
         if self.position.value is not None:
-            position = graph.create_node(f"{name}_Position", CMSO.AtomAttribute)
+            position = graph.create_node(f"{sample_id}_Position", CMSO.AtomAttribute)
             graph.add(
                 (
                     sample,
@@ -419,7 +536,7 @@ class AtomAttribute(BaseModel, TemplateMixin):
             graph.add((position, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
 
         if self.species.value is not None:
-            species = graph.create_node(f"{name}_Species", CMSO.AtomAttribute)
+            species = graph.create_node(f"{sample_id}_Species", CMSO.AtomAttribute)
             graph.add(
                 (
                     sample,
@@ -436,6 +553,30 @@ class AtomAttribute(BaseModel, TemplateMixin):
                 )
             )
             graph.add((species, CMSO.hasPath, Literal(outfile, datatype=XSD.string)))
+
+    @classmethod
+    def from_graph(cls, graph, sample):
+        sample_id = get_sample_id(sample)
+
+        # cell_vectors
+        filepath = graph.value(URIRef(f"{sample_id}_Position"), CMSO.hasPath).toPython()
+        position_identifier = graph.value(
+            URIRef(f"{sample_id}_Position"), CMSO.hasIdentifier
+        ).toPython()
+        species_identifier = graph.value(
+            URIRef(f"{sample_id}_Species"), CMSO.hasIdentifier
+        ).toPython()
+
+        # open the file for reading
+        with open(filepath, "r") as fin:
+            data = json.load(fin)
+            positions = data[position_identifier]["value"]
+            species = data[species_identifier]["value"]
+
+        return cls(
+            position=DataProperty(value=positions),
+            species=DataProperty(value=species),
+        )
 
 
 class AtomicScaleSample(BaseModel, TemplateMixin):
@@ -470,11 +611,71 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     def to_graph(self, graph):
         name = f"sample:{str(uuid.uuid4())}"
         sample = graph.create_node(name, CMSO.AtomicScaleSample, label=self.label)
-        self.material.to_graph(graph, name, sample)
-        self.simulation_cell.to_graph(graph, name, sample)
+        self.material.to_graph(graph, sample)
+        self.simulation_cell.to_graph(graph, sample)
         self.atom_attribute.to_graph(
             graph,
-            name,
             sample,
         )
         self.id = name
+
+        # now call defect methods
+        # Defects
+        defect_fields = [
+            "point_defect",
+            "vacancy",
+            "substitutional",
+            "interstitial",
+            "dislocation",
+            "edge_dislocation",
+            "screw_dislocation",
+            "mixed_dislocation",
+            "stacking_fault",
+            "grain_boundary",
+            "tilt_grain_boundary",
+            "twist_grain_boundary",
+            "symmetric_tilt_grain_boundary",
+            "mixed_grain_boundary",
+        ]
+
+        for defect in defect_fields:
+            obj = getattr(self, defect)
+            if obj is not None:
+                obj.to_graph(graph, sample)
+
+    @classmethod
+    def from_graph(cls, graph, sample_id):
+        kwargs = {}
+
+        # material, simulation_cell, atom_attribute handled separately (if needed)
+        kwargs["material"] = Material.from_graph(graph, sample_id)
+        kwargs["simulation_cell"] = SimulationCell.from_graph(graph, sample_id)
+        kwargs["atom_attribute"] = AtomAttribute.from_graph(graph, sample_id)
+
+        defect_fields = [
+            "point_defect",
+            "vacancy",
+            "substitutional",
+            "interstitial",
+            "dislocation",
+            "edge_dislocation",
+            "screw_dislocation",
+            "mixed_dislocation",
+            "stacking_fault",
+            "grain_boundary",
+            "tilt_grain_boundary",
+            "twist_grain_boundary",
+            "symmetric_tilt_grain_boundary",
+            "mixed_grain_boundary",
+        ]
+
+        # Loop over defect fields
+        for field in defect_fields:
+            field_type = cls.model_fields[field].annotation
+            if hasattr(field_type, "from_graph"):
+                try:
+                    kwargs[field] = field_type.from_graph(graph, sample)
+                except Exception:
+                    kwargs[field] = None  # or skip/log
+
+        return cls(**kwargs)
