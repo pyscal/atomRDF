@@ -117,7 +117,7 @@ class Dislocation(TemplateMixin, BaseModel):
         graph.add((line_defect, LDO.hasLineDirection, line_direction))
 
         burgers_vector = graph.create_node(
-            f"{self._name}_DislocationBurgersVector", LDO.BurgersVector
+            f"{name}_DislocationBurgersVector", LDO.BurgersVector
         )
         graph.add(
             (
