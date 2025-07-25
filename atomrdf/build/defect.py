@@ -2,7 +2,99 @@ from platform import system
 from atomrdf.build.bulk import bulk, _generate_atomic_sample_data
 import numpy as np
 from atomrdf.datamodels.defects.dislocation import Dislocation
+from atomrdf.datamodels.defects.stackingfault import StackingFault
 from atomrdf.datamodels.structure import AtomicScaleSample
+from atomrdf.build.buildutils import _declass
+
+
+def stacking_fault(
+    element,
+    slip_plane,
+    displacement_a,
+    displacement_b=0,
+    slip_direction_a=None,
+    slip_direction_b=None,
+    vacuum=0,
+    minwidth=15,
+    even=True,
+    minimum_r=None,
+    relative_fault_position=0.5,
+    crystalstructure=None,
+    a=None,
+    b=None,
+    c=None,
+    alpha=None,
+    covera=None,
+    repeat=1,
+    graph=None,
+):
+    """
+    Generate a stacking fault structure.
+
+    Parameters
+    ----------
+    slip_system : list of lists, shape (2 x 3) or (2 x 4)
+        the slip system for the given system. The input should of type [[u, v, w], [h, k, l]].
+        [u, v, w] is the slip direction and [h, k, l] is the slip plane.
+
+        For HCP systems, the input should be [[u, v, w, z], [h, k, l, m]].
+
+    distance : float
+        Distance for translating one half of the cell along the [h k l] direction. Default is 1.
+    """
+    try:
+        import atomman as am
+        import atomman.unitconvert as uc
+    except ImportError:
+        raise ImportError("This function requires the atomman package to be installed")
+
+    a = _declass(a)
+    b = _declass(b)
+    c = _declass(c)
+    alpha = _declass(alpha)
+    covera = _declass(covera)
+
+    input_structure, sdict = bulk(
+        element,
+        crystalstructure=crystalstructure,
+        a=a,
+        b=b,
+        c=c,
+        alpha=alpha,
+        covera=covera,
+        repeat=repeat,
+        get_metadata=True,
+    )
+
+    ucell = am.load("ase_Atoms", input_structure)
+    sf = am.defect.StackingFault(slip_plane, ucell)
+    if slip_direction_a is not None:
+        sf.a1vect_uvw = slip_direction_a
+    if slip_direction_b is not None:
+        sf.a2vect_uvw = slip_direction_b
+    surfacesystem = sf.surface(
+        shift=sf.shifts[0], minwidth=minwidth, even=even, vacuumwidth=vacuum
+    )
+    if relative_fault_position != 0.5:
+        sf.faultpos_rel = relative_fault_position
+    faultsystem = sf.fault(a1=displacement_a, a2=displacement_b)
+
+    # get displacements
+    displ = am.displacement(surfacesystem, faultsystem)
+    aseatoms = faultsystem.dump("ase_Atoms", return_prop=False)
+    aseatoms.set_positions(aseatoms.get_positions() + displ)
+
+    if graph is not None:
+        data = _generate_atomic_sample_data(aseatoms, sdict, repeat)
+        sample = AtomicScaleSample(**data)
+
+        datadict = StackingFault.template()
+        datadict["plabe"]["value"] = slip_plane
+        datadict["displacement"]["value"] = displ
+        setattr(sample, "stacking_fault", StackingFault(**datadict))
+        sample.to_graph(graph)
+
+    return aseatoms
 
 
 def dislocation(
@@ -37,6 +129,11 @@ def dislocation(
 
     Needs atomman.
     """
+    a = _declass(a)
+    b = _declass(b)
+    c = _declass(c)
+    alpha = _declass(alpha)
+    covera = _declass(covera)
 
     try:
         from atomman.defect.Dislocation import Dislocation
