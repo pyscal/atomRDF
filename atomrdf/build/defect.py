@@ -3,8 +3,10 @@ from atomrdf.build.bulk import bulk, _generate_atomic_sample_data
 import numpy as np
 from atomrdf.datamodels.defects.dislocation import Dislocation
 from atomrdf.datamodels.defects.stackingfault import StackingFault
+
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.build.buildutils import _declass
+from pyscal3.grain_boundary import GrainBoundary
 
 
 def stacking_fault(
@@ -244,3 +246,212 @@ def dislocation(
     if return_atomman_dislocation:
         return aseatoms, disc
     return aseatoms
+
+
+def grain_boundary(
+    element,
+    axis,
+    sigma,
+    gb_plane,
+    crystalstructure=None,
+    a=None,
+    b=None,
+    c=None,
+    alpha=None,
+    covera=None,
+    overlap=0.0,
+    gap=0.0,
+    vacuum=0.0,
+    delete_layer="0b0t0b0t",
+    tolerance=0.25,
+    uc_a=1,
+    uc_b=1,
+    repeat=None,
+    graph=None,
+):
+    """
+    Create a grain boundary system. GB can be created either with AIMSGB or GBCode.
+
+    Parameters:
+    -----------
+    axis : tuple or list
+        The rotation axis of the grain boundary.
+        Used with backend 'aimsgb' and 'gbcode'.
+    sigma : int
+        The sigma value of the grain boundary.
+        Used with backend 'aimsgb' and 'gbcode'.
+    gb_plane : tuple or list
+        The Miller indices of the grain boundary plane.
+        Used with backend 'aimsgb' and 'gbcode'.
+    backend : str, optional
+        The backend to use to create the grain boundary. Default is 'aimsgb'.
+        Some keyword arguments are only suitable for some backend.
+    structure : the lattice structure to be used to create the GB, optional
+        The lattice structure to populate the grain boundary with.
+        Used with backend 'aimsgb' and 'gbcode'.
+    element : str, optional
+        The element symbol to populate the grain boundary with.
+        Used with backend 'aimsgb' and 'gbcode'.
+    lattice_constant : float, optional
+        The lattice constant of the structure.
+        Used with backend 'aimsgb' and 'gbcode'.
+    repetitions : tuple or list, optional
+        The number of repetitions of the structure that will be used to create the GB.
+        Used only with 'gbcode'.
+        For example, if (2,3,4) is provided, each grain will have these repetitions in (x,y,z) directions.
+        For similar functionality in 'aimsgb', use 'uc_a' and 'uc_b'.
+    overlap : float, optional
+        The overlap between adjacent grain boundaries.
+        Used only with 'gbcode'.
+    vaccum : float, optional
+        Adds space between the grains at one of the two interfaces
+        that must exist due to periodic boundary conditions.
+        Used only with 'aimsgb'.
+    gap: float, optional
+        Adds space between the grains at both of the two interfaces
+        that must exist due to periodic boundary conditions.
+        Used only with 'aimsgb'.
+    delete_layer: str, optional
+        To delete layers of the GB.
+        Used only with 'aimsgb'.
+    tolerance: float, optional
+        Tolerance factor (in distance units) to determine whether two atoms
+        are in the same plane.
+        Used only with 'aimsgb'.
+    primitive: bool, optional
+        To generate primitive or non-primitive GB structure.
+        Used only with 'aimsgb'.
+    uc_a: int, optional
+        Number of unit cells of left grain.
+        Used only with 'aimsgb'.
+    uc_b: int, optional
+        Number of unit cells of right grain.
+        Used only with 'aimsgb'.
+    graph : atomrdf.KnowledgeGraph, optional
+        The graph object to store the system.
+        The system is only added to the KnowledgeGraph  if this option is provided.
+    names : bool, optional
+        If True human readable names will be assigned to each property. If False random ids will be used. Default is False.
+    label: str, optional
+        Add a label to the structure
+    add_extras: bool, optional
+        returns internal objects of the GB creation process.
+
+    Returns:
+    --------
+    atomrdf.System
+        The grain boundary system.
+
+    Notes
+    -----
+    This function requires the aimsgb and pymatgen packages to be installed to use the 'aimsgb' backend.
+
+    `repetitions` is used only with the 'gbcode' backend.
+    For similar functionality in 'aimsgb', use `uc_a` and `uc_b`. However, repetition in the third direction
+    is not supported in 'aimsgb'. For a similar effect, after reaching the GB, `system.modify.repeat` function
+    could be used with (1, 1, u_c).
+
+    If 'gbcode' is used as backend, the specific type of GB is determined using the `find_gb_character` function
+    When backend 'aimsgb' is used, this is attempted. If the type could not be found, a normal GB will be added in the annotation.
+
+    """
+    try:
+        from pymatgen.io.ase import AseAtomsAdaptor
+        from aimsgb import GrainBoundary as AIMSGrainBoundary
+        from aimsgb import Grain as AIMSGrain
+    except ImportError:
+        raise ImportError(
+            "This function requires the aimsgb and pymatgen packages to be installed"
+        )
+
+    a = _declass(a)
+    b = _declass(b)
+    c = _declass(c)
+    alpha = _declass(alpha)
+    covera = _declass(covera)
+
+    input_structure, sdict = bulk(
+        element,
+        crystalstructure=crystalstructure,
+        a=a,
+        b=b,
+        c=c,
+        alpha=alpha,
+        covera=covera,
+        repeat=repeat,
+        get_metadata=True,
+    )
+
+    pmsys = AseAtomsAdaptor().get_structure(atoms=input_structure)
+    grain = AIMSGrain(pmsys.lattice, pmsys.species, pmsys.frac_coords)
+    gb = AIMSGrainBoundary(
+        axis=axis,
+        sigma=sigma,
+        plane=gb_plane,
+        initial_struct=grain,
+        uc_a=uc_a,
+        uc_b=uc_b,
+    )
+    gb_struct = AIMSGrain.stack_grains(
+        grain_a=gb.grain_a,
+        grain_b=gb.grain_b,
+        vacuum=vacuum,
+        gap=gap,
+        direction=gb.direction,
+        delete_layer=delete_layer,
+        tol=tolerance,
+        to_primitive=primitive,
+    )
+    asestruct = AseAtomsAdaptor().get_atoms(structure=gb_struct)
+    if graph is not None:
+        data = _generate_atomic_sample_data(asestruct, sdict, repeat)
+        sample = AtomicScaleSample(**data)
+
+        try:
+            gb_inb = GrainBoundary()
+            gb_inb.create_grain_boundary(axis=axis, sigma=sigma, gb_plane=gb_plane)
+            gb_type = gb_inb.find_gb_character()
+        except:
+            gb_type = None
+
+        if gb_type is None:
+            from atomrdf.datamodels.defects.grainboundary import (
+                GrainBoundary as GBObject,
+            )
+
+            gb_name = "grain_boundary"
+        elif gb_type == "Tilt":
+            from atomrdf.datamodels.defects.grainboundary import (
+                TiltGrainBoundary as GBObject,
+            )
+
+            gb_name = "tilt_grain_boundary"
+        elif gb_type == "Twist":
+            from atomrdf.datamodels.defects.grainboundary import (
+                TwistGrainBoundary as GBObject,
+            )
+
+            gb_name = "twist_grain_boundary"
+        elif gb_type == "Symmetric Tilt":
+            from atomrdf.datamodels.defects.grainboundary import (
+                SymmetricalTiltGrainBoundary as GBObject,
+            )
+
+            gb_name = "symmetric_tilt_grain_boundary"
+        elif gb_type == "Mixed":
+            from atomrdf.datamodels.defects.grainboundary import (
+                MixedGrainBoundary as GBObject,
+            )
+
+            gb_name = "mixed_grain_boundary"
+
+        datadict = GBObject.template()
+        datadict["sigma"]["value"] = gb.sigma
+        datadict["rotation_axis"]["value"] = axis
+        datadict["plane"]["value"] = " ".join(np.array(gb_plane).astype(str))
+        datadict["misorientation_angle"]["value"] = gb.theta[0]
+        setattr(sample, gb_name, GBObject(**datadict))
+
+        sample.to_graph(graph)
+
+    return asestruct
