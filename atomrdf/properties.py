@@ -1,22 +1,31 @@
 import numpy as np
 import spglib
+from collections import Counter
 
 # DATADICT properties
 # ------------------------------------------
 bravais_lattice_dict = {
-    "l12": "https://www.wikidata.org/wiki/Q3006714",
     "b2": "https://www.wikidata.org/wiki/Q851536",
-    "diamond": "https://www.wikidata.org/wiki/Q3006714",
-    "hcp": "https://www.wikidata.org/wiki/Q663314",
-    "a15": "a15",
     "bcc": "https://www.wikidata.org/wiki/Q851536",
+    "bct": "bct",
+    "cubic": "https://www.wikidata.org/wiki/Q473227",
+    "diamond": "https://www.wikidata.org/wiki/Q3006714",
+    "diatom": "https://www.wikidata.org/wiki/Q1751859",
     "fcc": "https://www.wikidata.org/wiki/Q3006714",
+    "hcp": "https://www.wikidata.org/wiki/Q663314",
+    "monoclinic": "https://www.wikidata.org/wiki/Q624543",
+    "orthorhombic": "https://www.wikidata.org/wiki/Q648961",
+    "rhombohedral": "https://www.wikidata.org/wiki/Q13362463",
+    "sc": "https://www.wikidata.org/wiki/Q2242450",
+    "tetragonal": "https://www.wikidata.org/wiki/Q503601",
+    "l12": "https://www.wikidata.org/wiki/Q3006714",
+    "a15": "a15",
 }
 
 
 # SIMCELL properties
 # --------------------------------------------
-def get_chemical_composition(system):
+def get_chemical_composition(structure):
     """
     Get the chemical composition of the system.
 
@@ -31,7 +40,13 @@ def get_chemical_composition(system):
         A dictionary containing the chemical elements as keys and their corresponding counts as values.
 
     """
-    return system.composition
+    symbols = structure.get_chemical_symbols()
+    element_counts = Counter(symbols)
+    total_atoms = len(symbols)
+    composition = {
+        element: count / total_atoms for element, count in element_counts.items()
+    }
+    return composition
 
 
 def get_cell_volume(system):
@@ -49,7 +64,7 @@ def get_cell_volume(system):
         The volume of the simulation cell.
 
     """
-    return system.volume
+    return system.get_volume()
 
 
 def get_number_of_atoms(system):
@@ -67,7 +82,7 @@ def get_number_of_atoms(system):
         The number of atoms in the system.
 
     """
-    return system.natoms
+    return len(system)
 
 
 def get_simulation_cell_length(system):
@@ -85,7 +100,7 @@ def get_simulation_cell_length(system):
         A list containing the length of each dimension of the simulation cell.
 
     """
-    return system.box_dimensions
+    return system.get_cell_lengths_and_angles()[:3]
 
 
 def get_simulation_cell_vector(system):
@@ -103,7 +118,7 @@ def get_simulation_cell_vector(system):
         The simulation cell vector of the system.
 
     """
-    return system.box
+    return system.cell
 
 
 def get_simulation_cell_angle(system):
@@ -121,11 +136,7 @@ def get_simulation_cell_angle(system):
         A list containing the angles between the vectors of the simulation cell.
 
     """
-    return [
-        _get_angle(system.box[0], system.box[1]),
-        _get_angle(system.box[1], system.box[2]),
-        _get_angle(system.box[2], system.box[0]),
-    ]
+    return system.get_cell_lengths_and_angles()[3:]
 
 
 # LATTICE properties
@@ -234,6 +245,7 @@ def get_crystal_structure_name(system):
         return None
     return system.atoms._lattice
 
+
 def get_repetitions(system):
     if system._structure_dict is None:
         return [None, None, None]
@@ -241,7 +253,8 @@ def get_repetitions(system):
         return system._structure_dict["repetitions"]
     return [None, None, None]
 
-def get_bravais_lattice(system):
+
+def get_bravais_lattice(structure):
     """
     Get the Bravais lattice of a given system.
 
@@ -256,10 +269,8 @@ def get_bravais_lattice(system):
         The Bravais lattice of the system, or None if the system's structure dictionary is not available or the lattice is not found in the dictionary.
 
     """
-    if system._structure_dict is None:
-        return None
-    if system.atoms._lattice in bravais_lattice_dict.keys():
-        return bravais_lattice_dict[system.atoms._lattice]
+    if structure in bravais_lattice_dict.keys():
+        return bravais_lattice_dict[structure]
     return None
 
 
@@ -332,13 +343,7 @@ def get_spacegroup_symbol(system):
     Returns:
         str: The symbol of the spacegroup if available, otherwise None.
     """
-    if system._structure_dict is None:
-        return None
-    try:
-        results = _get_symmetry_dict(system)
-        return results[0]
-    except:
-        return None
+    results = _get_symmetry_dict(system)
 
 
 def get_spacegroup_number(system):
@@ -355,13 +360,7 @@ def get_spacegroup_number(system):
     int or None
         The spacegroup number of the system if it is available, otherwise None.
     """
-    if system._structure_dict is None:
-        return None
-    try:
-        results = _get_symmetry_dict(system)
-        return results[1]
-    except:
-        return None
+    results = _get_symmetry_dict(system)
 
 
 # ATOM attributes
@@ -435,9 +434,10 @@ def _get_angle(vec1, vec2):
 
 
 def _get_symmetry_dict(system):
-    box = get_lattice_vector(system)
-    direct_coordinates = get_basis_positions(system)
-    atom_types = system._structure_dict["species"]
+    box = system.get_cell()
+    direct_coordinates = system.get_scaled_positions()
+    symbols = system.get_chemical_symbols()
+    atom_types = [list(dict.fromkeys(symbols).keys()).index(s) + 1 for s in symbols]
 
     results = spglib.get_symmetry_dataset((box, direct_coordinates, atom_types))
     return results.international, results.number
