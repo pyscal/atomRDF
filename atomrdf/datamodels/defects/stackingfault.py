@@ -14,13 +14,16 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
 )
+from atomrdf.utils import get_material
 
 
 class StackingFault(TemplateMixin, BaseModel):
     plane: Optional[DataProperty[List[float]]] = None
     displacement: Optional[DataProperty[List[float]]] = None
 
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         plane = " ".join(np.array(self.plane.value).astype(str))
         displ = " ".join(np.array(self.displacement.value).astype(str))
         sf = graph.create_node(f"{name}_StackingFault", PLDO.StackingFault)

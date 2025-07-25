@@ -13,6 +13,7 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
 )
+from atomrdf.utils import get_material
 
 
 class PointDefect(TemplateMixin, BaseModel):
@@ -21,7 +22,10 @@ class PointDefect(TemplateMixin, BaseModel):
 
 
 class Vacancy(PointDefect):
-    def to_graph(self, graph, name, material, sample):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
+        sample = URIRef(sample_id)
         vacancy = graph.create_node(f"{name}_Vacancy", PODO.Vacancy)
         graph.add((material, CDCO.hasCrystallographicDefect, vacancy))
         graph.add(
@@ -42,7 +46,10 @@ class Vacancy(PointDefect):
 
 
 class Substitutional(PointDefect):
-    def to_graph(self, graph, name, material, sample):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
+        sample = URIRef(sample_id)
         defect = graph.create_node(
             f"{name}_SubstitutionalImpurity", PODO.SubstitutionalImpurity
         )
@@ -65,7 +72,10 @@ class Substitutional(PointDefect):
 
 
 class Interstitial(PointDefect):
-    def to_graph(self, graph, name, material, sample):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
+        sample = URIRef(sample_id)
         defect = graph.create_node(
             f"{name}_InterstitialImpurity", PODO.InterstitialImpurity
         )

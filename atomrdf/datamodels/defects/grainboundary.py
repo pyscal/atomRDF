@@ -13,6 +13,7 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
 )
+from atomrdf.utils import get_material
 
 
 class GrainBoundary(TemplateMixin, BaseModel):
@@ -53,14 +54,18 @@ class GrainBoundary(TemplateMixin, BaseModel):
             )
         )
 
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         plane_defect = graph.create_node(f"{name}_GrainBoundary", PLDO.GrainBoundary)
         graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
         self._add_gb(graph, name)
 
 
 class TwistGrainBoundary(GrainBoundary):
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         plane_defect = graph.create_node(
             f"{name}_TwistGrainBoundary", PLDO.TwistGrainBoundary
         )
@@ -69,15 +74,20 @@ class TwistGrainBoundary(GrainBoundary):
 
 
 class TiltGrainBoundary(GrainBoundary):
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         plane_defect = graph.create_node(
             f"{name}_TiltGrainBoundary", PLDO.TiltGrainBoundary
         )
+        graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
         self._add_gb(graph, name)
 
 
 class SymmetricalTiltGrainBoundary(GrainBoundary):
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         plane_defect = graph.create_node(
             f"{name}_SymmetricalTiltGrainBoundary", PLDO.SymmetricalTiltGrainBoundary
         )
@@ -86,7 +96,9 @@ class SymmetricalTiltGrainBoundary(GrainBoundary):
 
 
 class MixedGrainBoundary(GrainBoundary):
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         plane_defect = graph.create_node(
             f"{name}_MixedGrainBoundary", PLDO.MixedGrainBoundary
         )

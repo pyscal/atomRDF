@@ -13,6 +13,7 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
 )
+from atomrdf.utils import get_material
 
 
 class SlipPlane(TemplateMixin, BaseModel):
@@ -142,21 +143,27 @@ class Dislocation(TemplateMixin, BaseModel):
         graph.add((line_defect, LDO.hasBurgersVector, burgers_vector))
         self.slip_system.to_graph(graph, name, line_defect)
 
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         line_defect = graph.create_node(f"{name}_Dislocation", LDO.Dislocation)
         graph.add((material, CDCO.hasCrystallographicDefect, line_defect))
         self._add_dislocation(graph, name, line_defect)
 
 
 class ScrewDislocation(Dislocation):
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         line_defect = graph.create_node(f"{name}_Dislocation", LDO.ScrewDislocation)
         graph.add((material, CDCO.hasCrystallographicDefect, line_defect))
         self._add_dislocation(graph, name, line_defect)
 
 
 class EdgeDislocation(Dislocation):
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         line_defect = graph.create_node(f"{name}_Dislocation", LDO.EdgeDislocation)
         graph.add((material, CDCO.hasCrystallographicDefect, line_defect))
         self._add_dislocation(graph, name, line_defect)
@@ -165,7 +172,9 @@ class EdgeDislocation(Dislocation):
 class MixedDislocation(Dislocation):
     character_angle: Optional[DataProperty[float]] = None
 
-    def to_graph(self, graph, name, material):
+    def to_graph(self, graph, sample_id):
+        name = sample_id
+        material = get_material(graph, sample_id)
         line_defect = graph.create_node(f"{name}_Dislocation", LDO.MixedDislocation)
         graph.add((material, CDCO.hasCrystallographicDefect, line_defect))
         self._add_dislocation(graph, name, line_defect)
