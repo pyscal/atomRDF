@@ -1,158 +1,153 @@
-import pyscal3.structure_creator as pcs
-from atomrdf.structure import System
-from atomrdf.build.buildutils import _declass
-import pyscal3.core as pc
-from pyscal3.core import structure_dict, element_dict
+import numpy as np
+
+from ase.data import atomic_numbers, chemical_symbols, reference_states
+from ase.atoms import Atoms
+from ase.build import bulk as asebulk
+
+from atomrdf.datamodels.structure import AtomicScaleSample
+import atomrdf.properties as ap
+
 
 def bulk(
-    element,
-    structure=None,
-    lattice_constant=1.00,
-    repetitions=None,
-    ca_ratio=1.633,
-    noise=0,
-    primitive=False,
+    name: str,
+    crystalstructure: str = None,
+    a: float = None,
+    b: float = None,
+    c: float = None,
+    *,
+    alpha: float = None,
+    covera: float = None,
+    u: float = None,
+    orthorhombic: bool = False,
+    cubic: bool = False,
+    basis=None,
+    repeat: int = 1,
     graph=None,
-    names=False,
-    label=None,
-):
-    """
-    Create a crystal structure using the specified parameters.
+) -> tuple[Atoms, AtomicScaleSample]:
 
-    Parameters:
-    -----------
-    element : str or None, optional
-        The element to use for the crystal. Default is None.
-    structure : str
-        The crystal structure to create.
-    lattice_constant : float, optional
-        The lattice constant of the crystal. Default is 1.00.
-    repetitions : tuple or None, optional
-        The number of repetitions of the crystal structure in each direction. Default is None.
-    ca_ratio : float, optional
-        The c/a ratio of the crystal. Default is 1.633.
-    noise : float, optional
-        The amount of noise to add to each atom position. Default is 0.
-    primitive : bool, optional
-        Whether to create a primitive cell. Default is False.
-    graph : atomrdf.KnowledgeGraph, optional
-        The graph object to use for the crystal. Default is None.
-        The structure is added to the KnowledgeGraph only if this option is provided.
-    names : bool, optional
-        If provided, human-readable names will be assigned to each property. If False, random IDs will be used. Default is False.
+    sdict = _compute_structure_metadata(name, crystalstructure, a, b, c, covera)
+    atoms = _create_atoms(
+        name,
+        crystalstructure,
+        sdict["a"],
+        sdict["b"],
+        sdict["c"],
+        alpha,
+        covera,
+        u,
+        orthorhombic,
+        cubic,
+        basis,
+        repeat,
+    )
+    data = _generate_atomic_sample_data(atoms, sdict, repeat)
+    if graph is not None:
+        sample = AtomicScaleSample(**data)
+        sample.to_graph(graph)
+        atoms.info["id"] = sample.id
+        atoms.info["graph"] = graph
+    return atoms
 
-    Returns:
-    --------
-    s : object
-        The atomrdf.Structure object representing the generated crystal structure.
-    """
-    if repetitions is None:
-        repetitions = [1, 1, 1]
-    
-    if isinstance(element, str):
-        if element in element_dict.keys():
-            if structure is None:
-                structure = element_dict[element]["structure"]
-            if structure != element_dict[element]["structure"]:
-                if lattice_constant is None:
-                    raise ValueError(
-                        f"lattice_constant must be provided for {element} with structure {structure}"
-                    )
-            lattice_constant = element_dict[element]["lattice_constant"]
+
+def _generate_atomic_sample_data(atoms, sdict, repeat):
+    data = AtomicScaleSample.template()
+    data["material"]["element_ratio"]["value"] = ap.get_chemical_composition(atoms)
+    data["material"]["crystal_structure"]["name"]["value"] = sdict["structure"]
+    data["material"]["crystal_structure"]["spacegroup_symbol"]["value"] = (
+        ap.get_spacegroup_symbol(atoms)
+    )
+    data["material"]["crystal_structure"]["spacegroup_number"]["value"] = (
+        ap.get_spacegroup_number(atoms)
+    )
+    data["material"]["crystal_structure"]["unit_cell"]["bravais_lattice"]["value"] = (
+        ap.get_bravais_lattice(sdict["structure"])
+    )
+    data["material"]["crystal_structure"]["unit_cell"]["lattice_parameter"]["value"] = [
+        sdict["a"],
+        sdict["b"],
+        sdict["c"],
+    ]
+    data["material"]["crystal_structure"]["unit_cell"]["angle"][
+        "value"
+    ] = atoms.get_cell_lengths_and_angles()[3:]
+
+    data["simulation_cell"]["volume"]["value"] = ap.get_cell_volume(atoms)
+    data["simulation_cell"]["number_of_atoms"]["value"] = ap.get_number_of_atoms(atoms)
+    data["simulation_cell"]["length"]["value"] = ap.get_simulation_cell_length(atoms)
+    data["simulation_cell"]["vector"]["value"] = ap.get_simulation_cell_vector(atoms)
+    data["simulation_cell"]["angle"]["value"] = ap.get_simulation_cell_angle(atoms)
+    if isinstance(repeat, int):
+        data["simulation_cell"]["repetitions"]["value"] = (repeat, repeat, repeat)
     else:
-        if structure is None:
-            raise ValueError("for multiple elements, structure must be provided")
-                
-    atoms, box, sdict = pcs.make_crystal(
-        structure,
-        lattice_constant = _declass(lattice_constant),
-        repetitions=repetitions,
-        ca_ratio = _declass(ca_ratio),
-        noise=noise,
-        element=element,
-        return_structure_dict=True,
-        primitive=primitive,
-    )
-    if 'repetitions' not in sdict.keys():
-        sdict['repetitions'] = repetitions
+        data["simulation_cell"]["repetitions"]["value"] = repeat
 
-    s = System(graph=graph, names=names)
-    s.box = box
-    s.atoms = atoms
-    s.atoms._lattice = structure
-    s.atoms._lattice_constant = _declass(lattice_constant)
-    s._structure_dict = sdict
-    s.label = label
-    s.to_graph()
-    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
-    s.add_property_mappings(ca_ratio, mapping_quantity='lattice_constant')    
-    return s
+    data["atom_attribute"]["position"]["value"] = atoms.get_positions().tolist()
+    data["atom_attribute"]["species"]["value"] = atoms.get_chemical_symbols()
+    return data
 
-def lattice(
-    element,
-    positions,
-    types,
-    box,
-    lattice_constant=1.00,
-    repetitions=None,
-    noise=0,
-    graph=None,
-    names=False,
-    label=None,
+
+def _create_atoms(
+    name,
+    crystalstructure,
+    a,
+    b,
+    c,
+    alpha,
+    covera,
+    u,
+    orthorhombic,
+    cubic,
+    basis,
+    repeat,
 ):
-    """
-    Generate a general lattice structure.
-
-    Parameters:
-    -----------
-    positions : array_like
-        The atomic positions in the lattice.
-    types : array_like
-        The atomic types corresponding to the positions.
-    box : array_like
-        The box dimensions of the lattice.
-    lattice_constant : float, optional
-        The lattice constant, defaults to 1.00.
-    repetitions : array_like, optional
-        The number of repetitions of the lattice in each direction.
-    noise : float, optional
-        The amount of noise to add to the lattice positions, defaults to 0.
-    element : str, optional
-        The chemical elements associated with the atoms. Should be equal to the number of unique types.
-    graph : atomrdf.KnowledgeGraph, optional
-        The graph object to store the lattice structure, defaults to None.
-        The structure is added to the KnowledgeGraph only if this option is provided.
-    names : bool, optional
-        If True, human readable names instead of random ids will be created. Default is False.
-
-    Returns:
-    --------
-    s : object
-        The atomrdf.Structure object representing the generated lattice structure.
-
-    """
-    atoms, box, sdict = pcs.general_lattice(
-        positions,
-        types,
-        box,
-        lattice_constant=_declass(lattice_constant),
-        repetitions=repetitions,
-        noise=noise,
-        element=element,
-        return_structure_dict=True,
+    atoms = asebulk(
+        name,
+        crystalstructure=crystalstructure,
+        a=a,
+        b=b,
+        c=c,
+        alpha=alpha,
+        covera=covera,
+        u=u,
+        orthorhombic=orthorhombic,
+        cubic=cubic,
+        basis=basis,
     )
+    return atoms.repeat((repeat,) * 3 if isinstance(repeat, int) else repeat)
 
-    if 'repetitions' not in sdict.keys():
-        sdict['repetitions'] = repetitions
 
-    s = System(graph=graph, names=names)
-    s.box = box
-    s.atoms = atoms
-    s.atoms._lattice = "custom"
-    s.atoms._lattice_constant = _declass(lattice_constant)
-    s._structure_dict = sdict
-    s.label = label
-    s.to_graph()
-    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
-    
-    return s
+def _compute_structure_metadata(name, crystalstructure, a, b, c, covera):
+    sdict = {"a": a, "b": b, "c": c, "covera": covera}
+    atomic_number = atomic_numbers.get(name)
+    ref = reference_states[atomic_number]
+
+    xref = None
+    if ref:
+        xref = ref.get("symmetry")
+        if xref and name in chemical_symbols:
+            sdict["structure"] = xref
+
+    if crystalstructure:
+        sdict["structure"] = crystalstructure
+
+    if a is None and ref and "a" in ref:
+        sdict["a"] = ref["a"]
+
+    if b is None and ref and (bovera := ref.get("b/a")) and a:
+        sdict["b"] = bovera * a
+
+    if crystalstructure in ["hcp", "wurtzite"]:
+        if c:
+            covera = c / a
+        elif covera is None:
+            covera = ref.get("c/a") if xref == crystalstructure else sqrt(8 / 3)
+
+    if covera is None and ref and (ref_c_a := ref.get("c/a")):
+        covera = ref_c_a
+        if c is None and a:
+            sdict["c"] = covera * a
+
+    sdict["b"] = sdict["a"] if sdict["b"] is None else sdict["b"]
+    sdict["c"] = sdict["a"] if sdict["c"] is None else sdict["c"]
+
+    return sdict

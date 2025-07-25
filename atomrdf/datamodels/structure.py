@@ -442,7 +442,6 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     material: Optional[Material] = None
     simulation_cell: Optional[SimulationCell] = None
     atom_attribute: Optional[AtomAttribute] = None
-    label: Optional[str] = None
 
     def to_graph(self, graph):
         name = f"sample:{str(uuid.uuid4())}"
@@ -454,3 +453,4 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
             name,
             sample,
         )
+        self.id = name

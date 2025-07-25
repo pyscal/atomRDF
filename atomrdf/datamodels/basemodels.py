@@ -5,6 +5,9 @@ T = TypeVar("T")
 
 
 class TemplateMixin:
+    id: Optional[str] = Field(default=None, description="ID in the graph")
+    label: Optional[str] = Field(default=None, description="Label in the graph")
+
     @classmethod
     def template(cls) -> dict:
         def unwrap_type(typ):
@@ -34,3 +37,5 @@ class DataProperty(BaseModel, Generic[T]):
     value: Optional[T] = None
     pid: Optional[str] = Field(default=None, description="PID")
     unit: Optional[str] = Field(default=None, description="Unit of measure")
+    id: Optional[str] = Field(default=None, description="ID in the graph")
+    label: Optional[str] = Field(default=None, description="Label in the graph")
