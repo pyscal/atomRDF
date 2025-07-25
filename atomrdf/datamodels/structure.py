@@ -17,6 +17,7 @@ from atomrdf.namespace import (
     ASMO,
 )
 import atomrdf.json_io as json_io
+import atomrdf.datamodels.defects as defects
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -442,6 +443,29 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     material: Optional[Material] = None
     simulation_cell: Optional[SimulationCell] = None
     atom_attribute: Optional[AtomAttribute] = None
+
+    # add defects, all optional of course
+    # point defects
+    point_defect: Optional[defects.PointDefect] = None
+    vacancy: Optional[defects.Vacancy] = None
+    substitutional: Optional[defects.Substitutional] = None
+    interstitial: Optional[defects.Interstitial] = None
+
+    # dislocations
+    dislocation: Optional[defects.Dislocation] = None
+    edge_dislocation: Optional[defects.EdgeDislocation] = None
+    screw_dislocation: Optional[defects.ScrewDislocation] = None
+    mixed_dislocation: Optional[defects.MixedDislocation] = None
+
+    # stacking faults
+    stacking_fault: Optional[defects.StackingFault] = None
+
+    # grain boundaries
+    grain_boundary: Optional[defects.GrainBoundary] = None
+    tilt_grain_boundary: Optional[defects.TiltGrainBoundary] = None
+    twist_grain_boundary: Optional[defects.TwistGrainBoundary] = None
+    symmetric_tilt_grain_boundary: Optional[defects.SymmetricalTiltGrainBoundary] = None
+    mixed_grain_boundary: Optional[defects.MixedGrainBoundary] = None
 
     def to_graph(self, graph):
         name = f"sample:{str(uuid.uuid4())}"
