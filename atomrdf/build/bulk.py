@@ -23,9 +23,11 @@ def bulk(
     basis=None,
     repeat: int = 1,
     graph=None,
+    get_metadata: bool = False,
 ) -> tuple[Atoms, AtomicScaleSample]:
 
     sdict = _compute_structure_metadata(name, crystalstructure, a, b, c, covera)
+
     atoms = _create_atoms(
         name,
         crystalstructure,
@@ -40,12 +42,19 @@ def bulk(
         basis,
         repeat,
     )
+    sdict["spacegroup_symbol"] = ap.get_spacegroup_symbol(atoms)
+    sdict["spacegroup_number"] = ap.get_spacegroup_number(atoms)
+
     data = _generate_atomic_sample_data(atoms, sdict, repeat)
+
     if graph is not None:
         sample = AtomicScaleSample(**data)
         sample.to_graph(graph)
         atoms.info["id"] = sample.id
         atoms.info["graph"] = graph
+
+    if get_metadata:
+        return atoms, sdict
     return atoms
 
 
@@ -53,12 +62,12 @@ def _generate_atomic_sample_data(atoms, sdict, repeat):
     data = AtomicScaleSample.template()
     data["material"]["element_ratio"]["value"] = ap.get_chemical_composition(atoms)
     data["material"]["crystal_structure"]["name"]["value"] = sdict["structure"]
-    data["material"]["crystal_structure"]["spacegroup_symbol"]["value"] = (
-        ap.get_spacegroup_symbol(atoms)
-    )
-    data["material"]["crystal_structure"]["spacegroup_number"]["value"] = (
-        ap.get_spacegroup_number(atoms)
-    )
+    data["material"]["crystal_structure"]["spacegroup_symbol"]["value"] = sdict[
+        "spacegroup_symbol"
+    ]
+    data["material"]["crystal_structure"]["spacegroup_number"]["value"] = sdict[
+        "spacegroup_number"
+    ]
     data["material"]["crystal_structure"]["unit_cell"]["bravais_lattice"]["value"] = (
         ap.get_bravais_lattice(sdict["structure"])
     )
@@ -113,7 +122,9 @@ def _create_atoms(
         cubic=cubic,
         basis=basis,
     )
-    return atoms.repeat((repeat,) * 3 if isinstance(repeat, int) else repeat)
+    if isinstance(repeat, (int, list, tuple)):
+        atoms = atoms.repeat(repeat)
+    return atoms
 
 
 def _compute_structure_metadata(name, crystalstructure, a, b, c, covera):
@@ -140,7 +151,7 @@ def _compute_structure_metadata(name, crystalstructure, a, b, c, covera):
         if c:
             covera = c / a
         elif covera is None:
-            covera = ref.get("c/a") if xref == crystalstructure else sqrt(8 / 3)
+            covera = ref.get("c/a") if xref == crystalstructure else np.sqrt(8 / 3)
 
     if covera is None and ref and (ref_c_a := ref.get("c/a")):
         covera = ref_c_a

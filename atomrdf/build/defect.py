@@ -1,4 +1,8 @@
-from atomrdf.build.bulk import bulk
+from platform import system
+from atomrdf.build.bulk import bulk, _generate_atomic_sample_data
+import numpy as np
+from atomrdf.datamodels.defects.dislocation import Dislocation
+from atomrdf.datamodels.structure import AtomicScaleSample
 
 
 def dislocation(
@@ -14,7 +18,7 @@ def dislocation(
     c=None,
     alpha=None,
     covera=None,
-    repeat=None,
+    repeat=1,
     graph=None,
     label=None,
     return_atomman_dislocation=False,
@@ -50,47 +54,31 @@ def dislocation(
     elif len(burgers_vector) != 3:
         raise ValueError("burgers vector should be None, scalar, or of length 3")
 
-    if structure is not None:
-        # create a structure with the info
-        input_structure = bulk(
-            element,
-            structure=structure,
-            lattice_constant=_declass(lattice_constant),
-            repetitions=repetitions,
-            ca_ratio=_declass(ca_ratio),
-            noise=noise,
-            primitive=primitive,
-        )
-    elif element is not None:
-        if element in element_dict.keys():
-            structure = element_dict[element]["structure"]
-            lattice_constant = element_dict[element]["lattice_constant"]
-        else:
-            raise ValueError("Please provide structure")
-        input_structure = bulk(
-            element,
-            structure=structure,
-            lattice_constant=_declass(lattice_constant),
-            repetitions=repetitions,
-            ca_ratio=_declass(ca_ratio),
-            noise=noise,
-            primitive=primitive,
-        )
-    else:
-        raise ValueError("Provide either structure or element")
+    input_structure, sdict = bulk(
+        element,
+        crystalstructure=crystalstructure,
+        a=a,
+        b=b,
+        c=c,
+        alpha=alpha,
+        covera=covera,
+        repeat=repeat,
+        get_metadata=True,
+    )
 
     for key, val in elastic_constant_dict.items():
         elastic_constant_dict[key] = uc.set_in_units(val, "GPa")
     C = am.ElasticConstants(**elastic_constant_dict)
 
     box = am.Box(
-        avect=input_structure.box[0],
-        bvect=input_structure.box[1],
-        cvect=input_structure.box[2],
+        avect=input_structure.cell[0],
+        bvect=input_structure.cell[1],
+        cvect=input_structure.cell[2],
     )
-    atoms = am.Atoms(
-        atype=input_structure.atoms.types, pos=input_structure.atoms.positions
-    )
+
+    types = [1 for x in range(len(input_structure))]
+
+    atoms = am.Atoms(atype=types, pos=input_structure.get_positions())
     system = am.System(
         atoms=atoms, box=box, pbc=[True, True, True], symbols=element, scale=False
     )
@@ -107,54 +95,55 @@ def dislocation(
     elif dislocation_type == "periodicarray":
         disl_system = disc.periodicarray()
 
-    box = [disl_system.box.avect, disl_system.box.bvect, disl_system.box.cvect]
-    atom_df = disl_system.atoms_df()
-    types = [int(x) for x in atom_df.atype.values]
-    if element is not None:
-        species = []
-        for t in types:
-            species.append(element[int(t) - 1])
-    else:
-        species = [None for x in range(len(types))]
+    aseatoms = disl_system.dump("ase_Atoms", return_prop=False)
 
-    positions = np.column_stack(
-        (atom_df["pos[0]"].values, atom_df["pos[1]"].values, atom_df["pos[2]"].values)
-    )
+    if graph is not None:
+        data = _generate_atomic_sample_data(aseatoms, sdict, repeat)
+        sample = AtomicScaleSample(**data)
 
-    # find dislocation character
-    angle = np.dot(dislocation_line, burgers_vector) / (
-        np.linalg.norm(dislocation_line) * np.linalg.norm(burgers_vector)
-    )
-    angle_rad = np.arccos(angle)
-    angle_deg = np.degrees(angle_rad)
+        # now we need to add the dislocation info
 
-    disl_dict = {
-        "BurgersVector": burgers_vector,
-        "SlipPlane": slip_plane,
-        "SlipDirection": slip_direction,
-        "DislocationLine": dislocation_line,
-        "DislocationCharacter": angle_deg,
-    }
+        # find dislocation character
+        angle = np.dot(dislocation_line, burgers_vector) / (
+            np.linalg.norm(dislocation_line) * np.linalg.norm(burgers_vector)
+        )
+        angle_rad = np.arccos(angle)
+        angle_deg = np.degrees(angle_rad)
 
-    # here we dont add repetitions, since we cannot guarantee
-    atom_dict = {"positions": positions, "types": types, "species": species}
-    atom_obj = Atoms()
-    atom_obj.from_dict(atom_dict)
-    output_structure = System()
-    output_structure.box = box
-    output_structure.atoms = atom_obj
-    output_structure = output_structure.modify.remap_to_box()
-    output_structure.label = label
-    output_structure.graph = graph
-    output_structure.to_graph()
-    output_structure.add_dislocation(disl_dict)
-    output_structure.add_property_mappings(
-        lattice_constant, mapping_quantity="lattice_constant"
-    )
-    output_structure.add_property_mappings(
-        ca_ratio, mapping_quantity="lattice_constant"
-    )
+        if (
+            (np.abs(angle_deg - 0) < 1e-3)
+            or (np.abs(angle_deg - 180) < 1e-3)
+            or (np.abs(angle_deg - 360) < 1e-3)
+        ):
+            from atomrdf.datamodels.defects.dislocation import (
+                ScrewDislocation as DislocationObject,
+            )
+
+            disl_name = "screw_dislocation"
+        elif (np.abs(angle_deg - 90) < 1e-3) or (np.abs(angle_deg - 270) < 1e-3):
+            from atomrdf.datamodels.defects.dislocation import (
+                EdgeDislocation as DislocationObject,
+            )
+
+            disl_name = "edge_dislocation"
+        else:
+            from atomrdf.datamodels.defects.dislocation import (
+                MixedDislocation as DislocationObject,
+            )
+
+            disl_name = "mixed_dislocation"
+
+        disl_dict = DislocationObject.template()
+        disl_dict["line_direction"]["value"] = dislocation_line
+        disl_dict["burgers_vector"]["value"] = burgers_vector
+        disl_dict["slip_system"]["slip_direction"]["value"] = slip_direction
+        disl_dict["slip_system"]["slip_plane"]["normal"]["value"] = slip_plane
+        if disl_name == "mixed_dislocation":
+            disl_dict["character_angle"]["value"] = angle_deg
+
+        setattr(sample, disl_name, DislocationObject(**disl_dict))
+        sample.to_graph(graph)
 
     if return_atomman_dislocation:
-        return output_structure, disc
-    return output_structure
+        return aseatoms, disc
+    return aseatoms
