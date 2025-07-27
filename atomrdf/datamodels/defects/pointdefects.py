@@ -44,6 +44,20 @@ class Vacancy(PointDefect):
                 )
             )
 
+    @classmethod
+    def from_graph(cls, graph, sample):
+        material = get_material(graph, sample)
+        for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
+            vacancy = triple[2]
+            typev = graph.value(vacancy, RDF.type)
+            if typev is not None and typev.toPython() == PODO.Vacancy.uri:
+                concentration = graph.value(sample, PODO.hasVacancyConcentration)
+                number = graph.value(sample, PODO.hasNumberOfVacancies)
+                return cls(
+                    concentration=DataProperty(value=concentration),
+                    number=DataProperty(value=number),
+                )
+
 
 class Substitutional(PointDefect):
     def to_graph(self, graph, sample_id):
@@ -70,6 +84,23 @@ class Substitutional(PointDefect):
                 )
             )
 
+    @classmethod
+    def from_graph(cls, graph, sample):
+        material = get_material(graph, sample)
+        for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
+            defect = triple[2]
+            typev = graph.value(defect, RDF.type)
+            if (
+                typev is not None
+                and typev.toPython() == PODO.SubstitutionalImpurity.uri
+            ):
+                concentration = graph.value(sample, PODO.hasImpurityConcentration)
+                number = graph.value(sample, PODO.hasNumberOfImpurityAtoms)
+                return cls(
+                    concentration=DataProperty(value=concentration),
+                    number=DataProperty(value=number),
+                )
+
 
 class Interstitial(PointDefect):
     def to_graph(self, graph, sample_id):
@@ -95,3 +126,17 @@ class Interstitial(PointDefect):
                     Literal(self.number.value, datatype=XSD.integer),
                 )
             )
+
+    @classmethod
+    def from_graph(cls, graph, sample):
+        material = get_material(graph, sample)
+        for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
+            defect = triple[2]
+            typev = graph.value(defect, RDF.type)
+            if typev is not None and typev.toPython() == PODO.InterstitialImpurity.uri:
+                concentration = graph.value(sample, PODO.hasImpurityConcentration)
+                number = graph.value(sample, PODO.hasNumberOfImpurityAtoms)
+                return cls(
+                    concentration=DataProperty(value=concentration),
+                    number=DataProperty(value=number),
+                )
