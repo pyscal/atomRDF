@@ -573,6 +573,10 @@ class KnowledgeGraph:
         modified_double = self._modify_triple((arg1, arg2))
         return self.graph.value(modified_double[0], modified_double[1])
 
+    def objects(self, arg1, arg2):
+        modified_double = self._modify_triple((arg1, arg2))
+        return self.graph.objects(modified_double[0], modified_double[1])
+
     def remove(self, triple):
         """
         Remove a triple from the knowledge graph.

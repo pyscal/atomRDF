@@ -343,7 +343,11 @@ def get_spacegroup_symbol(system):
     Returns:
         str: The symbol of the spacegroup if available, otherwise None.
     """
-    results = _get_symmetry_dict(system)
+    try:
+        results = _get_symmetry_dict(system)
+        return results[0]
+    except:
+        return None
 
 
 def get_spacegroup_number(system):
@@ -360,7 +364,11 @@ def get_spacegroup_number(system):
     int or None
         The spacegroup number of the system if it is available, otherwise None.
     """
-    results = _get_symmetry_dict(system)
+    try:
+        results = _get_symmetry_dict(system)
+        return results[1]
+    except:
+        return None
 
 
 # ATOM attributes

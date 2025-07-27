@@ -1,7 +1,28 @@
-from typing import List, Optional, Union, Generic, TypeVar, get_args, get_origin
-from pydantic import BaseModel, Field
+from typing import List, Optional, Union, Generic, TypeVar, get_args, get_origin, Any
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field
 
 T = TypeVar("T")
+
+
+def remove_empty_dicts(data):
+    if isinstance(data, dict):
+        cleaned = {
+            k: remove_empty_dicts(v)
+            for k, v in data.items()
+            if not (isinstance(v, dict) and remove_empty_dicts(v) == {})
+        }
+        return cleaned
+    elif isinstance(data, list):
+        return [remove_empty_dicts(v) for v in data]
+    else:
+        return data
+
+
+class BaseModel(PydanticBaseModel):
+    def __init__(__pydantic_self__, **data: Any):
+        cleaned = remove_empty_dicts(data)
+        super().__init__(**cleaned)
 
 
 class TemplateMixin:

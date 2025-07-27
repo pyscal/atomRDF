@@ -44,7 +44,6 @@ def bulk(
     )
     sdict["spacegroup_symbol"] = ap.get_spacegroup_symbol(atoms)
     sdict["spacegroup_number"] = ap.get_spacegroup_number(atoms)
-
     data = _generate_atomic_sample_data(atoms, sdict, repeat)
 
     if graph is not None:

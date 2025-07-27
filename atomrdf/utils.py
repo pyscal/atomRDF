@@ -15,3 +15,18 @@ def get_sample_id(sample_id):
     if isinstance(sample_id, str):
         return sample_id
     return str(sample_id.toPython())
+
+
+def get_sample_object(sample_id):
+    if isinstance(sample_id, str):
+        sample_id = URIRef(sample_id)
+    return sample_id
+
+
+def toPython(item):
+    if item is None:
+        return None
+    try:
+        return item.toPython()
+    except AttributeError:
+        return item
