@@ -30,3 +30,22 @@ class StackingFault(TemplateMixin, BaseModel):
         graph.add((material, CDCO.hasCrystallographicDefect, sf))
         graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
         graph.add((sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string)))
+
+    @classmethod
+    def from_graph(cls, graph, sample):
+        material = get_material(graph, sample)
+        for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
+            sf = triple[2]
+            typev = graph.value(sf, RDF.type)
+            if typev is not None and typev.toPython() == PLDO.StackingFault.uri:
+                plane = graph.value(sf, PLDO.hasSFplane)
+                displacement = graph.value(sf, PLDO.hasDisplacementVector)
+                return cls(
+                    plane=DataProperty(
+                        value=plane.toPython().split(), pid=CMSO.plane.uri
+                    ),
+                    displacement=DataProperty(
+                        value=displacement.toPython().split(), pid=CMSO.displacement.uri
+                    ),
+                )
+        return None
