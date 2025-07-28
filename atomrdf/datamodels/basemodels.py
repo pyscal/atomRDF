@@ -62,6 +62,19 @@ class DataProperty(BaseModel, Generic[T]):
     label: Optional[str] = Field(default=None, description="Label in the graph")
 
 
+class Activity(BaseModel):
+    pid: Optional[str] = Field(default=None, description="PID of the activity")
+    id: Optional[str] = Field(default=None, description="ID in the graph")
+    label: Optional[str] = Field(default=None, description="Label in the graph")
+
+    initial_sample: Optional[str] = Field(
+        default=None, description="ID of the initial sample in the graph"
+    )
+    final_sample: Optional[str] = Field(
+        default=None, description="ID of the final sample in the graph"
+    )
+
+
 class RDFMixin:
     def to_graph(self, graph, sample):
         raise NotImplementedError
