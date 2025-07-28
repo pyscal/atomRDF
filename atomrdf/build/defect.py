@@ -1,12 +1,14 @@
 from platform import system
 from atomrdf.build.bulk import bulk, _generate_atomic_sample_data
+from atomrdf.datamodels.basemodels import DataProperty
 import numpy as np
 from atomrdf.datamodels.defects.dislocation import Dislocation
 from atomrdf.datamodels.defects.stackingfault import StackingFault
-
+from atomrdf.datamodels.defects.pointdefects import Vacancy
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.build.buildutils import _declass
 from pyscal3.grain_boundary import GrainBoundary
+from ase import Atoms
 
 
 def stacking_fault(
@@ -455,3 +457,71 @@ def grain_boundary(
         sample.to_graph(graph)
 
     return asestruct
+
+
+def vacancy(
+    name,
+    indices=None,
+    no_of_vacancies=None,
+    crystalstructure: str = None,
+    a: float = None,
+    b: float = None,
+    c: float = None,
+    *,
+    alpha: float = None,
+    covera: float = None,
+    u: float = None,
+    orthorhombic: bool = False,
+    cubic: bool = False,
+    basis=None,
+    repeat: int = 1,
+    graph=None,
+):
+
+    if indices is None and no_of_vacancies is None:
+        raise ValueError("Either indices or no_of_vacancies must be provided")
+
+    if isinstance(name, Atoms):
+        # just delet an atom
+        if indices is None:
+            indices = np.random.choice(range(len(name)), no_of_vacancies, replace=False)
+        atoms = name.copy()
+        indices = np.sort(indices)
+        for index in indices[::-1]:
+            del atoms[index]
+        # oke there are number of things to implemenmt here - the mapping mainly
+        return atoms
+
+    else:
+        atoms = bulk(
+            name,
+            crystalstructure=crystalstructure,
+            a=a,
+            b=b,
+            c=c,
+            alpha=alpha,
+            covera=covera,
+            u=u,
+            orthorhombic=orthorhombic,
+            cubic=cubic,
+            basis=basis,
+            repeat=repeat,
+            graph=graph,
+        )
+
+        if indices is None:
+            indices = np.random.choice(
+                range(len(atoms)), no_of_vacancies, replace=False
+            )
+        indices = np.sort(indices)
+        for index in indices[::-1]:
+            del atoms[index]
+
+        if graph is not None:
+            vacancy = Vacancy(
+                **{
+                    "concentration": no_of_vacancies / len(atoms),
+                    "number": no_of_vacancies,
+                }
+            )
+            vacancy.to_graph(graph, atoms.info["id"])
