@@ -624,6 +624,7 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
     def to_graph(self, graph):
         name = f"sample:{str(uuid.uuid4())}"
+        self.id = name
         sample = graph.create_node(name, CMSO.AtomicScaleSample, label=self.label)
         self.material.to_graph(graph, sample)
         self.simulation_cell.to_graph(graph, sample)
@@ -631,7 +632,6 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
             graph,
             sample,
         )
-        self.id = name
 
         # now call defect methods
         # Defects
@@ -693,4 +693,6 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
                 except Exception:
                     kwargs[field] = None  # or skip/log
 
-        return cls(**kwargs)
+        cls = cls(**kwargs)
+        cls.id = sample_id
+        return cls

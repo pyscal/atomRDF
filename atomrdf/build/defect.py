@@ -97,6 +97,7 @@ def stacking_fault(
         datadict["displacement"]["value"] = displ
         setattr(sample, "stacking_fault", StackingFault(**datadict))
         sample.to_graph(graph)
+        aseatoms.info["id"] = sample.id
 
     return aseatoms
 
@@ -244,6 +245,7 @@ def dislocation(
 
         setattr(sample, disl_name, DislocationObject(**disl_dict))
         sample.to_graph(graph)
+        aseatoms.info["id"] = sample.id
 
     if return_atomman_dislocation:
         return aseatoms, disc
@@ -455,6 +457,7 @@ def grain_boundary(
         setattr(sample, gb_name, GBObject(**datadict))
 
         sample.to_graph(graph)
+        asestruct.info["id"] = sample.id
 
     return asestruct
 
@@ -489,11 +492,28 @@ def vacancy(
         indices = np.sort(indices)
         for index in indices[::-1]:
             del atoms[index]
-        # oke there are number of things to implemenmt here - the mapping mainly
+
+        # ok step one check if there is id and graph both provided
+        if graph is not None:
+            if "id" in atoms.info.keys():
+                sample_id = atoms.info["id"]
+                # now we create the sample
+                sample = AtomicScaleSample.from_graph(graph, sample_id)
+                # now we create an new sample
+                sample.vacancy = Vacancy(
+                    **{
+                        "concentration": {"value": no_of_vacancies / len(atoms)},
+                        "number": {"value": no_of_vacancies},
+                    }
+                )
+                sample.to_graph(graph)
+                atoms.info["id"] = sample.id
+                # thats new sample then - calling to graph creates a new id
+                # NOW PENDING ADD OPERATION!
         return atoms
 
     else:
-        atoms = bulk(
+        atoms, sdict = bulk(
             name,
             crystalstructure=crystalstructure,
             a=a,
@@ -506,7 +526,7 @@ def vacancy(
             cubic=cubic,
             basis=basis,
             repeat=repeat,
-            graph=graph,
+            get_metadata=True,
         )
 
         if indices is None:
@@ -518,10 +538,14 @@ def vacancy(
             del atoms[index]
 
         if graph is not None:
-            vacancy = Vacancy(
+            data = _generate_atomic_sample_data(atoms, sdict, repeat)
+            sample = AtomicScaleSample(**data)
+            sample.vacancy = Vacancy(
                 **{
-                    "concentration": no_of_vacancies / len(atoms),
-                    "number": no_of_vacancies,
+                    "concentration": {"value": no_of_vacancies / len(atoms)},
+                    "number": {"value": no_of_vacancies},
                 }
             )
-            vacancy.to_graph(graph, atoms.info["id"])
+            sample.to_graph(graph)
+            atoms.info["id"] = sample.id
+        return atoms
