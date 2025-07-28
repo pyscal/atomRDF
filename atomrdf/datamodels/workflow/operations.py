@@ -247,6 +247,7 @@ class Translate(Activity):
 class Shear(Activity):
     shear_vector: Optional[DataProperty[List[float]]] = None
     normal_vector: Optional[DataProperty[List[float]]] = None
+    distance: Optional[DataProperty[float]] = None
 
     def to_graph(self, graph):
         activity_id = f"shear:{str(uuid.uuid4())}"
@@ -307,6 +308,14 @@ class Shear(Activity):
                     Literal(self.normal_vector.value[2], datatype=XSD.float),
                 )
             )
+            if self.distance:
+                graph.add(
+                    (
+                        plane,
+                        CMSO.hasDistanceFromOrigin,
+                        Literal(self.distance.value, datatype=XSD.float),
+                    )
+                )
 
     @classmethod
     def from_graph(cls, graph, activity_id):
@@ -329,6 +338,9 @@ class Shear(Activity):
             y = graph.value(normal_vector, CMSO.hasComponent_y)
             z = graph.value(normal_vector, CMSO.hasComponent_z)
             normal_vector_lst.append([x.toPython(), y.toPython(), z.toPython()])
+            distance = graph.value(plane, CMSO.hasDistanceFromOrigin)
+            if distance:
+                distance = distance.toPython()
         if len(normal_vector_lst) == 0:
             normal_vector_lst = None
 
@@ -338,4 +350,5 @@ class Shear(Activity):
             final_sample=final_sample,
             shear_vector=DataProperty(value=shear_vector_lst),
             normal_vector=DataProperty(value=normal_vector_lst),
+            distance=DataProperty(value=distance),
         )
