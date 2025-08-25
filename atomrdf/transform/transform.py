@@ -1,5 +1,6 @@
 import numpy as np
 from atomrdf.datamodels.structure import AtomicScaleSample
+from atomrdf.build.bulk import _generate_atomic_sample_data
 
 
 def repeat(system, repetitions, graph=None):
@@ -22,154 +23,106 @@ def repeat(system, repetitions, graph=None):
     new_system = system.copy()
     new_system = new_system.repeat(repetitions)
 
-    if "id" in system.info.keys():
-        if graph is not None:
+    # this means that the system is linked to a graph
+    if graph is not None:
+        if "id" in system.info.keys():
             # we recreate the sample
             sample = AtomicScaleSample.from_graph(graph, system.info["id"])
             # now update the atom attributes
             sample.update_attributes(new_system, repetitions)
-            # now serialize the sample to the graph
-            sample.to_graph(graph)
+        else:
+            data = _generate_atomic_sample_data(new_system, repeat=repetitions)
+            sample = AtomicScaleSample(**data)
+
+        # now serialize the sample to the graph
+        sample.to_graph(graph)
+        # ok this adds a complete new sample - no info about the original, which is ok
 
     return new_system
 
 
-def rotate(sys, rotation_vectors, graph=None, label=None):
+def rotate(system, rotation_vectors, graph=None, label=None):
     try:
-        from atomman.defect.Dislocation import Dislocation
         import atomman as am
         import atomman.unitconvert as uc
     except ImportError:
         raise ImportError("This function requires the atomman package to be installed")
 
-    box = am.Box(
-        avect=sys.box[0],
-        bvect=sys.box[1],
-        cvect=sys.box[2],
-    )
-
-    atoms = am.Atoms(atype=sys.atoms.types, pos=sys.atoms.positions)
-
-    element = [val for key, val in sys.atoms._type_dict.items()]
-
-    system = am.System(
-        atoms=atoms,
-        box=box,
-        pbc=[True, True, True],
-        symbols=element,
-        scale=False,
-    )
+    system = am.load("ase_Atoms", system)
 
     # now rotate with atomman
     system = system.rotate(rotation_vectors)
 
-    # now convert back and return the system
-    box = [system.box.avect, system.box.bvect, system.box.cvect]
+    # get back ase
+    new_system = am.dump("ase_Atoms", system)
 
-    atom_df = system.atoms_df()
-    types = [int(x) for x in atom_df.atype.values]
-
-    species = []
-    for t in types:
-        species.append(element[int(t) - 1])
-
-    positions = np.column_stack(
-        (atom_df["pos[0]"].values, atom_df["pos[1]"].values, atom_df["pos[2]"].values)
-    )
-
-    atom_dict = {"positions": positions, "types": types, "species": species}
-    atom_obj = Atoms()
-    atom_obj.from_dict(atom_dict)
-
-    output_structure = System()
-    output_structure.box = box
-    output_structure.atoms = atom_obj
-    # output_structure = output_structure.modify.remap_to_box()
     if graph is not None:
-        output_structure.graph = graph
-    else:
-        output_structure.graph = sys.graph
-    output_structure.atoms._lattice = sys.atoms._lattice
-    output_structure.atoms._lattice_constant = sys.atoms._lattice_constant
-    output_structure._structure_dict = sys._structure_dict
-    if label is not None:
-        output_structure.label = label
-    else:
-        output_structure.label = sys.label
-    output_structure.to_graph()
-    output_structure.copy_defects(sys.sample)
-    if output_structure.graph is not None:
-        sys.add_rotation_triples(rotation_vectors, output_structure.sample)
-    return output_structure
+        if "id" in system.info.keys():
+            # we recreate the sample
+            sample = AtomicScaleSample.from_graph(graph, system.info["id"])
+            # now update the atom attributes
+            sample.update_attributes(new_system)
+        else:
+            data = _generate_atomic_sample_data(
+                new_system,
+            )
+            sample = AtomicScaleSample(**data)
+
+        # now serialize the sample to the graph
+        sample.to_graph(graph)
+
+    return new_system
 
 
 def translate(
     system,
     translation_vector,
-    plane=None,
-    distance=None,
-    reverse_orientation=False,
-    copy_structure=True,
-    add_triples=True,
+    graph=None,
 ):
-    original_sample = system.sample
-    if copy_structure:
-        sys = system.duplicate()
-        # and add this new structure to the graph
-        sys.to_graph()
-        sys.copy_defects(system.sample)
-    else:
-        sys = system
+    new_system = system.copy()
+    new_system.translate(translation_vector)
 
-    if plane is not None:
-        if distance is None:
-            raise ValueError("distance needs to be provided")
+    if graph is not None:
+        if "id" in system.info.keys():
+            # we recreate the sample
+            sample = AtomicScaleSample.from_graph(graph, system.info["id"])
+            # now update the atom attributes
+            sample.update_attributes(new_system)
+        else:
+            data = _generate_atomic_sample_data(
+                new_system,
+            )
+            sample = AtomicScaleSample(**data)
 
-    if plane is not None:
-        sys.select_by_plane(plane, distance, reverse_orientation=reverse_orientation)
+        # now serialize the sample to the graph
+        sample.to_graph(graph)
 
-    if not len(translation_vector) == 3:
-        raise ValueError("translation vector must be of length 3")
-
-    translation_vector = np.array(translation_vector)
-
-    for x in range(len(sys.atoms["positions"])):
-        if sys.atoms["condition"][x]:
-            sys.atoms["positions"][x] += translation_vector
-
-    if plane is not None:
-        sys.remove_selection()
-
-    if add_triples:
-        sys.add_translation_triples(
-            translation_vector, plane, distance, original_sample
-        )
-    return sys
+    return new_system
 
 
 def shear(
-    self, shear_vector, plane, distance, reverse_orientation=False, copy_structure=True
+    system,
+    shear_matrix,
+    graph=None,
 ):
-    original_sample = self.sample
-    if copy_structure:
-        sys = self.duplicate()
-        # and add this new structure to the graph
-        sys.to_graph()
-        sys.copy_defects(self.sample)
-    else:
-        sys = self
+    new_system = system.copy()
+    cell = new_system.cell.copy()
+    newcell = shear_matrix @ cell
+    new_system.set_cell(newcell, scale_atoms=True)
 
-    if not np.dot(shear_vector, plane) == 0:
-        raise ValueError("shear vector must be perpendicular to the plane")
+    if graph is not None:
+        if "id" in system.info.keys():
+            # we recreate the sample
+            sample = AtomicScaleSample.from_graph(graph, system.info["id"])
+            # now update the atom attributes
+            sample.update_attributes(new_system)
+        else:
+            data = _generate_atomic_sample_data(
+                new_system,
+            )
+            sample = AtomicScaleSample(**data)
 
-    sys = sys.translate(
-        shear_vector,
-        plane=plane,
-        distance=distance,
-        reverse_orientation=reverse_orientation,
-        copy_structure=False,
-        add_triples=False,
-    )
+        # now serialize the sample to the graph
+        sample.to_graph(graph)
 
-    sys.add_shear_triples(shear_vector, plane, distance, original_sample)
-    return sys
+    return new_system
