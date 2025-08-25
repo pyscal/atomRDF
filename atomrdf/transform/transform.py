@@ -1,9 +1,8 @@
-import pyscal3.operations.operations as operations
-from pyscal3.atoms import AttrSetter, Atoms
-from atomrdf.structure import System
 import numpy as np
+from atomrdf.datamodels.structure import AtomicScaleSample
 
-def repeat(system, repetitions):
+
+def repeat(system, repetitions, graph=None):
     """
     Repeat the system in each direction by the specified number of times.
 
@@ -20,14 +19,20 @@ def repeat(system, repetitions):
     -----
     The system is repeated in each direction by the specified number of times.
     """
-    new_system = system.duplicate()
-    new_system = operations.repeat(new_system, repetitions)
-    if new_system._structure_dict is None:
-        new_system._structure_dict = {}
-    new_system._structure_dict["repetitions"] = repetitions
-    new_system.to_graph()
-    new_system.copy_defects(system.sample)
+    new_system = system.copy()
+    new_system = new_system.repeat(repetitions)
+
+    if "id" in system.info.keys():
+        if graph is not None:
+            # we recreate the sample
+            sample = AtomicScaleSample.from_graph(graph, system.info["id"])
+            # now update the atom attributes
+            sample.update_attributes(new_system, repetitions)
+            # now serialize the sample to the graph
+            sample.to_graph(graph)
+
     return new_system
+
 
 def rotate(sys, rotation_vectors, graph=None, label=None):
     try:
@@ -42,50 +47,44 @@ def rotate(sys, rotation_vectors, graph=None, label=None):
         bvect=sys.box[1],
         cvect=sys.box[2],
     )
-    
-    atoms = am.Atoms(
-        atype=sys.atoms.types, pos=sys.atoms.positions
-    )
-    
+
+    atoms = am.Atoms(atype=sys.atoms.types, pos=sys.atoms.positions)
+
     element = [val for key, val in sys.atoms._type_dict.items()]
 
     system = am.System(
-        atoms=atoms, 
-        box=box, 
-        pbc=[True, True, True], 
-        symbols=element, 
+        atoms=atoms,
+        box=box,
+        pbc=[True, True, True],
+        symbols=element,
         scale=False,
     )
 
-    #now rotate with atomman
+    # now rotate with atomman
     system = system.rotate(rotation_vectors)
 
-    #now convert back and return the system
-    box = [system.box.avect, 
-        system.box.bvect, 
-        system.box.cvect]
-    
+    # now convert back and return the system
+    box = [system.box.avect, system.box.bvect, system.box.cvect]
+
     atom_df = system.atoms_df()
     types = [int(x) for x in atom_df.atype.values]
-    
+
     species = []
     for t in types:
         species.append(element[int(t) - 1])
 
     positions = np.column_stack(
-        (atom_df["pos[0]"].values, 
-        atom_df["pos[1]"].values, 
-        atom_df["pos[2]"].values)
+        (atom_df["pos[0]"].values, atom_df["pos[1]"].values, atom_df["pos[2]"].values)
     )
 
     atom_dict = {"positions": positions, "types": types, "species": species}
     atom_obj = Atoms()
     atom_obj.from_dict(atom_dict)
-    
+
     output_structure = System()
     output_structure.box = box
     output_structure.atoms = atom_obj
-    #output_structure = output_structure.modify.remap_to_box()
+    # output_structure = output_structure.modify.remap_to_box()
     if graph is not None:
         output_structure.graph = graph
     else:
@@ -103,16 +102,20 @@ def rotate(sys, rotation_vectors, graph=None, label=None):
         sys.add_rotation_triples(rotation_vectors, output_structure.sample)
     return output_structure
 
-def translate(system,
-                translation_vector, 
-                plane=None, distance=None, 
-                reverse_orientation=False, 
-                copy_structure=True,
-                add_triples=True):
+
+def translate(
+    system,
+    translation_vector,
+    plane=None,
+    distance=None,
+    reverse_orientation=False,
+    copy_structure=True,
+    add_triples=True,
+):
     original_sample = system.sample
     if copy_structure:
         sys = system.duplicate()
-        #and add this new structure to the graph
+        # and add this new structure to the graph
         sys.to_graph()
         sys.copy_defects(system.sample)
     else:
@@ -120,36 +123,37 @@ def translate(system,
 
     if plane is not None:
         if distance is None:
-            raise ValueError('distance needs to be provided')
-    
+            raise ValueError("distance needs to be provided")
+
     if plane is not None:
         sys.select_by_plane(plane, distance, reverse_orientation=reverse_orientation)
 
     if not len(translation_vector) == 3:
         raise ValueError("translation vector must be of length 3")
-    
+
     translation_vector = np.array(translation_vector)
 
-    for x in range(len(sys.atoms['positions'])):
-        if sys.atoms['condition'][x]:
-            sys.atoms['positions'][x] += translation_vector
-    
+    for x in range(len(sys.atoms["positions"])):
+        if sys.atoms["condition"][x]:
+            sys.atoms["positions"][x] += translation_vector
+
     if plane is not None:
         sys.remove_selection()
 
     if add_triples:
-        sys.add_translation_triples(translation_vector, plane, distance, original_sample)
+        sys.add_translation_triples(
+            translation_vector, plane, distance, original_sample
+        )
     return sys
 
-def shear(self, shear_vector, 
-                plane, 
-                distance, 
-                reverse_orientation=False, 
-                copy_structure=True):
+
+def shear(
+    self, shear_vector, plane, distance, reverse_orientation=False, copy_structure=True
+):
     original_sample = self.sample
     if copy_structure:
         sys = self.duplicate()
-        #and add this new structure to the graph
+        # and add this new structure to the graph
         sys.to_graph()
         sys.copy_defects(self.sample)
     else:
@@ -157,10 +161,15 @@ def shear(self, shear_vector,
 
     if not np.dot(shear_vector, plane) == 0:
         raise ValueError("shear vector must be perpendicular to the plane")
-    
-    sys = sys.translate(shear_vector, plane=plane, distance=distance, 
-                        reverse_orientation=reverse_orientation, copy_structure=False,
-                        add_triples=False)
+
+    sys = sys.translate(
+        shear_vector,
+        plane=plane,
+        distance=distance,
+        reverse_orientation=reverse_orientation,
+        copy_structure=False,
+        add_triples=False,
+    )
 
     sys.add_shear_triples(shear_vector, plane, distance, original_sample)
     return sys

@@ -30,6 +30,7 @@ from atomrdf.namespace import (
 import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
 from atomrdf.utils import get_material, get_sample_id, get_sample_object, toPython
+import atomrdf.properties as ap
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -696,3 +697,22 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         cls = cls(**kwargs)
         cls.id = sample_id
         return cls
+
+    def update_attributes(self, atoms, repeat=None):
+        """
+        Extract
+        """
+        self.material.element_ratio.value = ap.get_chemical_composition(atoms)
+        self.simulation_cell.volume.value = ap.get_cell_volume(atoms)
+        self.simulation_cell.number_of_atoms.value = ap.get_number_of_atoms(atoms)
+        self.simulation_cell.length.value = ap.get_simulation_cell_length(atoms)
+        self.simulation_cell.vector.value = ap.get_simulation_cell_vector(atoms)
+        self.simulation_cell.angle.value = ap.get_simulation_cell_angle(atoms)
+        if repeat is not None:
+            if isinstance(repeat, int):
+                self.simulation_cell.repetitions.value = (repeat, repeat, repeat)
+            else:
+                self.simulation_cell.repetitions.value = repeat
+
+        self.atom_attribute.position.value = atoms.get_positions().tolist()
+        self.atom_attribute.species.value = atoms.get_chemical_symbols()
