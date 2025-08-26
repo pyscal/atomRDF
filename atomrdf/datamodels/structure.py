@@ -623,7 +623,12 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     symmetric_tilt_grain_boundary: Optional[defects.SymmetricalTiltGrainBoundary] = None
     mixed_grain_boundary: Optional[defects.MixedGrainBoundary] = None
 
-    def to_graph(self, graph):
+    def to_graph(self, graph, force=False):
+        # if force - creates a new ID and saves the structure again
+        if not force and self.id is not None:
+            return
+
+        # the rest of the function is only if id isnt there or force is true
         name = f"sample:{str(uuid.uuid4())}"
         self.id = name
         sample = graph.create_node(name, CMSO.AtomicScaleSample, label=self.label)
@@ -700,8 +705,10 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
     def update_attributes(self, atoms, repeat=None):
         """
-        Extract
+        Update the atom attributes based on the provided ASE Atoms object.
+        This would also reset the id, since the structure has changed.
         """
+        self.id = None
         self.material.element_ratio.value = ap.get_chemical_composition(atoms)
         self.simulation_cell.volume.value = ap.get_cell_volume(atoms)
         self.simulation_cell.number_of_atoms.value = ap.get_number_of_atoms(atoms)
