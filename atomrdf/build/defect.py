@@ -9,6 +9,7 @@ from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.build.buildutils import _declass
 from pyscal3.grain_boundary import GrainBoundary
 from ase import Atoms
+import atomrdf.datamodels.workflow.operations as ops
 
 
 def stacking_fault(
@@ -493,13 +494,16 @@ def vacancy(
         for index in indices[::-1]:
             del atoms[index]
 
-        # ok step one check if there is id and graph both provided
+        # atoms object is provided
         if graph is not None:
-            if "id" in atoms.info.keys():
-                sample_id = atoms.info["id"]
-                # now we create the sample
-                sample = AtomicScaleSample.from_graph(graph, sample_id)
-                # now we create an new sample
+            # this means that old system was already linked to a graph
+            if "id" in system.info.keys():
+                initial_sample_id = system.info["id"]
+                # we recreate the sample
+                sample = AtomicScaleSample.from_graph(graph, system.info["id"])
+                # ok but we have deleted an atom, so we need to update the sample
+                sample.update_attributes(atoms)
+                # now update the atom attributes
                 sample.vacancy = Vacancy(
                     **{
                         "concentration": {"value": no_of_vacancies / len(atoms)},
@@ -507,9 +511,30 @@ def vacancy(
                     }
                 )
                 sample.to_graph(graph)
-                atoms.info["id"] = sample.id
-                # thats new sample then - calling to graph creates a new id
-                # NOW PENDING ADD OPERATION!
+                final_sample_id = sample.id
+                # now we can add the activity
+                data = {
+                    "initial_sample": initial_sample_id,
+                    "final_sample": final_sample_id,
+                }
+                activity = ops.DeleteAtom(**data)
+                activity.to_graph(graph)
+
+            # this means that old system was not linked to a graph
+            # the user gave us a graph, so we create a new sample
+            else:
+                data = _generate_atomic_sample_data(
+                    atoms,
+                )
+                sample = AtomicScaleSample(**data)
+                sample.vacancy = Vacancy(
+                    **{
+                        "concentration": {"value": no_of_vacancies / len(atoms)},
+                        "number": {"value": no_of_vacancies},
+                    }
+                )
+                sample.to_graph(graph)
+
         return atoms
 
     else:

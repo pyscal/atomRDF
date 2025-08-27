@@ -1,6 +1,8 @@
+from build.lib.atomrdf import sample
 import numpy as np
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.build.bulk import _generate_atomic_sample_data
+import atomrdf.datamodels.workflow.operations as ops
 
 
 def repeat(system, repetitions, graph=None):
@@ -83,19 +85,39 @@ def translate(
     new_system.translate(translation_vector)
 
     if graph is not None:
+        # this means that old system was already linked to a graph
         if "id" in system.info.keys():
             # we recreate the sample
             sample = AtomicScaleSample.from_graph(graph, system.info["id"])
             # now update the atom attributes
             sample.update_attributes(new_system)
+            initial_sample_id = system.info["id"]
+            final_sample_id = sample.id
+
+        # this means that old system was not linked to a graph
+        # the user gave us a graph, so we create a new sample
         else:
+            data = _generate_atomic_sample_data(
+                system,
+            )
+            initial_sample = AtomicScaleSample(**data)
+            initial_sample.to_graph(graph)
+            initial_sample_id = initial_sample.id
+
             data = _generate_atomic_sample_data(
                 new_system,
             )
-            sample = AtomicScaleSample(**data)
+            final_sample = AtomicScaleSample(**data)
+            final_sample.to_graph(graph)
+            final_sample_id = final_sample.id
 
-        # now serialize the sample to the graph
-        sample.to_graph(graph)
+        data = {
+            "translation_vector": {"value": translation_vector},
+            "initial_sample": initial_sample_id,
+            "final_sample": final_sample_id,
+        }
+        activity = ops.Translate(**data)
+        activity.to_graph(graph)
 
     return new_system
 
@@ -111,18 +133,38 @@ def shear(
     new_system.set_cell(newcell, scale_atoms=True)
 
     if graph is not None:
+        # this means that old system was already linked to a graph
         if "id" in system.info.keys():
             # we recreate the sample
             sample = AtomicScaleSample.from_graph(graph, system.info["id"])
             # now update the atom attributes
             sample.update_attributes(new_system)
+            initial_sample_id = system.info["id"]
+            final_sample_id = sample.id
+
+        # this means that old system was not linked to a graph
+        # the user gave us a graph, so we create a new sample
         else:
+            data = _generate_atomic_sample_data(
+                system,
+            )
+            initial_sample = AtomicScaleSample(**data)
+            initial_sample.to_graph(graph)
+            initial_sample_id = initial_sample.id
+
             data = _generate_atomic_sample_data(
                 new_system,
             )
-            sample = AtomicScaleSample(**data)
+            final_sample = AtomicScaleSample(**data)
+            final_sample.to_graph(graph)
+            final_sample_id = final_sample.id
 
-        # now serialize the sample to the graph
-        sample.to_graph(graph)
+        data = {
+            "translation_vector": {"value": shear_matrix_vector},
+            "initial_sample": initial_sample_id,
+            "final_sample": final_sample_id,
+        }
+        activity = ops.Shear(**data)
+        activity.to_graph(graph)
 
     return new_system
