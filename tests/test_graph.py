@@ -1,6 +1,7 @@
 import pytest
 import os
-from atomrdf import KnowledgeGraph, System
+from atomrdf import KnowledgeGraph
+from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.namespace import CMSO, PLDO, ASMO, CDCO
 import shutil
 
@@ -21,7 +22,7 @@ def test_structuregraph():
     s.write("temp.ttl", format="turtle")
     s = KnowledgeGraph(graph_file="temp.ttl")
 
-    sys = build.defect.vacancy("Fe", graph=s, no_of_vacancies=1)
+    sys = build.defect.vacancy("Fe", cubic=True, graph=s, no_of_vacancies=1)
 
     s = KnowledgeGraph()
     sys = build.bulk("Fe", graph=s)
@@ -38,17 +39,12 @@ def test_logger():
     assert str(type(s.log).__name__) == "method"
 
 
-def test_add_structure():
-    s = KnowledgeGraph()
-    sys = build.bulk("Fe", graph=s)
-    s.add_structure(sys)
-    assert sys.sample in s.sample_ids
-
-
 def test_add_cross_triple():
 
     s = KnowledgeGraph(enable_log=True)
     sys = build.bulk("Fe", graph=s)
+    #recreate the sample
+    sample = 
     status, _ = s._check_domain_if_uriref(
         (sys.material, CDCO.hasCrystallographicDefect, PLDO.AntiphaseBoundary)
     )

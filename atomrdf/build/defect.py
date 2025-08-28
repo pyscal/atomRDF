@@ -559,6 +559,13 @@ def vacancy(
                 range(len(atoms)), no_of_vacancies, replace=False
             )
         indices = np.sort(indices)
+
+        remaining_atoms = len(atoms) - len(indices)
+        if remaining_atoms <= 0:
+            raise ValueError(
+                f"Number of vacancies {len(indices)} is greater than or equal to the number of atoms {len(atoms)}"
+            )
+
         for index in indices[::-1]:
             del atoms[index]
 

@@ -280,27 +280,6 @@ class KnowledgeGraph:
             self.graph = graph
             self._n_triples = 0
 
-    def add_structure(self, structure):
-        """
-        Add a structure to the knowledge graph.
-
-        Parameters
-        ----------
-        structure : Structure
-            The structure object to be added.
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-        This method adds a structure object to the knowledge graph. The structure object should be an instance of the Structure class.
-        The structure object is assigned to the graph and converted to RDF format.
-        """
-        structure.graph = self
-        structure.to_graph()
-
     def _is_valid(self, input_list):
         valid = False
         flat_list = []
@@ -637,6 +616,8 @@ class KnowledgeGraph:
         has_computational_method=None,
     ):
         """
+        TODO: NEEDS RESTRUCTURE
+
         Create a new output of simulation in the graph. The types of different terms are defined in the ontology.
         Those should be access by kg.terms.ontolog.ontology_term.
 
@@ -698,6 +679,8 @@ class KnowledgeGraph:
         self, sample, propertyname, value, base_quantity=None, unit=None
     ):
         """
+        TODO: NEEDS RESTRUCTURE
+
         Add a calculated quantity to a sample.
 
         Parameters
@@ -738,6 +721,8 @@ class KnowledgeGraph:
 
     def inspect_sample(self, sample):
         """
+        TODO: NEEDS RESTRUCTURE
+
         Inspects a sample and retrieves information about its atoms, material, defects, composition,
         crystal structure, space group, calculated properties, and units.
 
@@ -1156,6 +1141,8 @@ class KnowledgeGraph:
     #################################
     def query_sample(self, destination, return_query=False):
         """
+        TODO: NEEDS RESTRUCTURE
+
         Query the knowledge graph for atomic scale samples.
 
         Parameters
@@ -1197,6 +1184,7 @@ class KnowledgeGraph:
 
     @property
     def sample_files(self):
+        # TODO: NEEDS RESTRUCTURE
         files = []
         for sample_id in self.sample_ids:
             filepath = self.value(
@@ -1208,6 +1196,8 @@ class KnowledgeGraph:
     @property
     def sample_names(self):
         """
+        TODO: NEEDS RESTRUCTURE
+
         Returns a list of all Sample names in the graph
         """
         samples = [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
@@ -1222,6 +1212,7 @@ class KnowledgeGraph:
 
     @property
     def samples(self):
+        # TODO: NEEDS RESTRUCTURE
         sample_ids = self.sample_ids
         sample_names = self.sample_names
         sample_objects = []
@@ -1231,6 +1222,8 @@ class KnowledgeGraph:
 
     def list_quantities_of_type(self, typeclass):
         """
+        TODO: NEEDS RESTRUCTURE
+
         Returns a list of all Samples in the graph
         """
 
@@ -1263,6 +1256,8 @@ class KnowledgeGraph:
         self, item, create_new_graph=False, create_new_list=False, stop_at_sample=False
     ):
         """
+        TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
+
         Iterate through the graph starting from the given item.
 
         Parameters
@@ -1299,6 +1294,7 @@ class KnowledgeGraph:
                 self.iterate_graph(triple[2], stop_at_sample=stop_at_sample)
 
     def iterate_and_create_graph(self, item, stop_at_sample=False):
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         self.iterate_graph(item, create_new_list=True, stop_at_sample=stop_at_sample)
         triples = copy.deepcopy(self.slist)
         self.slist = []
@@ -1325,6 +1321,10 @@ class KnowledgeGraph:
         return f"{prologue}{uuid.uuid4()}{epilogue}"
 
     def iterate_and_rename_triples(self, item):
+        """
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
+        Iterate through the graph and rename all triples
+        """
         self.iterate_graph(item, create_new_list=True)
         triples = copy.deepcopy(self.slist)
         # now we have to edit this triples, and reapply them
