@@ -1355,6 +1355,7 @@ class KnowledgeGraph:
 
     def copy_defects(self, sample, parent_sample):
         """
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         Copy defects from one sample to another
         """
         parent_material = list(
@@ -1438,55 +1439,6 @@ class KnowledgeGraph:
     def change_label(self, sample, label):
         self.graph.remove((sample, RDFS.label, None))
         self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
-
-    def get_system_from_sample(self, sample):
-        """
-        Get a pyscal :py:class:`atomrdf.structure.System` from the selected sample
-
-        Parameters
-        ----------
-        sample: string
-            sample id
-
-        Returns
-        -------
-        system: :py:class:`atomrdf.structure.System`
-            corresponding system
-        """
-
-        simcell = self.value(sample, CMSO.hasSimulationCell)
-        cell_vectors = [[], [], []]
-
-        for s in self.triples((simcell, CMSO.hasVector, None)):
-            cell_vectors[0].append(self.value(s[2], CMSO.hasComponent_x).toPython())
-            cell_vectors[1].append(self.value(s[2], CMSO.hasComponent_y).toPython())
-            cell_vectors[2].append(self.value(s[2], CMSO.hasComponent_z).toPython())
-
-        # cell_vectors
-        filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath).toPython()
-        position_identifier = self.value(
-            URIRef(f"{sample}_Position"), CMSO.hasIdentifier
-        ).toPython()
-        species_identifier = self.value(
-            URIRef(f"{sample}_Species"), CMSO.hasIdentifier
-        ).toPython()
-
-        # open the file for reading
-        with open(filepath, "r") as fin:
-            data = json.load(fin)
-            positions = data[position_identifier]["value"]
-            species = data[species_identifier]["value"]
-
-        atoms = {"positions": positions, "species": species}
-        at = Atoms()
-        at.from_dict(atoms)
-        sys = System()
-        sys.box = cell_vectors
-        sys.atoms = at
-        sys.sample = sample
-        sys.graph = self
-        sys._name = sample.toPython().split("sample:")[-1]
-        return sys
 
     def to_file(
         self,

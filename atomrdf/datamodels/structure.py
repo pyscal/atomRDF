@@ -29,8 +29,10 @@ from atomrdf.namespace import (
 )
 import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
+import atomrdf.,datamodels.structure_io as structure_io
 from atomrdf.utils import get_material, get_sample_id, get_sample_object, toPython
 import atomrdf.properties as ap
+
 
 # read element data file
 file_location = os.path.dirname(__file__).split("/")
@@ -723,3 +725,42 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
         self.atom_attribute.position.value = atoms.get_positions().tolist()
         self.atom_attribute.species.value = atoms.get_chemical_symbols()
+
+    def to_structure(self, format="ase"):
+        if format == "ase":
+            return structure_io.sample_to_ase(self)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+
+    def to_file(self, outfile,
+        format,
+        copy_from=None,
+        pseudo_files=None,):
+        """
+        Write the structure to a file in the specified format.
+
+        Parameters
+        ----------
+        outfile : str
+            The path to the output file.
+        format : str, optional
+            The format of the output file. Defaults to 'lammps-dump'.
+        copy_from : str, optional
+            If provided, input options for quantum-espresso format will be copied from
+            the given file. Structure specific information will be replaced.
+            Note that the validity of input file is not checked.
+        pseudo_files : list, optional
+            if provided, add the pseudopotential filenames to file.
+            Should be in alphabetical order of chemical species symbols.
+
+        Returns
+        -------
+        None
+        """
+        structure_io.write(
+            self,
+            outfile,
+            format=format,
+            copy_from=copy_from,
+            pseudo_files=pseudo_files,
+        )
