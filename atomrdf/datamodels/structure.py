@@ -29,7 +29,7 @@ from atomrdf.namespace import (
 )
 import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
-import atomrdf.,datamodels.structure_io as structure_io
+import atomrdf.datamodels.structure_io as structure_io
 from atomrdf.utils import get_material, get_sample_id, get_sample_object, toPython
 import atomrdf.properties as ap
 
@@ -732,10 +732,13 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         else:
             raise ValueError(f"Unsupported format: {format}")
 
-    def to_file(self, outfile,
+    def to_file(
+        self,
+        outfile,
         format,
         copy_from=None,
-        pseudo_files=None,):
+        pseudo_files=None,
+    ):
         """
         Write the structure to a file in the specified format.
 

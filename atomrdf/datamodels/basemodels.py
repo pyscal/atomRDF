@@ -60,6 +60,9 @@ class DataProperty(BaseModel, Generic[T]):
     unit: Optional[str] = Field(default=None, description="Unit of measure")
     id: Optional[str] = Field(default=None, description="ID in the graph")
     label: Optional[str] = Field(default=None, description="Label in the graph")
+    basename: Optional[str] = Field(
+        default=None, description="Basename for file-based data properties"
+    )
 
 
 class Activity(BaseModel):
