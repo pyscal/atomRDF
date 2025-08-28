@@ -1440,58 +1440,10 @@ class KnowledgeGraph:
         self.graph.remove((sample, RDFS.label, None))
         self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
 
-    def to_file(
-        self,
-        sample,
-        filename=None,
-        format="poscar",
-        add_sample_id=True,
-        copy_from=None,
-        pseudo_files=None,
-    ):
-        """
-        Save a given sample to a file
-
-        Parameters
-        ----------
-        sample
-            ID of the sample
-
-        filename: string
-            name of output file
-
-        format: string, {"lammps-dump","lammps-data", "poscar", 'cif', 'quantum-espresso'}
-            or any format supported by ase
-
-        copy_from : str, optional
-            If provided, input options for quantum-espresso format will be copied from
-            the given file. Structure specific information will be replaced.
-            Note that the validity of input file is not checked.
-        pseudo_files : list, optional
-            if provided, add the pseudopotential filenames to file.
-            Should be in alphabetical order of chemical species symbols.
-
-        Returns
-        -------
-        None
-        """
-
-        if filename is None:
-            filename = os.path.join(os.getcwd(), "out")
-
-        sys = self.get_system_from_sample(sample)
-        write(
-            sys,
-            filename=filename,
-            format=format,
-            add_sample_id=add_sample_id,
-            copy_from=copy_from,
-            pseudo_files=pseudo_files,
-        )
-
     def enable_workflow(
         self, workflow_object, workflow_environment=None, workflow_module=None
     ):
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         self.workflow.inform_graph(
             workflow_object,
             workflow_environment=workflow_environment,
@@ -1506,6 +1458,7 @@ class KnowledgeGraph:
         job_dicts=None,
         add_intermediate_jobs=False,
     ):
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         self.workflow.to_graph(
             job,
             workflow_environment=workflow_environment,
@@ -1515,6 +1468,7 @@ class KnowledgeGraph:
         )
 
     def find_property(self, label=None, propertytype=None):
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         if label is not None:
             prop_list = list(self.graph.triples((None, RDFS.label, label)))
         elif propertytype is not None:
@@ -1544,6 +1498,7 @@ class KnowledgeGraph:
         return label
 
     def _add_to_dict(self, prop, indict):
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         name = _name(prop)
         if name not in indict.keys():
             indict[name] = {}
@@ -1551,6 +1506,7 @@ class KnowledgeGraph:
             indict[name]["label"] = self.get_string_label(prop)
 
     def _get_ancestor(self, prop, prov):
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         # note that only one operation and parent are present!
         if isinstance(prop, str):
             prop = URIRef(prop)
@@ -1660,6 +1616,7 @@ class KnowledgeGraph:
         return prov
 
     def generate_provenance(self, prop=None, label=None, visualize=False):
+        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
         if (prop is None) and (label is None):
             raise ValueError("Either prop or label must be provided")
 
@@ -1683,292 +1640,3 @@ class KnowledgeGraph:
             return visualize_provenance(prov)
 
         return prov
-
-    def query_structure_from_mp(
-        self,
-        api_key,
-        chemical_system=None,
-        material_ids=None,
-        is_stable=True,
-        conventional=True,
-        add_to_graph=True,
-    ):
-        docs = amp.query_mp(
-            api_key,
-            chemical_system=chemical_system,
-            material_ids=material_ids,
-            is_stable=is_stable,
-        )
-        structures = []
-        for doc in docs:
-            struct = doc["structure"]
-            if conventional:
-                aseatoms = struct.to_conventional().to_ase_atoms()
-            else:
-                aseatoms = struct.to_primitive().to_ase_atoms()
-
-            sys = System.read.ase(aseatoms)
-
-            symmetry = doc["symmetry"]
-
-            if add_to_graph:
-                sys.graph = self
-                sys.to_graph()
-
-                targets = [
-                    None,
-                    symmetry["symbol"],
-                    symmetry["number"],
-                    None,
-                    None,
-                    None,
-                ]
-                sys._add_crystal_structure(targets=targets)
-
-                # add energy
-                self.add_calculated_quantity(
-                    sys.sample, "EnergyPerAtom", doc["energy_per_atom"], unit="EV"
-                )
-                structures.append(sys)
-        if len(structures) == 1:
-            return structures[0]
-        else:
-            return structures
-
-    def update_sample(self, sample, struct):
-        """
-        Take a new system, and update the given sample with it.
-        Updated properties would be cell, atom positions, species
-
-        Parameters
-        ----------
-        sample: string
-            sample id
-        struct: :py:class:`atomrdf.structure.System`
-            system to be updated
-        """
-        if isinstance(sample, str):
-            sample = URIRef(sample)
-
-        sample_id = sample.toPython()
-
-        chemical_species = self.value(sample, CMSO.hasSpecies)
-        # start by cleanly removing elements
-        for s in self.triples((chemical_species, CMSO.hasElement, None)):
-            element = s[2]
-            self.remove((element, None, None))
-        self.remove((chemical_species, None, None))
-        self.remove((sample, CMSO.hasSpecies, None))
-
-        # now recalculate and add it again
-        composition = struct.schema.material.element_ratio()
-        valid = False
-        for e, r in composition.items():
-            if e in element_indetifiers.keys():
-                valid = True
-                break
-
-        if valid:
-            chemical_species = self.create_node(
-                f"{sample_id}_ChemicalSpecies", CMSO.ChemicalSpecies
-            )
-            self.add((sample, CMSO.hasSpecies, chemical_species))
-
-            for e, r in composition.items():
-                if e in element_indetifiers.keys():
-                    element = self.create_node(
-                        element_indetifiers[e], CMSO.ChemicalElement
-                    )
-                    self.add((chemical_species, CMSO.hasElement, element))
-                    self.add(
-                        (
-                            element,
-                            CMSO.hasChemicalSymbol,
-                            Literal(e, datatype=XSD.string),
-                        )
-                    )
-                    self.add(
-                        (
-                            element,
-                            CMSO.hasElementRatio,
-                            Literal(r, datatype=XSD.float),
-                        )
-                    )
-
-        # we also have to read in file and clean it up
-        filepath = self.value(URIRef(f"{sample_id}_Position"), CMSO.hasPath).toPython()
-        position_identifier = self.value(
-            URIRef(f"{sample_id}_Position"), CMSO.hasIdentifier
-        ).toPython()
-        species_identifier = self.value(
-            URIRef(f"{sample_id}_Species"), CMSO.hasIdentifier
-        ).toPython()
-
-        # clean up items
-        datadict = {
-            position_identifier: {
-                "value": struct.schema.atom_attribute.position(),
-                "label": "position",
-            },
-            species_identifier: {
-                "value": struct.schema.atom_attribute.species(),
-                "label": "species",
-            },
-        }
-        outfile = os.path.join(self.structure_store, str(sample_id).split(":")[-1])
-        json_io.write_file(outfile, datadict)
-
-        # now the only thing that needs to be updated is the cell
-        simulation_cell = self.value(sample, CMSO.hasSimulationCell)
-
-        # readd volume
-        self.remove((simulation_cell, CMSO.hasVolume, None))
-        self.add(
-            (
-                simulation_cell,
-                CMSO.hasVolume,
-                Literal(
-                    np.round(struct.schema.simulation_cell.volume(), decimals=2),
-                    datatype=XSD.float,
-                ),
-            )
-        )
-
-        # readd number of atoms
-        self.remove((sample, CMSO.hasNumberOfAtoms, None))
-        self.add(
-            (
-                sample,
-                CMSO.hasNumberOfAtoms,
-                Literal(
-                    struct.schema.simulation_cell.number_of_atoms(),
-                    datatype=XSD.integer,
-                ),
-            )
-        )
-
-        # update simulation cell length
-        simulation_cell_length = self.value(simulation_cell, CMSO.hasLength)
-        self.remove((simulation_cell_length, None, None))
-        data = struct.schema.simulation_cell.length()
-        self.add(
-            (
-                simulation_cell_length,
-                CMSO.hasLength_x,
-                Literal(data[0], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simulation_cell_length,
-                CMSO.hasLength_y,
-                Literal(data[1], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simulation_cell_length,
-                CMSO.hasLength_z,
-                Literal(data[2], datatype=XSD.float),
-            )
-        )
-
-        # simulation cell vectors
-        simvecs = [x[2] for x in self.triples((simulation_cell, CMSO.hasVector, None))]
-
-        for simvec in simvecs:
-            self.remove((simvec, None, None))
-
-        # now re-add
-        data = struct.schema.simulation_cell.vector()
-        self.add(
-            (
-                simvecs[0],
-                CMSO.hasComponent_x,
-                Literal(data[0][0], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simvecs[0],
-                CMSO.hasComponent_y,
-                Literal(data[0][1], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simvecs[0],
-                CMSO.hasComponent_z,
-                Literal(data[0][2], datatype=XSD.float),
-            )
-        )
-
-        self.add(
-            (
-                simvecs[1],
-                CMSO.hasComponent_x,
-                Literal(data[1][0], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simvecs[1],
-                CMSO.hasComponent_y,
-                Literal(data[1][1], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simvecs[1],
-                CMSO.hasComponent_z,
-                Literal(data[1][2], datatype=XSD.float),
-            )
-        )
-
-        self.add(
-            (
-                simvecs[2],
-                CMSO.hasComponent_x,
-                Literal(data[2][0], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simvecs[2],
-                CMSO.hasComponent_y,
-                Literal(data[2][1], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simvecs[2],
-                CMSO.hasComponent_z,
-                Literal(data[2][2], datatype=XSD.float),
-            )
-        )
-
-        # angle
-        simangle = self.value(simulation_cell, CMSO.hasAngle)
-        self.remove((simangle, None, None))
-        data = struct.schema.simulation_cell.angle()
-        self.add(
-            (
-                simangle,
-                CMSO.hasAngle_alpha,
-                Literal(data[0], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simangle,
-                CMSO.hasAngle_beta,
-                Literal(data[1], datatype=XSD.float),
-            )
-        )
-        self.add(
-            (
-                simangle,
-                CMSO.hasAngle_gamma,
-                Literal(data[2], datatype=XSD.float),
-            )
-        )
