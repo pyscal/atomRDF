@@ -24,7 +24,7 @@ from atomrdf.namespace import (
 )
 
 
-class PhysicalQuantity(DataProperty, RDFMixin):
+class PhysicalQuantity(DataProperty, TemplateMixin):
     """
     A class to represent a physical quantity with its value, unit, and associated metadata.
     """
@@ -58,6 +58,11 @@ class PhysicalQuantity(DataProperty, RDFMixin):
 
     @classmethod
     def from_graph(cls, graph, id):
+        # recover PID
+        pid = graph.value(id, RDFS.type)
+        pid = str(pid) if pid else None
+        basename = str(pid).split("/")[-1] if pid else None
+
         # get label
         label = graph.value(id, RDFS.label)
         # get value
@@ -65,6 +70,8 @@ class PhysicalQuantity(DataProperty, RDFMixin):
         # get unit
         unit = graph.value(id, ASMO.hasUnit)
         cls.id = str(id)
+        cls.pid = str(pid) if pid else None
+        cls.basename = str(basename) if basename else None
         cls.label = str(label) if label else None
         cls.value = float(value) if value else None
         cls.unit = str(unit).split("/")[-1] if unit else None

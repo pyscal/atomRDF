@@ -30,7 +30,7 @@ class TemplateMixin:
     label: Optional[str] = Field(default=None, description="Label in the graph")
 
     @classmethod
-    def template(cls) -> dict:
+    def template(cls, pid: bool = False) -> dict:
         def unwrap_type(typ):
             origin = get_origin(typ)
             if origin is Union:
@@ -41,13 +41,26 @@ class TemplateMixin:
 
         template = {}
         for name, field in cls.model_fields.items():
+            if not pid and name in {"pid", "label"}:
+                continue
+
             typ = unwrap_type(field.annotation)
 
             if isinstance(typ, type) and issubclass(typ, BaseModel):
-                template[name] = typ.template() if hasattr(typ, "template") else {}
+                if hasattr(typ, "template"):
+                    template[name] = typ.template(pid=pid)
+                else:
+                    template[name] = {}
 
             elif get_origin(typ) is DataProperty:
                 template[name] = {"value": None, "pid": None, "unit": None}
+
+            elif field.default is not None:
+                template[name] = field.default
+
+            elif callable(field.default_factory):
+                template[name] = field.default_factory()
+
             else:
                 template[name] = None
 
