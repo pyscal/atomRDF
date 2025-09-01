@@ -35,6 +35,7 @@ from atomrdf.datamodels.workflow.xcfunctional import *
 class Simulation(BaseModel, TemplateMixin):
     pid: Optional[str] = Field(default=None, description="PID of the method")
     label: Optional[str] = Field(default=None, description="Label of the method")
+    # classes
     method: Optional[
         Union[
             MolecularDynamics,
@@ -46,10 +47,12 @@ class Simulation(BaseModel, TemplateMixin):
         ]
     ] = Field(default=None, description="Computational method used in the simulation")
 
+    # named individuals
     degrees_of_freedom: Optional[
         List[Union[AtomicPositionRelaxation, CellVolumeRelaxation, CellShapeRelaxation]]
     ] = Field(default=[], description="Degrees of freedom associated with the method")
 
+    # named individuals
     thermodynamic_ensemble: Optional[
         List[
             Union[
@@ -62,6 +65,7 @@ class Simulation(BaseModel, TemplateMixin):
         ]
     ] = Field(default=None, description="Thermodynamic ensemble used in the method")
 
+    # class
     interatomic_potential: Optional[
         Union[
             InteratomicPotential,
@@ -72,6 +76,7 @@ class Simulation(BaseModel, TemplateMixin):
         ]
     ] = Field(default=None, description="Interatomic potential used in the method")
 
+    # class
     xc_functional: Optional[Union[XCFunctional, GGA, LDA]] = Field(
         default=None, description="XC functional used in the method"
     )
@@ -173,15 +178,7 @@ class Simulation(BaseModel, TemplateMixin):
         return v
 
     def _add_md_details(self, graph, simulation):
-        if self.thermodynamic_ensemble:
-            for ensemble in self.thermodynamic_ensemble:
-                graph.add(
-                    (
-                        simulation,
-                        ASMO.hasStatisticalEnsemble,
-                        getattr(ASMO, ensemble.basename),
-                    )
-                )
+        pass
 
     def _add_dft_details(
         self,

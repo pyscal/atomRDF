@@ -33,22 +33,82 @@ class Method(BaseModel, TemplateMixin):
 class MolecularStatics(Method):
     pid: str = ASMO.MolecularStatics.uri
 
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, ASMO.MolecularStatics)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
+
 
 class MolecularDynamics(Method):
     pid: str = ASMO.MolecularDynamics.uri
+
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, ASMO.MolecularDynamics)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
 
 
 class DensityFunctionalTheory(Method):
     pid: str = ASMO.DensityFunctionalTheory.uri
 
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, ASMO.DensityFunctionalTheory)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
+
 
 class EquationOfStateFit(Method):
     pid: str = ASMO.EquationOfStateFit.uri
+
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, ASMO.EquationOfStateFit)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
 
 
 class QuasiHarmonicApproximation(Method):
     pid: str = ASMO.QuasiHarmonicApproximation.uri
 
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, ASMO.QuasiHarmonicApproximation)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
+
 
 class ThermodynamicIntegration(Method):
     pid: str = ASMO.ThermodynamicIntegration.uri
+
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, ASMO.ThermodynamicIntegration)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
