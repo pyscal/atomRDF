@@ -29,10 +29,22 @@ from atomrdf.namespace import (
 class XCFunctional(TemplateMixin, BaseModel):
     pid: str = MDO.ExchangeCorrelationEnergyFunctional.uri
 
+    def to_graph(self):
+        # as strange as it may seem, this is what a NamedIndividual should do
+        return MDO.ExchangeCorrelationEnergyFunctional
+
 
 class GGA(XCFunctional):
     pid: str = MDO.GGA.uri
 
+    def to_graph(self):
+        # as strange as it may seem, this is what a NamedIndividual should do
+        return MDO.GGA
+
 
 class LDA(XCFunctional):
     pid: str = MDO.LDA.uri
+
+    def to_graph(self):
+        # as strange as it may seem, this is what a NamedIndividual should do
+        return MDO.LDA
