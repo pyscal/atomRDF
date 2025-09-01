@@ -1,3 +1,4 @@
+from platform import node
 from typing import List, Optional, Union
 import os
 import numpy as np
@@ -45,6 +46,16 @@ class InteratomicPotential(BaseModel, TemplateMixin):
         potential = graph.create_node(main_id, ASMO.InteratomicPotential)
         self._add_potential(potential)
         return potential
+
+    @classmethod
+    def from_graph(cls, graph, uri):
+        uri = graph.value(uri, CMSO.hasReference)
+        label = graph.value(uri, RDFS.label)
+        pot_type = graph.value(uri, RDF.type)
+        if pot_type is not None:
+            pot_type = pot_type.toPython().split("/")[-1]
+            return cls(uri=uri, label=label, potential_type=pot_type)
+        return cls(uri=uri, label=label)
 
 
 class ModifiedEmbeddedAtomModel(InteratomicPotential):
