@@ -36,6 +36,7 @@ class SoftwareAgent(BaseModel, TemplateMixin):
         graph,
     ):
         agent = graph.create_node(self.uri, PROV.SoftwareAgent, label=self.label)
+        return agent
         # if method:
         #    graph.add((method, PROV.wasAssociatedWith, agent))
         # if workflow_agent:
