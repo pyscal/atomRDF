@@ -79,6 +79,14 @@ class Simulation(BaseModel, TemplateMixin):
         default=None, description="XC functional used in the method"
     )
 
+    # class
+    workflow_manager: Optional[SoftwareAgent] = Field(
+        default=None, description="Workflow manager used in the simulation"
+    )
+    software: Optional[List[SoftwareAgent]] = Field(
+        default=None, description="Softwares used in the simulation"
+    )
+
     @field_validator("method", mode="before")
     @classmethod
     def _validate_method(cls, v):
@@ -169,6 +177,20 @@ class Simulation(BaseModel, TemplateMixin):
                 return XCFunctional()
         return v
 
+    @field_validator("software", mode="before")
+    @classmethod
+    def _validate_software(cls, v):
+        if isinstance(v, list):
+            return [SoftwareAgent(**item) for item in v]
+        return [SoftwareAgent(**v)]
+
+    @field_validator("workflow_manager", mode="before")
+    @classmethod
+    def _validate_workflow_manager(cls, v):
+        if isinstance(v, dict):
+            return SoftwareAgent(**v)
+        return v
+
     def _add_md_details(self, graph, simulation):
         # add ensemble
         if self.thermodynamic_ensemble:
@@ -190,3 +212,8 @@ class Simulation(BaseModel, TemplateMixin):
         if self.degrees_of_freedom:
             for dof in self.degrees_of_freedom:
                 graph.add((simulation, ASMO.hasRelaxationDOF, dof.to_graph()))
+
+    def _add_software(self, graph, simulation):
+        if self.software:
+            software = self.software.to_graph()
+            graph.add((simulation, ASMO.hasSoftware, software))
