@@ -22,12 +22,14 @@ from atomrdf.namespace import (
     PROV,
     Literal,
     ASMO,
+    MDO,
 )
 from atomrdf.datamodels.workflow.dof import *
 from atomrdf.datamodels.workflow.ensemble import *
 from atomrdf.datamodels.workflow.potential import *
 from atomrdf.datamodels.workflow.software import *
 from atomrdf.datamodels.workflow.method import *
+from atomrdf.datamodels.workflow.xcfunctional import *
 
 
 class Simulation(BaseModel, TemplateMixin):
@@ -69,6 +71,10 @@ class Simulation(BaseModel, TemplateMixin):
             MachineLearningPotential,
         ]
     ] = Field(default=None, description="Interatomic potential used in the method")
+
+    xc_functional: Optional[Union[XCFunctional, GGA, LDA]] = Field(
+        default=None, description="XC functional used in the method"
+    )
 
     @field_validator("method", mode="before")
     @classmethod
@@ -151,6 +157,21 @@ class Simulation(BaseModel, TemplateMixin):
                 return potential_map["InteratomicPotential"](**v)
         return v
 
+    @field_validator("xc_functional", mode="before")
+    @classmethod
+    def _validate_xc_functional(cls, v):
+        if isinstance(v, str):
+            xc_map = {
+                "LDA": LDA,
+                "GGA": GGA,
+                "PBE": GGA,
+            }
+            if v in xc_map:
+                return xc_map[v]()
+            else:
+                return XCFunctional()
+        return v
+
     def _add_md_details(self, graph, simulation):
         if self.thermodynamic_ensemble:
             for ensemble in self.thermodynamic_ensemble:
@@ -162,27 +183,22 @@ class Simulation(BaseModel, TemplateMixin):
                     )
                 )
 
+    def _add_dft_details(
+        self,
+        graph,
+    ):
+        if self.xc_functional:
+            graph.add(
+                (
+                    simulation,
+                    ASMO.hasXCFunctional,
+                    getattr(ASMO, self.xc_functional.basename),
+                )
+            )
+
     def _add_dof(self, graph, simulation):
         if self.degrees_of_freedom:
             for dof in self.degrees_of_freedom:
                 graph.add(
                     (simulation, ASMO.hasRelaxationDOF, getattr(ASMO, dof.basename))
                 )
-
-    def to_graph(self, graph, main_id):
-        simulation = graph.create_node(main_id, ASMO.EnergyCalculation)
-        graph.add((simulation, ASMO.hasComputationalMethod, ASMO.MolecularStatics))
-
-        # add DOF
-        self._add_dof(graph, simulation)
-        self._add_md_details(graph, simulation)
-
-        if self.interatomic_potential:
-            potential = self.interatomic_potential.to_graph(graph, main_id)
-            graph.add(
-                (
-                    simulation,
-                    ASMO.hasInteratomicPotential,
-                    potential,
-                )
-            )
