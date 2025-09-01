@@ -33,12 +33,24 @@ class AtomicPositionRelaxation(DegreeOfFreedom):
     pid: str = ASMO.AtomicPositionRelaxation.uri
     basename: str = "AtomicPositionRelaxation"
 
+    def to_graph(self):
+        # as strange as it may seem, this is what a NamedIndividual should do
+        return ASMO.AtomicPositionRelaxation
+
 
 class CellVolumeRelaxation(DegreeOfFreedom):
     pid: str = ASMO.CellVolumeRelaxation.uri
     basename: str = "CellVolumeRelaxation"
 
+    def to_graph(self):
+        # as strange as it may seem, this is what a NamedIndividual should do
+        return ASMO.CellVolumeRelaxation
+
 
 class CellShapeRelaxation(DegreeOfFreedom):
     pid: str = ASMO.CellShapeRelaxation.uri
     basename: str = "CellShapeRelaxation"
+
+    def to_graph(self):
+        # as strange as it may seem, this is what a NamedIndividual should do
+        return ASMO.CellShapeRelaxation
