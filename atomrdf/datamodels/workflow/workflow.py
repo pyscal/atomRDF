@@ -30,6 +30,7 @@ from atomrdf.datamodels.workflow.potential import *
 from atomrdf.datamodels.workflow.software import *
 from atomrdf.datamodels.workflow.method import *
 from atomrdf.datamodels.workflow.xcfunctional import *
+from atomrdf.utils import get_simulation
 
 
 class Simulation(BaseModel, TemplateMixin):
@@ -191,7 +192,7 @@ class Simulation(BaseModel, TemplateMixin):
             return SoftwareAgent(**v)
         return v
 
-    def _add_md_details(self, graph, simulation):
+    def _to_graph_md_details(self, graph, simulation):
         # add ensemble
         if self.thermodynamic_ensemble:
             ensemble = self.thermodynamic_ensemble.to_graph(graph, simulation)
@@ -202,18 +203,94 @@ class Simulation(BaseModel, TemplateMixin):
             potential = self.interatomic_potential.to_graph(graph, simulation)
             graph.add((simulation, ASMO.hasInteratomicPotential, potential))
 
-    def _add_dft_details(self, graph, simulation):
+    @classmethod
+    def _from_graph_md_details(cls, graph, sim_id):
+        sim = get_simulation(graph, sim_id)
+        ensemble = graph.value(sim, ASMO.hasStatisticalEnsemble)
+        if ensemble:
+            cls.thermodynamic_ensemble = ensemble.toPython().split("/")[-1]
+
+        potential = graph.value(sim, ASMO.hasInteratomicPotential)
+        if potential:
+            pot_type = potential.toPython().split("/")[-1]
+            if pot_type == "ModifiedEmbeddedAtomModel":
+                cls.interatomic_potential = ModifiedEmbeddedAtomModel.from_graph(
+                    graph, potential
+                )
+            elif pot_type == "EmbeddedAtomModel":
+                cls.interatomic_potential = EmbeddedAtomModel.from_graph(
+                    graph, potential
+                )
+            elif pot_type == "LennardJonesPotential":
+                cls.interatomic_potential = LennardJonesPotential.from_graph(
+                    graph, potential
+                )
+            elif pot_type == "MachineLearningPotential":
+                cls.interatomic_potential = MachineLearningPotential.from_graph(
+                    graph, potential
+                )
+            else:
+                cls.interatomic_potential = InteratomicPotential.from_graph(
+                    graph, potential
+                )
+        return cls
+
+    def _to_graph_dft_details(self, graph, simulation):
         # add XC functional
         if self.xc_functional:
             xc_functional = self.xc_functional.to_graph()
             graph.add((simulation, MDO.hasXCFunctional, xc_functional))
 
-    def _add_dof(self, graph, simulation):
+    @classmethod
+    def _from_graph_dft_details(cls, graph, sim_id):
+        sim = get_simulation(graph, sim_id)
+        xc_functional = graph.value(sim, MDO.hasXCFunctional)
+        if xc_functional:
+            cls.xc_functional = xc_functional.toPython().split("/")[-1]
+        return cls
+
+    def _to_graph_dof(self, graph, simulation):
         if self.degrees_of_freedom:
             for dof in self.degrees_of_freedom:
                 graph.add((simulation, ASMO.hasRelaxationDOF, dof.to_graph()))
 
-    def _add_software(self, graph, simulation):
+    @classmethod
+    def _from_graph_dof(cls, graph, sim_id):
+        sim = get_simulation(graph, sim_id)
+        dofs = [x[2] for x in graph.triples((sim, ASMO.hasRelaxationDOF, None))]
+        doflist = []
+        for dof in dofs:
+            doflist.append(dof.toPython().split("/")[-1])
+
+        if doflist:
+            cls.degrees_of_freedom = doflist
+        return cls
+
+    def _to_graph_software(self, graph, simulation):
+        workflow_manager = None
+        if self.workflow_manager:
+            workflow_manager = self.workflow_manager.to_graph(
+                graph,
+            )
+            graph.add((simulation, PROV.wasAssociatedWith, workflow_manager))
+
         if self.software:
-            software = self.software.to_graph()
-            graph.add((simulation, ASMO.hasSoftware, software))
+            for software in self.software:
+                softobj = software.to_graph(
+                    graph,
+                )
+                graph.add((simulation, PROV.wasAssociatedWith, softobj))
+                if workflow_manager:
+                    graph.add((workflow_manager, PROV.actedOnBehalfOf, softobj))
+
+    @classmethod
+    def _from_graph_software(cls, graph, sim_id):
+        sim = get_simulation(graph, sim_id)
+        workflow_manager = graph.value(sim, PROV.wasAssociatedWith)
+        if workflow_manager:
+            cls.workflow_manager = SoftwareAgent.from_graph(graph, workflow_manager)
+
+        software = [x[2] for x in graph.triples((sim, PROV.wasAssociatedWith, None))]
+        if software:
+            cls.software = [SoftwareAgent.from_graph(graph, s) for s in software]
+        return cls

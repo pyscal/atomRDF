@@ -48,10 +48,10 @@ class InteratomicPotential(BaseModel, TemplateMixin):
         return potential
 
     @classmethod
-    def from_graph(cls, graph, uri):
-        uri = graph.value(uri, CMSO.hasReference)
-        label = graph.value(uri, RDFS.label)
-        pot_type = graph.value(uri, RDF.type)
+    def from_graph(cls, graph, potential_id):
+        uri = graph.value(potential_id, CMSO.hasReference)
+        label = graph.value(potential_id, RDFS.label)
+        pot_type = graph.value(potential_id, RDF.type)
         if pot_type is not None:
             pot_type = pot_type.toPython().split("/")[-1]
             return cls(uri=uri, label=label, potential_type=pot_type)

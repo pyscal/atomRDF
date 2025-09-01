@@ -5,6 +5,12 @@ from collections import Counter
 import numpy as np
 
 
+def get_simulation(kg, simulation_id):
+    if isinstance(simulation_id, str):
+        simulation_id = URIRef(simulation_id)
+    return simulation_id
+
+
 def get_material(kg, sample_id):
     if isinstance(sample_id, str):
         sample_id = URIRef(sample_id)
