@@ -54,14 +54,12 @@ class Simulation(BaseModel, TemplateMixin):
 
     # named individuals
     thermodynamic_ensemble: Optional[
-        List[
-            Union[
-                CanonicalEnsemble,
-                MicrocanonicalEnsemble,
-                IsothermalIsobaricEnsemble,
-                IsoenthalpicIsobaricEnsemble,
-                GrandCanonicalEnsemble,
-            ]
+        Union[
+            CanonicalEnsemble,
+            MicrocanonicalEnsemble,
+            IsothermalIsobaricEnsemble,
+            IsoenthalpicIsobaricEnsemble,
+            GrandCanonicalEnsemble,
         ]
     ] = Field(default=None, description="Thermodynamic ensemble used in the method")
 
@@ -125,7 +123,7 @@ class Simulation(BaseModel, TemplateMixin):
     @field_validator("thermodynamic_ensemble", mode="before")
     @classmethod
     def _validate_ensemble(cls, v):
-        if isinstance(v, list):
+        if isinstance(v, str):
             ensemble_map = {
                 "CanonicalEnsemble": CanonicalEnsemble,
                 "MicrocanonicalEnsemble": MicrocanonicalEnsemble,
@@ -133,16 +131,10 @@ class Simulation(BaseModel, TemplateMixin):
                 "IsoenthalpicIsobaricEnsemble": IsoenthalpicIsobaricEnsemble,
                 "GrandCanonicalEnsemble": GrandCanonicalEnsemble,
             }
-            validated_ensembles = []
-            for item in v:
-                if isinstance(item, str):
-                    if item in ensemble_map:
-                        validated_ensembles.append(ensemble_map[item]())
-                    else:
-                        raise ValueError(f"Unknown ensemble type: {item}")
-                else:
-                    raise ValueError(f"Invalid type for ensemble: {type(item)}")
-            return validated_ensembles
+            if v in ensemble_map:
+                return ensemble_map[v]()
+            else:
+                raise ValueError(f"Unknown ensemble type: {v}")
         return v
 
     @field_validator("interatomic_potential", mode="before")
@@ -178,24 +170,23 @@ class Simulation(BaseModel, TemplateMixin):
         return v
 
     def _add_md_details(self, graph, simulation):
-        pass
+        # add ensemble
+        if self.thermodynamic_ensemble:
+            ensemble = self.thermodynamic_ensemble.to_graph(graph, simulation)
+            graph.add((simulation, ASMO.hasStatisticalEnsemble, ensemble))
 
-    def _add_dft_details(
-        self,
-        graph,
-    ):
+        # add potential
+        if self.interatomic_potential:
+            potential = self.interatomic_potential.to_graph(graph, simulation)
+            graph.add((simulation, ASMO.hasInteratomicPotential, potential))
+
+    def _add_dft_details(self, graph, simulation):
+        # add XC functional
         if self.xc_functional:
-            graph.add(
-                (
-                    simulation,
-                    ASMO.hasXCFunctional,
-                    getattr(ASMO, self.xc_functional.basename),
-                )
-            )
+            xc_functional = self.xc_functional.to_graph()
+            graph.add((simulation, MDO.hasXCFunctional, xc_functional))
 
     def _add_dof(self, graph, simulation):
         if self.degrees_of_freedom:
             for dof in self.degrees_of_freedom:
-                graph.add(
-                    (simulation, ASMO.hasRelaxationDOF, getattr(ASMO, dof.basename))
-                )
+                graph.add((simulation, ASMO.hasRelaxationDOF, dof.to_graph()))
