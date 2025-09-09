@@ -28,6 +28,7 @@ def process_job_lammps(job):
     add_software(method_dict)
     get_simulation_folder(job, method_dict)
     extract_calculated_quantities(job, method_dict)
+    get_structures(job, method_dict)
     return method_dict
 
 def get_simulation_folder(job, method_dict):
@@ -205,3 +206,10 @@ def extract_calculated_quantities(job, method_dict):
     )
     
     method_dict['calculated_property'] =  outputs
+
+def get_structures(job, method_dict):
+    initial_pyiron_structure = job.structure
+    final_pyiron_structure = job.get_structure(frame=-1)
+
+    method_dict['initial_sample'] = initial_pyiron_structure
+    method_dict['final_sample'] = final_pyiron_structure    
