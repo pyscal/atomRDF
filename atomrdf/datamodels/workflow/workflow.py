@@ -11,6 +11,7 @@ from atomrdf.datamodels.basemodels import (
     RDFMixin,
     BaseModel,
 )
+from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.datamodels.activity import Activity
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
@@ -326,9 +327,17 @@ class Simulation(Activity):
                 graph.add((param_uri, ASMO.wasCalculatedBy, simulation), validate=False)
                 if param.associate_to_sample:
                     if self.final_sample:
-                        graph.add((self.final_sample, ASMO.hasCalculatedProperty, param_uri), validate=False)
+                        graph.add((URIRef(self.final_sample), ASMO.hasCalculatedProperty, param_uri), validate=False)
     
     def to_graph(self, graph):
+        #if needed, serialise structures
+        if self.initial_sample:
+            if isinstance(self.initial_sample, AtomicScaleSample):
+                self.initial_sample = self.initial_sample.to_graph(graph)
+        if self.final_sample:
+            if isinstance(self.final_sample, AtomicScaleSample):
+                self.final_sample = self.final_sample.to_graph(graph)
+                
         # create main simulation id
         main_id = uuid.uuid4()
         main_id = f'simulation:{main_id}'
@@ -365,9 +374,9 @@ class Simulation(Activity):
 
         #add structure layers
         if self.final_sample:
-            graph.add((self.final_sample, PROV.wasGeneratedBy, simulation))        
+            graph.add((URIRef(self.final_sample), PROV.wasGeneratedBy, simulation))        
             if self.initial_sample:
-                graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
+                graph.add((URIRef(self.final_sample), PROV.wasDerivedFrom, URIRef(self.initial_sample)))
 
         if self.path:
             graph.add((simulation, CMSO.hasPath, Literal(self.path, datatype=XSD.string)))

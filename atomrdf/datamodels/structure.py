@@ -52,66 +52,70 @@ class UnitCell(BaseModel, TemplateMixin):
         unit_cell = graph.create_node(f"{sample_id}_UnitCell", CMSO.UnitCell)
         graph.add((crystal_structure, CMSO.hasUnitCell, unit_cell))
 
-        bv = graph.create_node(
-            f"{sample_id}_BravaisLattice", URIRef(self.bravais_lattice.value)
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasBravaisLattice,
-                bv,
+        if self.bravais_lattice.value is not None: 
+            bv = graph.create_node(
+                f"{sample_id}_BravaisLattice", URIRef(self.bravais_lattice.value)
             )
-        )
-        lattice_parameter = graph.create_node(
-            f"{sample_id}_LatticeParameter", CMSO.LatticeParameter
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasLength_x,
-                Literal(self.lattice_parameter.value[0], datatype=XSD.float),
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasBravaisLattice,
+                    bv,
+                )
             )
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasLength_y,
-                Literal(self.lattice_parameter.value[1], datatype=XSD.float),
+        
+        if self.lattice_parameter.value is not None:
+            lattice_parameter = graph.create_node(
+                f"{sample_id}_LatticeParameter", CMSO.LatticeParameter
             )
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasLength_z,
-                Literal(self.lattice_parameter.value[2], datatype=XSD.float),
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasLength_x,
+                    Literal(self.lattice_parameter.value[0], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasLength_y,
+                    Literal(self.lattice_parameter.value[1], datatype=XSD.float),
+                )
+            )
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasLength_z,
+                    Literal(self.lattice_parameter.value[2], datatype=XSD.float),
+                )
+            )
 
-        lattice_angle = graph.create_node(
-            f"{sample_id}_LatticeAngle", CMSO.LatticeAngle
-        )
-        graph.add((unit_cell, CMSO.hasAngle, lattice_angle))
-        graph.add(
-            (
-                lattice_angle,
-                CMSO.hasAngle_alpha,
-                Literal(self.angle.value[0], datatype=XSD.float),
+        if self.angle.value is not None:
+            lattice_angle = graph.create_node(
+                f"{sample_id}_LatticeAngle", CMSO.LatticeAngle
             )
-        )
-        graph.add(
-            (
-                lattice_angle,
-                CMSO.hasAngle_beta,
-                Literal(self.angle.value[1], datatype=XSD.float),
+            graph.add((unit_cell, CMSO.hasAngle, lattice_angle))
+            graph.add(
+                (
+                    lattice_angle,
+                    CMSO.hasAngle_alpha,
+                    Literal(self.angle.value[0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                lattice_angle,
-                CMSO.hasAngle_gamma,
-                Literal(self.angle.value[2], datatype=XSD.float),
+            graph.add(
+                (
+                    lattice_angle,
+                    CMSO.hasAngle_beta,
+                    Literal(self.angle.value[1], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    lattice_angle,
+                    CMSO.hasAngle_gamma,
+                    Literal(self.angle.value[2], datatype=XSD.float),
+                )
+            )
 
     @classmethod
     def from_graph(cls, graph, crystal_structure):
@@ -259,7 +263,7 @@ class SimulationCell(BaseModel, TemplateMixin):
     length: Optional[DataProperty[List[float]]] = None
     vector: Optional[DataProperty[List[List[float]]]] = None
     angle: Optional[DataProperty[List[float]]] = None
-    repetitions: Optional[DataProperty[List[int]]] = None
+    repetitions: Optional[DataProperty[List[int]]]
 
     def to_graph(self, graph, sample):
         sample_id = get_sample_id(sample)
@@ -297,27 +301,28 @@ class SimulationCell(BaseModel, TemplateMixin):
         )
 
         repetitions = self.repetitions.value
-        graph.add(
-            (
-                simulation_cell,
-                CMSO.hasRepetition_x,
-                Literal(repetitions[0], datatype=XSD.integer),
+        if repetitions is not None:
+            graph.add(
+                (
+                    simulation_cell,
+                    CMSO.hasRepetition_x,
+                    Literal(repetitions[0], datatype=XSD.integer),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell,
-                CMSO.hasRepetition_y,
-                Literal(repetitions[1], datatype=XSD.integer),
+            graph.add(
+                (
+                    simulation_cell,
+                    CMSO.hasRepetition_y,
+                    Literal(repetitions[1], datatype=XSD.integer),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell,
-                CMSO.hasRepetition_z,
-                Literal(repetitions[2], datatype=XSD.integer),
+            graph.add(
+                (
+                    simulation_cell,
+                    CMSO.hasRepetition_z,
+                    Literal(repetitions[2], datatype=XSD.integer),
+                )
             )
-        )
         simulation_cell_length = graph.create_node(
             f"{sample_id}_SimulationCellLength", CMSO.SimulationCellLength
         )
