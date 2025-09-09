@@ -88,7 +88,7 @@ def identify_method(job, method_dict):
     pssplit = ps.split('/')
     if len(pssplit) > 1:
         ps = pssplit[0]
-        
+
     method_dict["interatomic_potential"] = {
         'potential_type': ps,
     }
@@ -129,3 +129,64 @@ def add_software(method_dict):
         "label": "LAMMPS",
     }
     method_dict["software"] = [software]
+
+def extract_calculated_quantities(job, method_dict):
+    """
+    Extracts calculated quantities from a job.
+
+    Parameters
+    ----------
+    job : pyiron.Job
+        The job object containing the calculated quantities.
+
+    Returns
+    -------
+    list
+        A list of dictionaries, each containing the label, value, unit, and associate_to_sample of a calculated quantity.
+
+    """
+    energy_tot = np.mean(job.output.energy_tot)
+    energy_pot = np.mean(job.output.energy_pot)
+    energy_kin = energy_tot - energy_pot
+
+    volume = np.mean(job.output.volume)
+    
+    outputs = []
+    outputs.append(
+        {
+            "label": "TotalEnergy",
+            "basename": "TotalEnergy",
+            "value": np.round(energy_tot, decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "PotentialEnergy",
+            "basename": "PotentialEnergy",
+            "value": np.round(energy_pot, decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "KineticEnergy",
+            "basename": "KineticEnergy",
+            "value": np.round(energy_kin, decimals=4),
+            "unit": "EV",
+            "associate_to_sample": True,
+        }
+    )
+    outputs.append(
+        {
+            "label": "SimulationCellVolume",
+            "value": np.round(volume, decimals=4),
+            "unit": "ANGSTROM3",
+            "associate_to_sample": True,
+            "basename": "SimulationCellVolume",
+        }
+    )
+    
+    method_dict['calculated_property'] =  outputs
