@@ -72,3 +72,12 @@ class GrandCanonicalEnsemble(ThermodynamicEnsemble):
     def to_graph(self):
         # as strange as it may seem, this is what a NamedIndividual should do
         return ASMO.GrandCanonicalEnsemble
+
+
+ensemble_map = {
+    "CanonicalEnsemble": CanonicalEnsemble,
+    "MicrocanonicalEnsemble": MicrocanonicalEnsemble,
+    "IsothermalIsobaricEnsemble": IsothermalIsobaricEnsemble,
+    "IsoenthalpicIsobaricEnsemble": IsoenthalpicIsobaricEnsemble,
+    "GrandCanonicalEnsemble": GrandCanonicalEnsemble,
+}

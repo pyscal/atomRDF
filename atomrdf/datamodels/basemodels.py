@@ -67,7 +67,7 @@ class TemplateMixin:
         return template
 
 
-class DataProperty(BaseModel, Generic[T]):
+class DataProperty(BaseModel, Generic[T], TemplateMixin):
     value: Optional[T] = None
     pid: Optional[str] = Field(default=None, description="PID")
     unit: Optional[str] = Field(default=None, description="Unit of measure")
@@ -78,10 +78,8 @@ class DataProperty(BaseModel, Generic[T]):
     )
 
 
-class Activity(BaseModel):
+class Activity(BaseModel, TemplateMixin):
     pid: Optional[str] = Field(default=None, description="PID of the activity")
-    id: Optional[str] = Field(default=None, description="ID in the graph")
-    label: Optional[str] = Field(default=None, description="Label in the graph")
 
     initial_sample: Optional[str] = Field(
         default=None, description="ID of the initial sample in the graph"

@@ -54,3 +54,10 @@ class CellShapeRelaxation(DegreeOfFreedom):
     def to_graph(self):
         # as strange as it may seem, this is what a NamedIndividual should do
         return ASMO.CellShapeRelaxation
+
+
+dof_map = {
+    "AtomicPositionRelaxation": AtomicPositionRelaxation,
+    "CellVolumeRelaxation": CellVolumeRelaxation,
+    "CellShapeRelaxation": CellShapeRelaxation,
+}

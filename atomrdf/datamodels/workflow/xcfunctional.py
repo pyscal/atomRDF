@@ -48,3 +48,10 @@ class LDA(XCFunctional):
     def to_graph(self):
         # as strange as it may seem, this is what a NamedIndividual should do
         return MDO.LDA
+
+
+xc_map = {
+    "LDA": LDA,
+    "GGA": GGA,
+    "PBE": GGA,
+}

@@ -31,6 +31,7 @@ from atomrdf.datamodels.workflow.software import *
 from atomrdf.datamodels.workflow.method import *
 from atomrdf.datamodels.workflow.xcfunctional import *
 from atomrdf.utils import get_simulation
+from atomrdf.datamodels.workflow.property import Property
 
 
 class Simulation(BaseModel, TemplateMixin):
@@ -88,18 +89,21 @@ class Simulation(BaseModel, TemplateMixin):
         default=None, description="Softwares used in the simulation"
     )
 
+    # list of classes
+    input_property: Optional[List[Property]] = Field(
+        default=[], description="Input properties used in the simulation"
+    )
+    output_property: Optional[List[Property]] = Field(
+        default=[], description="Output properties generated in the simulation"
+    )
+    calculated_property: Optional[List[Property]] = Field(
+        default=[], description="Calculated properties from the simulation"
+    )
+
     @field_validator("method", mode="before")
     @classmethod
     def _validate_method(cls, v):
         if isinstance(v, str):
-            method_map = {
-                "MolecularDynamics": MolecularDynamics,
-                "MolecularStatics": MolecularStatics,
-                "DensityFunctionalTheory": DensityFunctionalTheory,
-                "EquationOfState": EquationOfStateFit,
-                "QuasiHarmonicModel": QuasiHarmonicApproximation,
-                "ThermodynamicIntegration": ThermodynamicIntegration,
-            }
             if v in method_map:
                 return method_map[v]()
             else:
@@ -110,11 +114,6 @@ class Simulation(BaseModel, TemplateMixin):
     @classmethod
     def _validate_dof(cls, v):
         if isinstance(v, list):
-            dof_map = {
-                "AtomicPositionRelaxation": AtomicPositionRelaxation,
-                "CellVolumeRelaxation": CellVolumeRelaxation,
-                "CellShapeRelaxation": CellShapeRelaxation,
-            }
             validated_dof = []
             for item in v:
                 if isinstance(item, str):
@@ -133,13 +132,6 @@ class Simulation(BaseModel, TemplateMixin):
     @classmethod
     def _validate_ensemble(cls, v):
         if isinstance(v, str):
-            ensemble_map = {
-                "CanonicalEnsemble": CanonicalEnsemble,
-                "MicrocanonicalEnsemble": MicrocanonicalEnsemble,
-                "IsothermalIsobaricEnsemble": IsothermalIsobaricEnsemble,
-                "IsoenthalpicIsobaricEnsemble": IsoenthalpicIsobaricEnsemble,
-                "GrandCanonicalEnsemble": GrandCanonicalEnsemble,
-            }
             if v in ensemble_map:
                 return ensemble_map[v]()
             else:
@@ -150,13 +142,6 @@ class Simulation(BaseModel, TemplateMixin):
     @classmethod
     def _validate_potential(cls, v):
         if isinstance(v, dict):
-            potential_map = {
-                "InteratomicPotential": InteratomicPotential,
-                "ModifiedEmbeddedAtomModel": ModifiedEmbeddedAtomModel,
-                "EmbeddedAtomModel": EmbeddedAtomModel,
-                "LennardJonesPotential": LennardJonesPotential,
-                "MachineLearningPotential": MachineLearningPotential,
-            }
             if v.get("potential_type") in potential_map:
                 return potential_map[v.get("potential_type")](**v)
             else:
@@ -167,11 +152,6 @@ class Simulation(BaseModel, TemplateMixin):
     @classmethod
     def _validate_xc_functional(cls, v):
         if isinstance(v, str):
-            xc_map = {
-                "LDA": LDA,
-                "GGA": GGA,
-                "PBE": GGA,
-            }
             if v in xc_map:
                 return xc_map[v]()
             else:

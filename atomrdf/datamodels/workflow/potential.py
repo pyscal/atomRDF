@@ -108,3 +108,12 @@ class MachineLearningPotential(InteratomicPotential):
         potential = graph.create_node(main_id, ASMO.MachineLearningPotential)
         self._add_potential(potential)
         return potential
+
+
+potential_map = {
+    "InteratomicPotential": InteratomicPotential,
+    "ModifiedEmbeddedAtomModel": ModifiedEmbeddedAtomModel,
+    "EmbeddedAtomModel": EmbeddedAtomModel,
+    "LennardJonesPotential": LennardJonesPotential,
+    "MachineLearningPotential": MachineLearningPotential,
+}

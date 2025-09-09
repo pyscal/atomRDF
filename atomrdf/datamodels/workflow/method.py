@@ -31,6 +31,7 @@ class Method(BaseModel, TemplateMixin):
 
 
 class MolecularStatics(Method):
+
     pid: str = ASMO.MolecularStatics.uri
 
     def to_graph(self, graph, main_id):
@@ -112,3 +113,13 @@ class ThermodynamicIntegration(Method):
     def from_graph(cls, graph, id):
         label = graph.get_label(id)
         return cls(label=label)
+
+
+method_map = {
+    "MolecularDynamics": MolecularDynamics,
+    "MolecularStatics": MolecularStatics,
+    "DensityFunctionalTheory": DensityFunctionalTheory,
+    "EquationOfState": EquationOfStateFit,
+    "QuasiHarmonicModel": QuasiHarmonicApproximation,
+    "ThermodynamicIntegration": ThermodynamicIntegration,
+}
