@@ -26,12 +26,13 @@ from atomrdf.namespace import (
 
 
 class Method(BaseModel, TemplateMixin):
+    basename: str
     pid: Optional[str] = Field(default=None, description="PID of the method")
     label: Optional[str] = Field(default=None, description="Label of the method")
 
 
 class MolecularStatics(Method):
-
+    basename = "MolecularStatics"
     pid: str = ASMO.MolecularStatics.uri
 
     def to_graph(self, graph, main_id):
@@ -46,6 +47,7 @@ class MolecularStatics(Method):
 
 
 class MolecularDynamics(Method):
+    basename = "MolecularDynamics"
     pid: str = ASMO.MolecularDynamics.uri
 
     def to_graph(self, graph, main_id):
@@ -60,6 +62,7 @@ class MolecularDynamics(Method):
 
 
 class DensityFunctionalTheory(Method):
+    basename = "DensityFunctionalTheory"
     pid: str = ASMO.DensityFunctionalTheory.uri
 
     def to_graph(self, graph, main_id):
@@ -74,6 +77,7 @@ class DensityFunctionalTheory(Method):
 
 
 class EquationOfStateFit(Method):
+    basename = "EquationOfState"
     pid: str = ASMO.EquationOfStateFit.uri
 
     def to_graph(self, graph, main_id):
@@ -88,6 +92,7 @@ class EquationOfStateFit(Method):
 
 
 class QuasiHarmonicApproximation(Method):
+    basename = "QuasiHarmonicModel"
     pid: str = ASMO.QuasiHarmonicApproximation.uri
 
     def to_graph(self, graph, main_id):
@@ -102,6 +107,7 @@ class QuasiHarmonicApproximation(Method):
 
 
 class ThermodynamicIntegration(Method):
+    basename = "ThermodynamicIntegration"
     pid: str = ASMO.ThermodynamicIntegration.uri
 
     def to_graph(self, graph, main_id):

@@ -85,9 +85,15 @@ class OutputParameter(Property):
     basename: Optional[str] = Field(
         default='OutputParameter', description="Basename of the property"
     )    
-
+    associate_to_sample: Optional[bool] = Field(
+        default=True, description="Whether to associate the property to the sample"
+    )
+    
 class CalculatedProperty(Property):
     basename: Optional[str] = Field(
         default='CalculatedProperty', description="Basename of the property"
+    )
+    associate_to_sample: Optional[bool] = Field(
+        default=True, description="Whether to associate the property to the sample"
     )    
     

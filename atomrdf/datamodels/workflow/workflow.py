@@ -31,12 +31,11 @@ from atomrdf.datamodels.workflow.software import *
 from atomrdf.datamodels.workflow.method import *
 from atomrdf.datamodels.workflow.xcfunctional import *
 from atomrdf.utils import get_simulation
-from atomrdf.datamodels.workflow.property import Property
+from atomrdf.datamodels.workflow.property import *
 
 
-class Simulation(BaseModel, TemplateMixin):
-    pid: Optional[str] = Field(default=None, description="PID of the method")
-    label: Optional[str] = Field(default=None, description="Label of the method")
+class Simulation(Activity):
+    label: Optional[str] = Field(default=None, description="Label of the simulation")
     # classes
     method: Optional[
         Union[
@@ -90,14 +89,18 @@ class Simulation(BaseModel, TemplateMixin):
     )
 
     # list of classes
-    input_property: Optional[List[Property]] = Field(
+    input_paramater: Optional[List[InputParameter]] = Field(
         default=[], description="Input properties used in the simulation"
     )
-    output_property: Optional[List[Property]] = Field(
+    output_parameter: Optional[List[OutputParameter]] = Field(
         default=[], description="Output properties generated in the simulation"
     )
-    calculated_property: Optional[List[Property]] = Field(
+    calculated_property: Optional[List[CalculatedProperty]] = Field(
         default=[], description="Calculated properties from the simulation"
+    )
+
+    path: Optional[str] = Field(
+        default=None, description="Path to the simulation directory"
     )
 
     @field_validator("method", mode="before")
@@ -171,6 +174,8 @@ class Simulation(BaseModel, TemplateMixin):
         if isinstance(v, dict):
             return SoftwareAgent(**v)
         return v
+    
+
 
     def _to_graph_md_details(self, graph, simulation):
         # add ensemble
@@ -274,3 +279,138 @@ class Simulation(BaseModel, TemplateMixin):
         if software:
             cls.software = [SoftwareAgent.from_graph(graph, s) for s in software]
         return cls
+    
+    def to_graph_input_parameters(self, graph, simulation):
+        if self.input_paramater:
+            for param in self.input_paramater:
+                param_uri = param.to_graph(graph)
+                graph.add((simulation, ASMO.hasInputParameter, param_uri))
+    
+    @classmethod
+    def from_graph_input_parameters(cls, graph, sim_id):
+        sim = get_simulation(graph, sim_id)
+        input_params = [x[2] for x in graph.triples((sim, ASMO.hasInputParameter, None))]
+        if input_params:
+            cls.input_paramater = [InputParameter.from_graph(graph, p) for p in input_params]
+        return cls
+    
+    def to_graph_output_parameters(self, graph, simulation):
+        if self.output_parameter:
+            for param in self.output_parameter:
+                param_uri = param.to_graph(graph)
+                graph.add((simulation, ASMO.hasOutputParameter, param_uri))
+                if param.associate_to_sample:
+                    if self.final_sample:
+                        graph.add((self.final_sample, ASMO.hasCalculatedProperty, param_uri))
+
+    @classmethod
+    def from_graph_output_parameters(cls, graph, sim_id):
+        sim = get_simulation(graph, sim_id)
+        output_params = [x[2] for x in graph.triples((sim, ASMO.hasOutputParameter, None))]
+        if output_params:
+            cls.output_parameter = [OutputParameter.from_graph(graph, p) for p in output_params]
+        return cls
+    
+    @classmethod
+    def from_graph_calculated_properties(cls, graph, sim_id):
+        sim = get_simulation(graph, sim_id)
+        calc_props = [x[2] for x in graph.triples((sim, ASMO.wasCalculatedBy, None))]
+        if calc_props:
+            cls.calculated_property = [CalculatedProperty.from_graph(graph, p) for p in calc_props]
+        return cls
+
+    def to_graph_calculated_properties(self, graph, simulation):
+        if self.calculated_property:
+            for param in self.calculated_property:
+                param_uri = param.to_graph(graph)
+                graph.add((param_uri, ASMO.wasCalculatedBy, simulation))
+                if param.associate_to_sample:
+                    if self.final_sample:
+                        graph.add((self.final_sample, ASMO.hasCalculatedProperty, param_uri))
+    
+    def to_graph(self, graph):
+        # create main simulation id
+        main_id = uuid.uuid4()
+        main_id = f'simulation:{main_id}'
+
+        #add method
+        method = self.method.to_graph(graph, main_id)
+        
+        # create simulation node based on method
+        if self.method.basename in ["MolecularStatics", "MolecularDynamics"]:
+            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
+            graph.add((simulation, ASMO.hasComputationalMethod, method))
+            self._to_graph_dof(graph, simulation)
+            self._to_graph_md_details(graph, simulation)
+        
+        elif self.method.basename == "DensityFunctionalTheory":
+            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
+            graph.add((simulation, ASMO.hasComputationalMethod, method))
+            self._to_graph_dof(graph, simulation)
+            self._to_graph_dft_details(graph, simulation)
+
+        elif self.method.basename in ["EquationOfStateFit",
+                                      "QuasiHarmonicApproximation",]:
+            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            graph.add((simulation, ASMO.usesSimulationAlgorithm, method))
+
+        elif self.method.basename == 'ThermodynamicIntegration':
+            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            graph.add((simulation, ASMO.usesSimulationAlgorithm, method))
+            self._to_graph_dof(graph, simulation)
+            self._to_graph_md_details(graph, simulation)
+        
+        #now add software
+        self._to_graph_software(graph, simulation)
+
+        #add structure layers
+        if self.final_sample:
+            graph.add((self.final_sample, PROV.wasGeneratedBy, simulation))        
+            if self.initial_sample:
+                graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
+
+        if self.path:
+            graph.add((simulation, CMSO.hasPath, Literal(self.path, datatype=XSD.string)))
+
+
+        if self.input_paramater:
+            self.to_graph_input_parameters(graph, simulation)
+        if self.output_parameter:
+            self.to_graph_output_parameters(graph, simulation)
+        if self.calculated_property:
+            self.to_graph_calculated_properties(graph, simulation)
+        
+        return simulation
+    
+    @classmethod
+    def from_graph(cls, graph, sim_id):
+        cls = cls._from_graph_md_details(graph, sim_id)
+        cls = cls._from_graph_dft_details(graph, sim_id)
+        cls = cls._from_graph_dof(graph, sim_id)
+        cls = cls._from_graph_software(graph, sim_id)
+        cls = cls.from_graph_input_parameters(graph, sim_id)
+        cls = cls.from_graph_output_parameters(graph, sim_id)
+        cls = cls.from_graph_calculated_properties(graph, sim_id)
+
+        sim = get_simulation(graph, sim_id)
+        label = graph.get_label(sim)
+        if label:
+            cls.label = label
+
+        initial_sample = graph.value(sim, PROV.wasDerivedFrom)
+        if initial_sample:
+            cls.initial_sample = str(initial_sample)
+
+        final_sample = graph.value(sim, PROV.wasGeneratedBy)
+        if final_sample:
+            cls.final_sample = str(final_sample)
+
+        path = graph.value(sim, CMSO.hasPath)
+        if path:
+            cls.path = str(path)
+
+        return cls
+        
+
+
+
