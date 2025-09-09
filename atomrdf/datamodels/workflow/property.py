@@ -44,7 +44,7 @@ class Property(DataProperty):
 
     def _create_name(self):
         name = str(uuid.uuid4())
-        name = f"{self.basename.lower()}:{name}"
+        name = f"property:{self.basename.lower()}_{name}"
         return name
 
     def to_graph(self, graph):

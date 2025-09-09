@@ -89,7 +89,7 @@ class Simulation(Activity):
     )
 
     # list of classes
-    input_paramater: Optional[List[InputParameter]] = Field(
+    input_parameter: Optional[List[InputParameter]] = Field(
         default=[], description="Input properties used in the simulation"
     )
     output_parameter: Optional[List[OutputParameter]] = Field(
@@ -180,7 +180,7 @@ class Simulation(Activity):
     def _to_graph_md_details(self, graph, simulation):
         # add ensemble
         if self.thermodynamic_ensemble:
-            ensemble = self.thermodynamic_ensemble.to_graph(graph, simulation)
+            ensemble = self.thermodynamic_ensemble.to_graph(graph, )
             graph.add((simulation, ASMO.hasStatisticalEnsemble, ensemble))
 
         # add potential
@@ -281,27 +281,27 @@ class Simulation(Activity):
         return cls
     
     def to_graph_input_parameters(self, graph, simulation):
-        if self.input_paramater:
-            for param in self.input_paramater:
+        if self.input_parameter:
+            for param in self.input_parameter:
                 param_uri = param.to_graph(graph)
-                graph.add((simulation, ASMO.hasInputParameter, param_uri))
+                graph.add((simulation, ASMO.hasInputParameter, param_uri), validate=False)
     
     @classmethod
     def from_graph_input_parameters(cls, graph, sim_id):
         sim = get_simulation(graph, sim_id)
         input_params = [x[2] for x in graph.triples((sim, ASMO.hasInputParameter, None))]
         if input_params:
-            cls.input_paramater = [InputParameter.from_graph(graph, p) for p in input_params]
+            cls.input_parameter = [InputParameter.from_graph(graph, p) for p in input_params]
         return cls
     
     def to_graph_output_parameters(self, graph, simulation):
         if self.output_parameter:
             for param in self.output_parameter:
                 param_uri = param.to_graph(graph)
-                graph.add((simulation, ASMO.hasOutputParameter, param_uri))
+                graph.add((simulation, ASMO.hasOutputParameter, param_uri), validate=False)
                 if param.associate_to_sample:
                     if self.final_sample:
-                        graph.add((self.final_sample, ASMO.hasCalculatedProperty, param_uri))
+                        graph.add((self.final_sample, ASMO.hasCalculatedProperty, param_uri), validate=False)
 
     @classmethod
     def from_graph_output_parameters(cls, graph, sim_id):
@@ -323,10 +323,10 @@ class Simulation(Activity):
         if self.calculated_property:
             for param in self.calculated_property:
                 param_uri = param.to_graph(graph)
-                graph.add((param_uri, ASMO.wasCalculatedBy, simulation))
+                graph.add((param_uri, ASMO.wasCalculatedBy, simulation), validate=False)
                 if param.associate_to_sample:
                     if self.final_sample:
-                        graph.add((self.final_sample, ASMO.hasCalculatedProperty, param_uri))
+                        graph.add((self.final_sample, ASMO.hasCalculatedProperty, param_uri), validate=False)
     
     def to_graph(self, graph):
         # create main simulation id
@@ -338,24 +338,24 @@ class Simulation(Activity):
         
         # create simulation node based on method
         if self.method.basename in ["MolecularStatics", "MolecularDynamics"]:
-            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
+            simulation = graph.create_node(main_id, ASMO.EnergyCalculation)
             graph.add((simulation, ASMO.hasComputationalMethod, method))
             self._to_graph_dof(graph, simulation)
             self._to_graph_md_details(graph, simulation)
         
         elif self.method.basename == "DensityFunctionalTheory":
-            simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
+            simulation = graph.create_node(main_id, ASMO.EnergyCalculation)
             graph.add((simulation, ASMO.hasComputationalMethod, method))
             self._to_graph_dof(graph, simulation)
             self._to_graph_dft_details(graph, simulation)
 
         elif self.method.basename in ["EquationOfStateFit",
                                       "QuasiHarmonicApproximation",]:
-            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            simulation = graph.create_node(main_id, ASMO.Simulation)
             graph.add((simulation, ASMO.usesSimulationAlgorithm, method))
 
         elif self.method.basename == 'ThermodynamicIntegration':
-            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            simulation = graph.create_node(main_id, ASMO.Simulation)
             graph.add((simulation, ASMO.usesSimulationAlgorithm, method))
             self._to_graph_dof(graph, simulation)
             self._to_graph_md_details(graph, simulation)
@@ -373,7 +373,7 @@ class Simulation(Activity):
             graph.add((simulation, CMSO.hasPath, Literal(self.path, datatype=XSD.string)))
 
 
-        if self.input_paramater:
+        if self.input_parameter:
             self.to_graph_input_parameters(graph, simulation)
         if self.output_parameter:
             self.to_graph_output_parameters(graph, simulation)

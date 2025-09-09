@@ -32,7 +32,7 @@ class Method(BaseModel, TemplateMixin):
 
 
 class MolecularStatics(Method):
-    basename = "MolecularStatics"
+    basename: str = "MolecularStatics"
     pid: str = ASMO.MolecularStatics.uri
 
     def to_graph(self, graph, main_id):
@@ -47,7 +47,7 @@ class MolecularStatics(Method):
 
 
 class MolecularDynamics(Method):
-    basename = "MolecularDynamics"
+    basename: str = "MolecularDynamics"
     pid: str = ASMO.MolecularDynamics.uri
 
     def to_graph(self, graph, main_id):
@@ -62,7 +62,7 @@ class MolecularDynamics(Method):
 
 
 class DensityFunctionalTheory(Method):
-    basename = "DensityFunctionalTheory"
+    basename: str = "DensityFunctionalTheory"
     pid: str = ASMO.DensityFunctionalTheory.uri
 
     def to_graph(self, graph, main_id):
@@ -77,7 +77,7 @@ class DensityFunctionalTheory(Method):
 
 
 class EquationOfStateFit(Method):
-    basename = "EquationOfState"
+    basename: str = "EquationOfStateFit"
     pid: str = ASMO.EquationOfStateFit.uri
 
     def to_graph(self, graph, main_id):
@@ -92,7 +92,7 @@ class EquationOfStateFit(Method):
 
 
 class QuasiHarmonicApproximation(Method):
-    basename = "QuasiHarmonicModel"
+    basename: str = "QuasiHarmonicApproximation"
     pid: str = ASMO.QuasiHarmonicApproximation.uri
 
     def to_graph(self, graph, main_id):
@@ -107,7 +107,7 @@ class QuasiHarmonicApproximation(Method):
 
 
 class ThermodynamicIntegration(Method):
-    basename = "ThermodynamicIntegration"
+    basename: str = "ThermodynamicIntegration"
     pid: str = ASMO.ThermodynamicIntegration.uri
 
     def to_graph(self, graph, main_id):
@@ -125,7 +125,7 @@ method_map = {
     "MolecularDynamics": MolecularDynamics,
     "MolecularStatics": MolecularStatics,
     "DensityFunctionalTheory": DensityFunctionalTheory,
-    "EquationOfState": EquationOfStateFit,
-    "QuasiHarmonicModel": QuasiHarmonicApproximation,
+    "EquationOfStateFit": EquationOfStateFit,
+    "QuasiHarmonicApproximation": QuasiHarmonicApproximation,
     "ThermodynamicIntegration": ThermodynamicIntegration,
 }
