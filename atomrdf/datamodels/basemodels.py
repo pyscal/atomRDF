@@ -78,17 +78,6 @@ class DataProperty(BaseModel, Generic[T], TemplateMixin):
     )
 
 
-class Activity(BaseModel, TemplateMixin):
-    pid: Optional[str] = Field(default=None, description="PID of the activity")
-
-    initial_sample: Optional[str] = Field(
-        default=None, description="ID of the initial sample in the graph"
-    )
-    final_sample: Optional[str] = Field(
-        default=None, description="ID of the final sample in the graph"
-    )
-
-
 class RDFMixin:
     def to_graph(self, graph, sample):
         raise NotImplementedError

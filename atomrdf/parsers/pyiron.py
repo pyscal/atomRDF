@@ -4,6 +4,20 @@ import ast
 from atomrdf.datamodels.workflow.workflow import Simulation
 from atomrdf.datamodels.workflow.property import InputParameter, OutputParameter, CalculatedProperty
 
+def ase_to_pyiron(structure):
+    try:
+        from pyiron_atomistics.atomistics.structure.atoms import (
+            ase_to_pyiron,
+            pyiron_to_ase,
+        )
+    except ImportError:
+        raise ImportError("Please install pyiron_atomistics")
+    
+    pyiron_structure = ase_to_pyiron(structure)
+    if 'id' in structure.info:
+        pyiron_structure.info['id'] = structure.info['id']
+    return pyiron_structure
+
 def extract(job):
     if type(job).__name__ == 'Lammps':
         return process_job_lammps(job)
@@ -13,6 +27,7 @@ def process_job_lammps(job):
     identify_method(job, method_dict)
     add_software(method_dict)
     get_simulation_folder(job, method_dict)
+    extract_calculated_quantities(job, method_dict)
     return method_dict
 
 def get_simulation_folder(job, method_dict):

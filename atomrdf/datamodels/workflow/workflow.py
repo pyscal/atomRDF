@@ -10,8 +10,8 @@ from atomrdf.datamodels.basemodels import (
     DataProperty,
     RDFMixin,
     BaseModel,
-    Activity,
 )
+from atomrdf.datamodels.activity import Activity
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
     CMSO,
