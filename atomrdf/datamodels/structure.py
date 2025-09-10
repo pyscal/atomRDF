@@ -12,10 +12,10 @@ import json
 from pydantic import Field
 from atomrdf.datamodels.basemodels import (
     TemplateMixin,
-    DataProperty,
     RDFMixin,
     BaseModel,
 )
+from atomrdf.datamodels.workflow.property import Property as DataProperty
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
     CMSO,
@@ -684,6 +684,13 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     def from_graph(cls, graph, sample_id):
         kwargs = {}
         sample = get_sample_object(sample_id)
+
+        #try a type query first
+        sample_type = graph.value(sample, RDF.type)
+        if sample_type is None:
+            raise ValueError(f"Sample {sample_id} not found in graph.")
+        
+        
         # material, simulation_cell, atom_attribute handled separately (if needed)
         kwargs["material"] = Material.from_graph(graph, sample)
         kwargs["simulation_cell"] = SimulationCell.from_graph(graph, sample)
