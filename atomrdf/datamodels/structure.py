@@ -129,17 +129,17 @@ class UnitCell(BaseModel, TemplateMixin):
         alpha = graph.value(angle, CMSO.hasAngle_alpha)
         beta = graph.value(angle, CMSO.hasAngle_beta)
         gamma = graph.value(angle, CMSO.hasAngle_gamma)
-        datadict = {
-            "bravais_lattice": {
-                "value": str(bv),
-            },
-            "lattice_parameter": {
-                "value": [x, y, z],
-            },
-            "angle": {
-                "value": [alpha, beta, gamma],
-            },
-        }
+        datadict = {}
+        if bv is not None:
+            datadict["bravais_lattice"] = {"value": str(bv)}
+        if x is not None and y is not None and z is not None:
+            datadict["lattice_parameter"] = {"value": [x.toPython(), 
+                                                       y.toPython(), 
+                                                       z.toPython()]}
+        if alpha is not None and beta is not None and gamma is not None:
+            datadict["angle"] = {"value": [alpha.toPython(), 
+                                           beta.toPython(), 
+                                           gamma.toPython()]}
         return cls(**datadict)
 
 
@@ -463,20 +463,26 @@ class SimulationCell(BaseModel, TemplateMixin):
         volume = graph.value(volume_item, ASMO.hasValue)
         number_of_atoms = graph.value(sample, CMSO.hasNumberOfAtoms)
 
+        rx = graph.value(simulation_cell, CMSO.hasRepetition_x) or 1
+        ry = graph.value(simulation_cell, CMSO.hasRepetition_y) or 1
+        rz = graph.value(simulation_cell, CMSO.hasRepetition_z) or 1
+
         repetitions = [
-            toPython(graph.value(simulation_cell, CMSO.hasRepetition_x)),
-            toPython(graph.value(simulation_cell, CMSO.hasRepetition_y)),
-            toPython(graph.value(simulation_cell, CMSO.hasRepetition_z)),
+            int(rx),
+            int(ry),
+            int(rz),
         ]
         simulation_cell_length = graph.value(
             simulation_cell,
             CMSO.hasLength,
         )
-        length = [
-            toPython(graph.value(simulation_cell_length, CMSO.hasLength_x)),
-            toPython(graph.value(simulation_cell_length, CMSO.hasLength_y)),
-            toPython(graph.value(simulation_cell_length, CMSO.hasLength_z)),
-        ]
+        if simulation_cell_length is not None:
+            lx = graph.value(simulation_cell_length, CMSO.hasLength_x)
+            ly = graph.value(simulation_cell_length, CMSO.hasLength_y)
+            lz = graph.value(simulation_cell_length, CMSO.hasLength_z)
+            if lx is not None and ly is not None and lz is not None:
+                length = [lx.toPython(), ly.toPython(), lz.toPython()]
+
         vector = []
         for v in graph.objects(simulation_cell, CMSO.hasVector):
             vector.append(
@@ -629,6 +635,9 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     twist_grain_boundary: Optional[defects.TwistGrainBoundary] = None
     symmetric_tilt_grain_boundary: Optional[defects.SymmetricalTiltGrainBoundary] = None
     mixed_grain_boundary: Optional[defects.MixedGrainBoundary] = None
+
+    #properties
+
 
     def to_graph(self, graph, force=False):
         # if force - creates a new ID and saves the structure again
