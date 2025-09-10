@@ -4,7 +4,8 @@ import numpy as np
 import yaml
 import uuid
 import json
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, PrivateAttr
+
 from atomrdf.datamodels.basemodels import (
     TemplateMixin,
     DataProperty,
@@ -23,9 +24,16 @@ from atomrdf.namespace import (
     ASMO,
     MDO,
 )
+from atomrdf.graph import KnowledgeGraph
 
 
 class Property(DataProperty):
+    graph: Optional[KnowledgeGraph] = Field(default=None)  # Private attribute for graph
+    
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
     def _add_value(self, graph, property):
         if self.value is not None:
             graph.add(

@@ -47,7 +47,7 @@ import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
 from atomrdf.sample import Sample
 import atomrdf.mp as amp
-from atomrdf.io.write import write
+
 
 from atomrdf.namespace import (
     Namespace,

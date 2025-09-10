@@ -500,7 +500,7 @@ class SimulationCell(BaseModel, TemplateMixin):
         ]
 
         datadict = {
-            "volume": {"value": volume},
+            "volume": {"value": volume,},
             "number_of_atoms": {"value": int(number_of_atoms)},
             "repetitions": {"value": repetitions},
             "length": {"value": length},
@@ -600,10 +600,13 @@ class AtomAttribute(BaseModel, TemplateMixin):
             data = json.load(fin)
             positions = data[position_identifier]["value"]
             species = data[species_identifier]["value"]
-
+        
+        position=DataProperty(value=positions)
+        species=DataProperty(value=species)
+        
         return cls(
-            position=DataProperty(value=positions),
-            species=DataProperty(value=species),
+            position=position,
+            species=species,
         )
 
 
@@ -690,7 +693,7 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         if sample_type is None:
             raise ValueError(f"Sample {sample_id} not found in graph.")
         
-        
+
         # material, simulation_cell, atom_attribute handled separately (if needed)
         kwargs["material"] = Material.from_graph(graph, sample)
         kwargs["simulation_cell"] = SimulationCell.from_graph(graph, sample)
