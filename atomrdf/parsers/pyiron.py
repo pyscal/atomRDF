@@ -24,11 +24,9 @@ def extract(job):
     elif type(job).__name__ == 'Calphy':
         return calphy_process_job(job)
     elif type(job).__name__ == 'Murnaghan':
-        return murnaghan.process_job(job)
+        return murnaghan_process_job(job)
     elif type(job).__name__ == 'QuasiHarmonicJob':
-        return qha.process_job(job)
-    elif type(job).__name__ == 'Calphy':
-        return calphy.process_job(job)
+        return quasiharmonic_process_job(job)
     else:
         raise TypeError("These type of pyiron Job is not currently supported")
 
@@ -200,7 +198,7 @@ def _lammps_identify_method(job, method_dict):
 
     elif "nvt" in input_dict["fix___ensemble"]:
         method = "md_nvt"
-        raw = input_dict["fix___ensemble"].split()
+        raw = input_dict["fix___ensemble"].split().format(i)
         temp = float(raw[3])
         dof.append("AtomicPositionRelaxation")
         md_method = "MolecularDynamics"
@@ -222,7 +220,8 @@ def _lammps_identify_method(job, method_dict):
 
     method_dict["method"] = {'basename': md_method}
     method_dict["degrees_of_freedom"] = dof
-    method_dict["thermodynamic_ensemble"] = {'basename': ensemble}
+    if ensemble is not None:
+        method_dict["thermodynamic_ensemble"] = {'basename': ensemble}
 
     # now process potential
     inpdict = job.input.to_dict()
