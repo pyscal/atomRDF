@@ -27,7 +27,7 @@ from atomrdf.namespace import (
 
 
 class XCFunctional(TemplateMixin, BaseModel):
-    pid: str = MDO.ExchangeCorrelationEnergyFunctional.uri
+    pid: str = MDO.ExchangeCorrelationEnergyFunctional.toPython()
 
     def to_graph(self):
         # as strange as it may seem, this is what a NamedIndividual should do
@@ -35,7 +35,7 @@ class XCFunctional(TemplateMixin, BaseModel):
 
 
 class GGA(XCFunctional):
-    pid: str = MDO.GGA.uri
+    pid: str = MDO.GGA.toPython()
 
     def to_graph(self):
         # as strange as it may seem, this is what a NamedIndividual should do
@@ -43,7 +43,7 @@ class GGA(XCFunctional):
 
 
 class LDA(XCFunctional):
-    pid: str = MDO.LDA.uri
+    pid: str = MDO.LDA.toPython()
 
     def to_graph(self):
         # as strange as it may seem, this is what a NamedIndividual should do
