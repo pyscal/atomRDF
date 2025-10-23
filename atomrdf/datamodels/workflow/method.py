@@ -10,7 +10,6 @@ from atomrdf.datamodels.basemodels import (
     DataProperty,
     RDFMixin,
     BaseModel,
-    Activity,
 )
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
@@ -26,12 +25,13 @@ from atomrdf.namespace import (
 
 
 class Method(BaseModel, TemplateMixin):
+    basename: str
     pid: Optional[str] = Field(default=None, description="PID of the method")
     label: Optional[str] = Field(default=None, description="Label of the method")
 
 
 class MolecularStatics(Method):
-
+    basename: str = "MolecularStatics"
     pid: str = ASMO.MolecularStatics.uri
 
     def to_graph(self, graph, main_id):
@@ -46,6 +46,7 @@ class MolecularStatics(Method):
 
 
 class MolecularDynamics(Method):
+    basename: str = "MolecularDynamics"
     pid: str = ASMO.MolecularDynamics.uri
 
     def to_graph(self, graph, main_id):
@@ -60,6 +61,7 @@ class MolecularDynamics(Method):
 
 
 class DensityFunctionalTheory(Method):
+    basename: str = "DensityFunctionalTheory"
     pid: str = ASMO.DensityFunctionalTheory.uri
 
     def to_graph(self, graph, main_id):
@@ -74,6 +76,7 @@ class DensityFunctionalTheory(Method):
 
 
 class EquationOfStateFit(Method):
+    basename: str = "EquationOfStateFit"
     pid: str = ASMO.EquationOfStateFit.uri
 
     def to_graph(self, graph, main_id):
@@ -88,6 +91,7 @@ class EquationOfStateFit(Method):
 
 
 class QuasiHarmonicApproximation(Method):
+    basename: str = "QuasiHarmonicApproximation"
     pid: str = ASMO.QuasiHarmonicApproximation.uri
 
     def to_graph(self, graph, main_id):
@@ -102,6 +106,7 @@ class QuasiHarmonicApproximation(Method):
 
 
 class ThermodynamicIntegration(Method):
+    basename: str = "ThermodynamicIntegration"
     pid: str = ASMO.ThermodynamicIntegration.uri
 
     def to_graph(self, graph, main_id):
@@ -119,7 +124,7 @@ method_map = {
     "MolecularDynamics": MolecularDynamics,
     "MolecularStatics": MolecularStatics,
     "DensityFunctionalTheory": DensityFunctionalTheory,
-    "EquationOfState": EquationOfStateFit,
-    "QuasiHarmonicModel": QuasiHarmonicApproximation,
+    "EquationOfStateFit": EquationOfStateFit,
+    "QuasiHarmonicApproximation": QuasiHarmonicApproximation,
     "ThermodynamicIntegration": ThermodynamicIntegration,
 }

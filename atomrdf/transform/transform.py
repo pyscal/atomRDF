@@ -1,4 +1,4 @@
-from build.lib.atomrdf import sample
+
 import numpy as np
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.build.bulk import _generate_atomic_sample_data

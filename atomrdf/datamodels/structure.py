@@ -12,10 +12,10 @@ import json
 from pydantic import Field
 from atomrdf.datamodels.basemodels import (
     TemplateMixin,
-    DataProperty,
     RDFMixin,
     BaseModel,
 )
+from atomrdf.datamodels.workflow.property import Property as DataProperty
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
     CMSO,
@@ -52,66 +52,70 @@ class UnitCell(BaseModel, TemplateMixin):
         unit_cell = graph.create_node(f"{sample_id}_UnitCell", CMSO.UnitCell)
         graph.add((crystal_structure, CMSO.hasUnitCell, unit_cell))
 
-        bv = graph.create_node(
-            f"{sample_id}_BravaisLattice", URIRef(self.bravais_lattice.value)
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasBravaisLattice,
-                bv,
+        if self.bravais_lattice.value is not None: 
+            bv = graph.create_node(
+                f"{sample_id}_BravaisLattice", URIRef(self.bravais_lattice.value)
             )
-        )
-        lattice_parameter = graph.create_node(
-            f"{sample_id}_LatticeParameter", CMSO.LatticeParameter
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasLength_x,
-                Literal(self.lattice_parameter.value[0], datatype=XSD.float),
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasBravaisLattice,
+                    bv,
+                )
             )
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasLength_y,
-                Literal(self.lattice_parameter.value[1], datatype=XSD.float),
+        
+        if self.lattice_parameter.value is not None:
+            lattice_parameter = graph.create_node(
+                f"{sample_id}_LatticeParameter", CMSO.LatticeParameter
             )
-        )
-        graph.add(
-            (
-                unit_cell,
-                CMSO.hasLength_z,
-                Literal(self.lattice_parameter.value[2], datatype=XSD.float),
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasLength_x,
+                    Literal(self.lattice_parameter.value[0], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasLength_y,
+                    Literal(self.lattice_parameter.value[1], datatype=XSD.float),
+                )
+            )
+            graph.add(
+                (
+                    unit_cell,
+                    CMSO.hasLength_z,
+                    Literal(self.lattice_parameter.value[2], datatype=XSD.float),
+                )
+            )
 
-        lattice_angle = graph.create_node(
-            f"{sample_id}_LatticeAngle", CMSO.LatticeAngle
-        )
-        graph.add((unit_cell, CMSO.hasAngle, lattice_angle))
-        graph.add(
-            (
-                lattice_angle,
-                CMSO.hasAngle_alpha,
-                Literal(self.angle.value[0], datatype=XSD.float),
+        if self.angle.value is not None:
+            lattice_angle = graph.create_node(
+                f"{sample_id}_LatticeAngle", CMSO.LatticeAngle
             )
-        )
-        graph.add(
-            (
-                lattice_angle,
-                CMSO.hasAngle_beta,
-                Literal(self.angle.value[1], datatype=XSD.float),
+            graph.add((unit_cell, CMSO.hasAngle, lattice_angle))
+            graph.add(
+                (
+                    lattice_angle,
+                    CMSO.hasAngle_alpha,
+                    Literal(self.angle.value[0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                lattice_angle,
-                CMSO.hasAngle_gamma,
-                Literal(self.angle.value[2], datatype=XSD.float),
+            graph.add(
+                (
+                    lattice_angle,
+                    CMSO.hasAngle_beta,
+                    Literal(self.angle.value[1], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    lattice_angle,
+                    CMSO.hasAngle_gamma,
+                    Literal(self.angle.value[2], datatype=XSD.float),
+                )
+            )
 
     @classmethod
     def from_graph(cls, graph, crystal_structure):
@@ -125,17 +129,17 @@ class UnitCell(BaseModel, TemplateMixin):
         alpha = graph.value(angle, CMSO.hasAngle_alpha)
         beta = graph.value(angle, CMSO.hasAngle_beta)
         gamma = graph.value(angle, CMSO.hasAngle_gamma)
-        datadict = {
-            "bravais_lattice": {
-                "value": str(bv),
-            },
-            "lattice_parameter": {
-                "value": [x, y, z],
-            },
-            "angle": {
-                "value": [alpha, beta, gamma],
-            },
-        }
+        datadict = {}
+        if bv is not None:
+            datadict["bravais_lattice"] = {"value": str(bv)}
+        if x is not None and y is not None and z is not None:
+            datadict["lattice_parameter"] = {"value": [x.toPython(), 
+                                                       y.toPython(), 
+                                                       z.toPython()]}
+        if alpha is not None and beta is not None and gamma is not None:
+            datadict["angle"] = {"value": [alpha.toPython(), 
+                                           beta.toPython(), 
+                                           gamma.toPython()]}
         return cls(**datadict)
 
 
@@ -259,7 +263,7 @@ class SimulationCell(BaseModel, TemplateMixin):
     length: Optional[DataProperty[List[float]]] = None
     vector: Optional[DataProperty[List[List[float]]]] = None
     angle: Optional[DataProperty[List[float]]] = None
-    repetitions: Optional[DataProperty[List[int]]] = None
+    repetitions: Optional[DataProperty[List[int]]]
 
     def to_graph(self, graph, sample):
         sample_id = get_sample_id(sample)
@@ -297,27 +301,28 @@ class SimulationCell(BaseModel, TemplateMixin):
         )
 
         repetitions = self.repetitions.value
-        graph.add(
-            (
-                simulation_cell,
-                CMSO.hasRepetition_x,
-                Literal(repetitions[0], datatype=XSD.integer),
+        if repetitions is not None:
+            graph.add(
+                (
+                    simulation_cell,
+                    CMSO.hasRepetition_x,
+                    Literal(repetitions[0], datatype=XSD.integer),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell,
-                CMSO.hasRepetition_y,
-                Literal(repetitions[1], datatype=XSD.integer),
+            graph.add(
+                (
+                    simulation_cell,
+                    CMSO.hasRepetition_y,
+                    Literal(repetitions[1], datatype=XSD.integer),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell,
-                CMSO.hasRepetition_z,
-                Literal(repetitions[2], datatype=XSD.integer),
+            graph.add(
+                (
+                    simulation_cell,
+                    CMSO.hasRepetition_z,
+                    Literal(repetitions[2], datatype=XSD.integer),
+                )
             )
-        )
         simulation_cell_length = graph.create_node(
             f"{sample_id}_SimulationCellLength", CMSO.SimulationCellLength
         )
@@ -458,20 +463,26 @@ class SimulationCell(BaseModel, TemplateMixin):
         volume = graph.value(volume_item, ASMO.hasValue)
         number_of_atoms = graph.value(sample, CMSO.hasNumberOfAtoms)
 
+        rx = graph.value(simulation_cell, CMSO.hasRepetition_x) or 1
+        ry = graph.value(simulation_cell, CMSO.hasRepetition_y) or 1
+        rz = graph.value(simulation_cell, CMSO.hasRepetition_z) or 1
+
         repetitions = [
-            toPython(graph.value(simulation_cell, CMSO.hasRepetition_x)),
-            toPython(graph.value(simulation_cell, CMSO.hasRepetition_y)),
-            toPython(graph.value(simulation_cell, CMSO.hasRepetition_z)),
+            int(rx),
+            int(ry),
+            int(rz),
         ]
         simulation_cell_length = graph.value(
             simulation_cell,
             CMSO.hasLength,
         )
-        length = [
-            toPython(graph.value(simulation_cell_length, CMSO.hasLength_x)),
-            toPython(graph.value(simulation_cell_length, CMSO.hasLength_y)),
-            toPython(graph.value(simulation_cell_length, CMSO.hasLength_z)),
-        ]
+        if simulation_cell_length is not None:
+            lx = graph.value(simulation_cell_length, CMSO.hasLength_x)
+            ly = graph.value(simulation_cell_length, CMSO.hasLength_y)
+            lz = graph.value(simulation_cell_length, CMSO.hasLength_z)
+            if lx is not None and ly is not None and lz is not None:
+                length = [lx.toPython(), ly.toPython(), lz.toPython()]
+
         vector = []
         for v in graph.objects(simulation_cell, CMSO.hasVector):
             vector.append(
@@ -489,7 +500,7 @@ class SimulationCell(BaseModel, TemplateMixin):
         ]
 
         datadict = {
-            "volume": {"value": volume},
+            "volume": {"value": volume,},
             "number_of_atoms": {"value": int(number_of_atoms)},
             "repetitions": {"value": repetitions},
             "length": {"value": length},
@@ -589,10 +600,13 @@ class AtomAttribute(BaseModel, TemplateMixin):
             data = json.load(fin)
             positions = data[position_identifier]["value"]
             species = data[species_identifier]["value"]
-
+        
+        position=DataProperty(value=positions)
+        species=DataProperty(value=species)
+        
         return cls(
-            position=DataProperty(value=positions),
-            species=DataProperty(value=species),
+            position=position,
+            species=species,
         )
 
 
@@ -624,6 +638,9 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     twist_grain_boundary: Optional[defects.TwistGrainBoundary] = None
     symmetric_tilt_grain_boundary: Optional[defects.SymmetricalTiltGrainBoundary] = None
     mixed_grain_boundary: Optional[defects.MixedGrainBoundary] = None
+
+    #properties
+
 
     def to_graph(self, graph, force=False):
         # if force - creates a new ID and saves the structure again
@@ -670,6 +687,13 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     def from_graph(cls, graph, sample_id):
         kwargs = {}
         sample = get_sample_object(sample_id)
+
+        #try a type query first
+        sample_type = graph.value(sample, RDF.type)
+        if sample_type is None:
+            raise ValueError(f"Sample {sample_id} not found in graph.")
+        
+
         # material, simulation_cell, atom_attribute handled separately (if needed)
         kwargs["material"] = Material.from_graph(graph, sample)
         kwargs["simulation_cell"] = SimulationCell.from_graph(graph, sample)

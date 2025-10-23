@@ -10,7 +10,6 @@ from atomrdf.datamodels.basemodels import (
     DataProperty,
     RDFMixin,
     BaseModel,
-    Activity,
 )
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
@@ -33,7 +32,7 @@ class CanonicalEnsemble(ThermodynamicEnsemble):
     pid: str = ASMO.CanonicalEnsemble.uri
     basename: str = "CanonicalEnsemble"
 
-    def to_graph(self):
+    def to_graph(self, graph=None):
         # as strange as it may seem, this is what a NamedIndividual should do
         return ASMO.CanonicalEnsemble
 
@@ -42,7 +41,7 @@ class MicrocanonicalEnsemble(ThermodynamicEnsemble):
     pid: str = ASMO.MicrocanonicalEnsemble.uri
     basename: str = "MicrocanonicalEnsemble"
 
-    def to_graph(self):
+    def to_graph(self, graph=None):
         # as strange as it may seem, this is what a NamedIndividual should do
         return ASMO.MicrocanonicalEnsemble
 
@@ -51,7 +50,7 @@ class IsothermalIsobaricEnsemble(ThermodynamicEnsemble):
     pid: str = ASMO.IsothermalIsobaricEnsemble.uri
     basename: str = "IsothermalIsobaricEnsemble"
 
-    def to_graph(self):
+    def to_graph(self, graph=None):
         # as strange as it may seem, this is what a NamedIndividual should do
         return ASMO.IsothermalIsobaricEnsemble
 
@@ -60,7 +59,7 @@ class IsoenthalpicIsobaricEnsemble(ThermodynamicEnsemble):
     pid: str = ASMO.IsoenthalpicIsobaricEnsemble.uri
     basename: str = "IsoenthalpicIsobaricEnsemble"
 
-    def to_graph(self):
+    def to_graph(self, graph=None):
         # as strange as it may seem, this is what a NamedIndividual should do
         return ASMO.IsoenthalpicIsobaricEnsemble
 
@@ -69,7 +68,7 @@ class GrandCanonicalEnsemble(ThermodynamicEnsemble):
     pid: str = ASMO.GrandCanonicalEnsemble.uri
     basename: str = "GrandCanonicalEnsemble"
 
-    def to_graph(self):
+    def to_graph(self, graph=None):
         # as strange as it may seem, this is what a NamedIndividual should do
         return ASMO.GrandCanonicalEnsemble
 

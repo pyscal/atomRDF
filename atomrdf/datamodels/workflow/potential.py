@@ -11,7 +11,6 @@ from atomrdf.datamodels.basemodels import (
     DataProperty,
     RDFMixin,
     BaseModel,
-    Activity,
 )
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
@@ -36,7 +35,7 @@ class InteratomicPotential(BaseModel, TemplateMixin):
     def _add_potential(self, potential, graph):
         if self.uri:
             graph.add(
-                (potential, CMSO.hasReference, Literal(self.uri, datatype=XSD.string))
+                (potential, CMSO.hasReference, Literal(self.uri, datatype=XSD.anyURI))
             )
         if self.label:
             graph.add((potential, RDFS.label, Literal(self.label, datatype=XSD.string)))
@@ -44,7 +43,7 @@ class InteratomicPotential(BaseModel, TemplateMixin):
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_potential"
         potential = graph.create_node(main_id, ASMO.InteratomicPotential)
-        self._add_potential(potential)
+        self._add_potential(potential, graph)
         return potential
 
     @classmethod
@@ -67,7 +66,7 @@ class ModifiedEmbeddedAtomModel(InteratomicPotential):
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_potential"
         potential = graph.create_node(main_id, ASMO.ModifiedEmbeddedAtomModel)
-        self._add_potential(potential)
+        self._add_potential(potential, graph)
         return potential
 
 
@@ -80,7 +79,7 @@ class EmbeddedAtomModel(InteratomicPotential):
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_potential"
         potential = graph.create_node(main_id, ASMO.EmbeddedAtomModel)
-        self._add_potential(potential)
+        self._add_potential(potential, graph)
         return potential
 
 
@@ -93,7 +92,7 @@ class LennardJonesPotential(InteratomicPotential):
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_potential"
         potential = graph.create_node(main_id, ASMO.LennardJonesPotential)
-        self._add_potential(potential)
+        self._add_potential(potential, graph)
         return potential
 
 
@@ -106,7 +105,7 @@ class MachineLearningPotential(InteratomicPotential):
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_potential"
         potential = graph.create_node(main_id, ASMO.MachineLearningPotential)
-        self._add_potential(potential)
+        self._add_potential(potential, graph)
         return potential
 
 
@@ -116,4 +115,14 @@ potential_map = {
     "EmbeddedAtomModel": EmbeddedAtomModel,
     "LennardJonesPotential": LennardJonesPotential,
     "MachineLearningPotential": MachineLearningPotential,
+    "EAM": EmbeddedAtomModel,
+    "MEAM": ModifiedEmbeddedAtomModel,
+    "ACE": MachineLearningPotential,
+    "LJ": LennardJonesPotential,
+    "HDNNP": MachineLearningPotential,
+    "eam": EmbeddedAtomModel,
+    "meam": ModifiedEmbeddedAtomModel,
+    "pace": MachineLearningPotential,
+    "lj": LennardJonesPotential,
+    "hdnnp": MachineLearningPotential,
 }
