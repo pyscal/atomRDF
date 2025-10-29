@@ -273,6 +273,7 @@ def grain_boundary(
     uc_b=1,
     repeat=None,
     graph=None,
+    primitive=False,
 ):
     """
     Create a grain boundary system. GB can be created either with AIMSGB or GBCode.
@@ -453,7 +454,7 @@ def grain_boundary(
         datadict = GBObject.template()
         datadict["sigma"]["value"] = gb.sigma
         datadict["rotation_axis"]["value"] = axis
-        datadict["plane"]["value"] = " ".join(np.array(gb_plane).astype(str))
+        datadict["plane"]["value"] = gb_plane
         datadict["misorientation_angle"]["value"] = gb.theta[0]
         setattr(sample, gb_name, GBObject(**datadict))
 
