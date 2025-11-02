@@ -40,7 +40,8 @@ from pyscal3.atoms import Atoms
 
 from atomrdf.visualize import visualize_graph, visualize_provenance
 from atomrdf.ontology import read_ontology
-from atomrdf.structure import System
+
+# from atomrdf.structure import System
 import atomrdf.properties as prp
 from atomrdf.stores import create_store, purge
 import atomrdf.json_io as json_io

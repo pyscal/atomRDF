@@ -25,10 +25,19 @@ import uuid
 import importlib
 import uuid
 
-from atomrdf.structure import System
 
 # Move imports to another file
-from atomrdf.namespace import PROV, CMSO, PODO, ASMO, MDO, Literal, UNSAFECMSO, UNSAFEASMO
+from atomrdf.namespace import (
+    PROV,
+    CMSO,
+    PODO,
+    ASMO,
+    MDO,
+    Literal,
+    UNSAFECMSO,
+    UNSAFEASMO,
+)
+
 
 class Workflow:
     def __init__(self, kg):
@@ -46,82 +55,98 @@ class Workflow:
 
     def inform_graph(self, pr, workflow_environment=None, workflow_module=None):
         if workflow_environment is not None:
-            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}.{workflow_environment}")
-        
+            workflow_module = importlib.import_module(
+                f"atomrdf.workflow.{workflow_environment}.{workflow_environment}"
+            )
+
         if workflow_module is not None:
             workflow_module.inform_graph(pr, self.kg)
-        
 
-    def to_graph(self, job=None, workflow_environment=None, workflow_module=None, job_dicts=None, add_intermediate_jobs=False):
+    def to_graph(
+        self,
+        job=None,
+        workflow_environment=None,
+        workflow_module=None,
+        job_dicts=None,
+        add_intermediate_jobs=False,
+    ):
 
         if workflow_environment is not None:
-            workflow_module = importlib.import_module(f"atomrdf.workflow.{workflow_environment}.{workflow_environment}")
+            workflow_module = importlib.import_module(
+                f"atomrdf.workflow.{workflow_environment}.{workflow_environment}"
+            )
             job_dicts = np.atleast_1d(workflow_module.process_job(job))
         elif workflow_module is not None:
             job_dicts = np.atleast_1d(workflow_module.process_job(job))
         if job_dicts is None:
             raise ValueError("Job dict could not be calculated!")
         job_dicts = np.atleast_1d(job_dicts)
-        
-        #print(job_dict)
 
-        #now we call the functions in order
+        # print(job_dict)
+
+        # now we call the functions in order
         for job_dict in job_dicts:
-            if not 'intermediate' in job_dict.keys():
-                job_dict['intermediate'] = False
-            if (not add_intermediate_jobs) and job_dict['intermediate']:
+            if not "intermediate" in job_dict.keys():
+                job_dict["intermediate"] = False
+            if (not add_intermediate_jobs) and job_dict["intermediate"]:
                 continue
             job_dict = self._add_structure(job_dict)
-            parent_sample = job_dict['sample']['initial']
-            sample = job_dict['sample']['final']
-            structure = job_dict['structure']['final']
-            #print(parent_sample)
+            parent_sample = job_dict["sample"]["initial"]
+            sample = job_dict["sample"]["final"]
+            structure = job_dict["structure"]["final"]
+            # print(parent_sample)
             self._add_structural_relation(parent_sample, sample, structure)
             self._add_method(job_dict)
 
-        #now add child connection
+        # now add child connection
         if add_intermediate_jobs:
             for job_dict in job_dicts:
-                if not job_dict['intermediate']:
+                if not job_dict["intermediate"]:
                     parent = job_dict
                     break
-            
+
             for job_dict in job_dicts:
-                if job_dict['intermediate']:
-                    parent_sample = job_dict['sample']['final']
-                    sample = parent['sample']['final']
-                    structure = parent['structure']['final']
+                if job_dict["intermediate"]:
+                    parent_sample = job_dict["sample"]["final"]
+                    sample = parent["sample"]["final"]
+                    structure = parent["structure"]["final"]
                     self._add_structural_relation(parent_sample, sample, structure)
 
     def _add_structure(self, job_dict):
-        #ensure these are not strings
-        if isinstance(job_dict['sample']['initial'], str):
-            job_dict['sample']['initial'] = URIRef(job_dict['sample']['initial'])
-        if isinstance(job_dict['sample']['final'], str):
-            job_dict['sample']['final'] = URIRef(job_dict['sample']['final'])
+        # ensure these are not strings
+        if isinstance(job_dict["sample"]["initial"], str):
+            job_dict["sample"]["initial"] = URIRef(job_dict["sample"]["initial"])
+        if isinstance(job_dict["sample"]["final"], str):
+            job_dict["sample"]["final"] = URIRef(job_dict["sample"]["final"])
 
-        if (job_dict['structure']['final'] is None) and (job_dict['sample']['final'] is None):
+        if (job_dict["structure"]["final"] is None) and (
+            job_dict["sample"]["final"] is None
+        ):
             raise ValueError("Either structure or sample should be specified")
 
-        if job_dict['sample']['final'] is None:
+        if job_dict["sample"]["final"] is None:
             # its not added to graph yet
-            structure = job_dict['structure']['final']
+            structure = job_dict["structure"]["final"]
             structure.graph = self.kg
             structure.to_graph()
-            job_dict['sample']['final'] = structure.sample
+            job_dict["sample"]["final"] = structure.sample
 
-
-        if (job_dict['sample']['initial'] is None) or (job_dict['sample']['initial'] not in self.kg.sample_ids):
+        if (job_dict["sample"]["initial"] is None) or (
+            job_dict["sample"]["initial"] not in self.kg.sample_ids
+        ):
             # its not added to graph yet
-            parent_structure = job_dict['structure']['initial']
+            parent_structure = job_dict["structure"]["initial"]
             if parent_structure is not None:
                 parent_structure.graph = self.kg
                 parent_structure.to_graph()
-                job_dict['sample']['initial'] = parent_structure.sample
+                job_dict["sample"]["initial"] = parent_structure.sample
         return job_dict
 
     def _add_structural_relation(
-        self, parent_sample, sample, structure,
+        self,
+        parent_sample,
+        sample,
+        structure,
     ):
         """
         Add structural relation between samples.
@@ -139,11 +164,11 @@ class Workflow:
         """
 
         self.kg.add((sample, RDF.type, PROV.Entity))
-        
+
         if parent_sample is not None:
             self.kg.add((parent_sample, RDF.type, PROV.Entity))
             self.kg.add((sample, PROV.wasDerivedFrom, parent_sample))
-            #update label
+            # update label
             label = self.kg.get_string_label(sample)
             parent_label = self.kg.get_string_label(parent_sample)
             if label is None:
@@ -151,27 +176,37 @@ class Workflow:
             else:
                 new_label = f"{label}_from_{parent_label}"
             self.kg.change_label(sample, new_label)
-            self._get_lattice_properties(parent_sample, sample, structure,)
-            self._add_inherited_properties(parent_sample, sample,)
-            self._add_cell_repetitions(parent_sample, sample,)
+            self._get_lattice_properties(
+                parent_sample,
+                sample,
+                structure,
+            )
+            self._add_inherited_properties(
+                parent_sample,
+                sample,
+            )
+            self._add_cell_repetitions(
+                parent_sample,
+                sample,
+            )
 
     def _get_lattice_properties(
-        self, parent_sample, sample, structure,
+        self,
+        parent_sample,
+        sample,
+        structure,
     ):
         if sample is None:
             return
 
         material = list(
-            [
-                k[2]
-                for k in self.kg.triples((parent_sample, CMSO.hasMaterial, None))
-            ]
+            [k[2] for k in self.kg.triples((parent_sample, CMSO.hasMaterial, None))]
         )[0]
         crystal_structure = self.kg.value(material, CMSO.hasStructure)
 
         altname = self.kg.value(crystal_structure, CMSO.hasAltName)
 
-        #space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
+        # space_group = self.kg.value(crystal_structure, CMSO.hasSpaceGroup)
         space_group_symbol = self.kg.value(crystal_structure, CMSO.hasSpaceGroupSymbol)
         space_group_number = self.kg.value(crystal_structure, CMSO.hasSpaceGroupNumber)
 
@@ -203,13 +238,13 @@ class Workflow:
         structure._add_crystal_structure(targets=targets)
 
     def _add_cell_repetitions(self, parent_sample, sample):
-        #add lattice repetitions when doing simulations
+        # add lattice repetitions when doing simulations
 
         if sample is None:
             return
-        
+
         old_simcell = self.kg.value(parent_sample, CMSO.hasSimulationCell)
-        x = self.kg.value(old_simcell, CMSO.hasRepetition_x)        
+        x = self.kg.value(old_simcell, CMSO.hasRepetition_x)
         y = self.kg.value(old_simcell, CMSO.hasRepetition_y)
         z = self.kg.value(old_simcell, CMSO.hasRepetition_z)
         x = Literal(1) if x is None else x
@@ -220,9 +255,11 @@ class Workflow:
         self.kg.add((new_simcell, CMSO.hasRepetition_x, x))
         self.kg.add((new_simcell, CMSO.hasRepetition_y, y))
         self.kg.add((new_simcell, CMSO.hasRepetition_z, z))
-    
+
     def _add_inherited_properties(
-        self, parent_sample, sample,
+        self,
+        parent_sample,
+        sample,
     ):
         # Here we need to add inherited info: CalculatedProperties will be lost
         # Defects will be inherited
@@ -233,8 +270,9 @@ class Workflow:
         self.kg.copy_defects(sample, parent_sample)
 
     def _add_method(
-            self, job_dict, 
-        ):
+        self,
+        job_dict,
+    ):
         """
         Add the computational method and related information to the knowledge graph.
 
@@ -260,49 +298,75 @@ class Workflow:
         # add activity
         # ----------------------------------------------------------
         main_id = uuid.uuid4()
-        main_id = f'simulation:{main_id}'
-        job_dict['id'] = main_id
+        main_id = f"simulation:{main_id}"
+        job_dict["id"] = main_id
         simulation = self.kg.create_node(main_id, ASMO.Simulation)
-        
+
         # add method
         # ----------------------------------------------------------
         method = URIRef(f"{main_id}_method")
         if job_dict["method"] == "MolecularStatics":
             simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
-            self.kg.add((simulation, ASMO.hasComputationalMethod, ASMO.MolecularStatics))
+            self.kg.add(
+                (simulation, ASMO.hasComputationalMethod, ASMO.MolecularStatics)
+            )
             self._add_dof(job_dict, simulation)
             self._add_md(job_dict, simulation)
 
         elif job_dict["method"] == "MolecularDynamics":
             simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
-            self.kg.add((simulation, ASMO.hasComputationalMethod, ASMO.MolecularDynamics))
+            self.kg.add(
+                (simulation, ASMO.hasComputationalMethod, ASMO.MolecularDynamics)
+            )
             self._add_dof(job_dict, simulation)
             self._add_md(job_dict, simulation)
 
         elif job_dict["method"] == "DensityFunctionalTheory":
             simulation = self.kg.create_node(main_id, ASMO.EnergyCalculation)
-            self.kg.add((simulation, ASMO.hasComputationalMethod, ASMO.DensityFunctionalTheory))
+            self.kg.add(
+                (simulation, ASMO.hasComputationalMethod, ASMO.DensityFunctionalTheory)
+            )
             self._add_dof(job_dict, simulation)
             self._add_dft(job_dict, method, simulation)
 
-        elif job_dict["method"] == "EquationOfState":            
+        elif job_dict["method"] == "EquationOfState":
             simulation = self.kg.create_node(main_id, ASMO.Simulation)
-            self.kg.add((simulation, ASMO.usesSimulationAlgorithm, ASMO.EquationOfStateFit))
+            self.kg.add(
+                (simulation, ASMO.usesSimulationAlgorithm, ASMO.EquationOfStateFit)
+            )
 
         elif job_dict["method"] == "QuasiHarmonicModel":
-            simulation = self.kg.create_node(main_id, ASMO.Simulation)            
-            self.kg.add((simulation, ASMO.usesSimulationAlgorithm, ASMO.QuasiHarmonicApproximation))
-
-        elif job_dict["method"] == "ThermodynamicIntegration": 
             simulation = self.kg.create_node(main_id, ASMO.Simulation)
-            self.kg.add((simulation, ASMO.usesSimulationAlgorithm, ASMO.ThermodynamicIntegration))    
+            self.kg.add(
+                (
+                    simulation,
+                    ASMO.usesSimulationAlgorithm,
+                    ASMO.QuasiHarmonicApproximation,
+                )
+            )
+
+        elif job_dict["method"] == "ThermodynamicIntegration":
+            simulation = self.kg.create_node(main_id, ASMO.Simulation)
+            self.kg.add(
+                (
+                    simulation,
+                    ASMO.usesSimulationAlgorithm,
+                    ASMO.ThermodynamicIntegration,
+                )
+            )
             self._add_dof(job_dict, simulation)
-            self._add_md(job_dict, simulation)       
+            self._add_md(job_dict, simulation)
 
         # add that structure was generated
-        self.kg.add((job_dict['sample']['final'], PROV.wasGeneratedBy, simulation))
-        if 'path' in job_dict.keys():
-            self.kg.add((simulation, CMSO.hasPath, Literal(job_dict['path'], datatype=XSD.string)))
+        self.kg.add((job_dict["sample"]["final"], PROV.wasGeneratedBy, simulation))
+        if "path" in job_dict.keys():
+            self.kg.add(
+                (
+                    simulation,
+                    CMSO.hasPath,
+                    Literal(job_dict["path"], datatype=XSD.string),
+                )
+            )
         self._add_inputs(job_dict, simulation)
         self._add_outputs(job_dict, simulation)
         self._add_software(job_dict, method)
@@ -310,84 +374,98 @@ class Workflow:
     def _add_dof(self, job_dict, activity):
         for dof in job_dict["dof"]:
             self.kg.add((activity, UNSAFEASMO.hasRelaxationDOF, getattr(ASMO, dof)))
-    
+
     def _select_base_property(self, out, main_id, default_class):
         if "base" in out.keys():
             base = out["base"]
         else:
             base = out["label"]
 
-        if base == 'TotalEnergy':
+        if base == "TotalEnergy":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.TotalEnergy,
+                f'{main_id}_{out["label"]}',
+                ASMO.TotalEnergy,
                 label=out["label"],
             )
-        elif base == 'PotentialEnergy':
+        elif base == "PotentialEnergy":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.PotentialEnergy,
+                f'{main_id}_{out["label"]}',
+                ASMO.PotentialEnergy,
                 label=out["label"],
             )
-        elif base == 'KineticEnergy':
+        elif base == "KineticEnergy":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.KineticEnergy,
+                f'{main_id}_{out["label"]}',
+                ASMO.KineticEnergy,
                 label=out["label"],
             )
-        elif base == 'Volume':
+        elif base == "Volume":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.Volume,
+                f'{main_id}_{out["label"]}',
+                ASMO.Volume,
                 label=out["label"],
             )
-        elif base == 'Pressure':
+        elif base == "Pressure":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', UNSAFEASMO.VirialPressure,
+                f'{main_id}_{out["label"]}',
+                UNSAFEASMO.VirialPressure,
                 label=out["label"],
             )
-        elif base == 'Temperature':
+        elif base == "Temperature":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.Temperature,
+                f'{main_id}_{out["label"]}',
+                ASMO.Temperature,
                 label=out["label"],
             )
-        elif base == 'BulkModulus':
+        elif base == "BulkModulus":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.BulkModulus,
+                f'{main_id}_{out["label"]}',
+                ASMO.BulkModulus,
                 label=out["label"],
             )
-        elif base == 'FreeEnergy':
+        elif base == "FreeEnergy":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.FreeEnergy,
+                f'{main_id}_{out["label"]}',
+                ASMO.FreeEnergy,
                 label=out["label"],
             )
-        elif base == 'EnergyCutoff':
+        elif base == "EnergyCutoff":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.EnergyCutoff,
+                f'{main_id}_{out["label"]}',
+                ASMO.EnergyCutoff,
                 label=out["label"],
             )
-        elif base == 'ExplicitKPointMesh':
+        elif base == "ExplicitKPointMesh":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.ExplicitKPointMesh,
+                f'{main_id}_{out["label"]}',
+                ASMO.ExplicitKPointMesh,
                 label=out["label"],
             )
-        elif base == 'GammaCenteredKPointMesh':
+        elif base == "GammaCenteredKPointMesh":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.GammaCenteredKPointMesh,
+                f'{main_id}_{out["label"]}',
+                ASMO.GammaCenteredKPointMesh,
                 label=out["label"],
             )
-        elif base == 'MonkhorstPackKPointMesh':
+        elif base == "MonkhorstPackKPointMesh":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.MonkhorstPackKPointMesh,
+                f'{main_id}_{out["label"]}',
+                ASMO.MonkhorstPackKPointMesh,
                 label=out["label"],
             )
-        elif base == 'KPointMesh':
+        elif base == "KPointMesh":
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', ASMO.KPointMesh,
+                f'{main_id}_{out["label"]}',
+                ASMO.KPointMesh,
                 label=out["label"],
             )
         else:
             prop = self.kg.create_node(
-                f'{main_id}_{out["label"]}', default_class,
+                f'{main_id}_{out["label"]}',
+                default_class,
                 label=out["label"],
             )
-        
+
         self.kg.add((prop, ASMO.hasValue, Literal(out["value"], datatype=XSD.float)))
         if "unit" in out.keys():
             unit = out["unit"]
@@ -400,25 +478,26 @@ class Workflow:
             )
         return prop
 
-
     def _add_inputs(self, job_dict, activity):
-        main_id = job_dict['id']
+        main_id = job_dict["id"]
         if "inputs" in job_dict.keys():
             for inp in job_dict["inputs"]:
                 prop = self._select_base_property(inp, main_id, ASMO.InputParameter)
                 self.kg.add((activity, ASMO.hasInputParameter, prop))
 
     def _add_outputs(self, job_dict, activity):
-        main_id = job_dict['id']
+        main_id = job_dict["id"]
         if "outputs" in job_dict.keys():
             for out in job_dict["outputs"]:
-                #here we add the classes by property
-                #call func here
+                # here we add the classes by property
+                # call func here
                 prop = self._select_base_property(out, main_id, ASMO.CalculatedProperty)
                 self.kg.add((prop, ASMO.wasCalculatedBy, activity))
-                
+
                 if out["associate_to_sample"]:
-                    self.kg.add((job_dict['sample']['final'], ASMO.hasCalculatedProperty, prop))
+                    self.kg.add(
+                        (job_dict["sample"]["final"], ASMO.hasCalculatedProperty, prop)
+                    )
 
     def _add_software(self, job_dict, method):
         # finally add software
@@ -440,21 +519,23 @@ class Workflow:
             else:
                 self.kg.add((method, PROV.wasAssociatedWith, agent))
 
-
     def _add_dft(self, job_dict, method, activity):
-        main_id = job_dict['id']
+        main_id = job_dict["id"]
         if job_dict["xc_functional"] is not None:
-            if job_dict["xc_functional"] in ['PBE', 'GGA']:
+            if job_dict["xc_functional"] in ["PBE", "GGA"]:
                 self.kg.add((method, MDO.hasXCFunctional, MDO.GGA))
-            elif job_dict["xc_functional"] in ['LDA']:
+            elif job_dict["xc_functional"] in ["LDA"]:
                 self.kg.add((method, MDO.hasXCFunctional, MDO.LDA))
 
-    
     def _add_md(self, job_dict, activity):
-        main_id = job_dict['id']
+        main_id = job_dict["id"]
         if job_dict["ensemble"] is not None:
             self.kg.add(
-                (activity, ASMO.hasStatisticalEnsemble, getattr(ASMO, job_dict["ensemble"]))
+                (
+                    activity,
+                    ASMO.hasStatisticalEnsemble,
+                    getattr(ASMO, job_dict["ensemble"]),
+                )
             )
 
         # potentials need to be mapped
