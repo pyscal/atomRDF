@@ -2,7 +2,12 @@ import os
 import numpy as np
 import ast
 from atomrdf.datamodels.workflow.workflow import Simulation
-from atomrdf.datamodels.workflow.property import InputParameter, OutputParameter, CalculatedProperty
+from atomrdf.datamodels.workflow.property import (
+    InputParameter,
+    OutputParameter,
+    CalculatedProperty,
+)
+
 
 def ase_to_pyiron(structure):
     try:
@@ -12,20 +17,21 @@ def ase_to_pyiron(structure):
         )
     except ImportError:
         raise ImportError("Please install pyiron_atomistics")
-    
+
     pyiron_structure = ase_to_pyiron(structure)
-    if 'id' in structure.info:
-        pyiron_structure.info['id'] = structure.info['id']
+    if "id" in structure.info:
+        pyiron_structure.info["id"] = structure.info["id"]
     return pyiron_structure
 
+
 def extract(job):
-    if type(job).__name__ == 'Lammps':
+    if type(job).__name__ == "Lammps":
         return lammps_process_job(job)
-    elif type(job).__name__ == 'Calphy':
+    elif type(job).__name__ == "Calphy":
         return calphy_process_job(job)
-    elif type(job).__name__ == 'Murnaghan':
+    elif type(job).__name__ == "Murnaghan":
         return murnaghan_process_job(job)
-    elif type(job).__name__ == 'QuasiHarmonicJob':
+    elif type(job).__name__ == "QuasiHarmonicJob":
         return quasiharmonic_process_job(job)
     else:
         raise TypeError("These type of pyiron Job is not currently supported")
@@ -40,6 +46,7 @@ def lammps_process_job(job):
     _lammps_get_structures(job, method_dict)
     return method_dict
 
+
 def calphy_process_job(job):
     method_dict = Simulation.template()
     _calphy_identify_method(job, method_dict)
@@ -49,28 +56,30 @@ def calphy_process_job(job):
     _lammps_get_structures(job, method_dict)
     return method_dict
 
+
 def murnaghan_process_job(job):
-    #murnaghan job processing; add individual lammps jobs first
+    # murnaghan job processing; add individual lammps jobs first
     job_dicts = []
     for jobid in job.child_ids:
         child_job = job.project.load(jobid)
-        if type(child_job).__name__ == 'Lammps':
+        if type(child_job).__name__ == "Lammps":
             single_job_dict = lammps_process_job(child_job)
-            #note that we turn the jobs to child here
+            # note that we turn the jobs to child here
             job_dicts.append(single_job_dict)
-    
-    #create an additional jobdict with the murnaghan job
+
+    # create an additional jobdict with the murnaghan job
     murnaghan_dict = Simulation.template()
     _lammps_get_structures(job, murnaghan_dict)
     _lammps_get_simulation_folder(job, murnaghan_dict)
 
-    #add the murnaghan method
-    murnaghan_dict['method'] = "EquationOfStateFit"
+    # add the murnaghan method
+    murnaghan_dict["algorithm"] = "EquationOfStateFit"
+    murnaghan_dict["method"] = "MolecularStatics"
     outputs = []
     outputs.append(
         {
             "label": "EquilibriumEnergy",
-            "value": np.round(job['output/equilibrium_energy'], decimals=4),
+            "value": np.round(job["output/equilibrium_energy"], decimals=4),
             "unit": "EV",
             "associate_to_sample": True,
             "basename": "TotalEnergy",
@@ -79,7 +88,7 @@ def murnaghan_process_job(job):
     outputs.append(
         {
             "label": "EquilibriumVolume",
-            "value": np.round(job['output/equilibrium_volume'], decimals=4),
+            "value": np.round(job["output/equilibrium_volume"], decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
             "basename": "Volume",
@@ -88,7 +97,7 @@ def murnaghan_process_job(job):
     outputs.append(
         {
             "label": "TotalEnergy",
-            "value": np.round(job['output/energy'], decimals=4),
+            "value": np.round(job["output/energy"], decimals=4),
             "unit": "EV",
             "associate_to_sample": True,
             "basename": "TotalEnergy",
@@ -97,7 +106,7 @@ def murnaghan_process_job(job):
     outputs.append(
         {
             "label": "SimulationCellVolume",
-            "value": np.round(job['output/volume'], decimals=4),
+            "value": np.round(job["output/volume"], decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
             "basename": "SimulationCellVolume",
@@ -106,34 +115,36 @@ def murnaghan_process_job(job):
     outputs.append(
         {
             "label": "BulkModulus",
-            'basename': "BulkModulus",
-            "value": np.round(job['output/equilibrium_bulk_modulus'], decimals=2),
+            "basename": "BulkModulus",
+            "value": np.round(job["output/equilibrium_bulk_modulus"], decimals=2),
             "unit": "GigaPA",
             "associate_to_sample": True,
         }
     )
-    
-    murnaghan_dict['calculated_property'] = outputs
+
+    murnaghan_dict["calculated_property"] = outputs
     _lammps_add_software(murnaghan_dict)
     job_dicts.append(murnaghan_dict)
     return job_dicts
 
+
 def quasiharmonic_process_job(job):
-    #murnaghan job processing; add individual lammps jobs first
+    # murnaghan job processing; add individual lammps jobs first
     job_dicts = []
-    
-    #create an additional jobdict with the murnaghan job
+
+    # create an additional jobdict with the murnaghan job
     quasi_dict = Simulation.template()
     _lammps_get_structures(job, quasi_dict)
     _lammps_get_simulation_folder(job, quasi_dict)
 
-    #add the murnaghan method
-    quasi_dict['method'] = "QuasiHarmonicApproximation"
+    # add the murnaghan method
+    quasi_dict["algorithm"] = "QuasiHarmonicApproximation"
+    quasi_dict["method"] = "MolecularStatics"
     outputs = []
     outputs.append(
         {
             "label": "QuasiharmonicFreeEnergy",
-            "value": np.round(job['output/free_energy'].T, decimals=4),
+            "value": np.round(job["output/free_energy"].T, decimals=4),
             "unit": "EV",
             "associate_to_sample": True,
             "basename": "FreeEnergy",
@@ -142,7 +153,7 @@ def quasiharmonic_process_job(job):
     outputs.append(
         {
             "label": "QuasiharmonicVolume",
-            "value": np.round(job['output/volumes'].T, decimals=4),
+            "value": np.round(job["output/volumes"].T, decimals=4),
             "unit": "ANGSTROM3",
             "associate_to_sample": True,
             "basename": "SimulationCellVolume",
@@ -151,19 +162,21 @@ def quasiharmonic_process_job(job):
     outputs.append(
         {
             "label": "QuasiharmonicTemperature",
-            "value": np.round(job['output/temperatures'][0], decimals=2),
+            "value": np.round(job["output/temperatures"][0], decimals=2),
             "unit": "K",
             "associate_to_sample": True,
             "basename": "Temperature",
         }
     )
-    quasi_dict['calculated_property'] = outputs
+    quasi_dict["calculated_property"] = outputs
     _lammps_add_software(quasi_dict)
     job_dicts.append(quasi_dict)
     return job_dicts
 
+
 def _lammps_get_simulation_folder(job, method_dict):
-    method_dict['path'] = os.path.join(job.project.path, f'{job.name}_hdf5')
+    method_dict["path"] = os.path.join(job.project.path, f"{job.name}_hdf5")
+
 
 def _lammps_identify_method(job, method_dict):
     job_dict = job.input.to_dict()
@@ -218,10 +231,10 @@ def _lammps_identify_method(job, method_dict):
         press = float(raw[7])
         ensemble = "IsothermalIsobaricEnsemble"
 
-    method_dict["method"] = {'basename': md_method}
+    method_dict["method"] = {"basename": md_method}
     method_dict["degrees_of_freedom"] = dof
     if ensemble is not None:
-        method_dict["thermodynamic_ensemble"] = {'basename': ensemble}
+        method_dict["thermodynamic_ensemble"] = {"basename": ensemble}
 
     # now process potential
     inpdict = job.input.to_dict()
@@ -233,12 +246,12 @@ def _lammps_identify_method(job, method_dict):
     if "url" in potdict[list(potdict.keys())[0]].keys():
         url = potdict[list(potdict.keys())[0]]["url"]
 
-    pssplit = ps.split('/')
+    pssplit = ps.split("/")
     if len(pssplit) > 1:
         ps = pssplit[0]
 
     method_dict["interatomic_potential"] = {
-        'potential_type': ps,
+        "potential_type": ps,
     }
 
     if url is not None:
@@ -246,9 +259,9 @@ def _lammps_identify_method(job, method_dict):
     else:
         method_dict["interatomic_potential"]["uri"] = name
 
-    #add temperature and pressure as inputs
+    # add temperature and pressure as inputs
     if temp is not None:
-        method_dict['input_parameter'].append(
+        method_dict["input_parameter"].append(
             {
                 "basename": "Temperature",
                 "label": "Temperature",
@@ -257,7 +270,7 @@ def _lammps_identify_method(job, method_dict):
             }
         )
     if press is not None:
-        method_dict['input_parameter'].append(
+        method_dict["input_parameter"].append(
             {
                 "basename": "Pressure",
                 "label": "Pressure",
@@ -266,9 +279,12 @@ def _lammps_identify_method(job, method_dict):
             }
         )
 
+
 def _lammps_add_software(method_dict):
     method_dict["workflow_manager"] = {}
-    method_dict["workflow_manager"]["uri"] = "https://doi.org/10.1016/j.commatsci.2018.07.043"
+    method_dict["workflow_manager"][
+        "uri"
+    ] = "https://doi.org/10.1016/j.commatsci.2018.07.043"
     method_dict["workflow_manager"]["label"] = "pyiron"
     # and finally code details
 
@@ -277,6 +293,7 @@ def _lammps_add_software(method_dict):
         "label": "LAMMPS",
     }
     method_dict["software"] = [software]
+
 
 def _lammps_extract_calculated_quantities(job, method_dict):
     """
@@ -298,7 +315,7 @@ def _lammps_extract_calculated_quantities(job, method_dict):
     energy_kin = energy_tot - energy_pot
 
     volume = np.mean(job.output.volume)
-    
+
     outputs = []
     outputs.append(
         {
@@ -336,15 +353,16 @@ def _lammps_extract_calculated_quantities(job, method_dict):
             "basename": "SimulationCellVolume",
         }
     )
-    
-    method_dict['calculated_property'] =  outputs
+
+    method_dict["calculated_property"] = outputs
+
 
 def _lammps_get_structures(job, method_dict):
     initial_pyiron_structure = job.structure
     final_pyiron_structure = job.get_structure(frame=-1)
 
-    method_dict['initial_sample'] = initial_pyiron_structure
-    method_dict['final_sample'] = final_pyiron_structure    
+    method_dict["initial_sample"] = initial_pyiron_structure
+    method_dict["final_sample"] = final_pyiron_structure
 
 
 def _calphy_identify_method(job, method_dict):
@@ -367,10 +385,10 @@ def _calphy_identify_method(job, method_dict):
     elif np.shape(pressure) == (2, 3):
         iso = False
         fix_lattice = False
-    
+
     dof = []
     dof.append("AtomicPositionRelaxation")
-    ensemble = 'IsothermalIsobaricEnsemble'
+    ensemble = "IsothermalIsobaricEnsemble"
 
     if not fix_lattice:
         dof.append("CellVolumeRelaxation")
@@ -379,9 +397,9 @@ def _calphy_identify_method(job, method_dict):
     if not iso:
         dof.append("CellShapeRelaxation")
 
-    method_dict["method"] = {'basename': 'ThermodynamicIntegration'}
+    method_dict["method"] = {"basename": "ThermodynamicIntegration"}
     method_dict["degrees_of_freedom"] = dof
-    method_dict["thermodynamic_ensemble"] = {'basename': ensemble}
+    method_dict["thermodynamic_ensemble"] = {"basename": ensemble}
 
     # now process potential
     inpdict = job.input.to_dict()
@@ -393,12 +411,12 @@ def _calphy_identify_method(job, method_dict):
     if "url" in potdict[list(potdict.keys())[0]].keys():
         url = potdict[list(potdict.keys())[0]]["url"]
 
-    pssplit = ps.split('/')
+    pssplit = ps.split("/")
     if len(pssplit) > 1:
         ps = pssplit[0]
 
     method_dict["interatomic_potential"] = {
-        'potential_type': ps,
+        "potential_type": ps,
     }
 
     if url is not None:
@@ -406,8 +424,8 @@ def _calphy_identify_method(job, method_dict):
     else:
         method_dict["interatomic_potential"]["uri"] = name
 
-    #add temperature and pressure as inputs
-    method_dict['input_parameter'].append(
+    # add temperature and pressure as inputs
+    method_dict["input_parameter"].append(
         {
             "basename": "Temperature",
             "label": "Temperature",
@@ -416,7 +434,7 @@ def _calphy_identify_method(job, method_dict):
         }
     )
 
-    method_dict['input_parameter'].append(
+    method_dict["input_parameter"].append(
         {
             "basename": "Pressure",
             "label": "Pressure",
@@ -425,9 +443,12 @@ def _calphy_identify_method(job, method_dict):
         }
     )
 
+
 def _calphy_add_software(method_dict):
     method_dict["workflow_manager"] = {}
-    method_dict["workflow_manager"]["uri"] = "https://doi.org/10.1016/j.commatsci.2018.07.043"
+    method_dict["workflow_manager"][
+        "uri"
+    ] = "https://doi.org/10.1016/j.commatsci.2018.07.043"
     method_dict["workflow_manager"]["label"] = "pyiron"
     # and finally code details
 
@@ -441,6 +462,7 @@ def _calphy_add_software(method_dict):
     }
     method_dict["software"] = [software1, software2]
 
+
 def _calphy_extract_calculated_quantities(job, method_dict):
 
     outputs = []
@@ -448,7 +470,7 @@ def _calphy_extract_calculated_quantities(job, method_dict):
         {
             "label": "FreeEnergy",
             "basename": "FreeEnergy",
-            "value": np.round(job['output/energy_free'], decimals=4),
+            "value": np.round(job["output/energy_free"], decimals=4),
             "unit": "EV",
             "associate_to_sample": True,
         }
@@ -457,7 +479,7 @@ def _calphy_extract_calculated_quantities(job, method_dict):
         {
             "label": "VirialPressure",
             "basename": "VirialPressure",
-            "value": np.round(job['output/pressure'], decimals=4),
+            "value": np.round(job["output/pressure"], decimals=4),
             "unit": "GigaPA",
             "associate_to_sample": True,
         }
@@ -466,9 +488,9 @@ def _calphy_extract_calculated_quantities(job, method_dict):
         {
             "label": "Temperature",
             "basename": "Temperature",
-            "value": np.round(job['output/temperature'], decimals=2),
+            "value": np.round(job["output/temperature"], decimals=2),
             "unit": "K",
             "associate_to_sample": True,
         }
-    )  
-    method_dict['calculated_property'] =  outputs
+    )
+    method_dict["calculated_property"] = outputs
