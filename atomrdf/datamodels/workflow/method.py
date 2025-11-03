@@ -75,56 +75,8 @@ class DensityFunctionalTheory(Method):
         return cls(label=label)
 
 
-class EquationOfStateFit(Method):
-    basename: str = "EquationOfStateFit"
-    pid: str = ASMO.EquationOfStateFit.uri
-
-    def to_graph(self, graph, main_id):
-        main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.EquationOfStateFit)
-        return method
-
-    @classmethod
-    def from_graph(cls, graph, id):
-        label = graph.get_label(id)
-        return cls(label=label)
-
-
-class QuasiHarmonicApproximation(Method):
-    basename: str = "QuasiHarmonicApproximation"
-    pid: str = ASMO.QuasiHarmonicApproximation.uri
-
-    def to_graph(self, graph, main_id):
-        main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.QuasiHarmonicApproximation)
-        return method
-
-    @classmethod
-    def from_graph(cls, graph, id):
-        label = graph.get_label(id)
-        return cls(label=label)
-
-
-class ThermodynamicIntegration(Method):
-    basename: str = "ThermodynamicIntegration"
-    pid: str = ASMO.ThermodynamicIntegration.uri
-
-    def to_graph(self, graph, main_id):
-        main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.ThermodynamicIntegration)
-        return method
-
-    @classmethod
-    def from_graph(cls, graph, id):
-        label = graph.get_label(id)
-        return cls(label=label)
-
-
 method_map = {
     "MolecularDynamics": MolecularDynamics,
     "MolecularStatics": MolecularStatics,
     "DensityFunctionalTheory": DensityFunctionalTheory,
-    "EquationOfStateFit": EquationOfStateFit,
-    "QuasiHarmonicApproximation": QuasiHarmonicApproximation,
-    "ThermodynamicIntegration": ThermodynamicIntegration,
 }
