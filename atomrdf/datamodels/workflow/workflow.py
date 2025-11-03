@@ -121,6 +121,16 @@ class Simulation(Activity):
                 raise ValueError(f"Unknown method type: {v}")
         return v
 
+    @field_validator("algorithm", mode="before")
+    @classmethod
+    def _validate_method(cls, v):
+        if isinstance(v, str):
+            if v in algorithm_map:
+                return algorithm_map[v]()
+            else:
+                raise ValueError(f"Unknown algorithm type: {v}")
+        return v
+
     @field_validator("degrees_of_freedom", mode="before")
     @classmethod
     def _validate_dof(cls, v):
@@ -389,18 +399,22 @@ class Simulation(Activity):
             self._to_graph_dof(graph, simulation)
             self._to_graph_dft_details(graph, simulation)
 
-        elif self.method.basename in [
-            "EquationOfStateFit",
-            "QuasiHarmonicApproximation",
-        ]:
+        else:
             simulation = graph.create_node(main_id, ASMO.Simulation)
-            graph.add((simulation, ASMO.usesSimulationAlgorithm, method))
+
+        if self.algorithm.basename == "EquationOfStateFit":
+            algorithm = graph.create_node(main_id, ASMO.EquationOfStateFit)
+
+        elif self.algorithm.basename == "QuasiHarmonicApproximation":
+            algorithm = graph.create_node(main_id, ASMO.QuasiHarmonicApproximation)
 
         elif self.method.basename == "ThermodynamicIntegration":
-            simulation = graph.create_node(main_id, ASMO.Simulation)
-            graph.add((simulation, ASMO.usesSimulationAlgorithm, method))
-            self._to_graph_dof(graph, simulation)
-            self._to_graph_md_details(graph, simulation)
+            algorithm = graph.create_node(main_id, ASMO.ThermodynamicIntegration)
+
+        elif self.method.basename == "ANNNIModel":
+            algorithm = graph.create_node(main_id, ASMO.ANNNImodel)
+
+        graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
         # now add software
         self._to_graph_software(graph, simulation)
