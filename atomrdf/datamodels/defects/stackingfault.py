@@ -1,8 +1,8 @@
 from typing import List, Optional, Union
 import numpy as np
 from atomrdf import graph
-from pydantic import BaseModel, Field
-from atomrdf.datamodels.basemodels import TemplateMixin, DataProperty
+from pydantic import Field
+from atomrdf.datamodels.basemodels import TemplateMixin, DataProperty, BaseModel
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.namespace import (
     CMSO,

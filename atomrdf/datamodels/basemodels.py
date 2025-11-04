@@ -7,11 +7,12 @@ T = TypeVar("T")
 
 def remove_empty_dicts(data):
     if isinstance(data, dict):
-        cleaned = {
-            k: remove_empty_dicts(v)
-            for k, v in data.items()
-            if not (isinstance(v, dict) and remove_empty_dicts(v) == {})
-        }
+        cleaned = {}
+        for k, v in data.items():
+            cleaned_v = remove_empty_dicts(v)
+            # Skip empty dicts, but keep other values
+            if not (isinstance(cleaned_v, dict) and cleaned_v == {}):
+                cleaned[k] = cleaned_v
         return cleaned
     elif isinstance(data, list):
         return [remove_empty_dicts(v) for v in data]
@@ -41,30 +42,109 @@ class TemplateMixin:
 
         template = {}
         for name, field in cls.model_fields.items():
-            if not pid and name in {"pid", "label"}:
+            # Skip internal fields
+            if name in {"graph", "id"}:
+                continue
+            # Skip pid unless explicitly requested
+            if not pid and name == "pid":
                 continue
 
             typ = unwrap_type(field.annotation)
 
-            if isinstance(typ, type) and issubclass(typ, BaseModel):
+            # Handle List types first
+            if get_origin(typ) is list:
+                args = get_args(typ)
+                if args:
+                    # Get the inner type (e.g., SomeModel from List[SomeModel])
+                    inner_typ = unwrap_type(args[0])
+                    # Check against PydanticBaseModel to catch all BaseModel subclasses
+                    if isinstance(inner_typ, type) and issubclass(
+                        inner_typ, PydanticBaseModel
+                    ):
+                        # Create a list with one template example
+                        if hasattr(inner_typ, "template"):
+                            template[name] = [inner_typ.template(pid=pid)]
+                        else:
+                            template[name] = [{}]
+                    else:
+                        # For primitive types, just empty list
+                        template[name] = []
+                else:
+                    template[name] = []
+
+            # Handle BaseModel types (including those with default=None)
+            # Check against PydanticBaseModel to catch both custom BaseModel and direct Pydantic subclasses
+            elif isinstance(typ, type) and issubclass(typ, PydanticBaseModel):
                 if hasattr(typ, "template"):
                     template[name] = typ.template(pid=pid)
                 else:
                     template[name] = {}
 
+            # Handle DataProperty types
             elif get_origin(typ) is DataProperty:
-                template[name] = {"value": None, "pid": None, "unit": None}
+                # DataProperty has template() method, use it
+                if hasattr(typ, "template"):
+                    template[name] = typ.template(pid=pid)
+                else:
+                    # Fallback if for some reason template is not available
+                    template[name] = {"value": None, "pid": None, "unit": None}
 
+            # Handle fields with non-None defaults (but only for non-BaseModel types)
             elif field.default is not None:
                 template[name] = field.default
 
-            elif callable(field.default_factory):
+            # Handle default_factory
+            elif (
+                hasattr(field, "default_factory")
+                and field.default_factory is not None
+                and callable(field.default_factory)
+            ):
                 template[name] = field.default_factory()
 
+            # Everything else gets None
             else:
                 template[name] = None
 
         return template
+
+    @classmethod
+    def save_template(
+        cls, filepath: str, format: str = "json", pid: bool = False, indent: int = 2
+    ) -> None:
+        """
+        Save the template to a file in JSON or YAML format.
+
+        Parameters
+        ----------
+        filepath : str
+            Path where the template file will be saved
+        format : str, optional
+            Output format, either 'json' or 'yaml' (default: 'json')
+        pid : bool, optional
+            Whether to include PID fields in the template (default: False)
+        indent : int, optional
+            Number of spaces for JSON indentation (default: 2, only used for JSON format)
+
+        Examples
+        --------
+        >>> AtomicScaleSample.save_template('template.json', format='json')
+        >>> AtomicScaleSample.save_template('template.yaml', format='yaml')
+        >>> AtomicScaleSample.save_template('template.json')  # defaults to JSON
+        """
+        template = cls.template(pid=pid)
+
+        if format.lower() == "json":
+            import json
+
+            with open(filepath, "w") as f:
+                json.dump(template, f, indent=indent)
+        elif format.lower() == "yaml":
+            import yaml
+
+            with open(filepath, "w") as f:
+                yaml.dump(template, f, default_flow_style=False, sort_keys=False)
+        else:
+            raise ValueError(f"Unsupported format: '{format}'. Use 'json' or 'yaml'.")
 
 
 class DataProperty(BaseModel, Generic[T], TemplateMixin):
