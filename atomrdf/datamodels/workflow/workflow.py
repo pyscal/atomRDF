@@ -326,11 +326,21 @@ class Simulation(Activity):
                     (simulation, ASMO.hasOutputParameter, param_uri), validate=False
                 )
                 if param.associate_to_sample:
-                    if self.final_sample:
-                        graph.add(
-                            (self.final_sample, ASMO.hasCalculatedProperty, param_uri),
-                            validate=False,
+                    if self.output_sample:
+                        output_samples = (
+                            self.output_sample
+                            if isinstance(self.output_sample, list)
+                            else [self.output_sample]
                         )
+                        for out_sample in output_samples:
+                            graph.add(
+                                (
+                                    URIRef(out_sample),
+                                    ASMO.hasCalculatedProperty,
+                                    param_uri,
+                                ),
+                                validate=False,
+                            )
 
     @classmethod
     def from_graph_output_parameters(cls, graph, sim_id):
@@ -360,24 +370,40 @@ class Simulation(Activity):
                 param_uri = param.to_graph(graph)
                 graph.add((param_uri, ASMO.wasCalculatedBy, simulation), validate=False)
                 if param.associate_to_sample:
-                    if self.final_sample:
-                        graph.add(
-                            (
-                                URIRef(self.final_sample),
-                                ASMO.hasCalculatedProperty,
-                                param_uri,
-                            ),
-                            validate=False,
+                    if self.output_sample:
+                        output_samples = (
+                            self.output_sample
+                            if isinstance(self.output_sample, list)
+                            else [self.output_sample]
                         )
+                        for out_sample in output_samples:
+                            graph.add(
+                                (
+                                    URIRef(out_sample),
+                                    ASMO.hasCalculatedProperty,
+                                    param_uri,
+                                ),
+                                validate=False,
+                            )
 
     def to_graph(self, graph):
         # if needed, serialise structures
-        if self.initial_sample:
-            if isinstance(self.initial_sample, AtomicScaleSample):
-                self.initial_sample = self.initial_sample.to_graph(graph)
-        if self.final_sample:
-            if isinstance(self.final_sample, AtomicScaleSample):
-                self.final_sample = self.final_sample.to_graph(graph)
+        if self.input_sample:
+            if isinstance(self.input_sample, list):
+                self.input_sample = [
+                    s.to_graph(graph) if isinstance(s, AtomicScaleSample) else s
+                    for s in self.input_sample
+                ]
+            elif isinstance(self.input_sample, AtomicScaleSample):
+                self.input_sample = self.input_sample.to_graph(graph)
+        if self.output_sample:
+            if isinstance(self.output_sample, list):
+                self.output_sample = [
+                    s.to_graph(graph) if isinstance(s, AtomicScaleSample) else s
+                    for s in self.output_sample
+                ]
+            elif isinstance(self.output_sample, AtomicScaleSample):
+                self.output_sample = self.output_sample.to_graph(graph)
 
         # create main simulation id
         main_id = uuid.uuid4()
@@ -420,16 +446,28 @@ class Simulation(Activity):
         self._to_graph_software(graph, simulation)
 
         # add structure layers
-        if self.final_sample:
-            graph.add((URIRef(self.final_sample), PROV.wasGeneratedBy, simulation))
-            if self.initial_sample:
-                graph.add(
-                    (
-                        URIRef(self.final_sample),
-                        PROV.wasDerivedFrom,
-                        URIRef(self.initial_sample),
+        if self.output_sample:
+            output_samples = (
+                self.output_sample
+                if isinstance(self.output_sample, list)
+                else [self.output_sample]
+            )
+            for out_sample in output_samples:
+                graph.add((URIRef(out_sample), PROV.wasGeneratedBy, simulation))
+                if self.input_sample:
+                    input_samples = (
+                        self.input_sample
+                        if isinstance(self.input_sample, list)
+                        else [self.input_sample]
                     )
-                )
+                    for in_sample in input_samples:
+                        graph.add(
+                            (
+                                URIRef(out_sample),
+                                PROV.wasDerivedFrom,
+                                URIRef(in_sample),
+                            )
+                        )
 
         if self.path:
             graph.add(
@@ -460,13 +498,25 @@ class Simulation(Activity):
         if label:
             cls.label = label
 
-        initial_sample = graph.value(sim, PROV.wasDerivedFrom)
-        if initial_sample:
-            cls.initial_sample = str(initial_sample)
+        # Get all input samples (can be multiple)
+        input_samples = [
+            str(x[2])
+            for x in graph.triples((None, PROV.wasDerivedFrom, None))
+            if any(graph.triples((x[0], PROV.wasGeneratedBy, sim)))
+        ]
+        if input_samples:
+            cls.input_sample = (
+                input_samples if len(input_samples) > 1 else input_samples[0]
+            )
 
-        final_sample = graph.value(sim, PROV.wasGeneratedBy)
-        if final_sample:
-            cls.final_sample = str(final_sample)
+        # Get all output samples (can be multiple)
+        output_samples = [
+            str(x[0]) for x in graph.triples((None, PROV.wasGeneratedBy, sim))
+        ]
+        if output_samples:
+            cls.output_sample = (
+                output_samples if len(output_samples) > 1 else output_samples[0]
+            )
 
         path = graph.value(sim, CMSO.hasPath)
         if path:

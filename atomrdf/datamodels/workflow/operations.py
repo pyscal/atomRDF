@@ -24,18 +24,18 @@ class DeleteAtom(Activity):
         activity_id = f"deleteatom:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.DeleteAtom)
-        graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
-        graph.add((self.final_sample, PROV.wasGeneratedBy, activity))
+        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
+        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
 
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        final_sample = graph.value(activity, PROV.wasGeneratedBy)
-        initial_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        output_sample = graph.value(activity, PROV.wasGeneratedBy)
+        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
         return cls(
             id=activity_id,
-            initial_sample=initial_sample,
-            final_sample=final_sample,
+            input_sample=input_sample,
+            output_sample=output_sample,
         )
 
 
@@ -44,18 +44,18 @@ class SubstituteAtom(Activity):
         activity_id = f"substituteatom:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.SubstituteAtom)
-        graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
-        graph.add((self.final_sample, PROV.wasGeneratedBy, activity))
+        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
+        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
 
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        final_sample = graph.value(activity, PROV.wasGeneratedBy)
-        initial_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        output_sample = graph.value(activity, PROV.wasGeneratedBy)
+        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
         return cls(
             id=activity_id,
-            initial_sample=initial_sample,
-            final_sample=final_sample,
+            input_sample=input_sample,
+            output_sample=output_sample,
         )
 
 
@@ -64,18 +64,18 @@ class AddAtom(Activity):
         activity_id = f"addatom:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.AddAtom)
-        graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
-        graph.add((self.final_sample, PROV.wasGeneratedBy, activity))
+        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
+        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
 
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        final_sample = graph.value(activity, PROV.wasGeneratedBy)
-        initial_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        output_sample = graph.value(activity, PROV.wasGeneratedBy)
+        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
         return cls(
             id=activity_id,
-            initial_sample=initial_sample,
-            final_sample=final_sample,
+            input_sample=input_sample,
+            output_sample=output_sample,
         )
 
 
@@ -86,8 +86,8 @@ class Rotate(Activity):
         activity_id = f"rotate:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.Rotation)
-        graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
-        graph.add((self.final_sample, PROV.wasGeneratedBy, activity))
+        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
+        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
 
         rot_vector_01 = graph.create_node(
             f"{activity_id}_RotationVector_1", CMSO.Vector
@@ -170,8 +170,8 @@ class Rotate(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        final_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        initial_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
+        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
 
         rotation_matrix = []
         rot_matrix = graph.objects(activity, CMSO.hasVector)
@@ -183,8 +183,8 @@ class Rotate(Activity):
 
         return cls(
             id=activity_id,
-            initial_sample=initial_sample,
-            final_sample=final_sample,
+            input_sample=input_sample,
+            output_sample=output_sample,
             rotation_matrix=DataProperty(value=rotation_matrix),
         )
 
@@ -196,8 +196,8 @@ class Translate(Activity):
         activity_id = f"translate:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.Translation)
-        graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
-        graph.add((self.final_sample, PROV.wasGeneratedBy, activity))
+        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
+        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
 
         translation_vector = graph.create_node(
             f"{activity_id}_TranslationVector", CMSO.Vector
@@ -228,8 +228,8 @@ class Translate(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        final_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        initial_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
+        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
 
         translation_vector_lst = []
         translation_vector = graph.objects(activity, CMSO.hasVector)
@@ -239,8 +239,8 @@ class Translate(Activity):
         translation_vector_lst.append([x.toPython(), y.toPython(), z.toPython()])
         return cls(
             id=activity_id,
-            initial_sample=initial_sample,
-            final_sample=final_sample,
+            input_sample=input_sample,
+            output_sample=output_sample,
             translation_vector=DataProperty(value=translation_vector_lst),
         )
 
@@ -254,8 +254,8 @@ class Shear(Activity):
         activity_id = f"shear:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.Shear)
-        graph.add((self.final_sample, PROV.wasDerivedFrom, self.initial_sample))
-        graph.add((self.final_sample, PROV.wasGeneratedBy, activity))
+        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
+        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
 
         shear_vector = graph.create_node(f"{activity_id}_ShearVector", CMSO.Vector)
         graph.add((activity, CMSO.hasVector, shear_vector))
@@ -321,8 +321,8 @@ class Shear(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        final_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        initial_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
+        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
 
         shear_vector_lst = []
         shear_vector = graph.objects(activity, CMSO.hasVector)
@@ -347,8 +347,8 @@ class Shear(Activity):
 
         return cls(
             id=activity_id,
-            initial_sample=initial_sample,
-            final_sample=final_sample,
+            input_sample=input_sample,
+            output_sample=output_sample,
             shear_vector=DataProperty(value=shear_vector_lst),
             normal_vector=DataProperty(value=normal_vector_lst),
             distance=DataProperty(value=distance),

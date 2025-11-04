@@ -12,11 +12,11 @@ def sample_to_ase(sample):
     Convert a CMSO AtomicScaleSample to an ASE Atoms object
     """
     # first get the cell
-    cell = sample.simulation_cell.vector.value
+    cell = sample.simulation_cell.vector
 
     # now read atom attributes - positions and species
-    positions = sample.atom_attribute.position.value
-    species = sample.atom_attribute.species.value
+    positions = sample.atom_attribute.position
+    species = sample.atom_attribute.species
 
     # create the ASE Atoms object
     ase_atoms = Atoms(positions=positions, symbols=species, cell=cell)

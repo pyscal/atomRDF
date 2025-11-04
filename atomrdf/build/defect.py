@@ -94,7 +94,7 @@ def stacking_fault(
         sample = AtomicScaleSample(**data)
 
         datadict = StackingFault.template()
-        datadict["plabe"]["value"] = slip_plane
+        datadict["plane"]["value"] = slip_plane
         datadict["displacement"]["value"] = displ
         setattr(sample, "stacking_fault", StackingFault(**datadict))
         sample.to_graph(graph)

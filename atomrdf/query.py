@@ -50,8 +50,8 @@ def materials_project(
         if graph is not None:
             data = _generate_atomic_sample_data(aseatoms)
             sys = AtomicScaleSample(**data)
-            sys.material.crystal_structure.spacegroup_symbol.value = symmetry["symbol"]
-            sys.material.crystal_structure.spacegroup_number.value = symmetry["number"]
+            sys.material.crystal_structure.spacegroup_symbol = symmetry["symbol"]
+            sys.material.crystal_structure.spacegroup_number = symmetry["number"]
             sys.to_graph(graph)
             aseatoms.info["id"] = sys.id
             aseatoms.info["graph"] = graph

@@ -59,54 +59,52 @@ def bulk(
 
 def _generate_atomic_sample_data(atoms, sdict=None, repeat=None):
     data = AtomicScaleSample.template()
-    data["material"]["element_ratio"]["value"] = ap.get_chemical_composition(atoms)
+    data["material"]["element_ratio"] = ap.get_chemical_composition(atoms)
 
     if sdict is not None:
         if "structure" in sdict.keys():
-            data["material"]["crystal_structure"]["name"]["value"] = sdict["structure"]
+            data["material"]["crystal_structure"]["name"] = sdict["structure"]
         if "spacegroup_symbol" in sdict.keys():
-            data["material"]["crystal_structure"]["spacegroup_symbol"]["value"] = sdict[
+            data["material"]["crystal_structure"]["spacegroup_symbol"] = sdict[
                 "spacegroup_symbol"
             ]
         if "spacegroup_number" in sdict.keys():
-            data["material"]["crystal_structure"]["spacegroup_number"]["value"] = sdict[
+            data["material"]["crystal_structure"]["spacegroup_number"] = sdict[
                 "spacegroup_number"
             ]
         if "structure" in sdict.keys():
-            data["material"]["crystal_structure"]["unit_cell"]["bravais_lattice"][
-                "value"
-            ] = ap.get_bravais_lattice(sdict["structure"])
+            data["material"]["crystal_structure"]["unit_cell"]["bravais_lattice"] = (
+                ap.get_bravais_lattice(sdict["structure"])
+            )
         if "a" in sdict.keys():
             if "b" not in sdict.keys():
                 sdict["b"] = sdict["a"]
             if "c" not in sdict.keys():
                 sdict["c"] = sdict["a"]
-            data["material"]["crystal_structure"]["unit_cell"]["lattice_parameter"][
-                "value"
-            ] = [
+            data["material"]["crystal_structure"]["unit_cell"]["lattice_parameter"] = [
                 sdict["a"],
                 sdict["b"],
                 sdict["c"],
             ]
 
-    data["material"]["crystal_structure"]["unit_cell"]["angle"][
-        "value"
+    data["material"]["crystal_structure"]["unit_cell"][
+        "angle"
     ] = atoms.get_cell_lengths_and_angles()[3:]
 
     data["simulation_cell"]["volume"]["value"] = ap.get_cell_volume(atoms)
-    data["simulation_cell"]["number_of_atoms"]["value"] = ap.get_number_of_atoms(atoms)
-    data["simulation_cell"]["length"]["value"] = ap.get_simulation_cell_length(atoms)
-    data["simulation_cell"]["vector"]["value"] = ap.get_simulation_cell_vector(atoms)
-    data["simulation_cell"]["angle"]["value"] = ap.get_simulation_cell_angle(atoms)
+    data["simulation_cell"]["number_of_atoms"] = ap.get_number_of_atoms(atoms)
+    data["simulation_cell"]["length"] = ap.get_simulation_cell_length(atoms)
+    data["simulation_cell"]["vector"] = ap.get_simulation_cell_vector(atoms)
+    data["simulation_cell"]["angle"] = ap.get_simulation_cell_angle(atoms)
 
     if repeat is not None:
         if isinstance(repeat, int):
-            data["simulation_cell"]["repetitions"]["value"] = (repeat, repeat, repeat)
+            data["simulation_cell"]["repetitions"] = (repeat, repeat, repeat)
         else:
-            data["simulation_cell"]["repetitions"]["value"] = repeat
+            data["simulation_cell"]["repetitions"] = repeat
 
-    data["atom_attribute"]["position"]["value"] = atoms.get_positions().tolist()
-    data["atom_attribute"]["species"]["value"] = atoms.get_chemical_symbols()
+    data["atom_attribute"]["position"] = atoms.get_positions().tolist()
+    data["atom_attribute"]["species"] = atoms.get_chemical_symbols()
     return data
 
 

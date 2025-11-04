@@ -10,9 +10,17 @@ def remove_empty_dicts(data):
         cleaned = {}
         for k, v in data.items():
             cleaned_v = remove_empty_dicts(v)
-            # Skip empty dicts, but keep other values
-            if not (isinstance(cleaned_v, dict) and cleaned_v == {}):
-                cleaned[k] = cleaned_v
+            # Skip empty dicts
+            if isinstance(cleaned_v, dict) and cleaned_v == {}:
+                continue
+            # Skip None values
+            if cleaned_v is None:
+                continue
+            # Skip empty lists
+            if isinstance(cleaned_v, list) and cleaned_v == []:
+                continue
+            # Keep everything else
+            cleaned[k] = cleaned_v
         return cleaned
     elif isinstance(data, list):
         return [remove_empty_dicts(v) for v in data]
