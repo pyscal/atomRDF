@@ -17,7 +17,7 @@ from atomrdf.utils import get_material
 
 
 class SlipPlane(TemplateMixin, BaseModel):
-    normal: Optional[DataProperty[List[float]]] = None
+    normal: Optional[List[float]] = None
 
     def to_graph(self, graph, sample_id, slip_system):
         slip_plane = graph.create_node(
@@ -30,21 +30,21 @@ class SlipPlane(TemplateMixin, BaseModel):
             (
                 normal_vector,
                 CMSO.hasComponent_x,
-                Literal(self.normal.value[0], datatype=XSD.float),
+                Literal(self.normal[0], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 normal_vector,
                 CMSO.hasComponent_y,
-                Literal(self.normal.value[1], datatype=XSD.float),
+                Literal(self.normal[1], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 normal_vector,
                 CMSO.hasComponent_z,
-                Literal(self.normal.value[2], datatype=XSD.float),
+                Literal(self.normal[2], datatype=XSD.float),
             )
         )
         graph.add((slip_plane, LDO.hasNormalVector, normal_vector))
@@ -64,16 +64,11 @@ class SlipPlane(TemplateMixin, BaseModel):
         normal_y = graph.value(normal_vector, CMSO.hasComponent_y)
         normal_z = graph.value(normal_vector, CMSO.hasComponent_z)
 
-        return cls(
-            normal=DataProperty(
-                value=[float(normal_x), float(normal_y), float(normal_z)],
-                pid=CMSO.hasNormalVector.uri,
-            )
-        )
+        return cls(normal=[float(normal_x), float(normal_y), float(normal_z)])
 
 
 class SlipSystem(TemplateMixin, BaseModel):
-    slip_direction: Optional[DataProperty[List[float]]] = None
+    slip_direction: Optional[List[float]] = None
     slip_plane: Optional[SlipPlane] = None
 
     def to_graph(self, graph, sample_id, line_defect):
@@ -87,21 +82,21 @@ class SlipSystem(TemplateMixin, BaseModel):
             (
                 slip_direction,
                 CMSO.hasComponent_x,
-                Literal(self.slip_direction.value[0], datatype=XSD.float),
+                Literal(self.slip_direction[0], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 slip_direction,
                 CMSO.hasComponent_y,
-                Literal(self.slip_direction.value[1], datatype=XSD.float),
+                Literal(self.slip_direction[1], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 slip_direction,
                 CMSO.hasComponent_z,
-                Literal(self.slip_direction.value[2], datatype=XSD.float),
+                Literal(self.slip_direction[2], datatype=XSD.float),
             )
         )
         graph.add((slip_direction, LDO.belongsToSystem, slip_system))
@@ -125,17 +120,14 @@ class SlipSystem(TemplateMixin, BaseModel):
         slip_plane_instance = SlipPlane.from_graph(graph, sample, slip_system)
 
         return cls(
-            slip_direction=DataProperty(
-                value=[float(direction_x), float(direction_y), float(direction_z)],
-                pid=CMSO.hasSlipDirection.uri,
-            ),
+            slip_direction=[float(direction_x), float(direction_y), float(direction_z)],
             slip_plane=slip_plane_instance,
         )
 
 
 class Dislocation(TemplateMixin, BaseModel):
-    line_direction: Optional[DataProperty[List[float]]] = None
-    burgers_vector: Optional[DataProperty[List[float]]] = None
+    line_direction: Optional[List[float]] = None
+    burgers_vector: Optional[List[float]] = None
     slip_system: Optional[SlipSystem] = None
 
     def _add_dislocation(self, graph, sample_id, line_defect):
@@ -146,21 +138,21 @@ class Dislocation(TemplateMixin, BaseModel):
             (
                 line_direction,
                 CMSO.hasComponent_x,
-                Literal(self.line_direction.value[0], datatype=XSD.float),
+                Literal(self.line_direction[0], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 line_direction,
                 CMSO.hasComponent_y,
-                Literal(self.line_direction.value[1], datatype=XSD.float),
+                Literal(self.line_direction[1], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 line_direction,
                 CMSO.hasComponent_z,
-                Literal(self.line_direction.value[2], datatype=XSD.float),
+                Literal(self.line_direction[2], datatype=XSD.float),
             )
         )
         graph.add((line_defect, LDO.hasLineDirection, line_direction))
@@ -172,21 +164,21 @@ class Dislocation(TemplateMixin, BaseModel):
             (
                 burgers_vector,
                 CMSO.hasComponent_x,
-                Literal(self.burgers_vector.value[0], datatype=XSD.float),
+                Literal(self.burgers_vector[0], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 burgers_vector,
                 CMSO.hasComponent_y,
-                Literal(self.burgers_vector.value[1], datatype=XSD.float),
+                Literal(self.burgers_vector[1], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 burgers_vector,
                 CMSO.hasComponent_z,
-                Literal(self.burgers_vector.value[2], datatype=XSD.float),
+                Literal(self.burgers_vector[2], datatype=XSD.float),
             )
         )
         graph.add((line_defect, LDO.hasBurgersVector, burgers_vector))
@@ -214,14 +206,8 @@ class Dislocation(TemplateMixin, BaseModel):
         slip_system_instance = SlipSystem.from_graph(graph, sample, line_defect)
 
         return cls(
-            line_direction=DataProperty(
-                value=[float(direction_x), float(direction_y), float(direction_z)],
-                pid=CMSO.hasLineDirection.uri,
-            ),
-            burgers_vector=DataProperty(
-                value=[float(burgers_x), float(burgers_y), float(burgers_z)],
-                pid=CMSO.hasBurgersVector.uri,
-            ),
+            line_direction=[float(direction_x), float(direction_y), float(direction_z)],
+            burgers_vector=[float(burgers_x), float(burgers_y), float(burgers_z)],
             slip_system=slip_system_instance,
         )
 
@@ -272,7 +258,7 @@ class EdgeDislocation(Dislocation):
 
 
 class MixedDislocation(Dislocation):
-    character_angle: Optional[DataProperty[float]] = None
+    character_angle: Optional[float] = None
 
     def to_graph(self, graph, sample_id):
         name = sample_id
@@ -280,11 +266,11 @@ class MixedDislocation(Dislocation):
         line_defect = graph.create_node(f"{name}_Dislocation", LDO.MixedDislocation)
         graph.add((material, CDCO.hasCrystallographicDefect, line_defect))
         self._add_dislocation(graph, name, line_defect)
-        self.graph.add(
+        graph.add(
             (
                 line_defect,
                 LDO.hasCharacterAngle,
-                Literal(self.character_angle.value, datatype=XSD.float),
+                Literal(self.character_angle, datatype=XSD.float),
             )
         )
 
@@ -297,7 +283,7 @@ class MixedDislocation(Dislocation):
             if typev is not None and typev.toPython() == LDO.MixedDislocation.uri:
                 dislocation = cls._read_dislocation(graph, sample, line_defect)
                 character_angle = graph.value(line_defect, LDO.hasCharacterAngle)
-                dislocation.character_angle = DataProperty(
-                    value=float(character_angle), pid=LDO.hasCharacterAngle.uri
+                dislocation.character_angle = (
+                    float(character_angle) if character_angle is not None else None
                 )
                 return dislocation

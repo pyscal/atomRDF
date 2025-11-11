@@ -29,10 +29,8 @@ from atomrdf.graph import KnowledgeGraph
 
 class Property(DataProperty):
     graph: Optional[KnowledgeGraph] = Field(default=None)  # Private attribute for graph
-    
-    model_config = {
-        "arbitrary_types_allowed": True
-    }
+
+    model_config = {"arbitrary_types_allowed": True}
 
     def _add_value(self, graph, property):
         if self.value is not None:
@@ -48,7 +46,6 @@ class Property(DataProperty):
                 )
             )
 
-
     def _create_name(self):
         name = str(uuid.uuid4())
         name = f"property:{self.basename.lower()}_{name}"
@@ -58,17 +55,19 @@ class Property(DataProperty):
         # this knows just the serialisation of itself.
         name = self._create_name()
         self.id = name
-        property = graph.create_node(name, getattr(ASMO, self.basename), label=self.label)
+        property = graph.create_node(
+            name, getattr(ASMO, self.basename), label=self.label
+        )
         self._add_value(graph, property)
         return property
-        
+
     @classmethod
     def from_graph(cls, graph, id):
-        #get type
+        # get type
         typename = graph.value(id, RDF.type)
         if typename is not None:
             basename = typename.split("/")[-1]
-        
+
         # get label
         label = graph.value(id, RDFS.label)
         # get value
@@ -83,24 +82,26 @@ class Property(DataProperty):
         cls.unit = str(unit).split("/")[-1] if unit else None
         return cls
 
+
 class InputParameter(Property):
     basename: Optional[str] = Field(
-        default='InputParameter', description="Basename of the property"
-    )    
+        default="InputParameter", description="Basename of the property"
+    )
+
 
 class OutputParameter(Property):
     basename: Optional[str] = Field(
-        default='OutputParameter', description="Basename of the property"
-    )    
-    associate_to_sample: Optional[bool] = Field(
-        default=True, description="Whether to associate the property to the sample"
+        default="OutputParameter", description="Basename of the property"
     )
-    
+    associate_to_sample: Optional[List[str]] = Field(
+        default=None, description="List of sample IDs to associate the property with"
+    )
+
+
 class CalculatedProperty(Property):
     basename: Optional[str] = Field(
-        default='CalculatedProperty', description="Basename of the property"
+        default="CalculatedProperty", description="Basename of the property"
     )
-    associate_to_sample: Optional[bool] = Field(
-        default=True, description="Whether to associate the property to the sample"
-    )    
-    
+    associate_to_sample: Optional[List[str]] = Field(
+        default=None, description="List of sample IDs to associate the property with"
+    )

@@ -18,14 +18,14 @@ from atomrdf.utils import get_material
 
 
 class StackingFault(TemplateMixin, BaseModel):
-    plane: Optional[DataProperty[List[float]]] = None
-    displacement: Optional[DataProperty[List[float]]] = None
+    plane: Optional[List[float]] = None
+    displacement: Optional[List[float]] = None
 
     def to_graph(self, graph, sample_id):
         name = sample_id
         material = get_material(graph, sample_id)
-        plane = " ".join(np.array(self.plane.value).astype(str))
-        displ = " ".join(np.array(self.displacement.value).astype(str))
+        plane = " ".join(np.array(self.plane).astype(str))
+        displ = " ".join(np.array(self.displacement).astype(str))
         sf = graph.create_node(f"{name}_StackingFault", PLDO.StackingFault)
         graph.add((material, CDCO.hasCrystallographicDefect, sf))
         graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
@@ -41,11 +41,15 @@ class StackingFault(TemplateMixin, BaseModel):
                 plane = graph.value(sf, PLDO.hasSFplane)
                 displacement = graph.value(sf, PLDO.hasDisplacementVector)
                 return cls(
-                    plane=DataProperty(
-                        value=plane.toPython().split(), pid=CMSO.plane.uri
+                    plane=(
+                        [float(x) for x in plane.toPython().split()]
+                        if plane is not None
+                        else None
                     ),
-                    displacement=DataProperty(
-                        value=displacement.toPython().split(), pid=CMSO.displacement.uri
+                    displacement=(
+                        [float(x) for x in displacement.toPython().split()]
+                        if displacement is not None
+                        else None
                     ),
                 )
         return None

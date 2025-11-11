@@ -34,6 +34,8 @@ class SoftwareAgent(BaseModel, TemplateMixin):
         self,
         graph,
     ):
+        if self.uri is None:
+            self.uri = f"software:{self.label}"
         agent = graph.create_node(self.uri, PROV.SoftwareAgent, label=self.label)
         return agent
         # if method:

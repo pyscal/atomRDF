@@ -1,4 +1,5 @@
 from typing import List, Optional, Union
+import numpy as np
 from atomrdf import graph
 from pydantic import Field
 from atomrdf.datamodels.basemodels import TemplateMixin, DataProperty, BaseModel
@@ -17,24 +18,26 @@ from atomrdf.utils import get_material
 
 
 class GrainBoundary(TemplateMixin, BaseModel):
-    sigma: Optional[DataProperty[int]] = None
-    plane: Optional[DataProperty[List[float]]] = None
-    misorientation_angle: Optional[DataProperty[float]] = None
-    rotation_axis: Optional[DataProperty[List[float]]] = None
+    sigma: Optional[int] = None
+    plane: Optional[List[float]] = None
+    misorientation_angle: Optional[float] = None
+    rotation_axis: Optional[List[float]] = None
 
     def _add_gb(self, graph, name, plane_defect):
         graph.add(
             (
                 plane_defect,
                 PLDO.hasSigmaValue,
-                Literal(self.sigma.value, datatype=XSD.integer),
+                Literal(self.sigma, datatype=XSD.integer),
             )
         )
         graph.add(
             (
                 plane_defect,
                 PLDO.hasGBplane,
-                Literal(" ".join(self.plane.value.astype(str)), datatype=XSD.string),
+                Literal(
+                    " ".join(np.array(self.plane).astype(str)), datatype=XSD.string
+                ),
             )
         )
         graph.add(
@@ -42,15 +45,16 @@ class GrainBoundary(TemplateMixin, BaseModel):
                 plane_defect,
                 PLDO.hasRotationAxis,
                 Literal(
-                    " ".join(self.rotation_axis.value.astype(str)), datatype=XSD.string
+                    " ".join(np.array(self.rotation_axis).astype(str)),
+                    datatype=XSD.string,
                 ),
             )
         )
-        self.graph.add(
+        graph.add(
             (
                 plane_defect,
                 PLDO.hasMisorientationAngle,
-                Literal(self.misorientation_angle.value, datatype=XSD.float),
+                Literal(self.misorientation_angle, datatype=XSD.float),
             )
         )
 
@@ -69,10 +73,18 @@ class GrainBoundary(TemplateMixin, BaseModel):
         misorientation_angle = graph.value(plane_defect, PLDO.hasMisorientationAngle)
 
         return cls(
-            sigma=DataProperty(value=int(sigma)),
-            plane=DataProperty(value=[float(x) for x in plane.split()]),
-            rotation_axis=DataProperty(value=[float(x) for x in rotation_axis.split()]),
-            misorientation_angle=DataProperty(value=float(misorientation_angle)),
+            sigma=int(sigma) if sigma is not None else None,
+            plane=[float(x) for x in plane.split()] if plane is not None else None,
+            rotation_axis=(
+                [float(x) for x in rotation_axis.split()]
+                if rotation_axis is not None
+                else None
+            ),
+            misorientation_angle=(
+                float(misorientation_angle)
+                if misorientation_angle is not None
+                else None
+            ),
         )
 
     @classmethod

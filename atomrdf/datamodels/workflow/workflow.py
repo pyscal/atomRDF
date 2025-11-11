@@ -123,7 +123,7 @@ class Simulation(Activity):
 
     @field_validator("algorithm", mode="before")
     @classmethod
-    def _validate_method(cls, v):
+    def _validate_algorithm(cls, v):
         if isinstance(v, str):
             if v in algorithm_map:
                 return algorithm_map[v]()
@@ -326,21 +326,15 @@ class Simulation(Activity):
                     (simulation, ASMO.hasOutputParameter, param_uri), validate=False
                 )
                 if param.associate_to_sample:
-                    if self.output_sample:
-                        output_samples = (
-                            self.output_sample
-                            if isinstance(self.output_sample, list)
-                            else [self.output_sample]
+                    for sample_id in param.associate_to_sample:
+                        graph.add(
+                            (
+                                URIRef(sample_id),
+                                ASMO.hasCalculatedProperty,
+                                param_uri,
+                            ),
+                            validate=False,
                         )
-                        for out_sample in output_samples:
-                            graph.add(
-                                (
-                                    URIRef(out_sample),
-                                    ASMO.hasCalculatedProperty,
-                                    param_uri,
-                                ),
-                                validate=False,
-                            )
 
     @classmethod
     def from_graph_output_parameters(cls, graph, sim_id):
@@ -370,21 +364,15 @@ class Simulation(Activity):
                 param_uri = param.to_graph(graph)
                 graph.add((param_uri, ASMO.wasCalculatedBy, simulation), validate=False)
                 if param.associate_to_sample:
-                    if self.output_sample:
-                        output_samples = (
-                            self.output_sample
-                            if isinstance(self.output_sample, list)
-                            else [self.output_sample]
+                    for sample_id in param.associate_to_sample:
+                        graph.add(
+                            (
+                                URIRef(sample_id),
+                                ASMO.hasCalculatedProperty,
+                                param_uri,
+                            ),
+                            validate=False,
                         )
-                        for out_sample in output_samples:
-                            graph.add(
-                                (
-                                    URIRef(out_sample),
-                                    ASMO.hasCalculatedProperty,
-                                    param_uri,
-                                ),
-                                validate=False,
-                            )
 
     def to_graph(self, graph):
         # if needed, serialise structures
@@ -428,19 +416,24 @@ class Simulation(Activity):
         else:
             simulation = graph.create_node(main_id, ASMO.Simulation)
 
+        # create algorithm node with unique id
+        algorithm_id = f"algorithm:{uuid.uuid4()}"
+
         if self.algorithm.basename == "EquationOfStateFit":
-            algorithm = graph.create_node(main_id, ASMO.EquationOfStateFit)
+            algorithm = graph.create_node(algorithm_id, ASMO.EquationOfStateFit)
+            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
         elif self.algorithm.basename == "QuasiHarmonicApproximation":
-            algorithm = graph.create_node(main_id, ASMO.QuasiHarmonicApproximation)
+            algorithm = graph.create_node(algorithm_id, ASMO.QuasiHarmonicApproximation)
+            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
-        elif self.method.basename == "ThermodynamicIntegration":
-            algorithm = graph.create_node(main_id, ASMO.ThermodynamicIntegration)
+        elif self.algorithm.basename == "ThermodynamicIntegration":
+            algorithm = graph.create_node(algorithm_id, ASMO.ThermodynamicIntegration)
+            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
-        elif self.method.basename == "ANNNIModel":
-            algorithm = graph.create_node(main_id, ASMO.ANNNImodel)
-
-        graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
+        elif self.algorithm.basename == "ANNNIModel":
+            algorithm = graph.create_node(algorithm_id, ASMO.ANNNImodel)
+            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
         # now add software
         self._to_graph_software(graph, simulation)

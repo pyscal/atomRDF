@@ -94,8 +94,8 @@ def stacking_fault(
         sample = AtomicScaleSample(**data)
 
         datadict = StackingFault.template()
-        datadict["plane"]["value"] = slip_plane
-        datadict["displacement"]["value"] = displ
+        datadict["plane"] = slip_plane
+        datadict["displacement"] = displ
         setattr(sample, "stacking_fault", StackingFault(**datadict))
         sample.to_graph(graph)
         aseatoms.info["id"] = sample.id
@@ -237,12 +237,12 @@ def dislocation(
             disl_name = "mixed_dislocation"
 
         disl_dict = DislocationObject.template()
-        disl_dict["line_direction"]["value"] = dislocation_line
-        disl_dict["burgers_vector"]["value"] = burgers_vector
-        disl_dict["slip_system"]["slip_direction"]["value"] = slip_direction
-        disl_dict["slip_system"]["slip_plane"]["normal"]["value"] = slip_plane
+        disl_dict["line_direction"] = dislocation_line
+        disl_dict["burgers_vector"] = burgers_vector
+        disl_dict["slip_system"]["slip_direction"] = slip_direction
+        disl_dict["slip_system"]["slip_plane"]["normal"] = slip_plane
         if disl_name == "mixed_dislocation":
-            disl_dict["character_angle"]["value"] = angle_deg
+            disl_dict["character_angle"] = angle_deg
 
         setattr(sample, disl_name, DislocationObject(**disl_dict))
         sample.to_graph(graph)
@@ -452,10 +452,10 @@ def grain_boundary(
             gb_name = "mixed_grain_boundary"
 
         datadict = GBObject.template()
-        datadict["sigma"]["value"] = gb.sigma
-        datadict["rotation_axis"]["value"] = axis
-        datadict["plane"]["value"] = gb_plane
-        datadict["misorientation_angle"]["value"] = gb.theta[0]
+        datadict["sigma"] = gb.sigma
+        datadict["rotation_axis"] = axis
+        datadict["plane"] = gb_plane
+        datadict["misorientation_angle"] = gb.theta[0]
         setattr(sample, gb_name, GBObject(**datadict))
 
         sample.to_graph(graph)
@@ -507,8 +507,8 @@ def vacancy(
                 # now update the atom attributes
                 sample.vacancy = Vacancy(
                     **{
-                        "concentration": {"value": no_of_vacancies / len(atoms)},
-                        "number": {"value": no_of_vacancies},
+                        "concentration": no_of_vacancies / len(atoms),
+                        "number": no_of_vacancies,
                     }
                 )
                 sample.to_graph(graph)
@@ -530,8 +530,8 @@ def vacancy(
                 sample = AtomicScaleSample(**data)
                 sample.vacancy = Vacancy(
                     **{
-                        "concentration": {"value": no_of_vacancies / len(atoms)},
-                        "number": {"value": no_of_vacancies},
+                        "concentration": no_of_vacancies / len(atoms),
+                        "number": no_of_vacancies,
                     }
                 )
                 sample.to_graph(graph)
@@ -575,8 +575,8 @@ def vacancy(
             sample = AtomicScaleSample(**data)
             sample.vacancy = Vacancy(
                 **{
-                    "concentration": {"value": no_of_vacancies / len(atoms)},
-                    "number": {"value": no_of_vacancies},
+                    "concentration": no_of_vacancies / len(atoms),
+                    "number": no_of_vacancies,
                 }
             )
             sample.to_graph(graph)

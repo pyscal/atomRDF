@@ -77,11 +77,11 @@ class ThermodynamicIntegration(Algorithm):
 
 class ANNNIModel(Algorithm):
     basename: str = "ANNNIModel"
-    pid: str = ASMO.ANNImodel.uri
+    pid: str = Namespace("https://asmo").ANNImodel  # .uri
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.ANNImodel)
+        method = graph.create_node(main_id, Namespace("https://asmo").ANNImodel)
         return method
 
     @classmethod

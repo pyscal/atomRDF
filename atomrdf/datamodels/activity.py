@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 from rdflib import Graph, Namespace, XSD, RDF, RDFS, BNode, URIRef
 from atomrdf.utils import get_sample_object
 from ase import Atoms
-from atomrdf.build.bulk import _generate_atomic_sample_data
 from atomrdf.namespace import (
     CMSO,
     LDO,
@@ -59,6 +58,9 @@ class Activity(BaseModel, TemplateMixin):
             if "id" in sample.info:
                 return sample.info["id"]
             else:
+                # Import here to avoid circular import
+                from atomrdf.build.bulk import _generate_atomic_sample_data
+
                 # We have to serialize the structure and then return the object
                 data = _generate_atomic_sample_data(sample)
                 sample_obj = AtomicScaleSample(**data)

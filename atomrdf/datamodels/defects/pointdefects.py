@@ -17,8 +17,8 @@ from atomrdf.utils import get_material
 
 
 class PointDefect(TemplateMixin, BaseModel):
-    concentration: Optional[DataProperty[float]] = None
-    number: Optional[DataProperty[int]] = None
+    concentration: Optional[float] = None
+    number: Optional[int] = None
 
 
 class Vacancy(PointDefect):
@@ -32,7 +32,7 @@ class Vacancy(PointDefect):
             (
                 sample,
                 PODO.hasVacancyConcentration,
-                Literal(self.concentration.value, datatype=XSD.float),
+                Literal(self.concentration, datatype=XSD.float),
             )
         )
         if self.number is not None:
@@ -40,7 +40,7 @@ class Vacancy(PointDefect):
                 (
                     sample,
                     PODO.hasNumberOfVacancies,
-                    Literal(self.number.value, datatype=XSD.integer),
+                    Literal(self.number, datatype=XSD.integer),
                 )
             )
 
@@ -54,8 +54,10 @@ class Vacancy(PointDefect):
                 concentration = graph.value(sample, PODO.hasVacancyConcentration)
                 number = graph.value(sample, PODO.hasNumberOfVacancies)
                 return cls(
-                    concentration=DataProperty(value=concentration),
-                    number=DataProperty(value=number),
+                    concentration=(
+                        float(concentration) if concentration is not None else None
+                    ),
+                    number=int(number) if number is not None else None,
                 )
 
 
@@ -72,7 +74,7 @@ class Substitutional(PointDefect):
             (
                 sample,
                 PODO.hasImpurityConcentration,
-                Literal(self.concentration.value, datatype=XSD.float),
+                Literal(self.concentration, datatype=XSD.float),
             )
         )
         if self.number is not None:
@@ -80,7 +82,7 @@ class Substitutional(PointDefect):
                 (
                     sample,
                     PODO.hasNumberOfImpurityAtoms,
-                    Literal(self.number.value, datatype=XSD.integer),
+                    Literal(self.number, datatype=XSD.integer),
                 )
             )
 
@@ -97,8 +99,10 @@ class Substitutional(PointDefect):
                 concentration = graph.value(sample, PODO.hasImpurityConcentration)
                 number = graph.value(sample, PODO.hasNumberOfImpurityAtoms)
                 return cls(
-                    concentration=DataProperty(value=concentration),
-                    number=DataProperty(value=number),
+                    concentration=(
+                        float(concentration) if concentration is not None else None
+                    ),
+                    number=int(number) if number is not None else None,
                 )
 
 
@@ -115,7 +119,7 @@ class Interstitial(PointDefect):
             (
                 sample,
                 PODO.hasImpurityConcentration,
-                Literal(self.concentration.value, datatype=XSD.float),
+                Literal(self.concentration, datatype=XSD.float),
             )
         )
         if self.number is not None:
@@ -123,7 +127,7 @@ class Interstitial(PointDefect):
                 (
                     sample,
                     PODO.hasNumberOfImpurityAtoms,
-                    Literal(self.number.value, datatype=XSD.integer),
+                    Literal(self.number, datatype=XSD.integer),
                 )
             )
 
@@ -137,6 +141,8 @@ class Interstitial(PointDefect):
                 concentration = graph.value(sample, PODO.hasImpurityConcentration)
                 number = graph.value(sample, PODO.hasNumberOfImpurityAtoms)
                 return cls(
-                    concentration=DataProperty(value=concentration),
-                    number=DataProperty(value=number),
+                    concentration=(
+                        float(concentration) if concentration is not None else None
+                    ),
+                    number=int(number) if number is not None else None,
                 )
