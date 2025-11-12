@@ -1,6 +1,6 @@
-from atomrdf.structure import System
 from pyscal3.core import structure_dict, element_dict
 from atomrdf.build.buildutils import _declass
+
 
 def read(
     filename,
@@ -49,7 +49,7 @@ def read(
 
     basis_positions: nX3 list, optional
         specify the relative positions of atoms in the unit cell. Not required if lattice is provided
-    
+
     repetitions: tuple, optional
         specify the number _read_structureof repetitions of the unit cell in each direction. Default is None.
 
@@ -82,5 +82,5 @@ def read(
     s.lattice_properties = datadict
     s.label = label
     s.to_graph()
-    s.add_property_mappings(lattice_constant, mapping_quantity='lattice_constant')
+    s.add_property_mappings(lattice_constant, mapping_quantity="lattice_constant")
     return s

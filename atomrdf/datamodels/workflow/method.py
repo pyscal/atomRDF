@@ -27,7 +27,6 @@ from atomrdf.namespace import (
 class Method(BaseModel, TemplateMixin):
     basename: str
     pid: Optional[str] = Field(default=None, description="PID of the method")
-    label: Optional[str] = Field(default=None, description="Label of the method")
 
 
 class MolecularStatics(Method):

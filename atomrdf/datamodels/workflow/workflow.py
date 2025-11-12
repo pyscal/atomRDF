@@ -37,7 +37,6 @@ from atomrdf.datamodels.workflow.property import *
 
 
 class Simulation(Activity):
-    label: Optional[str] = Field(default=None, description="Label of the simulation")
     # classes
     method: Optional[
         Union[

@@ -1,2 +1,2 @@
 from atomrdf.graph import KnowledgeGraph
-from atomrdf.workflow.workflow import Workflow
+from atomrdf.io.workflow_parser import WorkflowParser

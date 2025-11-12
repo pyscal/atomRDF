@@ -27,7 +27,6 @@ from atomrdf.namespace import (
 class Algorithm(BaseModel, TemplateMixin):
     basename: str
     pid: Optional[str] = Field(default=None, description="PID of the algorithm")
-    label: Optional[str] = Field(default=None, description="Label of the algorithm")
 
 
 class EquationOfStateFit(Algorithm):
