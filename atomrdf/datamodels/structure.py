@@ -27,6 +27,7 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
     DCAT,
+    UNSAFECMSO,
 )
 import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
@@ -261,6 +262,8 @@ class SimulationCell(BaseModel, TemplateMixin):
     vector: Optional[List[List[float]]] = None  # Angstroms (implicit)
     angle: Optional[List[float]] = None  # Degrees (implicit)
     repetitions: Optional[List[int]] = None
+    grain_size: Optional[float] = None  # angstroms (implicit)
+    number_of_grains: Optional[int] = None
 
     def to_graph(self, graph, sample):
         sample_id = get_sample_id(sample)
@@ -452,6 +455,23 @@ class SimulationCell(BaseModel, TemplateMixin):
                 Literal(data[2], datatype=XSD.float),
             )
         )
+
+        if self.grain_size is not None:
+            graph.add(
+                (
+                    simulation_cell,
+                    UNSAFECMSO.hasGrainSize,
+                    Literal(self.grain_size, datatype=XSD.float),
+                )
+            )
+        if self.number_of_grains is not None:
+            graph.add(
+                (
+                    simulation_cell,
+                    UNSAFECMSO.hasNumberOfGrains,
+                    Literal(self.number_of_grains, datatype=XSD.integer),
+                )
+            )
 
     @classmethod
     def from_graph(cls, graph, sample):

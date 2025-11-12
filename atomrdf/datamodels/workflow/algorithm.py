@@ -21,6 +21,7 @@ from atomrdf.namespace import (
     PROV,
     Literal,
     ASMO,
+    UNSAFEASMO,
 )
 
 
@@ -76,11 +77,41 @@ class ThermodynamicIntegration(Algorithm):
 
 class ANNNIModel(Algorithm):
     basename: str = "ANNNIModel"
-    pid: str = Namespace("https://asmo").ANNImodel  # .uri
+    pid: str = UNSAFEASMO.ANNNImodel  # .uri
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, Namespace("https://asmo").ANNImodel)
+        method = graph.create_node(main_id, UNSAFEASMO.ANNNImodel)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
+
+
+class TensileTest(Algorithm):
+    basename: str = "TensileTest"
+    pid: str = UNSAFEASMO.TensileTest
+
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, UNSAFEASMO.TensileTest)
+        return method
+
+    @classmethod
+    def from_graph(cls, graph, id):
+        label = graph.get_label(id)
+        return cls(label=label)
+
+
+class CompressionTest(Algorithm):
+    basename: str = "CompressionTest"
+    pid: str = UNSAFEASMO.CompressionTest
+
+    def to_graph(self, graph, main_id):
+        main_id = f"{main_id}_method"
+        method = graph.create_node(main_id, UNSAFEASMO.CompressionTest)
         return method
 
     @classmethod
@@ -93,5 +124,7 @@ algorithm_map = {
     "EquationOfStateFit": EquationOfStateFit,
     "QuasiHarmonicApproximation": QuasiHarmonicApproximation,
     "ThermodynamicIntegration": ThermodynamicIntegration,
-    "ANNIModel": ANNNIModel,
+    "ANNNIModel": ANNNIModel,
+    "TensileTest": TensileTest,
+    "CompressionTest": CompressionTest,
 }

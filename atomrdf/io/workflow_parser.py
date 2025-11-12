@@ -1,5 +1,6 @@
 import yaml
 import json
+import ast
 from pathlib import Path
 from typing import Dict, List, Union, Any, Optional
 import re
@@ -29,9 +30,16 @@ class WorkflowParser:
         Decimal precision for hash computation
     sample_map : dict
         Maps original sample IDs to resolved URIs
+    debug : bool
+        If True, print debug messages during parsing
     """
 
-    def __init__(self, kg: Optional[KnowledgeGraph] = None, precision: int = 6):
+    def __init__(
+        self,
+        kg: Optional[KnowledgeGraph] = None,
+        precision: int = 6,
+        debug: bool = False,
+    ):
         """
         Initialize the workflow parser.
 
@@ -41,9 +49,12 @@ class WorkflowParser:
             Knowledge graph instance. If None, creates a new one.
         precision : int, optional
             Decimal precision for sample hash computation. Default is 6.
+        debug : bool, optional
+            If True, print debug messages during parsing. Default is False.
         """
         self.kg = kg if kg is not None else KnowledgeGraph()
         self.precision = precision
+        self.debug = debug
         self.sample_map: Dict[str, str] = {}
 
     def _miller_bravais_to_cartesian(self, uvtw: List[float]) -> List[float]:
@@ -134,6 +145,42 @@ class WorkflowParser:
 
         # String representation
         if isinstance(vec, str):
+            # Handle ASE Cell object string representations
+            # e.g., "Cell([[0.0, 1.785, 1.785], [1.785, 0.0, 1.785], [1.785, 1.785, 0.0]])"
+            # or "Cell([2.862593415622699, 2.862593415622699, 2.862593415622699])"
+            if vec.startswith("Cell("):
+                # Extract content between Cell( and )
+                inner = vec[5:-1]  # Remove "Cell(" and ")"
+                try:
+                    # Use ast.literal_eval to parse the list structure safely
+                    parsed = ast.literal_eval(inner)
+
+                    # Check if it's already a 3x3 matrix
+                    if (
+                        isinstance(parsed, list)
+                        and len(parsed) == 3
+                        and all(
+                            isinstance(row, list) and len(row) == 3 for row in parsed
+                        )
+                    ):
+                        return parsed
+
+                    # Check if it's a simple [x, y, z] list
+                    if (
+                        isinstance(parsed, list)
+                        and len(parsed) == 3
+                        and all(not isinstance(v, list) for v in parsed)
+                    ):
+                        nums = [float(x) for x in parsed]
+                        return [
+                            [nums[0], 0.0, 0.0],
+                            [0.0, nums[1], 0.0],
+                            [0.0, 0.0, nums[2]],
+                        ]
+                except (ValueError, SyntaxError):
+                    pass
+
+            # Fallback: extract numbers from string
             nums = re.findall(r"[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?", vec)
             if len(nums) == 3:
                 numsf = [float(n) for n in nums]
@@ -141,6 +188,14 @@ class WorkflowParser:
                     [numsf[0], 0.0, 0.0],
                     [0.0, numsf[1], 0.0],
                     [0.0, 0.0, numsf[2]],
+                ]
+            elif len(nums) == 9:
+                # Could be a flattened 3x3 matrix
+                numsf = [float(n) for n in nums]
+                return [
+                    [numsf[0], numsf[1], numsf[2]],
+                    [numsf[3], numsf[4], numsf[5]],
+                    [numsf[6], numsf[7], numsf[8]],
                 ]
 
         return vec
@@ -225,13 +280,32 @@ class WorkflowParser:
         """
         for sample_data in sample_data_list:
             original_id = sample_data.get("id", "unknown")
-            print(f"Processing sample: {original_id}")
+            if self.debug:
+                print(f"Processing sample: {original_id}")
 
             # Normalise simulation_cell.vector if present
             simcell = sample_data.get("simulation_cell")
             if isinstance(simcell, dict) and "vector" in simcell:
                 simcell["vector"] = self._normalise_vector(simcell["vector"])
                 sample_data["simulation_cell"] = simcell
+
+            # Convert repetitions from tuple to list if needed
+            if isinstance(simcell, dict) and "repetitions" in simcell:
+                if isinstance(simcell["repetitions"], tuple):
+                    simcell["repetitions"] = list(simcell["repetitions"])
+                    sample_data["simulation_cell"] = simcell
+
+            # Flatten grains: move grain_size and number_of_grains to simulation_cell level
+            if isinstance(simcell, dict) and "grains" in simcell:
+                grains = simcell["grains"]
+                if isinstance(grains, dict):
+                    if "grain_size" in grains:
+                        simcell["grain_size"] = grains["grain_size"]
+                    if "number_of_grains" in grains:
+                        simcell["number_of_grains"] = grains["number_of_grains"]
+                    # Remove the nested grains field
+                    del simcell["grains"]
+                    sample_data["simulation_cell"] = simcell
 
             # Convert 4D Miller-Bravais indices in defect fields
             defect_fields = [
@@ -254,11 +328,13 @@ class WorkflowParser:
             original_id = sample.id
             sample.id = None
             sample_hash = sample._compute_hash(precision=self.precision)
-            print(f"Computed hash: {sample_hash}")
+            if self.debug:
+                print(f"Computed hash: {sample_hash}")
 
             # Check if this hash already exists in the KG
             existing_uri = self._find_sample_by_hash(sample_hash)
-            print(f"Existing uri is {existing_uri}")
+            if self.debug:
+                print(f"Existing uri is {existing_uri}")
 
             if existing_uri:
                 self.sample_map[original_id] = existing_uri
@@ -287,6 +363,13 @@ class WorkflowParser:
         workflow_uris = []
 
         for i, workflow_data in enumerate(workflow_data_list):
+            # Fix algorithm name: UniaxialTension -> TensileTest
+            if (
+                "algorithm" in workflow_data
+                and workflow_data["algorithm"] == "UniaxialTension"
+            ):
+                workflow_data["algorithm"] = "TensileTest"
+
             # Resolve input sample references
             if "inputs" in workflow_data:
                 for j, inp in enumerate(workflow_data["inputs"]):
@@ -306,10 +389,11 @@ class WorkflowParser:
             sim_uri = sim.to_graph(self.kg)
             workflow_uris.append(sim_uri)
 
-            print(
-                f"Added workflow {i+1}: connecting samples "
-                f"{workflow_data.get('inputs', [])} to {workflow_data.get('outputs', [])}"
-            )
+            if self.debug:
+                print(
+                    f"Added workflow {i+1}: connecting samples "
+                    f"{workflow_data.get('input_sample', [])} to {workflow_data.get('output_sample', [])}"
+                )
 
         return workflow_uris
 
@@ -334,9 +418,10 @@ class WorkflowParser:
         # TODO: Implement activity parsing
         # This will be similar to workflow parsing but for Activity objects
         activity_uris = []
-        print(
-            f"Activity parsing not yet implemented. Found {len(activity_data_list)} activities."
-        )
+        if self.debug:
+            print(
+                f"Activity parsing not yet implemented. Found {len(activity_data_list)} activities."
+            )
         return activity_uris
 
     def parse(self, data: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
