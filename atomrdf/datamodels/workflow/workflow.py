@@ -52,6 +52,8 @@ class Simulation(Activity):
             QuasiHarmonicApproximation,
             ThermodynamicIntegration,
             ANNNIModel,
+            TensileTest,
+            CompressionTest,
         ]
     ] = Field(default=None, description="Algorithm used in the simulation")
 
