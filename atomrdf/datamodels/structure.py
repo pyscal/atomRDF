@@ -9,7 +9,7 @@ import numpy as np
 import yaml
 import uuid
 import json
-from pydantic import Field
+from pydantic import Field, SkipValidation
 from atomrdf.datamodels.basemodels import (
     TemplateMixin,
     RDFMixin,
@@ -531,8 +531,12 @@ class SimulationCell(BaseModel, TemplateMixin):
 
 class AtomAttribute(BaseModel, TemplateMixin):
     pid: Optional[str] = CMSO.AtomAttribute.uri
-    position: Optional[List[List[float]]] = None  # Angstroms (implicit)
-    species: Optional[List[str]] = None  # Chemical symbols
+    position: SkipValidation[Optional[List[List[float]]]] = (
+        None  # Angstroms (implicit) - validation skipped for performance
+    )
+    species: SkipValidation[Optional[List[str]]] = (
+        None  # Chemical symbols - validation skipped for performance
+    )
 
     def write_attributes(
         self, graph, sample_id, position_identifier, species_identifier

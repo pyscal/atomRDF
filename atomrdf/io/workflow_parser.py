@@ -32,6 +32,8 @@ class WorkflowParser:
         Maps original sample IDs to resolved URIs
     debug : bool
         If True, print debug messages during parsing
+    hash_threshold : int
+        Skip hashing for samples with more than this many atoms
     """
 
     def __init__(
@@ -39,6 +41,7 @@ class WorkflowParser:
         kg: Optional[KnowledgeGraph] = None,
         precision: int = 6,
         debug: bool = False,
+        hash_threshold: int = 10000,
     ):
         """
         Initialize the workflow parser.
@@ -51,10 +54,14 @@ class WorkflowParser:
             Decimal precision for sample hash computation. Default is 6.
         debug : bool, optional
             If True, print debug messages during parsing. Default is False.
+        hash_threshold : int, optional
+            Skip hashing for samples with more than this many atoms.
+            Default is 10000. Set to 0 to always hash.
         """
         self.kg = kg if kg is not None else KnowledgeGraph()
         self.precision = precision
         self.debug = debug
+        self.hash_threshold = hash_threshold
         self.sample_map: Dict[str, str] = {}
 
     def _miller_bravais_to_cartesian(self, uvtw: List[float]) -> List[float]:
@@ -323,24 +330,42 @@ class WorkflowParser:
                         sample_data[field]
                     )
 
-            # Create sample object to compute hash
+            # Create sample object
             sample = AtomicScaleSample(**sample_data)
             original_id = sample.id
-            sample.id = None
-            sample_hash = sample._compute_hash(precision=self.precision)
-            if self.debug:
-                print(f"Computed hash: {sample_hash}")
 
-            # Check if this hash already exists in the KG
-            existing_uri = self._find_sample_by_hash(sample_hash)
-            if self.debug:
-                print(f"Existing uri is {existing_uri}")
+            # Check if we should skip hashing for large systems
+            n_atoms = (
+                simcell.get("number_of_atoms", 0) if isinstance(simcell, dict) else 0
+            )
+            skip_hash = self.hash_threshold > 0 and n_atoms > self.hash_threshold
 
-            if existing_uri:
-                self.sample_map[original_id] = existing_uri
-            else:
+            if skip_hash:
+                # Skip hashing for large systems - treat as unique
+                if self.debug:
+                    print(
+                        f"Skipping hash for large system ({n_atoms} atoms > {self.hash_threshold} threshold)"
+                    )
+                sample.id = None  # Let to_graph generate a new UUID
                 sample.to_graph(self.kg)
                 self.sample_map[original_id] = sample.id
+            else:
+                # Use hash-based deduplication for smaller systems
+                sample.id = None
+                sample_hash = sample._compute_hash(precision=self.precision)
+                if self.debug:
+                    print(f"Computed hash: {sample_hash} ({n_atoms} atoms)")
+
+                # Check if this hash already exists in the KG
+                existing_uri = self._find_sample_by_hash(sample_hash)
+                if self.debug:
+                    print(f"Existing uri is {existing_uri}")
+
+                if existing_uri:
+                    self.sample_map[original_id] = existing_uri
+                else:
+                    sample.to_graph(self.kg)
+                    self.sample_map[original_id] = sample.id
 
         return self.sample_map
 
