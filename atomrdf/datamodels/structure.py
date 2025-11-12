@@ -26,6 +26,7 @@ from atomrdf.namespace import (
     PROV,
     Literal,
     ASMO,
+    DCAT,
 )
 import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
@@ -638,7 +639,9 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
     def to_graph(self, graph, force=False):
         # if force - creates a new ID and saves the structure again
+        print(self.id)
         if not force and self.id is not None:
+            print("Sample already in graph, skipping...")
             return self.id
 
         # the rest of the function is only if id isnt there or force is true
@@ -676,6 +679,14 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
             if isinstance(obj, BaseModel) and obj.model_fields_set:
                 if hasattr(obj, "to_graph"):
                     obj.to_graph(graph, sample)
+
+        # Add content hash to the graph for deduplication (skip validation for external vocab)
+        content_hash = self._compute_hash()
+        print("Content hash:", content_hash)
+        graph.add(
+            (sample, DCAT.checksum, Literal(content_hash, datatype=XSD.string)),
+            validate=False,
+        )
 
         return self.id
 
@@ -786,3 +797,54 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
             copy_from=copy_from,
             pseudo_files=pseudo_files,
         )
+
+    def _compute_hash(self, precision=6):
+        """
+        Compute a deterministic hash of the sample structure (internal method).
+
+        Excludes 'id' and 'graph' fields and rounds floating-point values
+        to the specified precision to ensure consistent hashing across
+        equivalent structures.
+
+        Parameters
+        ----------
+        precision : int, optional
+            Number of decimal places for rounding floats (default: 6)
+
+        Returns
+        -------
+        str
+            MD5 hash (hexadecimal string) of the sample content
+
+        Examples
+        --------
+        >>> sample1 = AtomicScaleSample(**sample_data)
+        >>> sample2 = AtomicScaleSample(**sample_data)
+        >>> sample1._compute_hash() == sample2._compute_hash()
+        True
+        """
+        import hashlib
+        import json
+
+        # Convert to dict and exclude id/label fields
+        data = self.model_dump(exclude={"id", "label"})
+
+        # Helper to round all floats in nested structures
+        def round_floats(obj, decimals):
+            if isinstance(obj, float):
+                return round(obj, decimals)
+            elif isinstance(obj, dict):
+                return {k: round_floats(v, decimals) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [round_floats(v, decimals) for v in obj]
+            else:
+                return obj
+
+        # Round all floats to avoid precision issues
+        data_rounded = round_floats(data, precision)
+
+        # Create deterministic JSON string (sorted keys)
+        json_str = json.dumps(data_rounded, sort_keys=True)
+
+        # Compute and return MD5 hash
+        return hashlib.md5(json_str.encode()).hexdigest()

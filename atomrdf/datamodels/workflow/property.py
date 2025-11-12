@@ -23,6 +23,7 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
     MDO,
+    UNSAFEASMO,
 )
 from atomrdf.graph import KnowledgeGraph
 
@@ -35,7 +36,8 @@ class Property(DataProperty):
     def _add_value(self, graph, property):
         if self.value is not None:
             graph.add(
-                (property, ASMO.hasValue, Literal(self.value, datatype=XSD.float))
+                (property, ASMO.hasValue, Literal(self.value, datatype=XSD.float)),
+                validate=False,
             )
         if self.unit is not None:
             graph.add(
@@ -43,7 +45,8 @@ class Property(DataProperty):
                     property,
                     ASMO.hasUnit,
                     URIRef(f"http://qudt.org/vocab/unit/{self.unit}"),
-                )
+                ),
+                validate=False,
             )
 
     def _create_name(self):
@@ -55,9 +58,14 @@ class Property(DataProperty):
         # this knows just the serialisation of itself.
         name = self._create_name()
         self.id = name
-        property = graph.create_node(
-            name, getattr(ASMO, self.basename), label=self.label
-        )
+        try:
+            property = graph.create_node(
+                name, getattr(ASMO, self.basename), label=self.label
+            )
+        except AttributeError:
+            property = graph.create_node(
+                name, getattr(UNSAFEASMO, self.basename), label=self.label
+            )
         self._add_value(graph, property)
         return property
 

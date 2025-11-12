@@ -418,22 +418,26 @@ class Simulation(Activity):
 
         # create algorithm node with unique id
         algorithm_id = f"algorithm:{uuid.uuid4()}"
+        if self.algorithm:
+            if self.algorithm.basename == "EquationOfStateFit":
+                algorithm = graph.create_node(algorithm_id, ASMO.EquationOfStateFit)
+                graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
-        if self.algorithm.basename == "EquationOfStateFit":
-            algorithm = graph.create_node(algorithm_id, ASMO.EquationOfStateFit)
-            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
+            elif self.algorithm.basename == "QuasiHarmonicApproximation":
+                algorithm = graph.create_node(
+                    algorithm_id, ASMO.QuasiHarmonicApproximation
+                )
+                graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
-        elif self.algorithm.basename == "QuasiHarmonicApproximation":
-            algorithm = graph.create_node(algorithm_id, ASMO.QuasiHarmonicApproximation)
-            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
+            elif self.algorithm.basename == "ThermodynamicIntegration":
+                algorithm = graph.create_node(
+                    algorithm_id, ASMO.ThermodynamicIntegration
+                )
+                graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
-        elif self.algorithm.basename == "ThermodynamicIntegration":
-            algorithm = graph.create_node(algorithm_id, ASMO.ThermodynamicIntegration)
-            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
-
-        elif self.algorithm.basename == "ANNNIModel":
-            algorithm = graph.create_node(algorithm_id, ASMO.ANNNImodel)
-            graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
+            elif self.algorithm.basename == "ANNNIModel":
+                algorithm = graph.create_node(algorithm_id, ASMO.ANNNImodel)
+                graph.add((simulation, ASMO.usesSimulationAlgorithm, algorithm))
 
         # now add software
         self._to_graph_software(graph, simulation)
