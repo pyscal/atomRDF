@@ -285,34 +285,46 @@ class WorkflowParser:
         dict
             Dictionary mapping original sample IDs to resolved URIs
         """
+        import time
+
         for sample_data in sample_data_list:
+            sample_start = time.time()
             original_id = sample_data.get("id", "unknown")
             if self.debug:
+                print(f"\n{'='*60}")
                 print(f"Processing sample: {original_id}")
 
             # Normalise simulation_cell.vector if present
+            prep_start = time.time()
             simcell = sample_data.get("simulation_cell")
-            if isinstance(simcell, dict) and "vector" in simcell:
-                simcell["vector"] = self._normalise_vector(simcell["vector"])
+            if isinstance(simcell, dict):
+                if "vector" in simcell:
+                    simcell["vector"] = self._normalise_vector(simcell["vector"])
+
+                # Convert repetitions from tuple/string to list if needed
+                if "repetitions" in simcell:
+                    reps = simcell["repetitions"]
+                    # If it's a string representation like "(15, 15, 15)", parse it
+                    if isinstance(reps, str):
+                        reps = ast.literal_eval(reps)
+                    # Convert tuple to list
+                    if isinstance(reps, tuple):
+                        reps = list(reps)
+                    simcell["repetitions"] = reps
+
+                # Flatten grains: move grain_size and number_of_grains to simulation_cell level
+                if "grains" in simcell:
+                    grains = simcell["grains"]
+                    if isinstance(grains, dict):
+                        if "grain_size" in grains:
+                            simcell["grain_size"] = grains["grain_size"]
+                        if "number_of_grains" in grains:
+                            simcell["number_of_grains"] = grains["number_of_grains"]
+                        # Remove the nested grains field
+                        del simcell["grains"]
+
+                # Update the sample_data with modified simcell
                 sample_data["simulation_cell"] = simcell
-
-            # Convert repetitions from tuple to list if needed
-            if isinstance(simcell, dict) and "repetitions" in simcell:
-                if isinstance(simcell["repetitions"], tuple):
-                    simcell["repetitions"] = list(simcell["repetitions"])
-                    sample_data["simulation_cell"] = simcell
-
-            # Flatten grains: move grain_size and number_of_grains to simulation_cell level
-            if isinstance(simcell, dict) and "grains" in simcell:
-                grains = simcell["grains"]
-                if isinstance(grains, dict):
-                    if "grain_size" in grains:
-                        simcell["grain_size"] = grains["grain_size"]
-                    if "number_of_grains" in grains:
-                        simcell["number_of_grains"] = grains["number_of_grains"]
-                    # Remove the nested grains field
-                    del simcell["grains"]
-                    sample_data["simulation_cell"] = simcell
 
             # Convert 4D Miller-Bravais indices in defect fields
             defect_fields = [
@@ -330,9 +342,17 @@ class WorkflowParser:
                         sample_data[field]
                     )
 
+            prep_time = time.time() - prep_start
+            if self.debug:
+                print(f"  Data preparation: {prep_time:.3f}s")
+
             # Create sample object
+            model_start = time.time()
             sample = AtomicScaleSample(**sample_data)
             original_id = sample.id
+            model_time = time.time() - model_start
+            if self.debug:
+                print(f"  Model creation: {model_time:.3f}s")
 
             # Check if we should skip hashing for large systems
             n_atoms = (
@@ -344,28 +364,49 @@ class WorkflowParser:
                 # Skip hashing for large systems - treat as unique
                 if self.debug:
                     print(
-                        f"Skipping hash for large system ({n_atoms} atoms > {self.hash_threshold} threshold)"
+                        f"  Skipping hash for large system ({n_atoms} atoms > {self.hash_threshold} threshold)"
                     )
+                graph_start = time.time()
                 sample.id = None  # Let to_graph generate a new UUID
                 sample.to_graph(self.kg)
+                graph_time = time.time() - graph_start
+                if self.debug:
+                    print(f"  Graph addition: {graph_time:.3f}s")
                 self.sample_map[original_id] = sample.id
             else:
                 # Use hash-based deduplication for smaller systems
+                hash_start = time.time()
                 sample.id = None
                 sample_hash = sample._compute_hash(precision=self.precision)
+                hash_time = time.time() - hash_start
                 if self.debug:
-                    print(f"Computed hash: {sample_hash} ({n_atoms} atoms)")
+                    print(f"  Hash computation: {hash_time:.3f}s ({n_atoms} atoms)")
+                    print(f"  Hash: {sample_hash}")
 
                 # Check if this hash already exists in the KG
+                lookup_start = time.time()
                 existing_uri = self._find_sample_by_hash(sample_hash)
+                lookup_time = time.time() - lookup_start
                 if self.debug:
-                    print(f"Existing uri is {existing_uri}")
+                    print(f"  Hash lookup: {lookup_time:.3f}s")
+                    print(f"  Existing uri: {existing_uri}")
 
                 if existing_uri:
                     self.sample_map[original_id] = existing_uri
+                    if self.debug:
+                        print(f"  Using existing sample (duplicate found)")
                 else:
+                    graph_start = time.time()
                     sample.to_graph(self.kg)
+                    graph_time = time.time() - graph_start
+                    if self.debug:
+                        print(f"  Graph addition: {graph_time:.3f}s")
                     self.sample_map[original_id] = sample.id
+
+            total_time = time.time() - sample_start
+            if self.debug:
+                print(f"  TOTAL sample time: {total_time:.3f}s")
+                print(f"{'='*60}")
 
         return self.sample_map
 
@@ -396,16 +437,30 @@ class WorkflowParser:
                 workflow_data["algorithm"] = "TensileTest"
 
             # Resolve input sample references
-            if "inputs" in workflow_data:
-                for j, inp in enumerate(workflow_data["inputs"]):
+            if "input_sample" in workflow_data:
+                for j, inp in enumerate(workflow_data["input_sample"]):
                     if inp in self.sample_map:
-                        workflow_data["inputs"][j] = self.sample_map[inp]
+                        workflow_data["input_sample"][j] = self.sample_map[inp]
 
             # Resolve output sample references
-            if "outputs" in workflow_data:
-                for j, outp in enumerate(workflow_data["outputs"]):
+            if "output_sample" in workflow_data:
+                for j, outp in enumerate(workflow_data["output_sample"]):
                     if outp in self.sample_map:
-                        workflow_data["outputs"][j] = self.sample_map[outp]
+                        workflow_data["output_sample"][j] = self.sample_map[outp]
+
+            if "calculated_property" in workflow_data:
+                for count, prop in enumerate(workflow_data["calculated_property"]):
+                    if "associate_to_sample" in prop:
+                        sample_list = []
+                        for a_sample in prop["associate_to_sample"]:
+                            if a_sample in self.sample_map:
+                                sample_list.append(self.sample_map[a_sample])
+                            else:
+                                sample_list.append(a_sample)
+
+                        workflow_data["calculated_property"][count][
+                            "associate_to_sample"
+                        ] = sample_list
 
             # Create the Simulation object
             sim = Simulation(**workflow_data)
@@ -475,10 +530,16 @@ class WorkflowParser:
         TypeError
             If data type is not supported
         """
+        import time
+
         # If data is a file path, read it first
         if isinstance(data, (str, Path)):
             filepath = Path(data)
 
+            if self.debug:
+                print(f"\nReading file: {filepath}")
+
+            read_start = time.time()
             with open(filepath, "r") as f:
                 if filepath.suffix in [".yaml", ".yml"]:
                     data = yaml.safe_load(f)
@@ -486,6 +547,10 @@ class WorkflowParser:
                     data = json.load(f)
                 else:
                     raise ValueError(f"Unsupported file format: {filepath.suffix}")
+            read_time = time.time() - read_start
+
+            if self.debug:
+                print(f"File reading time: {read_time:.3f}s")
         elif not isinstance(data, dict):
             raise TypeError(
                 f"Unsupported data type: {type(data)}. Expected str, Path, or dict."

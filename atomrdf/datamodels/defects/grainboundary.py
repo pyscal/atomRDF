@@ -144,9 +144,12 @@ class SymmetricalTiltGrainBoundary(GrainBoundary):
     def to_graph(self, graph, sample_id):
         name = sample_id
         material = get_material(graph, sample_id)
+        print("point 1")
         plane_defect = graph.create_node(
             f"{name}_SymmetricalTiltGrainBoundary", PLDO.SymmetricalTiltGrainBoundary
         )
+        print("point 2")
+        print(plane_defect)
         graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
         self._add_gb(graph, name)
 

@@ -31,7 +31,7 @@ class DeleteAtom(Activity):
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
         output_sample = graph.value(activity, PROV.wasGeneratedBy)
-        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
         return cls(
             id=activity_id,
             input_sample=input_sample,
@@ -51,7 +51,7 @@ class SubstituteAtom(Activity):
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
         output_sample = graph.value(activity, PROV.wasGeneratedBy)
-        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
         return cls(
             id=activity_id,
             input_sample=input_sample,
@@ -71,7 +71,7 @@ class AddAtom(Activity):
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
         output_sample = graph.value(activity, PROV.wasGeneratedBy)
-        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
         return cls(
             id=activity_id,
             input_sample=input_sample,
@@ -171,7 +171,7 @@ class Rotate(Activity):
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
         output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
 
         rotation_matrix = []
         rot_matrix = graph.objects(activity, CMSO.hasVector)
@@ -229,7 +229,7 @@ class Translate(Activity):
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
         output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
 
         translation_vector_lst = []
         translation_vector = graph.objects(activity, CMSO.hasVector)
@@ -322,7 +322,7 @@ class Shear(Activity):
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
         output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        input_sample = graph.value(final_sample, PROV.wasDerivedFrom)
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
 
         shear_vector_lst = []
         shear_vector = graph.objects(activity, CMSO.hasVector)

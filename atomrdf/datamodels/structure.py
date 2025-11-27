@@ -290,7 +290,8 @@ class SimulationCell(BaseModel, TemplateMixin):
                 volume,
                 ASMO.hasUnit,
                 URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
-            )
+            ),
+            validate=False,
         )
         graph.add(
             (
@@ -674,11 +675,11 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         sample = graph.create_node(name, CMSO.AtomicScaleSample, label=self.label)
         self.material.to_graph(graph, sample)
         self.simulation_cell.to_graph(graph, sample)
-        self.atom_attribute.to_graph(
-            graph,
-            sample,
-        )
-
+        if self.atom_attribute is not None:
+            self.atom_attribute.to_graph(
+                graph,
+                sample,
+            )
         # now call defect methods
         # Defects
         defect_fields = [

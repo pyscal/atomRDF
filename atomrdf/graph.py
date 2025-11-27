@@ -969,7 +969,10 @@ class KnowledgeGraph:
 
         # now go through each sample, and copy the file, at the same time fix the paths
         for sample in self.sample_ids:
-            filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath).toPython()
+            filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath)
+            if filepath is None:
+                continue
+            filepath = filepath.toPython()
             # filepath has to fixed with the correct prefix as needed
             filepath = os.path.join(self.structure_store, os.path.basename(filepath))
             shutil.copy(filepath, structure_store)
@@ -1094,7 +1097,17 @@ class KnowledgeGraph:
                     if "SELECT DISTINCT" in line:
                         break
                 labels = [x[1:] for x in line.split()[2:]]
-                return pd.DataFrame(res, columns=labels)
+                num_of_items = len(labels)
+                store = [[] for _ in range(num_of_items)]
+                for row in res:
+                    rlist = list(row)
+                    for i in range(num_of_items):
+                        if rlist[i] is not None:
+                            store[i].append(rlist[i].toPython())
+                        else:
+                            store[i].append(None)
+                datadict = {x: store[i] for i, x in enumerate(labels)}
+                return pd.DataFrame(datadict, columns=labels)
             else:
                 return res
         raise ValueError("SPARQL query returned None")

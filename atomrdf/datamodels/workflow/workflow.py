@@ -366,6 +366,7 @@ class Simulation(Activity):
                 graph.add((param_uri, ASMO.wasCalculatedBy, simulation), validate=False)
                 if param.associate_to_sample:
                     for sample_id in param.associate_to_sample:
+                        print(sample_id)
                         graph.add(
                             (
                                 URIRef(sample_id),
