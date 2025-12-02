@@ -13,7 +13,7 @@ dependencies:
   - ase 
   - networkx
   - pandas
-  - jupyter-book
+  - jupyter-book =1.0.4
   - plotly
   - ipywidgets
   - atomman
