@@ -8,7 +8,7 @@ logo: docs/source/_static/logo.png
 # Force re-execution of notebooks on each build.
 # See https://jupyterbook.org/content/execute.html
 execute:
-  execute_notebooks: "fauto"
+  execute_notebooks: "auto"
 
 only_build_toc_files: true
 
