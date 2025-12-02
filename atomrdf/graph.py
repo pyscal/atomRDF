@@ -968,21 +968,29 @@ class KnowledgeGraph:
         os.mkdir(structure_store)
 
         # now go through each sample, and copy the file, at the same time fix the paths
+        copied_basenames = set()
+
+        # First, attempt to copy the canonical sample files as before (best-effort)
         for sample in self.sample_ids:
             filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath)
             if filepath is None:
                 continue
             filepath = filepath.toPython()
-            # filepath has to fixed with the correct prefix as needed
-            filepath = os.path.join(self.structure_store, os.path.basename(filepath))
-            shutil.copy(filepath, structure_store)
+            # filepath has to be fixed with the correct prefix as needed
+            srcpath = os.path.join(self.structure_store, os.path.basename(filepath))
+            if os.path.exists(srcpath):
+                if os.path.basename(filepath) not in copied_basenames:
+                    shutil.copy(srcpath, structure_store)
+                    copied_basenames.add(os.path.basename(filepath))
 
-            # now we have to remove the old path, and fix new
+            # now we have to remove the old path, and fix new for Position/Species nodes
             for val in ["Position", "Species"]:
                 self.remove((URIRef(f"{sample}_{val}"), CMSO.hasPath, None))
 
                 # assign corrected path
-                new_relpath = "/".join(["rdf_structure_store", filepath.split("/")[-1]])
+                new_relpath = "/".join(
+                    ["rdf_structure_store", os.path.basename(filepath)]
+                )
                 self.add(
                     (
                         URIRef(f"{sample}_{val}"),
@@ -990,6 +998,35 @@ class KnowledgeGraph:
                         Literal(new_relpath, datatype=XSD.string),
                     )
                 )
+
+        # Additionally, copy any other files referenced by CMSO.hasPath (e.g. calculated-property files)
+        for subj, pred, obj in list(self.triples((None, CMSO.hasPath, None))):
+            try:
+                path = obj.toPython()
+            except Exception:
+                continue
+            basename = os.path.basename(path)
+            src = os.path.join(self.structure_store, basename)
+            if not os.path.exists(src):
+                # nothing to copy for this path
+                continue
+            if basename in copied_basenames:
+                # already copied
+                # still ensure triple points to rdf_structure_store
+                self.remove((subj, CMSO.hasPath, None))
+                new_relpath = "/".join(["rdf_structure_store", basename])
+                self.add(
+                    (subj, CMSO.hasPath, Literal(new_relpath, datatype=XSD.string))
+                )
+                continue
+
+            shutil.copy(src, structure_store)
+            copied_basenames.add(basename)
+
+            # replace path triple with corrected relative path inside package
+            self.remove((subj, CMSO.hasPath, None))
+            new_relpath = "/".join(["rdf_structure_store", basename])
+            self.add((subj, CMSO.hasPath, Literal(new_relpath, datatype=XSD.string)))
         # copy simulation files if needed
         if add_simulations:
             sim_store = f"{package_name}/simulation_store"

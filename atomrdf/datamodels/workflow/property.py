@@ -26,6 +26,8 @@ from atomrdf.namespace import (
     UNSAFEASMO,
 )
 from atomrdf.graph import KnowledgeGraph
+import atomrdf.json_io as json_io
+import os
 
 
 class Property(DataProperty):
@@ -34,11 +36,46 @@ class Property(DataProperty):
     model_config = {"arbitrary_types_allowed": True}
 
     def _add_value(self, graph, property):
+        # If the value is a list/array, serialize it to a JSON file in the
+        # graph's structure_store (same approach as AtomAttribute) and add
+        # identifier + path triples. Otherwise write a literal value.
         if self.value is not None:
-            graph.add(
-                (property, ASMO.hasValue, Literal(self.value, datatype=XSD.float)),
-                validate=False,
-            )
+            # handle numpy arrays and Python lists/tuples
+            if isinstance(self.value, (list, tuple)) or hasattr(self.value, "tolist"):
+                # ensure graph exposes a structure_store
+                try:
+                    store_dir = graph.structure_store
+                except Exception:
+                    raise RuntimeError(
+                        "KnowledgeGraph has no attribute 'structure_store'"
+                    )
+
+                identifier = str(uuid.uuid4())
+                datadict = {
+                    identifier: {"value": self.value, "label": self.basename.lower()}
+                }
+
+                outfile = os.path.join(store_dir, str(self.id).split(":")[-1])
+                json_io.write_file(outfile, datadict)
+                relpath = os.path.relpath(outfile + ".json")
+
+                graph.add(
+                    (
+                        property,
+                        CMSO.hasIdentifier,
+                        Literal(identifier, datatype=XSD.string),
+                    ),
+                    validate=False,
+                )
+                graph.add(
+                    (property, CMSO.hasPath, Literal(relpath, datatype=XSD.string)),
+                    validate=False,
+                )
+            else:
+                graph.add(
+                    (property, ASMO.hasValue, Literal(self.value, datatype=XSD.float)),
+                    validate=False,
+                )
         if self.unit is not None:
             graph.add(
                 (
@@ -78,15 +115,35 @@ class Property(DataProperty):
 
         # get label
         label = graph.value(id, RDFS.label)
-        # get value
+        # get value (literal) or externalised array via path+identifier
         value = graph.value(id, ASMO.hasValue)
         # get unit
         unit = graph.value(id, ASMO.hasUnit)
 
+        # check for externalised array
+        path = graph.value(id, CMSO.hasPath)
+        identifier = graph.value(id, CMSO.hasIdentifier)
+
         cls.id = str(id)
         cls.basename = str(basename)
         cls.label = str(label) if label else None
-        cls.value = float(value) if value else None
+
+        if value is not None:
+            cls.value = float(value)
+        elif path is not None and identifier is not None:
+            filepath = path.toPython()
+            ident = identifier.toPython()
+            # open and read JSON
+            with open(filepath, "r") as fin:
+                data = json.load(fin)
+                # defensive: ensure identifier exists
+                if ident in data:
+                    cls.value = data[ident]["value"]
+                else:
+                    raise KeyError(f"Identifier {ident} not found in {filepath}")
+        else:
+            cls.value = None
+
         cls.unit = str(unit).split("/")[-1] if unit else None
         return cls
 
