@@ -2,7 +2,7 @@
 # Learn more at https://jupyterbook.org/customize/toc.html
 
 format: jb-book
-root: index_1
+root: index
 chapters:
   - file: docs/gettingstarted.md
   - file: docs/examples.md
