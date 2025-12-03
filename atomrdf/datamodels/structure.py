@@ -33,6 +33,7 @@ import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
 import atomrdf.datamodels.structure_io as structure_io
 from atomrdf.utils import get_material, get_sample_id, get_sample_object, toPython
+from atomrdf.datamodels.workflow.property import *
 import atomrdf.properties as ap
 
 
@@ -661,6 +662,30 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
     mixed_grain_boundary: Optional[defects.MixedGrainBoundary] = None
 
     # properties
+    calculated_property: Optional[List[CalculatedProperty]] = Field(
+        default=[], description="Calculated properties from the simulation"
+    )
+
+    def to_graph_calculated_properties(self, graph):
+        if self.calculated_property:
+            for param in self.calculated_property:
+                param_uri = param.to_graph(graph)
+                graph.add(
+                    (
+                        URIRef(self.id),
+                        ASMO.hasCalculatedProperty,
+                        param_uri,
+                    ),
+                    validate=False,
+                )
+
+    def from_graph_calculated_properties(cls, graph, sample_id):
+        properties = []
+        for prop_uri in graph.objects(URIRef(sample_id), ASMO.hasCalculatedProperty):
+            prop = CalculatedProperty.from_graph(graph, prop_uri)
+            properties.append(prop)
+        cls.calculated_property = properties
+        return cls
 
     def to_graph(self, graph, force=False):
         # if force - creates a new ID and saves the structure again
@@ -680,6 +705,10 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
                 graph,
                 sample,
             )
+
+        # now add calculated properties
+        self.to_graph_calculated_properties(graph)
+
         # now call defect methods
         # Defects
         defect_fields = [
@@ -758,6 +787,7 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
         cls = cls(**kwargs)
         cls.id = sample_id
+        cls = cls.from_graph_calculated_properties(graph, sample_id)
         return cls
 
     def update_attributes(self, atoms, repeat=None):
