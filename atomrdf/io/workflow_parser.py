@@ -7,10 +7,30 @@ import re
 
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.datamodels.workflow.workflow import Simulation
+from atomrdf.datamodels.workflow.operations import (
+    DeleteAtom,
+    SubstituteAtom,
+    AddAtom,
+    Rotate,
+    Translate,
+    Shear,
+)
 from atomrdf import KnowledgeGraph
 from rdflib import URIRef, Literal, Namespace, XSD
 
 DCAT = Namespace("http://www.w3.org/ns/dcat#")
+
+# Mapping of operation method names to their classes
+OPERATION_MAP = {
+    "DeleteAtom": DeleteAtom,
+    "SubstituteAtom": SubstituteAtom,
+    "AddAtom": AddAtom,
+    "Rotate": Rotate,
+    "Rotation": Rotate,  # Alias
+    "Translate": Translate,
+    "Translation": Translate,  # Alias
+    "Shear": Shear,
+}
 
 
 class WorkflowParser:
@@ -20,7 +40,8 @@ class WorkflowParser:
     Handles parsing of:
     - Computational samples (with deduplication via hashing)
     - Workflows/Simulations
-    - Activities (transformations between samples)
+    - Operations (transformations between samples: DeleteAtom, SubstituteAtom,
+      AddAtom, Rotate, Translate, Shear)
 
     Attributes
     ----------
@@ -477,32 +498,92 @@ class WorkflowParser:
 
         return workflow_uris
 
-    def parse_activities(self, activity_data_list: List[Dict[str, Any]]) -> List[str]:
+    def parse_operations(self, operation_data_list: List[Dict[str, Any]]) -> List[str]:
         """
-        Parse activity data (transformations between samples).
+        Parse operation data (transformations between samples).
+
+        Operations include: DeleteAtom, SubstituteAtom, AddAtom, Rotate,
+        Translate, and Shear.
 
         Parameters
         ----------
-        activity_data_list : list of dict
-            List of activity dictionaries
+        operation_data_list : list of dict
+            List of operation dictionaries. Each must have:
+            - 'method': The operation type (e.g., 'DeleteAtom', 'Rotate')
+            - 'input_sample': Sample ID or list of sample IDs
+            - 'output_sample': Sample ID or list of sample IDs
+            - Additional method-specific parameters (e.g., rotation_matrix for Rotate)
 
         Returns
         -------
         list of str
-            List of activity URIs created
+            List of operation URIs created
 
-        Notes
-        -----
-        This method is not yet fully implemented.
+        Raises
+        ------
+        ValueError
+            If operation method is not recognized
         """
-        # TODO: Implement activity parsing
-        # This will be similar to workflow parsing but for Activity objects
-        activity_uris = []
-        if self.debug:
-            print(
-                f"Activity parsing not yet implemented. Found {len(activity_data_list)} activities."
-            )
-        return activity_uris
+        operation_uris = []
+
+        for i, operation_data in enumerate(operation_data_list):
+            method = operation_data.get("method")
+            if not method:
+                if self.debug:
+                    print(f"Skipping operation {i+1}: no method specified")
+                continue
+
+            # Get the operation class
+            operation_class = OPERATION_MAP.get(method)
+            if not operation_class:
+                raise ValueError(
+                    f"Unknown operation method: {method}. "
+                    f"Available methods: {list(OPERATION_MAP.keys())}"
+                )
+
+            # Resolve input sample references
+            if "input_sample" in operation_data:
+                input_sample = operation_data["input_sample"]
+                if isinstance(input_sample, list):
+                    operation_data["input_sample"] = [
+                        self.sample_map.get(s, s) for s in input_sample
+                    ]
+                else:
+                    operation_data["input_sample"] = self.sample_map.get(
+                        input_sample, input_sample
+                    )
+
+            # Resolve output sample references
+            if "output_sample" in operation_data:
+                output_sample = operation_data["output_sample"]
+                if isinstance(output_sample, list):
+                    operation_data["output_sample"] = [
+                        self.sample_map.get(s, s) for s in output_sample
+                    ]
+                else:
+                    operation_data["output_sample"] = self.sample_map.get(
+                        output_sample, output_sample
+                    )
+
+            # Remove 'method' from data as it's not part of the model
+            operation_data_copy = operation_data.copy()
+            operation_data_copy.pop("method", None)
+
+            # Create the operation object
+            operation = operation_class(**operation_data_copy)
+
+            # Add to knowledge graph
+            operation.to_graph(self.kg)
+            operation_uris.append(operation.id)
+
+            if self.debug:
+                print(
+                    f"Added operation {i+1} ({method}): "
+                    f"{operation_data.get('input_sample')} -> "
+                    f"{operation_data.get('output_sample')}"
+                )
+
+        return operation_uris
 
     def parse(self, data: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
         """
@@ -521,7 +602,7 @@ class WorkflowParser:
 
             - 'sample_map' : dict mapping original IDs to URIs
             - 'workflow_uris' : list of created workflow URIs
-            - 'activity_uris' : list of created activity URIs
+            - 'operation_uris' : list of created operation URIs
 
         Raises
         ------
@@ -556,9 +637,9 @@ class WorkflowParser:
                 f"Unsupported data type: {type(data)}. Expected str, Path, or dict."
             )
 
-        result = {"sample_map": {}, "workflow_uris": [], "activity_uris": []}
+        result = {"sample_map": {}, "workflow_uris": [], "operation_uris": []}
 
-        # Parse samples first (they may be referenced by workflows/activities)
+        # Parse samples first (they may be referenced by workflows/operations)
         if "computational_sample" in data:
             result["sample_map"] = self.parse_samples(data["computational_sample"])
 
@@ -566,9 +647,12 @@ class WorkflowParser:
         if "workflow" in data:
             result["workflow_uris"] = self.parse_workflows(data["workflow"])
 
-        # Parse activities
-        if "activity" in data:
-            result["activity_uris"] = self.parse_activities(data["activity"])
+        # Parse operations (formerly activities)
+        if "operation" in data:
+            result["operation_uris"] = self.parse_operations(data["operation"])
+        # Backwards compatibility: also check for 'activity' key
+        elif "activity" in data:
+            result["operation_uris"] = self.parse_operations(data["activity"])
 
         return result
 
@@ -705,26 +789,26 @@ def parse_workflow(
     return uris[0] if uris else None
 
 
-def parse_activity(
-    activity_data: Dict[str, Any], graph: Optional[KnowledgeGraph] = None
+def parse_operation(
+    operation_data: Dict[str, Any], graph: Optional[KnowledgeGraph] = None
 ) -> str:
     """
-    Parse a single activity.
+    Parse a single operation.
 
     Parameters
     ----------
-    activity_data : dict
-        Activity dictionary
+    operation_data : dict
+        Operation dictionary with 'method' field specifying the operation type
     graph : KnowledgeGraph, optional
         Knowledge graph instance. If None, creates a new one.
 
     Returns
     -------
     str or None
-        URI of the created activity
+        URI of the created operation
     """
     parser = WorkflowParser(kg=graph)
-    uris = parser.parse_activities([activity_data])
+    uris = parser.parse_operations([operation_data])
     return uris[0] if uris else None
 
 

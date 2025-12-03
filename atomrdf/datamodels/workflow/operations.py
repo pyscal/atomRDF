@@ -80,7 +80,7 @@ class AddAtom(Activity):
 
 
 class Rotate(Activity):
-    rotation_matrix: Optional[DataProperty[List[List[float]]]] = None
+    rotation_matrix: Optional[List[List[float]]] = None
 
     def to_graph(self, graph):
         activity_id = f"rotate:{str(uuid.uuid4())}"
@@ -185,12 +185,12 @@ class Rotate(Activity):
             id=activity_id,
             input_sample=input_sample,
             output_sample=output_sample,
-            rotation_matrix=DataProperty(value=rotation_matrix),
+            rotation_matrix=rotation_matrix,
         )
 
 
 class Translate(Activity):
-    translation_vector: Optional[DataProperty[List[float]]] = None
+    translation_vector: Optional[List[float]] = None
 
     def to_graph(self, graph):
         activity_id = f"translate:{str(uuid.uuid4())}"
@@ -207,21 +207,21 @@ class Translate(Activity):
             (
                 translation_vector,
                 CMSO.hasComponent_x,
-                Literal(self.translation_vector.value[0], datatype=XSD.float),
+                Literal(self.translation_vector[0], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 translation_vector,
                 CMSO.hasComponent_y,
-                Literal(self.translation_vector.value[1], datatype=XSD.float),
+                Literal(self.translation_vector[1], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 translation_vector,
                 CMSO.hasComponent_z,
-                Literal(self.translation_vector.value[2], datatype=XSD.float),
+                Literal(self.translation_vector[2], datatype=XSD.float),
             )
         )
 
@@ -241,14 +241,16 @@ class Translate(Activity):
             id=activity_id,
             input_sample=input_sample,
             output_sample=output_sample,
-            translation_vector=DataProperty(value=translation_vector_lst),
+            translation_vector=(
+                translation_vector_lst[0] if translation_vector_lst else None
+            ),
         )
 
 
 class Shear(Activity):
-    shear_vector: Optional[DataProperty[List[float]]] = None
-    normal_vector: Optional[DataProperty[List[float]]] = None
-    distance: Optional[DataProperty[float]] = None
+    shear_vector: Optional[List[float]] = None
+    normal_vector: Optional[List[float]] = None
+    distance: Optional[float] = None
 
     def to_graph(self, graph):
         activity_id = f"shear:{str(uuid.uuid4())}"
@@ -263,21 +265,21 @@ class Shear(Activity):
             (
                 shear_vector,
                 CMSO.hasComponent_x,
-                Literal(self.shear_vector.value[0], datatype=XSD.float),
+                Literal(self.shear_vector[0], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 shear_vector,
                 CMSO.hasComponent_y,
-                Literal(self.shear_vector.value[1], datatype=XSD.float),
+                Literal(self.shear_vector[1], datatype=XSD.float),
             )
         )
         graph.add(
             (
                 shear_vector,
                 CMSO.hasComponent_z,
-                Literal(self.shear_vector.value[2], datatype=XSD.float),
+                Literal(self.shear_vector[2], datatype=XSD.float),
             )
         )
 
@@ -292,21 +294,21 @@ class Shear(Activity):
                 (
                     normal_vector,
                     CMSO.hasComponent_x,
-                    Literal(self.normal_vector.value[0], datatype=XSD.float),
+                    Literal(self.normal_vector[0], datatype=XSD.float),
                 )
             )
             graph.add(
                 (
                     normal_vector,
                     CMSO.hasComponent_y,
-                    Literal(self.normal_vector.value[1], datatype=XSD.float),
+                    Literal(self.normal_vector[1], datatype=XSD.float),
                 )
             )
             graph.add(
                 (
                     normal_vector,
                     CMSO.hasComponent_z,
-                    Literal(self.normal_vector.value[2], datatype=XSD.float),
+                    Literal(self.normal_vector[2], datatype=XSD.float),
                 )
             )
             if self.distance:
@@ -314,7 +316,7 @@ class Shear(Activity):
                     (
                         plane,
                         CMSO.hasDistanceFromOrigin,
-                        Literal(self.distance.value, datatype=XSD.float),
+                        Literal(self.distance, datatype=XSD.float),
                     )
                 )
 
@@ -349,7 +351,11 @@ class Shear(Activity):
             id=activity_id,
             input_sample=input_sample,
             output_sample=output_sample,
-            shear_vector=DataProperty(value=shear_vector_lst),
-            normal_vector=DataProperty(value=normal_vector_lst),
-            distance=DataProperty(value=distance),
+            shear_vector=shear_vector_lst[0] if shear_vector_lst else None,
+            normal_vector=(
+                normal_vector_lst[0]
+                if normal_vector_lst and len(normal_vector_lst) > 0
+                else None
+            ),
+            distance=distance,
         )
