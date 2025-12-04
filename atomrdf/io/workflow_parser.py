@@ -20,6 +20,14 @@ from rdflib import URIRef, Literal, Namespace, XSD
 
 DCAT = Namespace("http://www.w3.org/ns/dcat#")
 
+# Rebuild models to resolve forward references now that KnowledgeGraph is imported
+DeleteAtom.model_rebuild()
+SubstituteAtom.model_rebuild()
+AddAtom.model_rebuild()
+Rotate.model_rebuild()
+Translate.model_rebuild()
+Shear.model_rebuild()
+
 # Mapping of operation method names to their classes
 OPERATION_MAP = {
     "DeleteAtom": DeleteAtom,
@@ -309,14 +317,9 @@ class WorkflowParser:
         import time
 
         for sample_data in sample_data_list:
-            sample_start = time.time()
             original_id = sample_data.get("id", "unknown")
-            if self.debug:
-                print(f"\n{'='*60}")
-                print(f"Processing sample: {original_id}")
 
             # Normalise simulation_cell.vector if present
-            prep_start = time.time()
             simcell = sample_data.get("simulation_cell")
             if isinstance(simcell, dict):
                 if "vector" in simcell:
@@ -363,17 +366,9 @@ class WorkflowParser:
                         sample_data[field]
                     )
 
-            prep_time = time.time() - prep_start
-            if self.debug:
-                print(f"  Data preparation: {prep_time:.3f}s")
-
             # Create sample object
-            model_start = time.time()
             sample = AtomicScaleSample(**sample_data)
             original_id = sample.id
-            model_time = time.time() - model_start
-            if self.debug:
-                print(f"  Model creation: {model_time:.3f}s")
 
             # Check if we should skip hashing for large systems
             n_atoms = (
@@ -383,51 +378,28 @@ class WorkflowParser:
 
             if skip_hash:
                 # Skip hashing for large systems - treat as unique
-                if self.debug:
-                    print(
-                        f"  Skipping hash for large system ({n_atoms} atoms > {self.hash_threshold} threshold)"
-                    )
-                graph_start = time.time()
                 sample.id = None  # Let to_graph generate a new UUID
                 sample.to_graph(self.kg)
-                graph_time = time.time() - graph_start
-                if self.debug:
-                    print(f"  Graph addition: {graph_time:.3f}s")
                 self.sample_map[original_id] = sample.id
+                if self.debug:
+                    print(f"Sample added (no hash check): {sample.id}")
             else:
                 # Use hash-based deduplication for smaller systems
-                hash_start = time.time()
                 sample.id = None
                 sample_hash = sample._compute_hash(precision=self.precision)
-                hash_time = time.time() - hash_start
-                if self.debug:
-                    print(f"  Hash computation: {hash_time:.3f}s ({n_atoms} atoms)")
-                    print(f"  Hash: {sample_hash}")
 
                 # Check if this hash already exists in the KG
-                lookup_start = time.time()
                 existing_uri = self._find_sample_by_hash(sample_hash)
-                lookup_time = time.time() - lookup_start
-                if self.debug:
-                    print(f"  Hash lookup: {lookup_time:.3f}s")
-                    print(f"  Existing uri: {existing_uri}")
 
                 if existing_uri:
                     self.sample_map[original_id] = existing_uri
                     if self.debug:
-                        print(f"  Using existing sample (duplicate found)")
+                        print(f"Sample exists: {existing_uri}")
                 else:
-                    graph_start = time.time()
                     sample.to_graph(self.kg)
-                    graph_time = time.time() - graph_start
-                    if self.debug:
-                        print(f"  Graph addition: {graph_time:.3f}s")
                     self.sample_map[original_id] = sample.id
-
-            total_time = time.time() - sample_start
-            if self.debug:
-                print(f"  TOTAL sample time: {total_time:.3f}s")
-                print(f"{'='*60}")
+                    if self.debug:
+                        print(f"Sample added: {sample.id}")
 
         return self.sample_map
 
@@ -491,10 +463,7 @@ class WorkflowParser:
             workflow_uris.append(sim_uri)
 
             if self.debug:
-                print(
-                    f"Added workflow {i+1}: connecting samples "
-                    f"{workflow_data.get('input_sample', [])} to {workflow_data.get('output_sample', [])}"
-                )
+                print(f"Workflow added: {sim_uri}")
 
         return workflow_uris
 
@@ -577,11 +546,7 @@ class WorkflowParser:
             operation_uris.append(operation.id)
 
             if self.debug:
-                print(
-                    f"Added operation {i+1} ({method}): "
-                    f"{operation_data.get('input_sample')} -> "
-                    f"{operation_data.get('output_sample')}"
-                )
+                print(f"Operation added ({method}): {operation.id}")
 
         return operation_uris
 
@@ -617,10 +582,6 @@ class WorkflowParser:
         if isinstance(data, (str, Path)):
             filepath = Path(data)
 
-            if self.debug:
-                print(f"\nReading file: {filepath}")
-
-            read_start = time.time()
             with open(filepath, "r") as f:
                 if filepath.suffix in [".yaml", ".yml"]:
                     data = yaml.safe_load(f)
@@ -628,10 +589,6 @@ class WorkflowParser:
                     data = json.load(f)
                 else:
                     raise ValueError(f"Unsupported file format: {filepath.suffix}")
-            read_time = time.time() - read_start
-
-            if self.debug:
-                print(f"File reading time: {read_time:.3f}s")
         elif not isinstance(data, dict):
             raise TypeError(
                 f"Unsupported data type: {type(data)}. Expected str, Path, or dict."

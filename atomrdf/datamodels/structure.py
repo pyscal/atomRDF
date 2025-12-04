@@ -689,9 +689,7 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
     def to_graph(self, graph, force=False):
         # if force - creates a new ID and saves the structure again
-        print(self.id)
         if not force and self.id is not None:
-            print("Sample already in graph, skipping...")
             return self.id
 
         # the rest of the function is only if id isnt there or force is true
@@ -729,14 +727,14 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         ]
 
         for defect in defect_fields:
-            obj = getattr(self, defect)
-            if isinstance(obj, BaseModel) and obj.model_fields_set:
-                if hasattr(obj, "to_graph"):
-                    obj.to_graph(graph, sample)
+            obj = getattr(self, defect, None)
+            if obj is not None:
+                if isinstance(obj, BaseModel) and obj.model_fields_set:
+                    if hasattr(obj, "to_graph"):
+                        obj.to_graph(graph, sample)
 
         # Add content hash to the graph for deduplication (skip validation for external vocab)
         content_hash = self._compute_hash()
-        print("Content hash:", content_hash)
         graph.add(
             (sample, DCAT.checksum, Literal(content_hash, datatype=XSD.string)),
             validate=False,

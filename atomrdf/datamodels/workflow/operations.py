@@ -24,8 +24,10 @@ class DeleteAtom(Activity):
         activity_id = f"deleteatom:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.DeleteAtom)
-        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
-        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
+        graph.add(
+            (URIRef(self.output_sample), PROV.wasDerivedFrom, URIRef(self.input_sample))
+        )
+        graph.add((URIRef(self.output_sample), PROV.wasGeneratedBy, activity))
 
     @classmethod
     def from_graph(cls, graph, activity_id):
@@ -44,8 +46,10 @@ class SubstituteAtom(Activity):
         activity_id = f"substituteatom:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.SubstituteAtom)
-        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
-        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
+        graph.add(
+            (URIRef(self.output_sample), PROV.wasDerivedFrom, URIRef(self.input_sample))
+        )
+        graph.add((URIRef(self.output_sample), PROV.wasGeneratedBy, activity))
 
     @classmethod
     def from_graph(cls, graph, activity_id):
@@ -64,8 +68,10 @@ class AddAtom(Activity):
         activity_id = f"addatom:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.AddAtom)
-        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
-        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
+        graph.add(
+            (URIRef(self.output_sample), PROV.wasDerivedFrom, URIRef(self.input_sample))
+        )
+        graph.add((URIRef(self.output_sample), PROV.wasGeneratedBy, activity))
 
     @classmethod
     def from_graph(cls, graph, activity_id):
@@ -86,8 +92,10 @@ class Rotate(Activity):
         activity_id = f"rotate:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.Rotation)
-        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
-        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
+        graph.add(
+            (URIRef(self.output_sample), PROV.wasDerivedFrom, URIRef(self.input_sample))
+        )
+        graph.add((URIRef(self.output_sample), PROV.wasGeneratedBy, activity))
 
         rot_vector_01 = graph.create_node(
             f"{activity_id}_RotationVector_1", CMSO.Vector
@@ -196,8 +204,10 @@ class Translate(Activity):
         activity_id = f"translate:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.Translation)
-        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
-        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
+        graph.add(
+            (URIRef(self.output_sample), PROV.wasDerivedFrom, URIRef(self.input_sample))
+        )
+        graph.add((URIRef(self.output_sample), PROV.wasGeneratedBy, activity))
 
         translation_vector = graph.create_node(
             f"{activity_id}_TranslationVector", CMSO.Vector
@@ -256,8 +266,10 @@ class Shear(Activity):
         activity_id = f"shear:{str(uuid.uuid4())}"
         self.id = activity_id
         activity = graph.create_node(activity_id, ASMO.Shear)
-        graph.add((self.output_sample, PROV.wasDerivedFrom, self.input_sample))
-        graph.add((self.output_sample, PROV.wasGeneratedBy, activity))
+        graph.add(
+            (URIRef(self.output_sample), PROV.wasDerivedFrom, URIRef(self.input_sample))
+        )
+        graph.add((URIRef(self.output_sample), PROV.wasGeneratedBy, activity))
 
         shear_vector = graph.create_node(f"{activity_id}_ShearVector", CMSO.Vector)
         graph.add((activity, CMSO.hasVector, shear_vector))
