@@ -18,6 +18,7 @@ from rdflib import Literal as RDFLibLiteral
 from pyscal3.atoms import AttrSetter
 from tools4rdf.network.network import OntologyNetwork
 
+
 def Literal(value, datatype=None):
     if datatype is not None:
         return RDFLibLiteral(value, datatype=datatype)
@@ -27,7 +28,8 @@ def Literal(value, datatype=None):
         return RDFLibLiteral(json.dumps(value.tolist()))
     else:
         return RDFLibLiteral(value)
-    
+
+
 class Namespace(AttrSetter, RDFLibNamespace):
     """A class representing a namespace in the AtomRDF library.
 
@@ -62,14 +64,14 @@ class Namespace(AttrSetter, RDFLibNamespace):
         AttrSetter.__init__(self)
         self.network = OntologyNetwork(infile)
         RDFLibNamespace.__init__(self.network.onto.base_iri)
-        self.name = self.network.onto.base_iri.split('/')[-1]
+        self.name = self.network.onto.base_iri.split("/")[-1]
         mapdict = {}
 
         # now iterate over all attributes
         for k1 in ["class", "object_property", "data_property"]:
             for k2, val in self.network.onto.attributes[k1].items():
-                #print(val.namespace, self.name)
-                #if val.namespace == self.name:
+                # print(val.namespace, self.name)
+                # if val.namespace == self.name:
                 mapdict[val.name_without_prefix] = val
 
         # add attributes
@@ -90,3 +92,4 @@ PROV = RDFLibNamespace("http://www.w3.org/ns/prov#")
 MDO = RDFLibNamespace("https://w3id.org/mdo/calculation/")
 UNSAFECMSO = RDFLibNamespace("http://purls.helmholtz-metadaten.de/cmso/")
 UNSAFEASMO = RDFLibNamespace("http://purls.helmholtz-metadaten.de/asmo/")
+DCAT = RDFLibNamespace("http://www.w3.org/ns/dcat#")

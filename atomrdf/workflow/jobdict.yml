@@ -20,6 +20,8 @@ outputs:
     unit:
     value:
     associate_to_sample: True
+
+
 workflow_manager:
   uri:
 software:
