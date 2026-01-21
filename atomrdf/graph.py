@@ -43,7 +43,6 @@ from atomrdf.ontology import read_ontology
 import atomrdf.properties as prp
 from atomrdf.stores import create_store, purge
 import atomrdf.json_io as json_io
-from atomrdf.workflow.workflow import Workflow
 import atomrdf.mp as amp
 
 
@@ -243,7 +242,6 @@ class KnowledgeGraph:
         self.terms = self.ontology.terms
         self.store = store
         self._n_triples = 0
-        self.workflow = Workflow(self)
 
     def purge(self, force=False):
         """
@@ -1509,33 +1507,6 @@ class KnowledgeGraph:
     def change_label(self, sample, label):
         self.graph.remove((sample, RDFS.label, None))
         self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
-
-    def enable_workflow(
-        self, workflow_object, workflow_environment=None, workflow_module=None
-    ):
-        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
-        self.workflow.inform_graph(
-            workflow_object,
-            workflow_environment=workflow_environment,
-            workflow_module=workflow_module,
-        )
-
-    def add_workflow(
-        self,
-        job,
-        workflow_environment=None,
-        workflow_module=None,
-        job_dicts=None,
-        add_intermediate_jobs=False,
-    ):
-        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
-        self.workflow.to_graph(
-            job,
-            workflow_environment=workflow_environment,
-            workflow_module=workflow_module,
-            job_dicts=job_dicts,
-            add_intermediate_jobs=add_intermediate_jobs,
-        )
 
     def find_property(self, label=None, propertytype=None):
         # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
