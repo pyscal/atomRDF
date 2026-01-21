@@ -35,18 +35,15 @@ import warnings
 import re
 import pickle
 
-# from pyscal3.core import System
 from pyscal3.atoms import Atoms
 
 from atomrdf.visualize import visualize_graph, visualize_provenance
 from atomrdf.ontology import read_ontology
 
-# from atomrdf.structure import System
 import atomrdf.properties as prp
 from atomrdf.stores import create_store, purge
 import atomrdf.json_io as json_io
 from atomrdf.workflow.workflow import Workflow
-from atomrdf.sample import Sample
 import atomrdf.mp as amp
 
 
@@ -174,12 +171,12 @@ class KnowledgeGraph:
 
     Methods
     -------
-    add_structure(structure)
-        Add a structure to the knowledge graph.
     add(triple, validate=True)
         Add a triple to the knowledge graph.
     triples(triple)
         Return the triples in the knowledge graph that match the given triple pattern.
+    get_sample_as_structure(sample_id)
+        Retrieve a sample from the graph as an AtomicScaleSample object.
     """
 
     def __init__(
@@ -1234,22 +1231,9 @@ class KnowledgeGraph:
         return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
 
     @property
-    def sample_files(self):
-        # TODO: NEEDS RESTRUCTURE
-        files = []
-        for sample_id in self.sample_ids:
-            filepath = self.value(
-                URIRef(f"{sample_id}_Position"), CMSO.hasPath
-            ).toPython()
-            files.append(filepath)
-        return files
-
-    @property
     def sample_names(self):
         """
-        TODO: NEEDS RESTRUCTURE
-
-        Returns a list of all Sample names in the graph
+        Returns a list of all Sample names in the graph.
         """
         samples = [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
         samples_names = []
@@ -1260,16 +1244,6 @@ class KnowledgeGraph:
             else:
                 samples_names.append(sample.toPython())
         return samples_names
-
-    @property
-    def samples(self):
-        # TODO: NEEDS RESTRUCTURE
-        sample_ids = self.sample_ids
-        sample_names = self.sample_names
-        sample_objects = []
-        for ids, name in zip(sample_ids, sample_names):
-            sample_objects.append(Sample(name, ids, self))
-        return sample_objects
 
     def list_quantities_of_type(self, typeclass):
         """
@@ -1446,37 +1420,82 @@ class KnowledgeGraph:
         ):
             self.add((sample, triple[1], triple[2]))
 
-    def get_sample(self, sample, no_atoms=False, stop_at_sample=True):
+    def get_sample_as_structure(self, sample_id):
         """
-        Get the Sample as a KnowledgeGraph
+        Retrieve a sample from the graph as an AtomicScaleSample object.
 
         Parameters
         ----------
-        sample: string
-            sample id
-
-        no_atoms: bool, optional
-            if True, returns the number of atoms in the sample
-
-        stop_at_sample: bool, optional
-            if True, stops the iteration at the when a sample object is encountered. Default is True.
+        sample_id : str or URIRef
+            The ID of the sample to retrieve
 
         Returns
         -------
-        sgraph: :py:class:`RDFGraph`
-            the RDFGraph of the queried sample
+        AtomicScaleSample
+            The sample as an AtomicScaleSample pydantic object
 
-        na: int, only retured if no_atoms is True
-
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> sample = kg.get_sample_as_structure('sample:123')
+        >>> atoms = sample.to_structure()  # Convert to ASE Atoms
+        >>> sample.to_file('output.lmp', format='lammps-dump')
         """
-        if isinstance(sample, str):
-            sample = URIRef(sample)
+        from atomrdf.datamodels.structure import AtomicScaleSample
 
-        sgraph = self.iterate_and_create_graph(sample, stop_at_sample=stop_at_sample)
-        if no_atoms:
-            na = sgraph.value(sample, CMSO.hasNumberOfAtoms).toPython()
-            return sgraph, na
-        return sgraph
+        if isinstance(sample_id, str):
+            sample_id = (
+                sample_id if sample_id.startswith("sample:") else f"sample:{sample_id}"
+            )
+
+        return AtomicScaleSample.from_graph(self, sample_id)
+
+    def to_file(
+        self,
+        sample,
+        filename,
+        format="lammps-dump",
+        copy_from=None,
+        pseudo_files=None,
+    ):
+        """
+        Write a sample structure to a file.
+
+        Parameters
+        ----------
+        sample : str or URIRef
+            Sample ID
+
+        filename : str
+            Name of the output file
+
+        format : str, optional
+            Format of the output file. Default is 'lammps-dump'.
+            Any format supported by ASE can be used.
+
+        copy_from : str, optional
+            If provided, input options for quantum-espresso format will be copied from
+            the given file. Structure specific information will be replaced.
+            Note that the validity of input file is not checked.
+
+        pseudo_files : list, optional
+            If provided, add the pseudopotential filenames to file.
+            Should be in alphabetical order of chemical species symbols.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> kg = KnowledgeGraph()
+        >>> kg.to_file('sample:123', 'output.lmp', format='lammps-dump')
+        >>> kg.to_file('sample:456', 'POSCAR', format='vasp')
+        """
+        sample_obj = self.get_sample_as_structure(sample)
+        sample_obj.to_file(
+            filename, format=format, copy_from=copy_from, pseudo_files=pseudo_files
+        )
 
     def get_label(self, item):
         label = self.graph.value(item, RDFS.label)
