@@ -159,22 +159,25 @@ class CrystalStructure(BaseModel, TemplateMixin):
         )
         graph.add((material, CMSO.hasStructure, crystal_structure))
 
-        graph.add(
-            (
-                crystal_structure,
-                CMSO.hasSpaceGroupSymbol,
-                Literal(self.spacegroup_symbol, datatype=XSD.string),
+        if self.spacegroup_symbol is not None:
+            graph.add(
+                (
+                    crystal_structure,
+                    CMSO.hasSpaceGroupSymbol,
+                    Literal(self.spacegroup_symbol, datatype=XSD.string),
+                )
             )
-        )
-        graph.add(
-            (
-                crystal_structure,
-                CMSO.hasSpaceGroupNumber,
-                Literal(self.spacegroup_number, datatype=XSD.integer),
+        if self.spacegroup_number is not None:
+            graph.add(
+                (
+                    crystal_structure,
+                    CMSO.hasSpaceGroupNumber,
+                    Literal(self.spacegroup_number, datatype=XSD.integer),
+                )
             )
-        )
 
-        self.unit_cell.to_graph(graph, sample_id, crystal_structure)
+        if self.unit_cell is not None:
+            self.unit_cell.to_graph(graph, sample_id, crystal_structure)
 
     @classmethod
     def from_graph(cls, graph, sample):
@@ -233,7 +236,8 @@ class Material(BaseModel, TemplateMixin):
                         (element, CMSO.hasElementRatio, Literal(r, datatype=XSD.float))
                     )
 
-        self.crystal_structure.to_graph(graph, sample)
+        if self.crystal_structure is not None:
+            self.crystal_structure.to_graph(graph, sample)
 
     @classmethod
     def from_graph(cls, graph, sample):
@@ -272,35 +276,41 @@ class SimulationCell(BaseModel, TemplateMixin):
             f"{sample_id}_SimulationCell", CMSO.SimulationCell
         )
         graph.add((sample, CMSO.hasSimulationCell, simulation_cell))
-        volume = graph.create_node(
-            f"{sample_id}_Volume", ASMO.Volume, label="SimulationCellVolume"
-        )
-        graph.add((simulation_cell, CMSO.hasVolume, volume))
-        graph.add(
-            (
-                volume,
-                ASMO.hasValue,
-                Literal(
-                    np.round(self.volume.value, decimals=2),
-                    datatype=XSD.float,
+
+        # Only add volume if it exists and has a value
+        if self.volume is not None and self.volume.value is not None:
+            volume = graph.create_node(
+                f"{sample_id}_Volume", ASMO.Volume, label="SimulationCellVolume"
+            )
+            graph.add((simulation_cell, CMSO.hasVolume, volume))
+            graph.add(
+                (
+                    volume,
+                    ASMO.hasValue,
+                    Literal(
+                        np.round(self.volume.value, decimals=2),
+                        datatype=XSD.float,
+                    ),
+                )
+            )
+            graph.add(
+                (
+                    volume,
+                    ASMO.hasUnit,
+                    URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
                 ),
+                validate=False,
             )
-        )
-        graph.add(
-            (
-                volume,
-                ASMO.hasUnit,
-                URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
-            ),
-            validate=False,
-        )
-        graph.add(
-            (
-                sample,
-                CMSO.hasNumberOfAtoms,
-                Literal(self.number_of_atoms, datatype=XSD.integer),
+
+        # Only add number of atoms if it's not None
+        if self.number_of_atoms is not None:
+            graph.add(
+                (
+                    sample,
+                    CMSO.hasNumberOfAtoms,
+                    Literal(self.number_of_atoms, datatype=XSD.integer),
+                )
             )
-        )
 
         repetitions = self.repetitions
         if repetitions is not None:
@@ -325,138 +335,144 @@ class SimulationCell(BaseModel, TemplateMixin):
                     Literal(repetitions[2], datatype=XSD.integer),
                 )
             )
-        simulation_cell_length = graph.create_node(
-            f"{sample_id}_SimulationCellLength", CMSO.SimulationCellLength
-        )
-        graph.add((simulation_cell, CMSO.hasLength, simulation_cell_length))
-        data = self.length
-        graph.add(
-            (
-                simulation_cell_length,
-                CMSO.hasLength_x,
-                Literal(data[0], datatype=XSD.float),
+        # Only add length if it exists and has data
+        if self.length is not None and len(self.length) >= 3:
+            simulation_cell_length = graph.create_node(
+                f"{sample_id}_SimulationCellLength", CMSO.SimulationCellLength
             )
-        )
-        graph.add(
-            (
-                simulation_cell_length,
-                CMSO.hasLength_y,
-                Literal(data[1], datatype=XSD.float),
+            graph.add((simulation_cell, CMSO.hasLength, simulation_cell_length))
+            data = self.length
+            graph.add(
+                (
+                    simulation_cell_length,
+                    CMSO.hasLength_x,
+                    Literal(data[0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell_length,
-                CMSO.hasLength_z,
-                Literal(data[2], datatype=XSD.float),
+            graph.add(
+                (
+                    simulation_cell_length,
+                    CMSO.hasLength_y,
+                    Literal(data[1], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    simulation_cell_length,
+                    CMSO.hasLength_z,
+                    Literal(data[2], datatype=XSD.float),
+                )
+            )
 
-        simulation_cell_vector_01 = graph.create_node(
-            f"{sample_id}_SimulationCellVector_1", CMSO.SimulationCellVector
-        )
-        data = self.vector
-        graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
-        graph.add(
-            (
-                simulation_cell_vector_01,
-                CMSO.hasComponent_x,
-                Literal(data[0][0], datatype=XSD.float),
+        # Only add vectors if they exist and have data
+        if self.vector is not None and len(self.vector) >= 3:
+            simulation_cell_vector_01 = graph.create_node(
+                f"{sample_id}_SimulationCellVector_1", CMSO.SimulationCellVector
             )
-        )
-        graph.add(
-            (
-                simulation_cell_vector_01,
-                CMSO.hasComponent_y,
-                Literal(data[0][1], datatype=XSD.float),
+            data = self.vector
+            graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_01))
+            graph.add(
+                (
+                    simulation_cell_vector_01,
+                    CMSO.hasComponent_x,
+                    Literal(data[0][0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell_vector_01,
-                CMSO.hasComponent_z,
-                Literal(data[0][2], datatype=XSD.float),
+            graph.add(
+                (
+                    simulation_cell_vector_01,
+                    CMSO.hasComponent_y,
+                    Literal(data[0][1], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    simulation_cell_vector_01,
+                    CMSO.hasComponent_z,
+                    Literal(data[0][2], datatype=XSD.float),
+                )
+            )
 
-        simulation_cell_vector_02 = graph.create_node(
-            f"{sample_id}_SimulationCellVector_2", CMSO.SimulationCellVector
-        )
-        graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
-        graph.add(
-            (
-                simulation_cell_vector_02,
-                CMSO.hasComponent_x,
-                Literal(data[1][0], datatype=XSD.float),
+            simulation_cell_vector_02 = graph.create_node(
+                f"{sample_id}_SimulationCellVector_2", CMSO.SimulationCellVector
             )
-        )
-        graph.add(
-            (
-                simulation_cell_vector_02,
-                CMSO.hasComponent_y,
-                Literal(data[1][1], datatype=XSD.float),
+            graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_02))
+            graph.add(
+                (
+                    simulation_cell_vector_02,
+                    CMSO.hasComponent_x,
+                    Literal(data[1][0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell_vector_02,
-                CMSO.hasComponent_z,
-                Literal(data[1][2], datatype=XSD.float),
+            graph.add(
+                (
+                    simulation_cell_vector_02,
+                    CMSO.hasComponent_y,
+                    Literal(data[1][1], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    simulation_cell_vector_02,
+                    CMSO.hasComponent_z,
+                    Literal(data[1][2], datatype=XSD.float),
+                )
+            )
 
-        simulation_cell_vector_03 = graph.create_node(
-            f"{sample_id}_SimulationCellVector_3", CMSO.SimulationCellVector
-        )
-        graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
-        graph.add(
-            (
-                simulation_cell_vector_03,
-                CMSO.hasComponent_x,
-                Literal(data[2][0], datatype=XSD.float),
+            simulation_cell_vector_03 = graph.create_node(
+                f"{sample_id}_SimulationCellVector_3", CMSO.SimulationCellVector
             )
-        )
-        graph.add(
-            (
-                simulation_cell_vector_03,
-                CMSO.hasComponent_y,
-                Literal(data[2][1], datatype=XSD.float),
+            graph.add((simulation_cell, CMSO.hasVector, simulation_cell_vector_03))
+            graph.add(
+                (
+                    simulation_cell_vector_03,
+                    CMSO.hasComponent_x,
+                    Literal(data[2][0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell_vector_03,
-                CMSO.hasComponent_z,
-                Literal(data[2][2], datatype=XSD.float),
+            graph.add(
+                (
+                    simulation_cell_vector_03,
+                    CMSO.hasComponent_y,
+                    Literal(data[2][1], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    simulation_cell_vector_03,
+                    CMSO.hasComponent_z,
+                    Literal(data[2][2], datatype=XSD.float),
+                )
+            )
 
-        simulation_cell_angle = graph.create_node(
-            f"{sample_id}_SimulationCellAngle", CMSO.SimulationCellAngle
-        )
-        data = self.angle
-        graph.add((simulation_cell, CMSO.hasAngle, simulation_cell_angle))
-        graph.add(
-            (
-                simulation_cell_angle,
-                CMSO.hasAngle_alpha,
-                Literal(data[0], datatype=XSD.float),
+        # Only add angles if they exist and have data
+        if self.angle is not None and len(self.angle) >= 3:
+            simulation_cell_angle = graph.create_node(
+                f"{sample_id}_SimulationCellAngle", CMSO.SimulationCellAngle
             )
-        )
-        graph.add(
-            (
-                simulation_cell_angle,
-                CMSO.hasAngle_beta,
-                Literal(data[1], datatype=XSD.float),
+            data = self.angle
+            graph.add((simulation_cell, CMSO.hasAngle, simulation_cell_angle))
+            graph.add(
+                (
+                    simulation_cell_angle,
+                    CMSO.hasAngle_alpha,
+                    Literal(data[0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                simulation_cell_angle,
-                CMSO.hasAngle_gamma,
-                Literal(data[2], datatype=XSD.float),
+            graph.add(
+                (
+                    simulation_cell_angle,
+                    CMSO.hasAngle_beta,
+                    Literal(data[1], datatype=XSD.float),
+                )
             )
-        )
+            graph.add(
+                (
+                    simulation_cell_angle,
+                    CMSO.hasAngle_gamma,
+                    Literal(data[2], datatype=XSD.float),
+                )
+            )
 
         if self.grain_size is not None:
             graph.add(
@@ -666,6 +682,14 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         default=[], description="Calculated properties from the simulation"
     )
 
+    # defect complex
+    defect_complex: Optional[defects.DefectComplex] = None
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize private accumulator (not a Pydantic field)
+        self._defect_complex_ids = []
+
     def to_graph_calculated_properties(self, graph):
         if self.calculated_property:
             for param in self.calculated_property:
@@ -726,12 +750,43 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
             "mixed_grain_boundary",
         ]
 
+        # Reset the defect complex IDs accumulator
+        self._defect_complex_ids = []
+
+        # Map defect field names to their class names for URI construction
+        defect_class_names = {
+            "point_defect": "PointDefect",
+            "vacancy": "Vacancy",
+            "substitutional": "Substitutional",
+            "interstitial": "Interstitial",
+            "dislocation": "Dislocation",
+            "edge_dislocation": "EdgeDislocation",
+            "screw_dislocation": "ScrewDislocation",
+            "mixed_dislocation": "MixedDislocation",
+            "stacking_fault": "StackingFault",
+            "grain_boundary": "GrainBoundary",
+            "tilt_grain_boundary": "TiltGrainBoundary",
+            "twist_grain_boundary": "TwistGrainBoundary",
+            "symmetric_tilt_grain_boundary": "SymmetricTiltGrainBoundary",
+            "mixed_grain_boundary": "MixedGrainBoundary",
+        }
+
         for defect in defect_fields:
             obj = getattr(self, defect, None)
             if obj is not None:
                 if isinstance(obj, BaseModel) and obj.model_fields_set:
                     if hasattr(obj, "to_graph"):
                         obj.to_graph(graph, sample)
+
+                        # If this defect belongs to defect_complex, construct and collect its URI
+                        if self.defect_complex and defect in self.defect_complex.ids:
+                            # Construct the defect URI (matches the pattern used in defect.to_graph())
+                            defect_uri = f"{sample}_{defect_class_names[defect]}"
+                            self._defect_complex_ids.append(defect_uri)
+
+        # Now serialize DefectComplex with collected defect URIs
+        if self.defect_complex is not None:
+            self.defect_complex.to_graph(graph, sample, self._defect_complex_ids)
 
         # Add content hash to the graph for deduplication (skip validation for external vocab)
         content_hash = self._compute_hash()

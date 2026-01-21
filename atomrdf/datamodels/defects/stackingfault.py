@@ -24,12 +24,18 @@ class StackingFault(TemplateMixin, BaseModel):
     def to_graph(self, graph, sample_id):
         name = sample_id
         material = get_material(graph, sample_id)
-        plane = " ".join(np.array(self.plane).astype(str))
-        displ = " ".join(np.array(self.displacement).astype(str))
         sf = graph.create_node(f"{name}_StackingFault", PLDO.StackingFault)
         graph.add((material, CDCO.hasCrystallographicDefect, sf))
-        graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
-        graph.add((sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string)))
+
+        if self.plane is not None:
+            plane = " ".join(np.array(self.plane).astype(str))
+            graph.add((sf, PLDO.hasSFplane, Literal(plane, datatype=XSD.string)))
+
+        if self.displacement is not None:
+            displ = " ".join(np.array(self.displacement).astype(str))
+            graph.add(
+                (sf, PLDO.hasDisplacementVector, Literal(displ, datatype=XSD.string))
+            )
 
     @classmethod
     def from_graph(cls, graph, sample):

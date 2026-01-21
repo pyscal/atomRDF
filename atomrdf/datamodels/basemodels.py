@@ -1,6 +1,7 @@
 from typing import List, Optional, Union, Generic, TypeVar, get_args, get_origin, Any
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import Field
+from pydantic import Field, field_validator
+from rdflib import XSD, Literal
 
 T = TypeVar("T")
 
@@ -33,10 +34,34 @@ class BaseModel(PydanticBaseModel):
         cleaned = remove_empty_dicts(data)
         super().__init__(**cleaned)
 
+    def _safe_add_triple(self, graph, subject, predicate, obj, datatype=None):
+        """Helper method to safely add triples only if object is not None."""
+        if obj is not None:
+            if datatype:
+                graph.add((subject, predicate, Literal(obj, datatype=datatype)))
+            else:
+                graph.add((subject, predicate, obj))
+
+    def _has_data(self, value, min_length=None):
+        """Check if value is not None and optionally has minimum length."""
+        if value is None:
+            return False
+        if min_length is not None:
+            return hasattr(value, "__len__") and len(value) >= min_length
+        return True
+
 
 class TemplateMixin:
     id: Optional[str] = Field(default=None, description="ID in the graph")
     label: Optional[str] = Field(default=None, description="Label in the graph")
+
+    @field_validator("label", mode="before")
+    @classmethod
+    def _convert_label_list_to_string(cls, v):
+        """Convert list of strings to a single string joined by periods."""
+        if isinstance(v, list):
+            return ". ".join(str(item) for item in v)
+        return v
 
     @classmethod
     def template(cls, pid: bool = False) -> dict:

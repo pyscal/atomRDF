@@ -271,29 +271,30 @@ class Shear(Activity):
         )
         graph.add((URIRef(self.output_sample), PROV.wasGeneratedBy, activity))
 
-        shear_vector = graph.create_node(f"{activity_id}_ShearVector", CMSO.Vector)
-        graph.add((activity, CMSO.hasVector, shear_vector))
-        graph.add(
-            (
-                shear_vector,
-                CMSO.hasComponent_x,
-                Literal(self.shear_vector[0], datatype=XSD.float),
+        if self.shear_vector is not None:
+            shear_vector = graph.create_node(f"{activity_id}_ShearVector", CMSO.Vector)
+            graph.add((activity, CMSO.hasVector, shear_vector))
+            graph.add(
+                (
+                    shear_vector,
+                    CMSO.hasComponent_x,
+                    Literal(self.shear_vector[0], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                shear_vector,
-                CMSO.hasComponent_y,
-                Literal(self.shear_vector[1], datatype=XSD.float),
+            graph.add(
+                (
+                    shear_vector,
+                    CMSO.hasComponent_y,
+                    Literal(self.shear_vector[1], datatype=XSD.float),
+                )
             )
-        )
-        graph.add(
-            (
-                shear_vector,
-                CMSO.hasComponent_z,
-                Literal(self.shear_vector[2], datatype=XSD.float),
+            graph.add(
+                (
+                    shear_vector,
+                    CMSO.hasComponent_z,
+                    Literal(self.shear_vector[2], datatype=XSD.float),
+                )
             )
-        )
 
         if self.normal_vector:
             plane = graph.create_node(f"{activity_id}_Plane", CMSO.Plane)

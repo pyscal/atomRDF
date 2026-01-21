@@ -61,8 +61,8 @@ class WorkflowParser:
         Maps original sample IDs to resolved URIs
     debug : bool
         If True, print debug messages during parsing
-    hash_threshold : int
-        Skip hashing for samples with more than this many atoms
+    hash_threshold : int or None
+        Skip hashing for samples with more than this many atoms. Set to None to disable hashing completely.
     """
 
     def __init__(
@@ -70,7 +70,7 @@ class WorkflowParser:
         kg: Optional[KnowledgeGraph] = None,
         precision: int = 6,
         debug: bool = False,
-        hash_threshold: int = 10000,
+        hash_threshold: Optional[int] = 10000,
     ):
         """
         Initialize the workflow parser.
@@ -83,9 +83,9 @@ class WorkflowParser:
             Decimal precision for sample hash computation. Default is 6.
         debug : bool, optional
             If True, print debug messages during parsing. Default is False.
-        hash_threshold : int, optional
+        hash_threshold : int or None, optional
             Skip hashing for samples with more than this many atoms.
-            Default is 10000. Set to 0 to always hash.
+            Default is 10000. Set to 0 to always hash. Set to None to disable hashing completely.
         """
         self.kg = kg if kg is not None else KnowledgeGraph()
         self.precision = precision
@@ -366,15 +366,25 @@ class WorkflowParser:
                         sample_data[field]
                     )
 
+            # Handle defect_complex field if present
+            if "defect_complex" in sample_data:
+                defect_complex_data = sample_data["defect_complex"]
+                # Convert Miller-Bravais in defect_complex if needed
+                sample_data["defect_complex"] = self._convert_miller_bravais_in_dict(
+                    defect_complex_data
+                )
+
             # Create sample object
             sample = AtomicScaleSample(**sample_data)
             original_id = sample.id
 
-            # Check if we should skip hashing for large systems
+            # Check if we should skip hashing for large systems or if hashing is disabled
             n_atoms = (
                 simcell.get("number_of_atoms", 0) if isinstance(simcell, dict) else 0
             )
-            skip_hash = self.hash_threshold > 0 and n_atoms > self.hash_threshold
+            skip_hash = (self.hash_threshold is None) or (
+                self.hash_threshold > 0 and n_atoms > self.hash_threshold
+            )
 
             if skip_hash:
                 # Skip hashing for large systems - treat as unique
