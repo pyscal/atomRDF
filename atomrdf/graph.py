@@ -1026,7 +1026,7 @@ class KnowledgeGraph:
         self,
         sample,
         filename,
-        format="lammps-dump",
+        format="lammps-data",
         copy_from=None,
         pseudo_files=None,
     ):
@@ -1042,7 +1042,7 @@ class KnowledgeGraph:
             Name of the output file
 
         format : str, optional
-            Format of the output file. Default is 'lammps-dump'.
+            Format of the output file. Default is 'lammps-data'.
             Any format supported by ASE can be used.
 
         copy_from : str, optional
@@ -1061,39 +1061,21 @@ class KnowledgeGraph:
         Examples
         --------
         >>> kg = KnowledgeGraph()
-        >>> kg.to_file('sample:123', 'output.lmp', format='lammps-dump')
-        >>> kg.to_file('sample:456', 'POSCAR', format='vasp')
+        >>> kg.to_file('sample:123', 'output.lmp', 'lammps-data')
+        >>> kg.to_file('sample:456', 'POSCAR', 'vasp')
         """
         sample_obj = self.get_sample_as_structure(sample)
         sample_obj.to_file(
-            filename, format=format, copy_from=copy_from, pseudo_files=pseudo_files
+            outfile=filename,
+            format=format,
+            copy_from=copy_from,
+            pseudo_files=pseudo_files,
         )
 
     def get_label(self, item):
         label = self.graph.value(item, RDFS.label)
         if label is not None:
             return label.toPython()
-
-    def get_sample_label(self, sample):
-        label = self.get_label(sample)
-        return label
-
-    def change_label(self, sample, label):
-        self.graph.remove((sample, RDFS.label, None))
-        self.graph.add((sample, RDFS.label, Literal(label, datatype=XSD.string)))
-
-    def find_property(self, label=None, propertytype=None):
-        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
-        if label is not None:
-            prop_list = list(self.graph.triples((None, RDFS.label, label)))
-        elif propertytype is not None:
-            prop_list = list(self.graph.triples((None, RDF.type, propertytype.URIRef)))
-        else:
-            raise RuntimeError("Either label or propertytype should be provided")
-        if len(prop_list) == 0:
-            raise RuntimeError(f"Property {label} not found in the graph")
-        prop = [x[0] for x in prop_list]
-        return prop
 
     def get_string_label(self, item):
         label = self.get_label(item)
@@ -1111,147 +1093,3 @@ class KnowledgeGraph:
                 if method_name is not None:
                     label = method_name.toPython().split("/")[-1]
         return label
-
-    def _add_to_dict(self, prop, indict):
-        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
-        name = _name(prop)
-        if name not in indict.keys():
-            indict[name] = {}
-            indict[name]["found"] = False
-            indict[name]["label"] = self.get_string_label(prop)
-
-    def _get_ancestor(self, prop, prov):
-        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
-        # note that only one operation and parent are present!
-        if isinstance(prop, str):
-            prop = URIRef(prop)
-        propname = _name(prop)
-
-        operation = [x[1] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
-
-        if len(operation) > 0:
-            parent = [x[2] for x in self.triples((prop, ASMO.wasCalculatedBy, None))]
-            operation = operation[0]
-            parent = parent[0]
-            prov[propname]["operation"] = "output_parameter"
-            prov[propname]["inputs"] = {}
-            prov[propname]["inputs"]["0"] = _name(parent)
-            self._add_to_dict(parent, prov)
-            prov[_name(parent)]["inputs"] = {}
-            associated_samples = [
-                x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))
-            ]
-            for count, sample in enumerate(associated_samples):
-                prov[_name(parent)]["inputs"][str(count)] = _name(sample)
-                self._add_to_dict(sample, prov)
-            prov[_name(parent)]["found"] = True
-            prov[_name(parent)]["operation"] = "sample_for_activity"
-
-        else:
-            operation = [x[1] for x in self.triples((None, None, prop))]
-            parent = [list(self.triples((None, op, prop)))[0][0] for op in operation]
-            if len(operation) == 0:
-                prov[propname]["found"] = True
-                return prov
-            operation = operation[0]
-            parent = parent[0]
-
-            if (
-                operation.toPython()
-                == "http://purls.helmholtz-metadaten.de/asmo/hasInputParameter"
-            ):
-                # print(f'we ran 1 for {operation.toPython()}')
-                prov[propname]["operation"] = "input_parameter"
-                prov[propname]["inputs"] = {}
-                prov[propname]["inputs"]["0"] = _name(parent)
-                self._add_to_dict(parent, prov)
-                prov[_name(parent)]["inputs"] = {}
-                associated_samples = [
-                    x[0] for x in self.triples((None, PROV.wasGeneratedBy, parent))
-                ]
-                for count, sample in enumerate(associated_samples):
-                    prov[_name(parent)]["inputs"][str(count)] = _name(sample)
-                    self._add_to_dict(sample, prov)
-                prov[_name(parent)]["found"] = True
-                prov[_name(parent)]["operation"] = "sample_for_activity"
-
-            elif (
-                operation.toPython()
-                == "http://purls.helmholtz-metadaten.de/cmso/hasCalculatedProperty"
-            ):
-                # print(f'we ran 2 for {operation.toPython()}')
-                prov[propname]["operation"] = "output_parameter"
-                prov[propname]["inputs"] = {}
-                prov[propname]["inputs"]["0"] = _name(parent)
-                self._add_to_dict(parent, prov)
-                prov[_name(parent)]["found"] = True
-                prov[_name(parent)]["operation"] = "sample_output"
-
-            elif operation == MATH.hasSum:
-                addends = list(
-                    x[2] for x in self.triples((parent, MATH.hasAddend, None))
-                )
-                prov[propname]["operation"] = "addition"
-                prov[propname]["inputs"] = {}
-                for count, term in enumerate(addends):
-                    prov[propname]["inputs"][f"{count}"] = _name(term)
-                    self._add_to_dict(term, prov)
-
-            elif operation == MATH.hasDifference:
-                minuend = self.value(parent, MATH.hasMinuend)
-                subtrahend = self.value(parent, MATH.hasSubtrahend)
-                prov[propname]["operation"] = "subtraction"
-                prov[propname]["inputs"] = {}
-                prov[propname]["inputs"]["0"] = _name(minuend)
-                prov[propname]["inputs"]["1"] = _name(subtrahend)
-                self._add_to_dict(minuend, prov)
-                self._add_to_dict(subtrahend, prov)
-
-            elif operation == MATH.hasProduct:
-                factors = list(
-                    x[2] for x in self.triples((parent, MATH.hasFactor, None))
-                )
-                prov[propname]["operation"] = "multiplication"
-                prov[propname]["inputs"] = {}
-                for count, term in enumerate(factors):
-                    prov[propname]["inputs"][f"{count}"] = _name(term)
-                    self._add_to_dict(term, prov)
-
-            elif operation == MATH.hasQuotient:
-                divisor = self.value(parent, MATH.hasDivisor)
-                dividend = self.value(parent, MATH.hasDividend)
-                prov[propname]["operation"] = "division"
-                prov[propname]["inputs"] = {}
-                prov[propname]["inputs"]["0"] = _name(divisor)
-                prov[propname]["inputs"]["1"] = _name(dividend)
-                self._add_to_dict(divisor, prov)
-                self._add_to_dict(dividend, prov)
-        print(operation)
-        prov[propname]["found"] = True
-        return prov
-
-    def generate_provenance(self, prop=None, label=None, visualize=False):
-        # TODO: NEEDS RESTRUCTURE - POSSIBLY DEPRECATE
-        if (prop is None) and (label is None):
-            raise ValueError("Either prop or label must be provided")
-
-        if prop is None:
-            prop = self.find_property(label)
-
-        name = _name(prop)
-        prov = {}
-        self._add_to_dict(prop, prov)
-
-        done = False
-        while not done:
-            done = True
-            keys = list(prov.keys())
-            for prop in keys:
-                if not prov[prop]["found"]:
-                    prov = self._get_ancestor(prop, prov)
-                    done = False
-
-        if visualize:
-            return visualize_provenance(prov)
-
-        return prov
