@@ -266,11 +266,21 @@ class KnowledgeGraph:
             )
             return
         else:
-            # clean up files
-            sample_files = self.sample_files
-            for file in sample_files:
-                if os.path.exists(file):
-                    os.remove(file)
+            # Clean up structure store files referenced by this graph
+            # Query for all files referenced via CMSO.hasPath
+            file_paths = set()
+            for triple in self.triples((None, CMSO.hasPath, None)):
+                filepath = triple[2].toPython()
+                if filepath:
+                    full_path = os.path.join(
+                        self.structure_store, os.path.basename(filepath)
+                    )
+                    if os.path.exists(full_path):
+                        file_paths.add(full_path)
+
+            # Remove the files
+            for filepath in file_paths:
+                os.remove(filepath)
 
             graph = purge(self._store, self._identifier, self._store_file)
             self.graph = graph
@@ -600,120 +610,6 @@ class KnowledgeGraph:
         if label is not None:
             self.add((item, RDFS.label, Literal(_clean_string(label))))
         return item
-
-    def add_output_of_simulation(
-        self,
-        simulation_term,
-        value,
-        property_label,
-        base_quantity=None,
-        unit=None,
-        has_simulation_algorithm=None,
-        has_computational_method=None,
-    ):
-        """
-        TODO: NEEDS RESTRUCTURE
-
-        Create a new output of simulation in the graph. The types of different terms are defined in the ontology.
-        Those should be access by kg.terms.ontolog.ontology_term.
-
-        Parameters
-        ----------
-        simulation_term : OntoTerm
-            The term representing the simulation.
-
-        value : float
-            The value of the output.
-
-        property_label : str
-            The label of the property.
-
-        base_quantity : OntoTerm, optional
-            The base quantity of the output. Default is None.
-
-        unit : OntoTerm, optional
-            The unit of the output. Default is None.
-
-
-        has_simulation_algorithm : OntoTerm, optional
-            The simulation algorithm used. Default is None.
-
-        has_computational_method : OntoTerm, optional
-            The computational method used. Default is None.
-
-        Returns
-        -------
-        URIRef
-            The newly created output of simulation.
-
-        """
-        main_id = str(uuid.uuid4())
-        simulation_node = self.create_node(f"simulation:{main_id}", simulation_term)
-        if has_simulation_algorithm is not None:
-            self.add(
-                (
-                    simulation_node,
-                    ASMO.usesSimulationAlgorithm,
-                    has_simulation_algorithm,
-                )
-            )
-        if has_computational_method is not None:
-            self.add(
-                (simulation_node, ASMO.hasComputationalMethod, has_computational_method)
-            )
-        if base_quantity is None:
-            base_quantity = ASMO.CalculatedProperty
-        prop = self.create_node(f"simulation:{main_id}_{property_label}", base_quantity)
-        self.add((prop, ASMO.wasCalculatedBy, simulation_node))
-        self.add((prop, RDFS.label, Literal(property_label)))
-        self.add((prop, ASMO.hasValue, Literal(value)))
-        if unit is not None:
-            self.add((prop, ASMO.hasUnit, unit))
-        return prop
-
-    def add_calculated_quantity(
-        self, sample, propertyname, value, base_quantity=None, unit=None
-    ):
-        """
-        TODO: NEEDS RESTRUCTURE
-
-        Add a calculated quantity to a sample.
-
-        Parameters
-        ----------
-        sample : URIRef
-            The URIRef of the sample to which the calculated quantity is being added.
-        propertyname : str
-            The name of the calculated property.
-        value : str
-            The value of the calculated property.
-        unit : str, optional
-            The unit of the calculated property. Default is None.
-            The unit should be from QUDT. See http://qudt.org/vocab/unit/
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-        This method adds a calculated quantity to a sample in the knowledge graph. The calculated quantity is represented as a triple with the sample as the subject, the calculated property as the predicate, and the value as the object. The calculated property is created as a node in the graph with the given name and value. If a unit is provided, it is also added as a property of the calculated property node.
-
-        Examples
-        --------
-        >>> graph = KnowledgeGraph()
-        >>> sample = graph.create_node("Sample1", CMSO.Sample)
-        >>> graph.add_calculated_quantity(sample, "energy", "10.5", "eV")
-        """
-        if base_quantity is None:
-            base_quantity = ASMO.CalculatedProperty
-
-        prop = self.create_node(f"{sample}_{propertyname}", base_quantity)
-        self.add((sample, ASMO.hasCalculatedProperty, prop))
-        self.add((prop, RDFS.label, Literal(propertyname)))
-        self.add((prop, ASMO.hasValue, Literal(value)))
-        if unit is not None:
-            self.add((prop, ASMO.hasUnit, URIRef(f"http://qudt.org/vocab/unit/{unit}")))
 
     def inspect_sample(self, sample):
         """
