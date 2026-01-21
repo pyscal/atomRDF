@@ -843,6 +843,124 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         cls = cls.from_graph_calculated_properties(graph, sample_id)
         return cls
 
+    @classmethod
+    def from_file(
+        cls,
+        filename,
+        format="lammps-dump",
+        species=None,
+        lattice=None,
+        lattice_constant=None,
+        basis_box=None,
+        basis_positions=None,
+        repeat=None,
+        graph=None,
+    ):
+        """
+        Read structure from file and create an AtomicScaleSample instance.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the structure file
+        format : str, optional
+            File format (default: 'lammps-dump'). Any format supported by ASE.
+        species : list, optional
+            If provided, LAMMPS types will be matched to species. For example, if types 1 and 2 exist
+            in the input file, and species = ['Li', 'Al'] is given, type 1 will be matched to 'Li' and
+            type 2 will be matched to 'Al'
+        lattice : str, optional
+            Crystal structure name (e.g., 'bcc', 'fcc', 'hcp', 'diamond', 'l12', 'b2').
+            If provided, metadata such as unit cell, space group, etc. are automatically added.
+        lattice_constant : float, optional
+            Lattice constant of the system
+        basis_box : list of lists, optional
+            3x3 matrix specifying the basis unit cell. Not required if lattice is provided.
+        basis_positions : list of lists, optional
+            Nx3 array specifying relative positions of atoms in the unit cell.
+            Not required if lattice is provided.
+        repeat : tuple or int, optional
+            Number of repetitions of the unit cell in each direction.
+        graph : KnowledgeGraph, optional
+            If provided, the structure will be added to the graph.
+
+        Returns
+        -------
+        AtomicScaleSample
+            The created sample instance
+
+        Examples
+        --------
+        >>> sample = AtomicScaleSample.from_file('structure.lmp', format='lammps-dump')
+        >>> sample = AtomicScaleSample.from_file('POSCAR', format='vasp',
+        ...                                       lattice='bcc', lattice_constant=2.87)
+        """
+        from ase.io import read as ase_read
+        from pyscal3.core import structure_dict
+        from atomrdf.build.bulk import _generate_atomic_sample_data
+        from atomrdf.build.buildutils import _declass
+
+        # Read structure with ASE
+        atoms = ase_read(filename, format=format)
+
+        # Handle species mapping for LAMMPS
+        if species is not None:
+            types = atoms.get_array("type") if "type" in atoms.arrays else None
+            if types is not None:
+                new_symbols = [species[int(t) - 1] for t in types]
+                atoms.set_chemical_symbols(new_symbols)
+
+        # Build metadata dict (sdict) for supplementing structure information
+        sdict = {}
+
+        if lattice is not None:
+            # Get structure information from known lattices
+            from pyscal3.core import structure_dict
+
+            if lattice in structure_dict.keys():
+                lattice_info = structure_dict[lattice].get("conventional", {})
+                sdict["structure"] = lattice
+
+                # Try to get spacegroup info
+                if "spacegroup_symbol" in lattice_info:
+                    sdict["spacegroup_symbol"] = lattice_info["spacegroup_symbol"]
+                if "spacegroup_number" in lattice_info:
+                    sdict["spacegroup_number"] = lattice_info["spacegroup_number"]
+
+        if lattice_constant is not None:
+            lattice_constant = _declass(lattice_constant)
+            sdict["a"] = lattice_constant
+            sdict["b"] = lattice_constant
+            sdict["c"] = lattice_constant
+
+        # If no lattice info provided, try to determine from structure
+        if not sdict and lattice is None:
+            try:
+                # Try to get spacegroup info from the atoms object
+                spacegroup_symbol = ap.get_spacegroup_symbol(atoms)
+                spacegroup_number = ap.get_spacegroup_number(atoms)
+                if spacegroup_symbol:
+                    sdict["spacegroup_symbol"] = spacegroup_symbol
+                if spacegroup_number:
+                    sdict["spacegroup_number"] = spacegroup_number
+            except:
+                # If we can't determine spacegroup, that's okay
+                pass
+
+        # Generate sample data using the helper function from bulk.py
+        data = _generate_atomic_sample_data(atoms, sdict if sdict else None, repeat)
+
+        # Create the AtomicScaleSample instance
+        sample = cls(**data)
+
+        # Optionally add to graph
+        if graph is not None:
+            sample.to_graph(graph)
+            atoms.info["id"] = sample.id
+            atoms.info["graph"] = graph
+
+        return sample
+
     def update_attributes(self, atoms, repeat=None):
         """
         Update the atom attributes based on the provided ASE Atoms object.
