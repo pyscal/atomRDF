@@ -566,26 +566,30 @@ class KnowledgeGraph:
 
     def query(self, source, destinations=None, return_df=True, num_paths=1, limit=None):
         """
-        Execute a SPARQL query on the knowledge graph using tools4RDF.
+        Execute a SPARQL query on the knowledge graph.
 
-        This method provides a programmatic interface to query the knowledge graph
-        using ontology terms. It wraps the tools4RDF query functionality to generate
-        and execute SPARQL queries based on the ontology structure.
+        This method supports two query modes:
+        1. Raw SPARQL query strings (passed as source parameter)
+        2. Ontology-based queries using tools4RDF (source as OntoTerm)
 
         Parameters
         ----------
-        source : OntoTerm
-            The source ontology term from which paths are to be queried.
+        source : str or OntoTerm
+            If str: Raw SPARQL query string to execute directly.
+            If OntoTerm: The source ontology term from which paths are to be queried.
             Access terms via self.ontology.terms (e.g., self.ontology.terms.cmso.AtomicScaleSample).
         destinations : list of OntoTerm or OntoTerm, optional
             One or more destination ontology terms to which paths are to be queried.
             Can be a single term or a list of terms. If None, all properties of the source are returned.
+            Only used when source is an OntoTerm.
         return_df : bool, default=True
             If True, returns results as a pandas DataFrame. Otherwise, returns raw query results.
         num_paths : int, default=1
             The number of paths to retrieve for each query when multiple paths exist.
+            Only used when source is an OntoTerm.
         limit : int, optional
             The maximum number of results to return. If None, no limit is applied.
+            Only used when source is an OntoTerm.
 
         Returns
         -------
@@ -596,6 +600,20 @@ class KnowledgeGraph:
 
         Examples
         --------
+        Query with raw SPARQL string:
+
+        >>> query = '''
+        ... PREFIX cmso: <http://purls.helmholtz-metadaten.de/cmso/>
+        ... SELECT DISTINCT ?symbol
+        ... WHERE {
+        ...     ?sample cmso:hasNumberOfAtoms ?number .
+        ...     ?sample cmso:hasMaterial ?material .
+        ...     ?material cmso:hasStructure ?structure .
+        ...     ?structure cmso:hasSpaceGroupSymbol ?symbol .
+        ... FILTER (?number="4"^^xsd:integer)
+        ... }'''
+        >>> df = kg.query(query)
+
         Query for all AtomicScaleSamples with their space group symbols:
 
         >>> kg = KnowledgeGraph()
@@ -613,18 +631,40 @@ class KnowledgeGraph:
 
         Notes
         -----
-        This method uses tools4RDF to automatically generate SPARQL queries based on
-        the ontology structure. It handles namespace management, path finding between
-        ontology terms, and result formatting automatically.
+        When using ontology terms, this method uses tools4RDF to automatically generate
+        SPARQL queries based on the ontology structure. It handles namespace management,
+        path finding between ontology terms, and result formatting automatically.
         """
-        return self.ontology.query(
-            self.graph,
-            source,
-            destinations=destinations,
-            return_df=return_df,
-            num_paths=num_paths,
-            limit=limit,
-        )
+        # Check if source is a raw SPARQL query string
+        if isinstance(source, str):
+            res = self.graph.query(source)
+            if res is not None and return_df:
+                # Extract column names from SELECT clause
+                import re
+
+                select_match = re.search(
+                    r"SELECT\s+(?:DISTINCT\s+)?(.+?)\s+WHERE",
+                    source,
+                    re.IGNORECASE | re.DOTALL,
+                )
+                if select_match:
+                    # Extract variable names (anything starting with ?)
+                    variables = re.findall(r"\?(\w+)", select_match.group(1))
+                    return pd.DataFrame(res, columns=variables)
+                else:
+                    # Fallback: return as DataFrame without column names
+                    return pd.DataFrame(res)
+            return res
+        else:
+            # Use tools4RDF for ontology-based queries
+            return self.ontology.query(
+                self.graph,
+                source,
+                destinations=destinations,
+                return_df=return_df,
+                num_paths=num_paths,
+                limit=limit,
+            )
 
     def remove(self, triple):
         """
