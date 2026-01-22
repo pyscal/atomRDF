@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from atomrdf.build.bulk import _generate_atomic_sample_data
 from atomrdf.datamodels.structure import AtomicScaleSample
 
@@ -11,58 +12,49 @@ def materials_project(
     conventional=True,
     graph=None,
 ):
-    try:
-        from mp_api.client import MPRester
-    except ImportError:
-        raise ImportError(
-            "mp-api is not installed. Please install it for this functionality."
-        )
-    rest = {
-        "use_document_model": False,
-        "include_user_agent": True,
-        "api_key": api_key,
-    }
-    if (chemical_system is None) and (material_ids is None):
-        raise ValueError(
-            "Please provide either a chemical system or a list of material ids"
-        )
+    """
+    Fetch structure(s) from Materials Project database.
 
-    with MPRester(**rest) as mpr:
-        if chemical_system is not None:
-            docs = mpr.materials.summary.search(
-                chemsys=chemical_system, is_stable=is_stable
-            )
-        else:
-            docs = mpr.materials.summary.search(material_ids=material_ids)
+    .. deprecated::
+        Use :meth:`AtomicScaleSample.from_repository` instead.
+        This function will be removed in a future version.
 
-    # process docs
-    structures = []
+    Parameters
+    ----------
+    api_key : str
+        Materials Project API key
+    chemical_system : str, optional
+        Chemical system string (e.g., 'Fe-C')
+    material_ids : list of str, optional
+        List of mp-ids (e.g., ['mp-149'])
+    is_stable : bool, optional
+        Only fetch stable materials (default: True)
+    conventional : bool, optional
+        Use conventional cell (default: True)
+    graph : KnowledgeGraph, optional
+        Knowledge graph to add structures to
 
-    for doc in docs:
-        struct = doc["structure"]
-        if conventional:
-            aseatoms = struct.to_conventional().to_ase_atoms()
-        else:
-            aseatoms = struct.to_primitive().to_ase_atoms()
+    Returns
+    -------
+    AtomicScaleSample or list
+        Single sample or list of samples
 
-        symmetry = doc["symmetry"]
+    See Also
+    --------
+    AtomicScaleSample.from_repository : Recommended replacement method
+    """
+    warnings.warn(
+        "materials_project() is deprecated. Use AtomicScaleSample.from_repository() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-        if graph is not None:
-            data = _generate_atomic_sample_data(aseatoms)
-            sys = AtomicScaleSample(**data)
-            sys.material.crystal_structure.spacegroup_symbol = symmetry["symbol"]
-            sys.material.crystal_structure.spacegroup_number = symmetry["number"]
-            sys.to_graph(graph)
-            aseatoms.info["id"] = sys.id
-            aseatoms.info["graph"] = graph
-
-            # add energy
-            # TODO
-            # self.add_calculated_quantity(
-            #    sys.sample, "EnergyPerAtom", doc["energy_per_atom"], unit="EV"
-            # )
-            structures.append(sys)
-    if len(structures) == 1:
-        return structures[0]
-    else:
-        return structures
+    return AtomicScaleSample.from_repository(
+        repository="materials_project",
+        api_key=api_key,
+        material_ids=material_ids,
+        chemical_system=chemical_system,
+        is_stable=is_stable,
+        conventional=conventional,
+        graph=graph,
+    )

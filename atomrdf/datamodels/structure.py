@@ -976,6 +976,181 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
         return sample
 
+    @classmethod
+    def from_repository(
+        cls,
+        repository="materials_project",
+        api_key=None,
+        material_ids=None,
+        chemical_system=None,
+        is_stable=True,
+        conventional=True,
+        graph=None,
+    ):
+        """
+        Fetch structure(s) from an external repository and create AtomicScaleSample instance(s).
+
+        Parameters
+        ----------
+        repository : str, optional
+            Repository name. Currently supports: 'materials_project' (default).
+        api_key : str
+            API key for the repository.
+        material_ids : list of str, optional
+            List of material IDs to fetch. For Materials Project, these are mp-ids like ['mp-149', 'mp-13'].
+        chemical_system : str, optional
+            Chemical system string (e.g., 'Fe-C', 'Li-Co-O'). If provided, all stable materials
+            in this system will be fetched.
+        is_stable : bool, optional
+            If True (default), only fetch stable materials. Only used with chemical_system.
+        conventional : bool, optional
+            If True (default), use conventional cell. If False, use primitive cell.
+        graph : KnowledgeGraph, optional
+            If provided, the structure(s) will be added to the graph.
+
+        Returns
+        -------
+        AtomicScaleSample or list of AtomicScaleSample
+            If a single material is fetched, returns AtomicScaleSample.
+            If multiple materials are fetched, returns a list of AtomicScaleSample instances.
+
+        Raises
+        ------
+        ValueError
+            If neither material_ids nor chemical_system is provided.
+        ImportError
+            If the required repository client library is not installed.
+
+        Examples
+        --------
+        Fetch a single material by ID:
+        >>> sample = AtomicScaleSample.from_repository(
+        ...     repository='materials_project',
+        ...     api_key='your_api_key',
+        ...     material_ids=['mp-149']
+        ... )
+
+        Fetch all stable materials in a chemical system:
+        >>> samples = AtomicScaleSample.from_repository(
+        ...     repository='materials_project',
+        ...     api_key='your_api_key',
+        ...     chemical_system='Fe-C'
+        ... )
+
+        Fetch and add to graph:
+        >>> kg = KnowledgeGraph()
+        >>> sample = AtomicScaleSample.from_repository(
+        ...     repository='materials_project',
+        ...     api_key='your_api_key',
+        ...     material_ids=['mp-149'],
+        ...     graph=kg
+        ... )
+        """
+        if repository.lower() == "materials_project":
+            return cls._from_materials_project(
+                api_key=api_key,
+                material_ids=material_ids,
+                chemical_system=chemical_system,
+                is_stable=is_stable,
+                conventional=conventional,
+                graph=graph,
+            )
+        else:
+            raise ValueError(
+                f"Repository '{repository}' is not supported. "
+                "Currently supported: 'materials_project'"
+            )
+
+    @classmethod
+    def _from_materials_project(
+        cls,
+        api_key,
+        material_ids=None,
+        chemical_system=None,
+        is_stable=True,
+        conventional=True,
+        graph=None,
+    ):
+        """
+        Internal method to fetch structures from Materials Project.
+        """
+        try:
+            from mp_api.client import MPRester
+        except ImportError:
+            raise ImportError(
+                "mp-api is not installed. Please install it with: pip install mp-api"
+            )
+
+        if api_key is None:
+            raise ValueError("api_key is required for Materials Project")
+
+        if (chemical_system is None) and (material_ids is None):
+            raise ValueError(
+                "Please provide either 'chemical_system' or 'material_ids'"
+            )
+
+        rest = {
+            "use_document_model": False,
+            "include_user_agent": True,
+            "api_key": api_key,
+        }
+
+        with MPRester(**rest) as mpr:
+            if chemical_system is not None:
+                docs = mpr.materials.summary.search(
+                    chemsys=chemical_system, is_stable=is_stable
+                )
+            else:
+                docs = mpr.materials.summary.search(material_ids=material_ids)
+
+        # Process documents and create samples
+        samples = []
+
+        for doc in docs:
+            struct = doc["structure"]
+            if conventional:
+                aseatoms = struct.to_conventional().to_ase_atoms()
+            else:
+                aseatoms = struct.to_primitive().to_ase_atoms()
+
+            symmetry = doc["symmetry"]
+
+            # Generate sample data
+            from atomrdf.build.bulk import _generate_atomic_sample_data
+
+            data = _generate_atomic_sample_data(aseatoms)
+            sample = cls(**data)
+
+            # Update spacegroup information
+            sample.material.crystal_structure.spacegroup_symbol = symmetry["symbol"]
+            sample.material.crystal_structure.spacegroup_number = symmetry["number"]
+
+            # Add energy as a calculated property
+            if "energy_per_atom" in doc and doc["energy_per_atom"] is not None:
+                from atomrdf.datamodels.workflow.property import CalculatedProperty
+
+                energy_prop = CalculatedProperty(
+                    basename="PotentialEnergy",
+                    label="Potential energy per atom",
+                    value=float(doc["energy_per_atom"]),
+                    unit="EV",
+                )
+                sample.calculated_property = [energy_prop]
+
+            # Add to graph if provided
+            if graph is not None:
+                sample.to_graph(graph)
+                aseatoms.info["id"] = sample.id
+                aseatoms.info["graph"] = graph
+
+            samples.append(sample)
+
+        # Return single sample or list
+        if len(samples) == 1:
+            return samples[0]
+        else:
+            return samples
+
     def update_attributes(self, atoms, repeat=None):
         """
         Update the atom attributes based on the provided ASE Atoms object.
