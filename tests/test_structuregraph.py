@@ -28,9 +28,3 @@ def test_structuregraph():
     except FileNotFoundError:
         # File doesn't exist, skip this part
         pass
-
-
-@pytest.mark.skip(reason="grain_boundary API needs verification with new architecture")
-def test_grain_boundary_old():
-    """Old grain boundary test - skipped pending API update."""
-    pass

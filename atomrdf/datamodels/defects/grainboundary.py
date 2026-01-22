@@ -63,7 +63,7 @@ class GrainBoundary(TemplateMixin, BaseModel):
         material = get_material(graph, sample_id)
         plane_defect = graph.create_node(f"{name}_GrainBoundary", PLDO.GrainBoundary)
         graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
-        self._add_gb(graph, name)
+        self._add_gb(graph, name, plane_defect)
 
     @classmethod
     def _read_gb(cls, graph, sample, plane_defect):
@@ -106,7 +106,7 @@ class TwistGrainBoundary(GrainBoundary):
             f"{name}_TwistGrainBoundary", PLDO.TwistGrainBoundary
         )
         graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
-        self._add_gb(graph, name)
+        self._add_gb(graph, name, plane_defect)
 
     @classmethod
     def from_graph(cls, graph, sample):
@@ -127,7 +127,7 @@ class TiltGrainBoundary(GrainBoundary):
             f"{name}_TiltGrainBoundary", PLDO.TiltGrainBoundary
         )
         graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
-        self._add_gb(graph, name)
+        self._add_gb(graph, name, plane_defect)
 
     @classmethod
     def from_graph(cls, graph, sample):
@@ -144,14 +144,11 @@ class SymmetricalTiltGrainBoundary(GrainBoundary):
     def to_graph(self, graph, sample_id):
         name = sample_id
         material = get_material(graph, sample_id)
-        print("point 1")
         plane_defect = graph.create_node(
             f"{name}_SymmetricalTiltGrainBoundary", PLDO.SymmetricalTiltGrainBoundary
         )
-        print("point 2")
-        print(plane_defect)
         graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
-        self._add_gb(graph, name)
+        self._add_gb(graph, name, plane_defect)
 
     @classmethod
     def from_graph(cls, graph, sample):
@@ -175,7 +172,7 @@ class MixedGrainBoundary(GrainBoundary):
             f"{name}_MixedGrainBoundary", PLDO.MixedGrainBoundary
         )
         graph.add((material, CDCO.hasCrystallographicDefect, plane_defect))
-        self._add_gb(graph, name)
+        self._add_gb(graph, name, plane_defect)
 
     @classmethod
     def from_graph(cls, graph, sample):

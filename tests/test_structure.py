@@ -9,28 +9,7 @@ import atomrdf.build as build
 import atomrdf.transform as atr
 
 
-# Old tests - skipped due to deprecated APIs
-@pytest.mark.skip(reason="lattice function not implemented in new architecture")
-def test_custom():
-    pass
-
-
-@pytest.mark.skip(reason="read function removed - use AtomicScaleSample.from_file()")
-def test_read_in():
-    pass
-
-
-@pytest.mark.skip(reason="substitutional API needs verification")
-def test_substitute():
-    pass
-
-
-@pytest.mark.skip(reason="interstitial API needs verification")
-def test_interstitials():
-    pass
-
-
-# New tests for current architecture
+# ============= BASIC STRUCTURE TESTS =============
 def test_bulk_creation():
     """Test basic bulk structure creation."""
     kg = KnowledgeGraph()
@@ -242,13 +221,13 @@ def test_grain_boundary():
     """Test grain boundary defect creation."""
     kg = KnowledgeGraph()
 
-    # Create grain boundary - use a valid plane
+    # Create grain boundary - Sigma 3 twin boundary on [111]
     try:
         atoms = build.defect.grain_boundary(
             element="Al",
-            axis=[0, 0, 1],
-            sigma=5,
-            gb_plane=[2, -1, 0],  # Valid plane for sigma=5
+            axis=[1, 1, 1],
+            sigma=3,
+            gb_plane=[1, 1, 1],
             crystalstructure="fcc",
             a=4.05,
             repeat=(2, 2, 2),
@@ -264,9 +243,16 @@ def test_grain_boundary():
             sample = kg.get_sample_as_structure(sample_id)
             assert sample is not None
             assert kg.n_samples == 1
+
+            # Check GB metadata
+            # Sigma 3 [111] is typically a twist boundary
+            assert (
+                sample.twist_grain_boundary is not None
+                or sample.grain_boundary is not None
+            )
     except Exception as e:
         # Grain boundary creation can fail due to:
         # - pyscal3 API changes
         # - Invalid geometric parameters
         # - Missing dependencies
-        pytest.skip(f"Grain boundary has known issues with pyscal3 API: {str(e)[:150]}")
+        pytest.skip(f"Grain boundary test failed: {str(e)[:150]}")

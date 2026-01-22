@@ -416,9 +416,7 @@ def grain_boundary(
 
         try:
             gb_inb = GrainBoundary()
-            gb_inb.create_grain_boundary(
-                axis=axis, sigma=sigma, gb_plane=gb_plane, plane_defect=False
-            )
+            gb_inb.create_grain_boundary(axis=axis, sigma=sigma, gb_plane=gb_plane)
             gb_type = gb_inb.find_gb_character()
         except Exception as e:
             # If GB character detection fails, default to generic GB
@@ -456,10 +454,10 @@ def grain_boundary(
             gb_name = "mixed_grain_boundary"
 
         datadict = GBObject.template()
-        datadict["sigma"] = gb.sigma
+        datadict["sigma"] = sigma  # Use the input parameter
         datadict["rotation_axis"] = axis
         datadict["plane"] = gb_plane
-        datadict["misorientation_angle"] = gb.theta[0]
+        datadict["misorientation_angle"] = gb.theta[0]  # gb is the AIMSGB object
         setattr(sample, gb_name, GBObject(**datadict))
 
         sample.to_graph(graph)
