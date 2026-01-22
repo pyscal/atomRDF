@@ -146,3 +146,55 @@ def test_purge():
     sys = build.bulk("Fe", graph=s)
     s.purge(force=True)
     assert s.n_samples == 0
+
+
+def test_query_method():
+    """Test the query method using tools4RDF."""
+    kg = KnowledgeGraph()
+
+    # Create multiple structures
+    struct_Fe = build.bulk("Fe", cubic=True, graph=kg)  # bcc cubic cell, 2 atoms
+    struct_Si = build.bulk("Si", cubic=True, graph=kg)  # cubic diamond, 8 atoms
+    struct_Al = build.bulk("Al", cubic=True, graph=kg)  # fcc cubic cell, 4 atoms
+
+    # Test 1: Query for all AtomicScaleSamples
+    df = kg.query(kg.ontology.terms.cmso.AtomicScaleSample)
+    assert df is not None
+    assert len(df) == 3
+
+    # Test 2: Query for AtomicScaleSamples with space group symbols
+    df = kg.query(
+        kg.ontology.terms.cmso.AtomicScaleSample,
+        [kg.ontology.terms.cmso.hasSpaceGroupSymbol],
+    )
+    assert df is not None
+    assert len(df) == 3
+    assert "hasSpaceGroupSymbolvalue" in df.columns
+    # Convert Literal objects to strings for comparison
+    symbols = [str(s) for s in df["hasSpaceGroupSymbolvalue"].values]
+    assert "Im-3m" in symbols  # Fe bcc
+    assert "Fm-3m" in symbols  # Al fcc
+    assert "Fd-3m" in symbols  # Si diamond
+
+    # Test 3: Query for AtomicScaleSamples with number of atoms
+    df = kg.query(
+        kg.ontology.terms.cmso.AtomicScaleSample,
+        [kg.ontology.terms.cmso.hasNumberOfAtoms],
+    )
+    assert df is not None
+    assert len(df) == 3
+    assert "hasNumberOfAtomsvalue" in df.columns
+
+    # Test 4: Query with filter (only samples with 4 atoms)
+    df = kg.query(
+        kg.ontology.terms.cmso.AtomicScaleSample,
+        [kg.ontology.terms.cmso.hasNumberOfAtoms == 4],
+    )
+    assert df is not None
+    assert len(df) == 1
+    # Al fcc cubic cell has 4 atoms
+
+    # Test 5: Query with limit
+    df = kg.query(kg.ontology.terms.cmso.AtomicScaleSample, limit=2)
+    assert df is not None
+    assert len(df) == 2

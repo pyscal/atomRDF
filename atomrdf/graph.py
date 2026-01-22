@@ -174,6 +174,8 @@ class KnowledgeGraph:
         Add a triple to the knowledge graph.
     triples(triple)
         Return the triples in the knowledge graph that match the given triple pattern.
+    query(source, destinations=None, return_df=True, num_paths=1, limit=None)
+        Execute a SPARQL query on the knowledge graph using tools4RDF.
     get_sample_as_structure(sample_id)
         Retrieve a sample from the graph as an AtomicScaleSample object.
     """
@@ -561,6 +563,68 @@ class KnowledgeGraph:
     def objects(self, arg1, arg2):
         modified_double = self._modify_triple((arg1, arg2))
         return self.graph.objects(modified_double[0], modified_double[1])
+
+    def query(self, source, destinations=None, return_df=True, num_paths=1, limit=None):
+        """
+        Execute a SPARQL query on the knowledge graph using tools4RDF.
+
+        This method provides a programmatic interface to query the knowledge graph
+        using ontology terms. It wraps the tools4RDF query functionality to generate
+        and execute SPARQL queries based on the ontology structure.
+
+        Parameters
+        ----------
+        source : OntoTerm
+            The source ontology term from which paths are to be queried.
+            Access terms via self.ontology.terms (e.g., self.ontology.terms.cmso.AtomicScaleSample).
+        destinations : list of OntoTerm or OntoTerm, optional
+            One or more destination ontology terms to which paths are to be queried.
+            Can be a single term or a list of terms. If None, all properties of the source are returned.
+        return_df : bool, default=True
+            If True, returns results as a pandas DataFrame. Otherwise, returns raw query results.
+        num_paths : int, default=1
+            The number of paths to retrieve for each query when multiple paths exist.
+        limit : int, optional
+            The maximum number of results to return. If None, no limit is applied.
+
+        Returns
+        -------
+        pandas.DataFrame or list or None
+            If return_df is True, returns a pandas DataFrame with query results.
+            If return_df is False, returns a list of query results.
+            Returns None if no results are found.
+
+        Examples
+        --------
+        Query for all AtomicScaleSamples with their space group symbols:
+
+        >>> kg = KnowledgeGraph()
+        >>> df = kg.query(
+        ...     kg.ontology.terms.cmso.AtomicScaleSample,
+        ...     [kg.ontology.terms.cmso.hasSpaceGroupSymbol]
+        ... )
+
+        Query with filters (using == operator on terms):
+
+        >>> df = kg.query(
+        ...     kg.ontology.terms.cmso.AtomicScaleSample,
+        ...     [kg.ontology.terms.cmso.hasNumberOfAtoms == 4]
+        ... )
+
+        Notes
+        -----
+        This method uses tools4RDF to automatically generate SPARQL queries based on
+        the ontology structure. It handles namespace management, path finding between
+        ontology terms, and result formatting automatically.
+        """
+        return self.ontology.query(
+            self.graph,
+            source,
+            destinations=destinations,
+            return_df=return_df,
+            num_paths=num_paths,
+            limit=limit,
+        )
 
     def remove(self, triple):
         """
