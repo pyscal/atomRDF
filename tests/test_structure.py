@@ -256,3 +256,136 @@ def test_grain_boundary():
         # - Invalid geometric parameters
         # - Missing dependencies
         pytest.skip(f"Grain boundary test failed: {str(e)[:150]}")
+
+
+def test_interstitial_tetrahedral():
+    """Test tetrahedral interstitial defect creation."""
+    kg = KnowledgeGraph()
+
+    # Create bulk structure
+    atoms = build.bulk("Cu", crystalstructure="fcc", a=3.61, repeat=(2, 2, 2), graph=kg)
+    initial_natoms = len(atoms)
+
+    # Add tetrahedral interstitials
+    atoms_int = build.defect.interstitial(
+        atoms,
+        element="C",
+        void_type="tetrahedral",
+        number=2,
+        graph=kg,
+    )
+
+    assert atoms_int is not None
+    assert len(atoms_int) == initial_natoms + 2
+    assert "id" in atoms_int.info
+
+    # Check sample exists in graph
+    sample_id = atoms_int.info["id"]
+    sample = kg.get_sample_as_structure(sample_id)
+    assert sample is not None
+    assert kg.n_samples == 2  # original bulk + interstitial
+
+    # Check interstitial metadata
+    assert sample.interstitial is not None
+    assert sample.interstitial.number == 2
+    assert sample.interstitial.concentration == pytest.approx(2 / initial_natoms)
+
+
+def test_interstitial_octahedral():
+    """Test octahedral interstitial defect creation."""
+    kg = KnowledgeGraph()
+
+    # Create bulk structure
+    atoms = build.bulk("Fe", crystalstructure="bcc", a=2.87, repeat=(3, 3, 3), graph=kg)
+    initial_natoms = len(atoms)
+
+    # Add octahedral interstitials
+    atoms_int = build.defect.interstitial(
+        atoms,
+        element="C",
+        void_type="octahedral",
+        number=1,
+        a=2.87,
+        graph=kg,
+    )
+
+    assert atoms_int is not None
+    assert len(atoms_int) == initial_natoms + 1
+    assert "id" in atoms_int.info
+
+    # Check sample exists in graph
+    sample_id = atoms_int.info["id"]
+    sample = kg.get_sample_as_structure(sample_id)
+    assert sample is not None
+
+    # Check interstitial metadata
+    assert sample.interstitial is not None
+    assert sample.interstitial.number == 1
+
+
+def test_substitutional_random():
+    """Test random substitutional defect creation."""
+    kg = KnowledgeGraph()
+
+    # Create bulk structure
+    atoms = build.bulk("Cu", crystalstructure="fcc", a=3.61, repeat=(2, 2, 2), graph=kg)
+    initial_natoms = len(atoms)
+
+    # Create random substitutions
+    atoms_sub = build.defect.substitutional(
+        atoms,
+        element="Zn",
+        number=3,
+        graph=kg,
+    )
+
+    assert atoms_sub is not None
+    assert len(atoms_sub) == initial_natoms  # same number of atoms
+    assert "id" in atoms_sub.info
+
+    # Check sample exists in graph
+    sample_id = atoms_sub.info["id"]
+    sample = kg.get_sample_as_structure(sample_id)
+    assert sample is not None
+    assert kg.n_samples == 2  # original bulk + substitutional
+
+    # Check substitutional metadata
+    assert sample.substitutional is not None
+    assert sample.substitutional.number == 3
+    assert sample.substitutional.concentration == pytest.approx(3 / initial_natoms)
+
+    # Verify composition changed
+    symbols = atoms_sub.get_chemical_symbols()
+    assert symbols.count("Zn") == 3
+    assert symbols.count("Cu") == initial_natoms - 3
+
+
+def test_substitutional_specific_indices():
+    """Test substitutional defect with specific indices."""
+    kg = KnowledgeGraph()
+
+    # Create bulk structure
+    atoms = build.bulk("Al", crystalstructure="fcc", a=4.05, repeat=(2, 2, 2), graph=kg)
+
+    # Substitute specific atoms
+    indices = [0, 3, 7]
+    atoms_sub = build.defect.substitutional(
+        atoms,
+        element="Mg",
+        indices=indices,
+        graph=kg,
+    )
+
+    assert atoms_sub is not None
+    assert len(atoms_sub) == len(atoms)
+
+    # Check substitutional metadata
+    sample_id = atoms_sub.info["id"]
+    sample = kg.get_sample_as_structure(sample_id)
+    assert sample.substitutional is not None
+    assert sample.substitutional.number == 3
+
+    # Verify specific atoms were substituted
+    symbols = atoms_sub.get_chemical_symbols()
+    assert symbols.count("Mg") == 3
+    assert symbols.count("Al") == len(atoms) - 3

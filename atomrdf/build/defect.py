@@ -4,7 +4,11 @@ from atomrdf.datamodels.basemodels import DataProperty
 import numpy as np
 from atomrdf.datamodels.defects.dislocation import Dislocation
 from atomrdf.datamodels.defects.stackingfault import StackingFault
-from atomrdf.datamodels.defects.pointdefects import Vacancy
+from atomrdf.datamodels.defects.pointdefects import (
+    Vacancy,
+    Interstitial,
+    Substitutional,
+)
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.build.buildutils import _declass
 from pyscal3.grain_boundary import GrainBoundary
@@ -585,3 +589,243 @@ def vacancy(
             sample.to_graph(graph)
             atoms.info["id"] = sample.id
         return atoms
+
+
+def interstitial(
+    atoms,
+    element,
+    void_type="tetrahedral",
+    number=1,
+    a=None,
+    threshold=0.01,
+    graph=None,
+):
+    """
+    Create interstitial defects by adding atoms at void positions.
+
+    Parameters
+    ----------
+    atoms : ase.Atoms or str
+        Either an ASE Atoms object or element symbol for creating bulk structure
+    element : str or list
+        Element symbol(s) for interstitial atom(s)
+    void_type : str, optional
+        Type of void position: 'tetrahedral' or 'octahedral'. Default is 'tetrahedral'
+    number : int, optional
+        Number of interstitial atoms to add. Default is 1
+    a : float, optional
+        Lattice constant. Required for octahedral voids
+    threshold : float, optional
+        Threshold for finding octahedral positions. Default is 0.01
+    graph : KnowledgeGraph, optional
+        KnowledgeGraph to add the structure to
+
+    Returns
+    -------
+    ase.Atoms
+        Structure with interstitial defects
+    """
+    try:
+        from pyscal3 import System
+    except ImportError:
+        raise ImportError("This function requires the pyscal3 package to be installed")
+
+    if not isinstance(atoms, Atoms):
+        raise ValueError("atoms must be an ASE Atoms object")
+
+    atoms_copy = atoms.copy()
+    sys = System(atoms_copy, format="ase")
+    element = np.atleast_1d(element)
+
+    # Ensure we have the right number of elements
+    if len(element) < number:
+        element = np.repeat(element, number)[:number]
+    elif len(element) > number:
+        element = element[:number]
+
+    if void_type == "tetrahedral":
+        sys.find.neighbors(method="voronoi", cutoff=0.1)
+        verts = sys.unique_vertices
+
+        if len(verts) == 0:
+            raise ValueError("No tetrahedral void positions found")
+
+        if len(verts) < number:
+            raise ValueError(
+                f"Only {len(verts)} tetrahedral positions found, but {number} requested"
+            )
+
+        randindex = np.random.choice(len(verts), size=number, replace=False)
+        randpos = np.array(verts)[randindex]
+
+    elif void_type == "octahedral":
+        # Try to get lattice constant from graph if available
+        if a is None and graph is not None and "id" in atoms_copy.info:
+            try:
+                sample_id = atoms_copy.info["id"]
+                sample = AtomicScaleSample.from_graph(graph, sample_id)
+                if (
+                    sample.material is not None
+                    and sample.material.crystal_structure is not None
+                    and sample.material.crystal_structure.unit_cell is not None
+                    and sample.material.crystal_structure.unit_cell.lattice_parameter
+                    is not None
+                ):
+                    a = sample.material.crystal_structure.unit_cell.lattice_parameter[0]
+            except:
+                pass
+
+        if a is None:
+            raise ValueError("Please provide lattice constant a for octahedral voids")
+
+        cutoff = a + threshold * 2
+        sys.find.neighbors(method="cutoff", cutoff=cutoff)
+        octa_pos = []
+
+        for count, dist in enumerate(sys.atoms.neighbors.distance):
+            diffs = np.abs(np.array(dist) - a)
+            indices = np.where(diffs < threshold)[0]
+            vector = np.array(sys.atoms["diff"][count])[indices]
+            vector = sys.atoms.positions[count] + vector / 2
+            for vect in vector:
+                vect = sys.modify.remap_position_to_box(vect)
+                octa_pos.append(vect)
+
+        if len(octa_pos) == 0:
+            raise ValueError("No octahedral void positions found")
+
+        octa_pos = np.unique(octa_pos, axis=0)
+
+        if len(octa_pos) < number:
+            raise ValueError(
+                f"Only {len(octa_pos)} octahedral positions found, but {number} requested"
+            )
+
+        randindex = np.random.choice(len(octa_pos), size=number, replace=False)
+        randpos = octa_pos[randindex]
+    else:
+        raise ValueError(
+            f'Unknown void type: {void_type}. Use "tetrahedral" or "octahedral"'
+        )
+
+    # Add interstitial atoms
+    sys = sys.add_atoms({"positions": randpos, "species": element})
+    new_atoms = sys.write.ase()
+
+    # Calculate defect properties
+    no_of_interstitials = len(randpos)
+    original_natoms = len(atoms_copy)
+    conc_of_interstitials = no_of_interstitials / original_natoms
+
+    # Update graph if provided
+    if graph is not None:
+        # Generate new sample data
+        data = _generate_atomic_sample_data(new_atoms)
+        sample = AtomicScaleSample(**data)
+
+        # Add interstitial defect metadata
+        sample.interstitial = Interstitial(
+            concentration=conc_of_interstitials,
+            number=no_of_interstitials,
+        )
+        sample.to_graph(graph)
+        new_atoms.info["id"] = sample.id
+
+        # If there was a previous sample, add activity to track the operation
+        if "id" in atoms_copy.info:
+            initial_sample_id = atoms_copy.info["id"]
+            final_sample_id = sample.id
+            data = {
+                "input_sample": initial_sample_id,
+                "output_sample": final_sample_id,
+            }
+            activity = ops.AddAtom(**data)
+            activity.to_graph(graph)
+
+    return new_atoms
+
+
+def substitutional(
+    atoms,
+    element,
+    number=1,
+    indices=None,
+    graph=None,
+):
+    """
+    Create substitutional defects by replacing atoms with different element(s).
+
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        ASE Atoms object
+    element : str
+        Element symbol for substitutional atom
+    number : int, optional
+        Number of substitutions to make. Default is 1
+    indices : list or array, optional
+        Specific atom indices to substitute. If None, random atoms are chosen
+    graph : KnowledgeGraph, optional
+        KnowledgeGraph to add the structure to
+
+    Returns
+    -------
+    ase.Atoms
+        Structure with substitutional defects
+    """
+    if not isinstance(atoms, Atoms):
+        raise ValueError("atoms must be an ASE Atoms object")
+
+    atoms_copy = atoms.copy()
+    species = atoms_copy.get_chemical_symbols()
+
+    # Select atoms to substitute
+    if indices is None:
+        if number > len(species):
+            raise ValueError(
+                f"Number of substitutions {number} exceeds number of atoms {len(species)}"
+            )
+        indices = np.random.choice(len(species), size=number, replace=False)
+    else:
+        indices = np.atleast_1d(indices)
+        number = len(indices)
+        if number > len(species):
+            raise ValueError(
+                f"Number of indices {number} exceeds number of atoms {len(species)}"
+            )
+
+    # Perform substitution
+    for idx in indices:
+        species[idx] = element
+    atoms_copy.set_chemical_symbols(species)
+
+    # Calculate defect properties
+    no_of_substitutions = number
+    conc_of_substitutions = no_of_substitutions / len(atoms_copy)
+
+    # Update graph if provided
+    if graph is not None:
+        # Generate new sample data
+        data = _generate_atomic_sample_data(atoms_copy)
+        sample = AtomicScaleSample(**data)
+
+        # Add substitutional defect metadata
+        sample.substitutional = Substitutional(
+            concentration=conc_of_substitutions,
+            number=no_of_substitutions,
+        )
+        sample.to_graph(graph)
+        atoms_copy.info["id"] = sample.id
+
+        # If there was a previous sample, add activity to track the operation
+        if "id" in atoms.info:
+            initial_sample_id = atoms.info["id"]
+            final_sample_id = sample.id
+            data = {
+                "input_sample": initial_sample_id,
+                "output_sample": final_sample_id,
+            }
+            activity = ops.SubstituteAtom(**data)
+            activity.to_graph(graph)
+
+    return atoms_copy
