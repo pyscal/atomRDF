@@ -95,7 +95,8 @@ def stacking_fault(
 
         datadict = StackingFault.template()
         datadict["plane"] = slip_plane
-        datadict["displacement"] = displ
+        # Convert numpy array to list for pydantic validation
+        datadict["displacement"] = displ.flatten().tolist()
         setattr(sample, "stacking_fault", StackingFault(**datadict))
         sample.to_graph(graph)
         aseatoms.info["id"] = sample.id
@@ -415,9 +416,12 @@ def grain_boundary(
 
         try:
             gb_inb = GrainBoundary()
-            gb_inb.create_grain_boundary(axis=axis, sigma=sigma, gb_plane=gb_plane)
+            gb_inb.create_grain_boundary(
+                axis=axis, sigma=sigma, gb_plane=gb_plane, plane_defect=False
+            )
             gb_type = gb_inb.find_gb_character()
-        except:
+        except Exception as e:
+            # If GB character detection fails, default to generic GB
             gb_type = None
 
         if gb_type is None:
@@ -573,12 +577,13 @@ def vacancy(
         if graph is not None:
             data = _generate_atomic_sample_data(atoms, sdict, repeat)
             sample = AtomicScaleSample(**data)
-            sample.vacancy = Vacancy(
+            vacancy_data = Vacancy(
                 **{
                     "concentration": no_of_vacancies / len(atoms),
                     "number": no_of_vacancies,
                 }
             )
+            sample.vacancy = vacancy_data
             sample.to_graph(graph)
             atoms.info["id"] = sample.id
         return atoms

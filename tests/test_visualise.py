@@ -1,7 +1,7 @@
 import pytest
 import os
 import numpy as np
-from atomrdf import KnowledgeGraph, System
+from atomrdf import KnowledgeGraph
 from atomrdf.namespace import CMSO, PLDO
 import shutil
 import atomrdf.visualize as viz

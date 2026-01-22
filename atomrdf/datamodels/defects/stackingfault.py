@@ -25,7 +25,12 @@ class StackingFault(TemplateMixin, BaseModel):
         name = sample_id
         material = get_material(graph, sample_id)
         sf = graph.create_node(f"{name}_StackingFault", PLDO.StackingFault)
-        graph.add((material, CDCO.hasCrystallographicDefect, sf))
+
+        # If material exists, attach to material; otherwise attach to sample
+        if material is not None:
+            graph.add((material, CDCO.hasCrystallographicDefect, sf))
+        else:
+            graph.add((sample_id, CDCO.hasCrystallographicDefect, sf))
 
         if self.plane is not None:
             plane = " ".join(np.array(self.plane).astype(str))

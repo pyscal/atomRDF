@@ -184,8 +184,19 @@ class Simulation(Activity):
     @classmethod
     def _validate_software(cls, v):
         if isinstance(v, list):
-            return [SoftwareAgent(**item) for item in v]
-        return [SoftwareAgent(**v)]
+            return [
+                (
+                    SoftwareAgent(**item)
+                    if isinstance(item, dict)
+                    else SoftwareAgent(name=item)
+                )
+                for item in v
+            ]
+        if isinstance(v, dict):
+            return [SoftwareAgent(**v)]
+        if isinstance(v, str):
+            return [SoftwareAgent(name=v)]
+        return v
 
     @field_validator("workflow_manager", mode="before")
     @classmethod

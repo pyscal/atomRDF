@@ -47,6 +47,8 @@ class Vacancy(PointDefect):
     @classmethod
     def from_graph(cls, graph, sample):
         material = get_material(graph, sample)
+        if material is None:
+            return None
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             vacancy = triple[2]
             typev = graph.value(vacancy, RDF.type)
@@ -59,6 +61,7 @@ class Vacancy(PointDefect):
                     ),
                     number=int(number) if number is not None else None,
                 )
+        return None
 
 
 class Substitutional(PointDefect):

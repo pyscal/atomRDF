@@ -84,7 +84,7 @@ def _write_espresso(atoms, inputfile, copy_from=None, pseudo_files=None):
     tab["CELL_PARAMETERS"]["extra"] = "angstrom"
     tab["CELL_PARAMETERS"]["value"] = []
 
-    for vec in s.box:
+    for vec in atoms.get_cell():
         tab["CELL_PARAMETERS"]["value"].append(" ".join([str(x) for x in vec]))
 
     cds = atoms.get_scaled_positions()
@@ -174,6 +174,8 @@ def write(
 
     Parameters
     ----------
+    system : AtomicScaleSample or Atoms
+        The structure to write. If AtomicScaleSample, will be converted to ASE Atoms first.
     outfile : str
         The path to the output file.
     format : str, optional
@@ -190,6 +192,11 @@ def write(
     -------
     None
     """
+    # Convert AtomicScaleSample to ASE Atoms if needed
+    if not isinstance(system, Atoms):
+        # Assume it's an AtomicScaleSample
+        system = sample_to_ase(system)
+
     if format == "poscar":
         ase_write(outfile, system, format="vasp")
         _write_poscar_id(system, outfile)

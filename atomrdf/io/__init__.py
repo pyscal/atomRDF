@@ -1,1 +1,1 @@
-from atomrdf.io.workflow_parser import WorkflowParser
+from atomrdf.io.workflow_parser import WorkflowParser, from_workflow_input

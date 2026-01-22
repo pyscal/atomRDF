@@ -720,8 +720,10 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         name = f"sample:{str(uuid.uuid4())}"
         self.id = name
         sample = graph.create_node(name, CMSO.AtomicScaleSample, label=self.label)
-        self.material.to_graph(graph, sample)
-        self.simulation_cell.to_graph(graph, sample)
+        if self.material is not None:
+            self.material.to_graph(graph, sample)
+        if self.simulation_cell is not None:
+            self.simulation_cell.to_graph(graph, sample)
         if self.atom_attribute is not None:
             self.atom_attribute.to_graph(
                 graph,
@@ -799,6 +801,8 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
     @classmethod
     def from_graph(cls, graph, sample_id):
+        from typing import get_origin, get_args
+
         kwargs = {}
         sample = get_sample_object(sample_id)
 
@@ -832,11 +836,22 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         # Loop over defect fields
         for field in defect_fields:
             field_type = cls.model_fields[field].annotation
+
+            # Unwrap Optional types (Union[X, None] -> X)
+            origin = get_origin(field_type)
+            if origin is not None:
+                # Check if it's Optional/Union
+                args = get_args(field_type)
+                if len(args) == 2 and type(None) in args:
+                    # It's Optional[X], extract X
+                    field_type = args[0] if args[0] is not type(None) else args[1]
+
             if hasattr(field_type, "from_graph"):
                 try:
-                    kwargs[field] = field_type.from_graph(graph, sample)
-                except Exception:
-                    kwargs[field] = None  # or skip/log
+                    result = field_type.from_graph(graph, sample)
+                    kwargs[field] = result
+                except Exception as e:
+                    kwargs[field] = None
 
         cls = cls(**kwargs)
         cls.id = sample_id
