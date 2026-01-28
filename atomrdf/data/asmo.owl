@@ -25,7 +25,7 @@
         <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://github.com/OCDO/asmo</rdfs:seeAlso>
         <owl:versionInfo rdf:datatype="http://www.w3.org/2001/XMLSchema#string">1.0.0</owl:versionInfo>
         <schema:citation rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Abril Azocar Guzman. (2024). Atomistic Simulation Methods Ontology. Zenodo. https://doi.org/10.5281/zenodo.10805591</schema:citation>
-        <schema:creativeWorkStatus rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Pre-release</schema:creativeWorkStatus>
+        <schema:creativeWorkStatus rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Ontology Specification</schema:creativeWorkStatus>
         <schema:funder rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://ror.org/05qj6w324</schema:funder>
         <schema:logo rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://raw.githubusercontent.com/OCDO/.github/refs/heads/main/profile/ocdo_logo.png</schema:logo>
     </owl:Ontology>
@@ -468,7 +468,7 @@ f(x) = 1/(√(2 π) σ) e^-((x - μ)^2/(2 σ^2))</obo:IAO_0000112>
     <owl:ObjectProperty rdf:about="http://purls.helmholtz-metadaten.de/asmo/hasShearPlane">
         <rdfs:domain rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Shear"/>
         <rdfs:range rdf:resource="http://purls.helmholtz-metadaten.de/cmso/Plane"/>
-        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a Shear spatial transformation and a specific plane within a material where shear deformation is applied.</rdfs:label>
+        <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The relation between a Shear spatial transformation and a specific plane within a material where shear deformation is applied.</obo:IAO_0000115>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has shear plane</rdfs:label>
     </owl:ObjectProperty>
     
@@ -1093,6 +1093,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/CompressionTest -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/CompressionTest">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SimulationAlgorithm"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Compression Test</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/ComputationalMethod -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ComputationalMethod">
@@ -1119,6 +1128,24 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An arithmetic operation by which the quotient of two numbers (dividend and divisor) is computed, symbolized by / or ÷.</obo:IAO_0000115>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Division</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/ElasticConstant -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ElasticConstant">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Elastic Constant</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/ElasticTensor -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ElasticTensor">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Elastic Tensor</rdfs:label>
     </owl:Class>
     
 
@@ -1189,6 +1216,16 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/MathematicalOperation"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">An arithmetic operation by which a number (the base) is raised to the power of another number (the exponent), symbolized by ** or ^. It represents repeated multiplication of the base by itself.</obo:IAO_0000115>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Exponentiation</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/FlowStress -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/FlowStress">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Stress"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Flow Stress</rdfs:label>
     </owl:Class>
     
 
@@ -1458,6 +1495,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Nanoindentation -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Nanoindentation">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SimulationAlgorithm"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Nanoindentation</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/NumberOfIonicSteps -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/NumberOfIonicSteps">
@@ -1684,6 +1730,15 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/SpecificHeatCapacity -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/SpecificHeatCapacity">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Specific Heat Capacity</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/StatisticalEnsemble -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/StatisticalEnsemble">
@@ -1701,6 +1756,32 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stillinger-Weber Potential is an interatomic potential comprising both two- and three-atom contributions to describe interactions in solid and liquid forms of Si (and other diamond structures).</obo:IAO_0000115>
         <obo:IAO_0000119 rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://doi.org/10.1103/PhysRevB.31.5262</obo:IAO_0000119>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stillinger-Weber Potential</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Strain -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Strain">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/StrainRate -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/StrainRate">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Strain Rate</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Stress -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Stress">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/PhysicalQuantity"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Stress</rdfs:label>
     </owl:Class>
     
 
@@ -1733,6 +1814,24 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Temperature</rdfs:label>
         <rdfs:seeAlso rdf:datatype="http://www.w3.org/2001/XMLSchema#anyURI">https://qudt.org/vocab/quantitykind/Temperature</rdfs:seeAlso>
         <skos:altLabel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">T</skos:altLabel>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/Tensile_Test -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Tensile_Test">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/SimulationAlgorithm"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Tensile Test</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/ThermalExpansionCoefficient -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/ThermalExpansionCoefficient">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Thermal Expansion Coefficient</rdfs:label>
     </owl:Class>
     
 
@@ -1824,6 +1923,16 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
     
 
 
+    <!-- http://purls.helmholtz-metadaten.de/asmo/VirialPressure -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/VirialPressure">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Pressure"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Virial Pressure</rdfs:label>
+    </owl:Class>
+    
+
+
     <!-- http://purls.helmholtz-metadaten.de/asmo/Volume -->
 
     <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/Volume">
@@ -1843,6 +1952,16 @@ prov:wasInfluencedBy should not be used without also using one of its subpropert
         <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/InputParameter"/>
         <obo:IAO_0000115 rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Volume range is an input parameter that indicates the predefined limits for the system&apos;s volume variation in a simulation.</obo:IAO_0000115>
         <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Volume Range</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://purls.helmholtz-metadaten.de/asmo/YieldStress -->
+
+    <owl:Class rdf:about="http://purls.helmholtz-metadaten.de/asmo/YieldStress">
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/CalculatedProperty"/>
+        <rdfs:subClassOf rdf:resource="http://purls.helmholtz-metadaten.de/asmo/Stress"/>
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Yield Stress</rdfs:label>
     </owl:Class>
     
 

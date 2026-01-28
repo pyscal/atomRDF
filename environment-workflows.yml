@@ -15,16 +15,18 @@ dependencies:
   - pandas
   - plotly
   - ipywidgets
-  - atomman
+  - tools4rdf
+  #- atomman
   #workflow packages
   - pyiron_base
   - pyiron_atomistics
   - pyiron-data
   - sqlalchemy
   - iprpy-data
-  - sphinxdft >=2.7.0
-  - sphinxdft-data
-  - lammps
+  #- sphinxdft >=2.7.0
+  #- sphinxdft-data
+  - lammps =2024.06.27=*_openmpi_*
+  - openmpi =4.1.6
   - nglview
   - pip:
     - "git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"
