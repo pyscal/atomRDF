@@ -92,6 +92,7 @@ class WorkflowParser:
         self.debug = debug
         self.hash_threshold = hash_threshold
         self.sample_map: Dict[str, str] = {}
+        self._base_dir: Optional[Path] = None
 
     def _miller_bravais_to_cartesian(self, uvtw: List[float]) -> List[float]:
         """
@@ -297,12 +298,86 @@ class WorkflowParser:
             return g[0].toPython()
         return None
 
+    def _resolve_atom_attribute_from_file(
+        self, sample_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        If atom_attribute contains a file_path key, read the structure file via
+        ASE and replace atom_attribute with inline position/species data.
+        Also fills simulation_cell from the file if it is absent or empty in the
+        YAML.
+
+        Parameters
+        ----------
+        sample_data : dict
+            A single sample dictionary (may be mutated by reference via copy).
+
+        Returns
+        -------
+        dict
+            Shallow-copied sample_data with atom_attribute resolved to inline
+            arrays (and simulation_cell populated if needed).
+        """
+        from ase.io import read as ase_read
+
+        aa = sample_data.get("atom_attribute")
+        if not isinstance(aa, dict):
+            return sample_data
+
+        file_path = aa.get("file_path")
+        if file_path is None:
+            return sample_data
+
+        # Resolve path relative to the YAML's parent directory
+        base = self._base_dir if self._base_dir is not None else Path.cwd()
+        resolved = (base / file_path).resolve()
+        if not resolved.exists():
+            raise FileNotFoundError(
+                f"Structure file not found: {resolved} "
+                f"(file_path='{file_path}', base='{base}')"
+            )
+
+        # Build ASE read kwargs
+        read_kwargs: Dict[str, Any] = {}
+        if aa.get("file_format"):
+            read_kwargs["format"] = aa["file_format"]
+        if aa.get("file_species"):
+            read_kwargs["specorder"] = list(aa["file_species"])
+
+        atoms = ase_read(str(resolved), **read_kwargs)
+
+        # Shallow-copy so we don't mutate the caller's dict
+        sample_data = dict(sample_data)
+        sample_data["atom_attribute"] = {
+            "position": atoms.get_positions().tolist(),
+            "species": atoms.get_chemical_symbols(),
+        }
+
+        # Fill simulation_cell from file only when absent / empty in the YAML
+        simcell = sample_data.get("simulation_cell")
+        needs_fill = not isinstance(simcell, dict) or not any(
+            simcell.get(k)
+            for k in ("length", "vector", "number_of_atoms")
+        )
+        if needs_fill:
+            sample_data["simulation_cell"] = {
+                "volume": {"value": float(atoms.get_volume())},
+                "number_of_atoms": len(atoms),
+                "length": atoms.cell.lengths().tolist(),
+                "vector": atoms.get_cell().tolist(),
+                "angle": atoms.cell.angles().tolist(),
+            }
+
+        return sample_data
+
     def parse_samples(self, sample_data_list: List[Dict[str, Any]]) -> Dict[str, str]:
         """
         Parse computational sample data and add to knowledge graph.
 
         Performs deduplication via hash-based lookup. If a sample with the same
-        hash already exists, reuses the existing URI.
+        hash already exists, reuses the existing URI. If atom_attribute contains
+        a file_path key, the structure file is read via ASE and atoms are
+        resolved before building the sample object.
 
         Parameters
         ----------
@@ -317,6 +392,8 @@ class WorkflowParser:
         import time
 
         for sample_data in sample_data_list:
+            # Resolve file_path references in atom_attribute before any processing
+            sample_data = self._resolve_atom_attribute_from_file(sample_data)
             original_id = sample_data.get("id", "unknown")
 
             # Normalise simulation_cell.vector if present
@@ -590,7 +667,8 @@ class WorkflowParser:
 
         # If data is a file path, read it first
         if isinstance(data, (str, Path)):
-            filepath = Path(data)
+            filepath = Path(data).resolve()
+            self._base_dir = filepath.parent
 
             with open(filepath, "r") as f:
                 if filepath.suffix in [".yaml", ".yml"]:
