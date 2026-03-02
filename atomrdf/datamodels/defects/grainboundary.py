@@ -24,39 +24,43 @@ class GrainBoundary(TemplateMixin, BaseModel):
     rotation_axis: Optional[List[float]] = None
 
     def _add_gb(self, graph, name, plane_defect):
-        graph.add(
-            (
-                plane_defect,
-                PLDO.hasSigmaValue,
-                Literal(self.sigma, datatype=XSD.integer),
+        if self.sigma is not None:
+            graph.add(
+                (
+                    plane_defect,
+                    PLDO.hasSigmaValue,
+                    Literal(self.sigma, datatype=XSD.integer),
+                )
             )
-        )
-        graph.add(
-            (
-                plane_defect,
-                PLDO.hasGBplane,
-                Literal(
-                    " ".join(np.array(self.plane).astype(str)), datatype=XSD.string
-                ),
+        if self.plane is not None:
+            graph.add(
+                (
+                    plane_defect,
+                    PLDO.hasGBplane,
+                    Literal(
+                        " ".join(np.array(self.plane).astype(str)), datatype=XSD.string
+                    ),
+                )
             )
-        )
-        graph.add(
-            (
-                plane_defect,
-                PLDO.hasRotationAxis,
-                Literal(
-                    " ".join(np.array(self.rotation_axis).astype(str)),
-                    datatype=XSD.string,
-                ),
+        if self.rotation_axis is not None:
+            graph.add(
+                (
+                    plane_defect,
+                    PLDO.hasRotationAxis,
+                    Literal(
+                        " ".join(np.array(self.rotation_axis).astype(str)),
+                        datatype=XSD.string,
+                    ),
+                )
             )
-        )
-        graph.add(
-            (
-                plane_defect,
-                PLDO.hasMisorientationAngle,
-                Literal(self.misorientation_angle, datatype=XSD.float),
+        if self.misorientation_angle is not None:
+            graph.add(
+                (
+                    plane_defect,
+                    PLDO.hasMisorientationAngle,
+                    Literal(self.misorientation_angle, datatype=XSD.float),
+                )
             )
-        )
 
     def to_graph(self, graph, sample_id):
         name = sample_id

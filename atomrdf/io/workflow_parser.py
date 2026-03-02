@@ -339,10 +339,29 @@ class WorkflowParser:
 
         # Build ASE read kwargs
         read_kwargs: Dict[str, Any] = {}
-        if aa.get("file_format"):
-            read_kwargs["format"] = aa["file_format"]
+        fmt = aa.get("file_format", "")
+        if fmt:
+            read_kwargs["format"] = fmt
         if aa.get("file_species"):
-            read_kwargs["specorder"] = list(aa["file_species"])
+            species_list = list(aa["file_species"])
+            if fmt == "lammps-data":
+                # lammps-data doesn't accept specorder; use Z_of_type instead.
+                # Read the number of atom types from the file header.
+                import re
+                from ase.data import atomic_numbers as _anz
+                n_types = 1
+                with open(str(resolved)) as _fh:
+                    for _line in _fh:
+                        _m = re.match(r"\s*(\d+)\s+atom\s+types", _line)
+                        if _m:
+                            n_types = int(_m.group(1))
+                            break
+                read_kwargs["Z_of_type"] = {
+                    i: _anz[species_list[min(i - 1, len(species_list) - 1)]]
+                    for i in range(1, n_types + 1)
+                }
+            else:
+                read_kwargs["specorder"] = species_list
 
         atoms = ase_read(str(resolved), **read_kwargs)
 
