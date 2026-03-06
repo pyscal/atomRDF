@@ -95,10 +95,7 @@ class Substitutional(PointDefect):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             defect = triple[2]
             typev = graph.value(defect, RDF.type)
-            if (
-                typev is not None
-                and typev == PODO.SubstitutionalImpurity
-            ):
+            if typev is not None and typev == PODO.SubstitutionalImpurity:
                 concentration = graph.value(sample, PODO.hasImpurityConcentration)
                 number = graph.value(sample, PODO.hasNumberOfImpurityAtoms)
                 return cls(

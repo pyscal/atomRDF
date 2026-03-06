@@ -160,10 +160,7 @@ class SymmetricalTiltGrainBoundary(GrainBoundary):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             plane_defect = triple[2]
             typev = graph.value(plane_defect, RDF.type)
-            if (
-                typev is not None
-                and typev == PLDO.SymmetricalTiltGrainBoundary
-            ):
+            if typev is not None and typev == PLDO.SymmetricalTiltGrainBoundary:
                 return cls._read_gb(graph, sample, plane_defect)
         return None
 

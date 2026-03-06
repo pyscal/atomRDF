@@ -18,11 +18,11 @@ def Literal(value, datatype=None):
 
 CMSO = Namespace("http://purls.helmholtz-metadaten.de/cmso/")
 ASMO = Namespace("http://purls.helmholtz-metadaten.de/asmo/")
-LDO  = Namespace("http://purls.helmholtz-metadaten.de/cdos/ldo/")
+LDO = Namespace("http://purls.helmholtz-metadaten.de/cdos/ldo/")
 PLDO = Namespace("http://purls.helmholtz-metadaten.de/cdos/pldo/")
 PODO = Namespace("http://purls.helmholtz-metadaten.de/cdos/podo/")
 CDCO = Namespace("http://purls.helmholtz-metadaten.de/cdos/cdco/")
 
 PROV = Namespace("http://www.w3.org/ns/prov#")
-MDO  = Namespace("https://w3id.org/mdo/calculation/")
+MDO = Namespace("https://w3id.org/mdo/calculation/")
 DCAT = Namespace("http://www.w3.org/ns/dcat#")

@@ -7,19 +7,20 @@ def read_ontology():
     pldo = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/pldo/")
     podo = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/podo/")
     asmo = parse_ontology("https://purls.helmholtz-metadaten.de/asmo/")
-    ldo  = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/ldo/")
+    ldo = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/ldo/")
     cdco = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/cdco/")
 
-
-    #now sum them up
+    # now sum them up
     combo = cmso + cdco + pldo + podo + asmo + ldo
-    combo.attributes['data_property']['cmso:hasSymbol'].range.append("str")
-    combo.attributes['data_property']['asmo:hasValue'].range.extend(["float", "double", "int", "str"])
+    combo.attributes["data_property"]["cmso:hasSymbol"].range.append("str")
+    combo.attributes["data_property"]["asmo:hasValue"].range.extend(
+        ["float", "double", "int", "str"]
+    )
 
-    #now combine the ontologies
+    # now combine the ontologies
     combo = OntologyNetworkBase(combo)
 
-    #add sring labels as needed
+    # add sring labels as needed
     combo.add_namespace("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
 
     combo.add_term(
@@ -27,7 +28,7 @@ def read_ontology():
         "data_property",
         delimiter="#",
         namespace="rdfs",
-        rn = ['str']
+        rn=["str"],
     )
 
     combo.add_path(("asmo:CalculatedProperty", "rdfs:label", "string"))

@@ -789,9 +789,7 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
 
         # Add content hash to the graph for deduplication (skip validation for external vocab)
         content_hash = self._compute_hash()
-        graph.add(
-            (sample, DCAT.checksum, Literal(content_hash, datatype=XSD.string))
-        )
+        graph.add((sample, DCAT.checksum, Literal(content_hash, datatype=XSD.string)))
 
         return self.id
 

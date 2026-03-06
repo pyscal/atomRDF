@@ -41,9 +41,7 @@ class DefectComplex(TemplateMixin, BaseModel):
         """
         name = sample_id
         material = get_material(graph, sample_id)
-        defect_complex = graph.create_node(
-            f"{name}_DefectComplex", CDCO.DefectComplex
-        )
+        defect_complex = graph.create_node(f"{name}_DefectComplex", CDCO.DefectComplex)
         graph.add((material, CDCO.hasDefectComplex, defect_complex))
 
         # Link the actual defect URIs
@@ -86,9 +84,7 @@ class DefectComplex(TemplateMixin, BaseModel):
             return None
 
         # Get relative distance if present
-        relative_distance = graph.value(
-            defect_complex_node, CDCO.hasRelativeDistance
-        )
+        relative_distance = graph.value(defect_complex_node, CDCO.hasRelativeDistance)
         relative_distance_str = (
             relative_distance.toPython() if relative_distance else None
         )

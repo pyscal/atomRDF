@@ -314,9 +314,7 @@ class Simulation(Activity):
         if self.input_parameter:
             for param in self.input_parameter:
                 param_uri = param.to_graph(graph)
-                graph.add(
-                    (simulation, ASMO.hasInputParameter, param_uri)
-                )
+                graph.add((simulation, ASMO.hasInputParameter, param_uri))
 
     @classmethod
     def from_graph_input_parameters(cls, graph, sim_id):
@@ -334,9 +332,7 @@ class Simulation(Activity):
         if self.output_parameter:
             for param in self.output_parameter:
                 param_uri = param.to_graph(graph)
-                graph.add(
-                    (simulation, ASMO.hasOutputParameter, param_uri)
-                )
+                graph.add((simulation, ASMO.hasOutputParameter, param_uri))
                 if param.associate_to_sample:
                     for sample_id in param.associate_to_sample:
                         graph.add(
