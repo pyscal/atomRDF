@@ -11,6 +11,7 @@ import atomrdf.build as build
 
 
 def test_sqlalchemy():
+    pytest.importorskip("rdflib_sqlalchemy", reason="rdflib_sqlalchemy not installed")
     s = KnowledgeGraph(store="SQLAlchemy", store_file="aa")
     sys = build.bulk("Fe", graph=s)
 
