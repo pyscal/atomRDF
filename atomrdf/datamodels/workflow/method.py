@@ -31,7 +31,7 @@ class Method(BaseModel, TemplateMixin):
 
 class MolecularStatics(Method):
     basename: str = "MolecularStatics"
-    pid: str = ASMO.MolecularStatics.uri
+    pid: str = str(ASMO.MolecularStatics)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
@@ -46,7 +46,7 @@ class MolecularStatics(Method):
 
 class MolecularDynamics(Method):
     basename: str = "MolecularDynamics"
-    pid: str = ASMO.MolecularDynamics.uri
+    pid: str = str(ASMO.MolecularDynamics)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
@@ -61,7 +61,7 @@ class MolecularDynamics(Method):
 
 class DensityFunctionalTheory(Method):
     basename: str = "DensityFunctionalTheory"
-    pid: str = ASMO.DensityFunctionalTheory.uri
+    pid: str = str(ASMO.DensityFunctionalTheory)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"

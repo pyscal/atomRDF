@@ -27,7 +27,6 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
     DCAT,
-    UNSAFECMSO,
 )
 import atomrdf.json_io as json_io
 import atomrdf.datamodels.defects as defects
@@ -298,8 +297,7 @@ class SimulationCell(BaseModel, TemplateMixin):
                     volume,
                     ASMO.hasUnit,
                     URIRef(f"http://qudt.org/vocab/unit/ANGSTROM3"),
-                ),
-                validate=False,
+                )
             )
 
         # Only add number of atoms if it's not None
@@ -478,7 +476,7 @@ class SimulationCell(BaseModel, TemplateMixin):
             graph.add(
                 (
                     simulation_cell,
-                    UNSAFECMSO.hasGrainSize,
+                    CMSO.hasGrainSize,
                     Literal(self.grain_size, datatype=XSD.float),
                 )
             )
@@ -486,7 +484,7 @@ class SimulationCell(BaseModel, TemplateMixin):
             graph.add(
                 (
                     simulation_cell,
-                    UNSAFECMSO.hasNumberOfGrains,
+                    CMSO.hasNumberOfGrains,
                     Literal(self.number_of_grains, datatype=XSD.integer),
                 )
             )
@@ -548,7 +546,7 @@ class SimulationCell(BaseModel, TemplateMixin):
 
 
 class AtomAttribute(BaseModel, TemplateMixin):
-    pid: Optional[str] = CMSO.AtomAttribute.uri
+    pid: Optional[str] = str(CMSO.AtomAttribute)
     position: SkipValidation[Optional[List[List[float]]]] = (
         None  # Angstroms (implicit) - validation skipped for performance
     )
@@ -649,7 +647,7 @@ class AtomAttribute(BaseModel, TemplateMixin):
 
 
 class AtomicScaleSample(BaseModel, TemplateMixin):
-    pid: Optional[str] = CMSO.AtomicScaleSample.uri
+    pid: Optional[str] = str(CMSO.AtomicScaleSample)
     material: Optional[Material] = None
     simulation_cell: Optional[SimulationCell] = None
     atom_attribute: Optional[AtomAttribute] = None
@@ -699,8 +697,7 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
                         URIRef(self.id),
                         ASMO.hasCalculatedProperty,
                         param_uri,
-                    ),
-                    validate=False,
+                    )
                 )
 
     def from_graph_calculated_properties(cls, graph, sample_id):
@@ -793,8 +790,7 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
         # Add content hash to the graph for deduplication (skip validation for external vocab)
         content_hash = self._compute_hash()
         graph.add(
-            (sample, DCAT.checksum, Literal(content_hash, datatype=XSD.string)),
-            validate=False,
+            (sample, DCAT.checksum, Literal(content_hash, datatype=XSD.string))
         )
 
         return self.id

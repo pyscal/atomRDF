@@ -1,17 +1,14 @@
 from tools4rdf.network.parser import OntoParser, parse_ontology
 from tools4rdf.network.network import OntologyNetworkBase
 
-import os
 
 def read_ontology():
-    file_location = os.path.dirname(__file__)
-
-    cmso = parse_ontology(os.path.join(file_location, "data/cmso.owl")) 
-    pldo = parse_ontology(os.path.join(file_location, "data/pldo.owl")) 
-    podo = parse_ontology(os.path.join(file_location, "data/podo.owl")) 
-    asmo = parse_ontology(os.path.join(file_location, "data/asmo.owl")) 
-    ldo = parse_ontology(os.path.join(file_location, "data/ldo.owl")) 
-    cdco = parse_ontology(os.path.join(file_location, "data/cdco.owl"))
+    cmso = parse_ontology("https://purls.helmholtz-metadaten.de/cmso/")
+    pldo = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/pldo/")
+    podo = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/podo/")
+    asmo = parse_ontology("https://purls.helmholtz-metadaten.de/asmo/")
+    ldo  = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/ldo/")
+    cdco = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/cdco/")
 
 
     #now sum them up

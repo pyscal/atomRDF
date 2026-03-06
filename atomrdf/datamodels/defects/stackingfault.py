@@ -48,7 +48,7 @@ class StackingFault(TemplateMixin, BaseModel):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             sf = triple[2]
             typev = graph.value(sf, RDF.type)
-            if typev is not None and typev.toPython() == PLDO.StackingFault.uri:
+            if typev is not None and typev == PLDO.StackingFault:
                 plane = graph.value(sf, PLDO.hasSFplane)
                 displacement = graph.value(sf, PLDO.hasDisplacementVector)
                 return cls(

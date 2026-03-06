@@ -29,7 +29,7 @@ class ThermodynamicEnsemble(BaseModel, TemplateMixin):
 
 
 class CanonicalEnsemble(ThermodynamicEnsemble):
-    pid: str = ASMO.CanonicalEnsemble.uri
+    pid: str = str(ASMO.CanonicalEnsemble)
     basename: str = "CanonicalEnsemble"
 
     def to_graph(self, graph=None):
@@ -38,7 +38,7 @@ class CanonicalEnsemble(ThermodynamicEnsemble):
 
 
 class MicrocanonicalEnsemble(ThermodynamicEnsemble):
-    pid: str = ASMO.MicrocanonicalEnsemble.uri
+    pid: str = str(ASMO.MicrocanonicalEnsemble)
     basename: str = "MicrocanonicalEnsemble"
 
     def to_graph(self, graph=None):
@@ -47,7 +47,7 @@ class MicrocanonicalEnsemble(ThermodynamicEnsemble):
 
 
 class IsothermalIsobaricEnsemble(ThermodynamicEnsemble):
-    pid: str = ASMO.IsothermalIsobaricEnsemble.uri
+    pid: str = str(ASMO.IsothermalIsobaricEnsemble)
     basename: str = "IsothermalIsobaricEnsemble"
 
     def to_graph(self, graph=None):
@@ -56,7 +56,7 @@ class IsothermalIsobaricEnsemble(ThermodynamicEnsemble):
 
 
 class IsoenthalpicIsobaricEnsemble(ThermodynamicEnsemble):
-    pid: str = ASMO.IsoenthalpicIsobaricEnsemble.uri
+    pid: str = str(ASMO.IsoenthalpicIsobaricEnsemble)
     basename: str = "IsoenthalpicIsobaricEnsemble"
 
     def to_graph(self, graph=None):
@@ -65,7 +65,7 @@ class IsoenthalpicIsobaricEnsemble(ThermodynamicEnsemble):
 
 
 class GrandCanonicalEnsemble(ThermodynamicEnsemble):
-    pid: str = ASMO.GrandCanonicalEnsemble.uri
+    pid: str = str(ASMO.GrandCanonicalEnsemble)
     basename: str = "GrandCanonicalEnsemble"
 
     def to_graph(self, graph=None):

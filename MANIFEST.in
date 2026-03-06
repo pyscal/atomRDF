@@ -1,1 +1,2 @@
-include atomrdf/data/*.??l
+include atomrdf/data/*.yml
+include atomrdf/data/*.rdf

@@ -52,7 +52,7 @@ class Vacancy(PointDefect):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             vacancy = triple[2]
             typev = graph.value(vacancy, RDF.type)
-            if typev is not None and typev.toPython() == PODO.Vacancy.uri:
+            if typev is not None and typev == PODO.Vacancy:
                 concentration = graph.value(sample, PODO.hasVacancyConcentration)
                 number = graph.value(sample, PODO.hasNumberOfVacancies)
                 return cls(
@@ -97,7 +97,7 @@ class Substitutional(PointDefect):
             typev = graph.value(defect, RDF.type)
             if (
                 typev is not None
-                and typev.toPython() == PODO.SubstitutionalImpurity.uri
+                and typev == PODO.SubstitutionalImpurity
             ):
                 concentration = graph.value(sample, PODO.hasImpurityConcentration)
                 number = graph.value(sample, PODO.hasNumberOfImpurityAtoms)
@@ -140,7 +140,7 @@ class Interstitial(PointDefect):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             defect = triple[2]
             typev = graph.value(defect, RDF.type)
-            if typev is not None and typev.toPython() == PODO.InterstitialImpurity.uri:
+            if typev is not None and typev == PODO.InterstitialImpurity:
                 concentration = graph.value(sample, PODO.hasImpurityConcentration)
                 number = graph.value(sample, PODO.hasNumberOfImpurityAtoms)
                 return cls(

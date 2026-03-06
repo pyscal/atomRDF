@@ -55,7 +55,7 @@ class SlipPlane(TemplateMixin, BaseModel):
         for triple in graph.triples((None, LDO.belongsToSystem, slip_system)):
             typev = graph.value(triple[0], RDF.type)
             if typev is not None:
-                if typev.toPython() == LDO.SlipPlane.uri:
+                if typev == LDO.SlipPlane:
                     slip_plane = triple[0]
                     break
 
@@ -109,7 +109,7 @@ class SlipSystem(TemplateMixin, BaseModel):
         for triple in graph.triples((None, LDO.belongsToSystem, slip_system)):
             typev = graph.value(triple[0], RDF.type)
             if typev is not None:
-                if typev.toPython() == LDO.SlipDirection.uri:
+                if typev == LDO.SlipDirection:
                     slip_direction = triple[0]
                     break
 
@@ -217,7 +217,7 @@ class Dislocation(TemplateMixin, BaseModel):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             line_defect = triple[2]
             typev = graph.value(line_defect, RDF.type)
-            if typev is not None and typev.toPython() == LDO.Dislocation.uri:
+            if typev is not None and typev == LDO.Dislocation:
                 return cls._read_dislocation(graph, sample, line_defect)
 
 
@@ -235,7 +235,7 @@ class ScrewDislocation(Dislocation):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             line_defect = triple[2]
             typev = graph.value(line_defect, RDF.type)
-            if typev is not None and typev.toPython() == LDO.ScrewDislocation.uri:
+            if typev is not None and typev == LDO.ScrewDislocation:
                 return cls._read_dislocation(graph, sample, line_defect)
 
 
@@ -253,7 +253,7 @@ class EdgeDislocation(Dislocation):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             line_defect = triple[2]
             typev = graph.value(line_defect, RDF.type)
-            if typev is not None and typev.toPython() == LDO.EdgeDislocation.uri:
+            if typev is not None and typev == LDO.EdgeDislocation:
                 return cls._read_dislocation(graph, sample, line_defect)
 
 
@@ -280,7 +280,7 @@ class MixedDislocation(Dislocation):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             line_defect = triple[2]
             typev = graph.value(line_defect, RDF.type)
-            if typev is not None and typev.toPython() == LDO.MixedDislocation.uri:
+            if typev is not None and typev == LDO.MixedDislocation:
                 dislocation = cls._read_dislocation(graph, sample, line_defect)
                 character_angle = graph.value(line_defect, LDO.hasCharacterAngle)
                 dislocation.character_angle = (
