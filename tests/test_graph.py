@@ -1,5 +1,6 @@
 import pytest
 import os
+import tempfile
 from atomrdf import KnowledgeGraph
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.namespace import CMSO, PLDO, ASMO, CDCO
@@ -142,10 +143,11 @@ def test_purge():
     s.purge(force=True)
     assert s.n_samples == 0
 
-    s = KnowledgeGraph(store="db", store_file=f"testr.db")
-    sys = build.bulk("Fe", graph=s)
-    s.purge(force=True)
-    assert s.n_samples == 0
+    with tempfile.TemporaryDirectory() as tmpdir:
+        s = KnowledgeGraph(store="Oxigraph", store_file=tmpdir)
+        sys = build.bulk("Fe", graph=s)
+        s.purge(force=True)
+        assert s.n_samples == 0
 
 
 def test_query_method():
