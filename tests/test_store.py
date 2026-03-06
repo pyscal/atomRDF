@@ -3,6 +3,8 @@ import os
 import shutil
 import tempfile
 
+import oxrdflib  # noqa: F401 — must be installed; CI installs via environment.yml
+
 from atomrdf import KnowledgeGraph
 from atomrdf.namespace import CMSO, PLDO
 import atomrdf.build as build
@@ -14,8 +16,6 @@ def test_sqlalchemy():
 
 
 # ─── Oxigraph store tests ────────────────────────────────────────────────────
-
-oxrdflib = pytest.importorskip("oxrdflib", reason="oxrdflib not installed")
 
 
 @pytest.fixture()
