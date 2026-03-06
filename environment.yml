@@ -23,5 +23,5 @@ dependencies:
   - mendeleev
   - tools4rdf
   - pip:
-    - "git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"
+    - oxrdflib
  

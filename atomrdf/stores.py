@@ -46,6 +46,14 @@ def create_store(kg, store, identifier, store_file=None, structure_store=None):
             store_file=store_file,
             structure_store=structure_store,
         )
+    elif store in ["Oxigraph", "oxigraph"]:
+        store_oxigraph(
+            kg,
+            store,
+            identifier,
+            store_file=store_file,
+            structure_store=structure_store,
+        )
     else:
         raise ValueError("Unknown store found!")
 
@@ -111,6 +119,67 @@ def store_alchemy(kg, store, identifier, store_file=None, structure_store=None):
     kg.graph.open(uri, create=True)
     kg.structure_store = _setup_structure_store(structure_store=structure_store)
 
+def store_oxigraph(kg, store, identifier, store_file=None, structure_store=None):
+    """
+    Store the knowledge graph using Oxigraph (via oxrdflib).
+
+    Parameters
+    ----------
+    kg : KnowledgeGraph
+        The knowledge graph to be stored.
+    store : str
+        The type of store to be used.
+    identifier : str or URIRef
+        The URI identifier for the named graph. Must be consistent across
+        open/reopen calls to retrieve the same triples.
+    store_file : str, optional
+        Directory path for the persistent on-disk Oxigraph store.
+        If None, an in-memory store is used (data is lost when the object
+        is garbage-collected).
+    structure_store : str, optional
+        The structure store to be used.
+
+    Raises
+    ------
+    RuntimeError
+        If oxrdflib is not installed.
+
+    Returns
+    -------
+    None
+    """
+    _check_if_oxrdflib_is_available()
+    from rdflib import Graph, URIRef as _URIRef
+
+    if isinstance(identifier, str):
+        identifier = _URIRef(identifier)
+
+    graph = Graph(store="Oxigraph", identifier=identifier)
+
+    if store_file is not None:
+        create = not os.path.exists(store_file)
+        graph.open(store_file, create=create)
+
+    # Oxigraph strictly validates prefix IRIs passed to its SPARQL engine.
+    # atomRDF binds some prefixes to local file paths (e.g. cmso.owl) which
+    # are not valid absolute IRIs.  Patch the store's bind() to silently
+    # skip any namespace whose IRI has no URI scheme.
+    _orig_bind = graph.store.bind.__func__  # type: ignore[attr-defined]
+
+    def _safe_bind(self_store, prefix, namespace, override=True):
+        ns_str = str(namespace)
+        # Skip namespaces that are bare file paths (no scheme)
+        if "://" not in ns_str and not ns_str.startswith("urn:"):
+            return
+        _orig_bind(self_store, prefix, namespace, override)
+
+    import types
+    graph.store.bind = types.MethodType(_safe_bind, graph.store)
+
+    kg.graph = graph
+    kg.structure_store = _setup_structure_store(structure_store=structure_store)
+
+
 def _check_if_sqlalchemy_is_available():
     try:
         import sqlalchemy as sa
@@ -121,6 +190,15 @@ def _check_if_sqlalchemy_is_available():
     except ImportError:
         raise RuntimeError(
             "Please install the rdllib-sqlalchemy package. The development version is needed, please do pip install git+https://github.com/RDFLib/rdflib-sqlalchemy.git@develop"
+        )
+
+
+def _check_if_oxrdflib_is_available():
+    try:
+        import oxrdflib  # noqa: F401
+    except ImportError:
+        raise RuntimeError(
+            "Please install the oxrdflib package: pip install oxrdflib"
         )
 
 
@@ -137,7 +215,10 @@ def purge(store, identifier, store_file):
 
     elif store in ["SQLAlchemy", "db", "database", "sqlalchemy"]:
         return _purge_alchemy(identifier, store_file)
-    
+
+    elif store in ["Oxigraph", "oxigraph"]:
+        return _purge_oxigraph(identifier, store_file)
+
     else:
         raise ValueError("Unknown store found!")    
 
@@ -151,4 +232,20 @@ def _purge_alchemy(identifier, store_file):
     graph = Graph(store="SQLAlchemy", identifier=identifier)
     uri = Literal(f"sqlite:///{store_file}")
     graph.open(uri, create=True)
+    return graph
+
+
+def _purge_oxigraph(identifier, store_file):
+    _check_if_oxrdflib_is_available()
+    from rdflib import Graph, URIRef as _URIRef
+
+    if isinstance(identifier, str):
+        identifier = _URIRef(identifier)
+
+    if store_file is not None and os.path.exists(store_file):
+        shutil.rmtree(store_file)
+
+    graph = Graph(store="Oxigraph", identifier=identifier)
+    if store_file is not None:
+        graph.open(store_file, create=True)
     return graph
