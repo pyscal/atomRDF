@@ -1025,8 +1025,20 @@ class KnowledgeGraph:
 
         """
         if compress:
-            package_base_name = ".".join(package_name.split(".")[:-2])
             with tarfile.open(package_name) as fin:
+                # Derive the top-level directory from the archive members
+                # instead of string-splitting the path (which breaks with
+                # absolute paths like /full/path/dataset.tar.gz).
+                top_dirs = {m.name.split("/")[0] for m in fin.getmembers()}
+                if len(top_dirs) == 1:
+                    package_base_name = top_dirs.pop()
+                else:
+                    # Fallback: strip extensions from the basename
+                    package_base_name = os.path.basename(package_name)
+                    for ext in (".tar.gz", ".tar.bz2", ".tar"):
+                        if package_base_name.endswith(ext):
+                            package_base_name = package_base_name[: -len(ext)]
+                            break
                 fin.extractall(".")
             # os.remove(package_name)
             # copy things out
@@ -1041,6 +1053,113 @@ class KnowledgeGraph:
             structure_store=f"{package_base_name}/rdf_structure_store",
             ontology=ontology,
         )
+
+    def merge_archive(self, package_name, compress=True, format="turtle"):
+        """
+        Merge an archived dataset into this KnowledgeGraph.
+
+        Unlike ``unarchive`` (which creates a new graph), this method loads
+        the triples and structure-store files from an existing archive into
+        the *current* graph so that multiple datasets can be combined
+        incrementally::
+
+            kg = KnowledgeGraph()
+            kg.merge_archive("dataset_1_GB.tar.gz")
+            kg.merge_archive("dataset_2_GB.tar.gz")
+            # kg now contains both datasets
+
+        Parameters
+        ----------
+        package_name : str
+            Path to the archive.  When *compress* is True (default) this
+            should be a ``.tar.gz`` file; otherwise the name of an already-
+            extracted directory.
+        compress : bool, optional
+            Whether *package_name* is a compressed tarball.  Default True.
+        format : str, optional
+            RDF serialisation format of the ``triples`` file inside the
+            archive.  Default ``"turtle"``.
+
+        Notes
+        -----
+        * Structure-store JSON files from the archive are copied into
+          ``self.structure_store``.  UUID-based filenames make collisions
+          extremely unlikely; a warning is emitted if a file already exists
+          and it is silently skipped (the existing copy wins).
+        * After parsing, every ``CMSO.hasPath`` triple that still references
+          the archive-internal ``rdf_structure_store/`` prefix is rewritten
+          to point at ``self.structure_store``.
+        """
+        # --- 1. Extract if compressed ----------------------------------------
+        if compress:
+            with tarfile.open(package_name) as fin:
+                # The archive's top-level directory name is used as package_base.
+                # extractall(".") puts it relative to cwd, so we must derive
+                # package_base from the archive member names rather than the
+                # (possibly absolute) package_name path.
+                top_dirs = {m.name.split("/")[0] for m in fin.getmembers()}
+                fin.extractall(".")
+            if len(top_dirs) == 1:
+                package_base = top_dirs.pop()
+            else:
+                # fallback: strip .tar.gz from basename
+                package_base = os.path.basename(package_name)
+                for suffix in (".tar.gz", ".tgz"):
+                    if package_base.endswith(suffix):
+                        package_base = package_base[: -len(suffix)]
+                        break
+        else:
+            package_base = package_name
+
+        triple_file = os.path.join(package_base, "triples")
+        archive_ss = os.path.join(package_base, "rdf_structure_store")
+
+        # --- 2. Copy structure-store files -----------------------------------
+        if os.path.isdir(archive_ss):
+            for fname in os.listdir(archive_ss):
+                src = os.path.join(archive_ss, fname)
+                dst = os.path.join(self.structure_store, fname)
+                if os.path.exists(dst):
+                    warnings.warn(
+                        f"merge_archive: '{fname}' already exists in "
+                        f"structure store — skipping (existing copy kept)",
+                        UserWarning,
+                        stacklevel=2,
+                    )
+                    continue
+                shutil.copy(src, dst)
+
+        # --- 3. Parse triples ------------------------------------------------
+        if os.path.exists(triple_file):
+            self.graph.parse(triple_file, format=format)
+
+        # --- 4. Rewrite CMSO.hasPath to point at self.structure_store --------
+        archive_prefix = "rdf_structure_store/"
+        for subj, pred, obj in list(self.triples((None, CMSO.hasPath, None))):
+            try:
+                path = obj.toPython()
+            except Exception:
+                continue
+            if not isinstance(path, str):
+                continue
+            basename = os.path.basename(path)
+            # Rewrite any path whose basename exists in self.structure_store
+            resolved = os.path.join(self.structure_store, basename)
+            if os.path.exists(resolved):
+                new_relpath = os.path.relpath(resolved, os.getcwd())
+                if path != new_relpath:
+                    self.remove((subj, CMSO.hasPath, obj))
+                    self.add(
+                        (
+                            subj,
+                            CMSO.hasPath,
+                            Literal(new_relpath, datatype=XSD.string),
+                        )
+                    )
+
+        # --- 5. Clean up extracted folder ------------------------------------
+        if compress and os.path.isdir(package_base):
+            shutil.rmtree(package_base)
 
     @property
     def n_samples(self):
