@@ -284,6 +284,13 @@ class KnowledgeGraph:
             for filepath in file_paths:
                 os.remove(filepath)
 
+            # Close the current store before destroying and recreating it
+            # (required for file-backed stores like Oxigraph that use a lock file)
+            try:
+                self.graph.close()
+            except Exception:
+                pass
+
             graph = purge(self._store, self._identifier, self._store_file)
             self.graph = graph
             self._n_triples = 0
@@ -848,6 +855,26 @@ class KnowledgeGraph:
         None
         """
         self.write(filename, format=format)
+
+    def close_store(self):
+        """
+        Release the underlying store (close file handles and locks).
+
+        This is a no-op for the in-memory store. For file-backed stores
+        (Oxigraph, SQLAlchemy) it releases the file lock so the same store
+        directory can be reopened in the same process or by another process.
+
+        Returns
+        -------
+        None
+        """
+        self.graph.close()
+
+    def __del__(self):
+        try:
+            self.graph.close()
+        except Exception:
+            pass
 
     def archive(
         self, package_name, format="turtle", compress=True, add_simulations=False

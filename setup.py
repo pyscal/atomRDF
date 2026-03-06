@@ -20,6 +20,10 @@ setup(
     'pyyaml', 'graphviz', 'networkx', 
     'pyscal3', 'spglib', 'pandas',
     'atomman', 'mp-api', 'aimsgb', 'pymatgen', 'mendeleev'],
+    extras_require={
+        'oxigraph': ['oxrdflib'],
+        'sqlalchemy': ['rdflib-sqlalchemy'],
+    },
     classifiers=[
         'Programming Language :: Python :: 3'
     ],
