@@ -6,6 +6,7 @@ from atomrdf.namespace import Literal
 import os
 import shutil
 
+
 def create_store(kg, store, identifier, store_file=None, structure_store=None):
     """
     Create a store based on the given parameters.
@@ -119,6 +120,7 @@ def store_alchemy(kg, store, identifier, store_file=None, structure_store=None):
     kg.graph.open(uri, create=True)
     kg.structure_store = _setup_structure_store(structure_store=structure_store)
 
+
 def store_oxigraph(kg, store, identifier, store_file=None, structure_store=None):
     """
     Store the knowledge graph using Oxigraph (via oxrdflib).
@@ -160,22 +162,6 @@ def store_oxigraph(kg, store, identifier, store_file=None, structure_store=None)
         create = not os.path.exists(store_file)
         graph.open(store_file, create=create)
 
-    # Oxigraph strictly validates prefix IRIs passed to its SPARQL engine.
-    # atomRDF binds some prefixes to local file paths (e.g. cmso.owl) which
-    # are not valid absolute IRIs.  Patch the store's bind() to silently
-    # skip any namespace whose IRI has no URI scheme.
-    _orig_bind = graph.store.bind.__func__  # type: ignore[attr-defined]
-
-    def _safe_bind(self_store, prefix, namespace, override=True):
-        ns_str = str(namespace)
-        # Skip namespaces that are bare file paths (no scheme)
-        if "://" not in ns_str and not ns_str.startswith("urn:"):
-            return
-        _orig_bind(self_store, prefix, namespace, override)
-
-    import types
-    graph.store.bind = types.MethodType(_safe_bind, graph.store)
-
     kg.graph = graph
     kg.structure_store = _setup_structure_store(structure_store=structure_store)
 
@@ -197,9 +183,7 @@ def _check_if_oxrdflib_is_available():
     try:
         import oxrdflib  # noqa: F401
     except ImportError:
-        raise RuntimeError(
-            "Please install the oxrdflib package: pip install oxrdflib"
-        )
+        raise RuntimeError("Please install the oxrdflib package: pip install oxrdflib")
 
 
 def _setup_structure_store(structure_store=None):
@@ -208,6 +192,7 @@ def _setup_structure_store(structure_store=None):
     if not os.path.exists(structure_store):
         os.mkdir(structure_store)
     return structure_store
+
 
 def purge(store, identifier, store_file):
     if store in ["Memory", "memory"]:
@@ -220,12 +205,13 @@ def purge(store, identifier, store_file):
         return _purge_oxigraph(identifier, store_file)
 
     else:
-        raise ValueError("Unknown store found!")    
+        raise ValueError("Unknown store found!")
 
 
 def _purge_memory(identifier, store_file):
     graph = Graph(store="Memory", identifier=identifier)
     return graph
+
 
 def _purge_alchemy(identifier, store_file):
     os.remove(store_file)
