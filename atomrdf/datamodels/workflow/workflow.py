@@ -85,9 +85,17 @@ class Simulation(Activity):
     ] = Field(default=None, description="Interatomic potential used in the method")
 
     # class
-    xc_functional: Optional[Union[XCFunctional, GGA, LDA]] = Field(
-        default=None, description="XC functional used in the method"
-    )
+    xc_functional: Optional[
+        Union[
+            HybridGeneralizedGradientApproximation,
+            HybridMetaGeneralizedGradientApproximation,
+            HybridFunctional,
+            MetaGeneralizedGradientApproximation,
+            GGA,
+            LDA,
+            XCFunctional,
+        ]
+    ] = Field(default=None, description="XC functional used in the method")
 
     # class
     workflow_manager: Optional[SoftwareAgent] = Field(
@@ -252,8 +260,9 @@ class Simulation(Activity):
 
     def _to_graph_dft_details(self, graph, simulation):
         # add XC functional
+        sim_id = str(simulation)
         if self.xc_functional:
-            xc_functional = self.xc_functional.to_graph()
+            xc_functional = self.xc_functional.to_graph(graph, sim_id)
             graph.add((simulation, MDO.hasXCFunctional, xc_functional))
 
     @classmethod
@@ -405,7 +414,7 @@ class Simulation(Activity):
         main_id = f"simulation:{main_id}"
 
         # add method
-        method = self.method.to_graph(graph, main_id)
+        method = self.method.to_graph(graph)
 
         # create simulation node based on method
         if self.method.basename in ["MolecularStatics", "MolecularDynamics"]:
