@@ -32,11 +32,14 @@ class Method(BaseModel, TemplateMixin):
 class MolecularStatics(Method):
     basename: str = "MolecularStatics"
     pid: str = str(ASMO.MolecularStatics)
+    base_uriref = URIRef("method_MolecularStatics")
 
-    def to_graph(self, graph, main_id):
-        main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.MolecularStatics)
-        return method
+    def to_graph(self, graph):
+        if graph.persistent_members["MolecularStatics"] is not None:
+            return graph.persistent_members["MolecularStatics"]
+        else:
+            graph.persistent_members["MolecularStatics"] = self.base_uriref
+        return self.base_uriref
 
     @classmethod
     def from_graph(cls, graph, id):
@@ -47,11 +50,14 @@ class MolecularStatics(Method):
 class MolecularDynamics(Method):
     basename: str = "MolecularDynamics"
     pid: str = str(ASMO.MolecularDynamics)
+    base_uriref = URIRef("method_MolecularDynamics")
 
-    def to_graph(self, graph, main_id):
-        main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.MolecularDynamics)
-        return method
+    def to_graph(self, graph):
+        if graph.persistent_members["MolecularDynamics"] is not None:
+            return graph.persistent_members["MolecularDynamics"]
+        else:
+            graph.persistent_members["MolecularDynamics"] = self.base_uriref
+        return self.base_uriref
 
     @classmethod
     def from_graph(cls, graph, id):
@@ -62,11 +68,14 @@ class MolecularDynamics(Method):
 class DensityFunctionalTheory(Method):
     basename: str = "DensityFunctionalTheory"
     pid: str = str(ASMO.DensityFunctionalTheory)
+    base_uriref = URIRef("method_DensityFunctionalTheory")
 
     def to_graph(self, graph, main_id):
-        main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.DensityFunctionalTheory)
-        return method
+        if graph.persistent_members["DensityFunctionalTheory"] is not None:
+            return graph.persistent_members["DensityFunctionalTheory"]
+        else:
+            graph.persistent_members["DensityFunctionalTheory"] = self.base_uriref
+        return self.base_uriref
 
     @classmethod
     def from_graph(cls, graph, id):
