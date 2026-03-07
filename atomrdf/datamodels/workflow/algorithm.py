@@ -21,7 +21,6 @@ from atomrdf.namespace import (
     PROV,
     Literal,
     ASMO,
-    UNSAFEASMO,
 )
 
 
@@ -32,7 +31,7 @@ class Algorithm(BaseModel, TemplateMixin):
 
 class EquationOfStateFit(Algorithm):
     basename: str = "EquationOfStateFit"
-    pid: str = ASMO.EquationOfStateFit.uri
+    pid: str = str(ASMO.EquationOfStateFit)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
@@ -47,7 +46,7 @@ class EquationOfStateFit(Algorithm):
 
 class QuasiHarmonicApproximation(Algorithm):
     basename: str = "QuasiHarmonicApproximation"
-    pid: str = ASMO.QuasiHarmonicApproximation.uri
+    pid: str = str(ASMO.QuasiHarmonicApproximation)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
@@ -62,7 +61,7 @@ class QuasiHarmonicApproximation(Algorithm):
 
 class ThermodynamicIntegration(Algorithm):
     basename: str = "ThermodynamicIntegration"
-    pid: str = ASMO.ThermodynamicIntegration.uri
+    pid: str = str(ASMO.ThermodynamicIntegration)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
@@ -77,11 +76,11 @@ class ThermodynamicIntegration(Algorithm):
 
 class ANNNIModel(Algorithm):
     basename: str = "ANNNIModel"
-    pid: str = UNSAFEASMO.ANNNImodel  # .uri
+    pid: str = str(ASMO.ANNNImodel)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, UNSAFEASMO.ANNNImodel)
+        method = graph.create_node(main_id, ASMO.ANNNImodel)
         return method
 
     @classmethod
@@ -92,11 +91,11 @@ class ANNNIModel(Algorithm):
 
 class TensileTest(Algorithm):
     basename: str = "TensileTest"
-    pid: str = UNSAFEASMO.TensileTest
+    pid: str = str(ASMO.TensileTest)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, UNSAFEASMO.TensileTest)
+        method = graph.create_node(main_id, ASMO.TensileTest)
         return method
 
     @classmethod
@@ -107,11 +106,11 @@ class TensileTest(Algorithm):
 
 class CompressionTest(Algorithm):
     basename: str = "CompressionTest"
-    pid: str = UNSAFEASMO.CompressionTest
+    pid: str = str(ASMO.CompressionTest)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, UNSAFEASMO.CompressionTest)
+        method = graph.create_node(main_id, ASMO.CompressionTest)
         return method
 
     @classmethod

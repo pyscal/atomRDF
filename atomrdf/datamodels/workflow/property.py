@@ -23,7 +23,6 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
     MDO,
-    UNSAFEASMO,
 )
 from atomrdf.graph import KnowledgeGraph
 import atomrdf.json_io as json_io
@@ -65,16 +64,13 @@ class Property(DataProperty):
                         CMSO.hasIdentifier,
                         Literal(identifier, datatype=XSD.string),
                     ),
-                    validate=False,
                 )
                 graph.add(
                     (property, CMSO.hasPath, Literal(relpath, datatype=XSD.string)),
-                    validate=False,
                 )
             else:
                 graph.add(
                     (property, ASMO.hasValue, Literal(self.value, datatype=XSD.float)),
-                    validate=False,
                 )
         if self.unit is not None:
             graph.add(
@@ -83,7 +79,6 @@ class Property(DataProperty):
                     ASMO.hasUnit,
                     URIRef(f"http://qudt.org/vocab/unit/{self.unit}"),
                 ),
-                validate=False,
             )
 
     def _create_name(self):
@@ -101,7 +96,7 @@ class Property(DataProperty):
             )
         except AttributeError:
             property = graph.create_node(
-                name, getattr(UNSAFEASMO, self.basename), label=self.label
+                name, getattr(ASMO, self.basename), label=self.label
             )
         self._add_value(graph, property)
         return property

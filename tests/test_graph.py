@@ -3,7 +3,7 @@ import os
 import tempfile
 from atomrdf import KnowledgeGraph
 from atomrdf.datamodels.structure import AtomicScaleSample
-from atomrdf.namespace import CMSO, PLDO, ASMO, CDCO
+
 import shutil
 
 import atomrdf.build as build
@@ -37,18 +37,6 @@ def test_logger():
     s = KnowledgeGraph(enable_log=True)
     s.log("testing-logger")
     assert str(type(s.log).__name__) == "method"
-
-
-def test_add_cross_triple():
-    s = KnowledgeGraph(enable_log=True)
-    atoms = build.bulk("Fe", graph=s)
-    sample_id = atoms.info["id"]
-    # Get material URIRef from graph
-    material = s.value(sample_id, CMSO.hasMaterial)
-    status, _ = s._check_domain_if_uriref(
-        (material, CDCO.hasCrystallographicDefect, PLDO.AntiphaseBoundary)
-    )
-    assert status == True
 
 
 def test_add_quantity():
@@ -153,6 +141,9 @@ def test_purge():
 def test_query_method():
     """Test the query method using tools4RDF."""
     kg = KnowledgeGraph()
+
+    if kg.ontology is None:
+        pytest.skip("Ontology not available (network/purls unavailable)")
 
     # Create multiple structures
     struct_Fe = build.bulk("Fe", cubic=True, graph=kg)  # bcc cubic cell, 2 atoms

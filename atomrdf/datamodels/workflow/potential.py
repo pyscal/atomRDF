@@ -26,7 +26,7 @@ from atomrdf.namespace import (
 
 
 class InteratomicPotential(BaseModel, TemplateMixin):
-    pid: str = ASMO.InteratomicPotential.uri
+    pid: str = str(ASMO.InteratomicPotential)
     uri: Optional[str] = Field(default=None, description="URI of the potential")
     potential_type: str = Field(
         default="InteratomicPotential", description="Type of the potential"
@@ -58,7 +58,7 @@ class InteratomicPotential(BaseModel, TemplateMixin):
 
 
 class ModifiedEmbeddedAtomModel(InteratomicPotential):
-    pid: str = ASMO.ModifiedEmbeddedAtomModel.uri
+    pid: str = str(ASMO.ModifiedEmbeddedAtomModel)
     potential_type: str = Field(
         default="ModifiedEmbeddedAtomModel", description="Type of the potential"
     )
@@ -71,7 +71,7 @@ class ModifiedEmbeddedAtomModel(InteratomicPotential):
 
 
 class EmbeddedAtomModel(InteratomicPotential):
-    pid: str = str(ASMO.EmbeddedAtomModel.uri)
+    pid: str = str(ASMO.EmbeddedAtomModel)
     potential_type: str = Field(
         default="EmbeddedAtomModel", description="Type of the potential"
     )
@@ -84,7 +84,7 @@ class EmbeddedAtomModel(InteratomicPotential):
 
 
 class LennardJonesPotential(InteratomicPotential):
-    pid: str = ASMO.LennardJonesPotential.uri
+    pid: str = str(ASMO.LennardJonesPotential)
     potential_type: str = Field(
         default="LennardJonesPotential", description="Type of the potential"
     )
@@ -97,7 +97,7 @@ class LennardJonesPotential(InteratomicPotential):
 
 
 class MachineLearningPotential(InteratomicPotential):
-    pid: str = ASMO.MachineLearningPotential.uri
+    pid: str = str(ASMO.MachineLearningPotential)
     potential_type: str = Field(
         default="MachineLearningPotential", description="Type of the potential"
     )

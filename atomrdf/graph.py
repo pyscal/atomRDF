@@ -5,7 +5,7 @@ object is stored in triplets.
 
 NOTES
 -----
-- To ensure domain and range checking works as expected, always add type before adding further properties!
+- Always add type triples before adding further properties.
 
 Classes
 -------
@@ -47,16 +47,12 @@ import atomrdf.mp as amp
 
 
 from atomrdf.namespace import (
-    Namespace,
     CMSO,
     PLDO,
     PODO,
     ASMO,
     PROV,
-    MATH,
     CDCO,
-    UNSAFECMSO,
-    UNSAFEASMO,
     Literal,
 )
 
@@ -239,9 +235,12 @@ class KnowledgeGraph:
 
         self.sgraph = None
         if ontology is None:
-            ontology = read_ontology()
+            try:
+                ontology = read_ontology()
+            except Exception:
+                ontology = None
         self.ontology = ontology
-        self.terms = self.ontology.terms
+        self.terms = self.ontology.terms if self.ontology is not None else None
         self.store = store
         self._n_triples = 0
 
@@ -309,159 +308,7 @@ class KnowledgeGraph:
                 break
         return valid
 
-    def _is_ontoterm(self, term):
-        return type(term).__name__ == "OntoTerm"
-
-    def _is_uriref(self, term):
-        return type(term).__name__ == "URIRef"
-
-    def _is_bnode(self, term):
-        return not term.toPython().startswith("http")
-
-    def _modify_triple(self, triple):
-        modified_triple = []
-        for term in triple:
-            if self._is_ontoterm(term):
-                modified_triple.append(term.namespace_object)
-            else:
-                modified_triple.append(term)
-        return tuple(modified_triple)
-
-    def _check_domain_if_uriref(self, triple):
-        found = True
-        dm = self.value(triple[0], RDF.type)
-        if dm is not None:
-            # we need to check
-            domain = triple[1].domain
-            if len(domain) > 0:
-                if "owl:Thing" not in domain:
-                    if triple[1].namespace_with_prefix not in dm:
-                        # cross ontology term
-                        self.log(
-                            f"ignoring possible cross ontology connection between {triple[1].namespace} and {dm}"
-                        )
-                        return True, None
-
-                    found = False
-                    for d in domain:
-                        if d.split(":")[-1] in dm:
-                            found = True
-                            break
-        return found, dm
-
-    #    def _check_domain_if_ontoterm(self, triple):
-    #        found = True
-    #        domain = triple[0].domain
-    #        if len(domain) > 0:
-    #            if 'owl:Thing' not in domain:
-    #                if triple[1].namespace != triple[0].namespace:
-    #                    #cross ontology term
-    #                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[0].namespace}')
-    #                    return True, None
-    #                found = False
-    #                if triple[1].name in domain:
-    #                    found = True
-    #        return found, triple[0].name
-
-    def _check_domain(self, triple):
-        if self._is_ontoterm(triple[1]):
-            # check if type was provided
-            found = True
-            dm = None
-
-            if type(triple[0]).__name__ == "URIRef":
-                found, dm = self._check_domain_if_uriref(triple)
-
-            # elif self._is_ontoterm(triple[0]):
-            #    found, dm = self._check_domain_if_ontoterm(triple)
-
-            if not found:
-                raise ValueError(f"{dm} not in domain of {triple[1].name}")
-
-            self.log(f"checked {triple[1].name} against domain {dm}")
-
-    def _check_range_if_uriref(self, triple):
-        found = True
-        rn = self.value(triple[2], RDF.type)
-
-        if rn is not None:
-            # we need to check
-            rang = triple[1].range
-            if len(rang) > 0:
-                if "owl:Thing" not in rang:
-                    if triple[1].namespace_with_prefix not in rn:
-                        # cross ontology term
-                        self.log(
-                            f"ignoring possible cross ontology connection between {triple[1].namespace} and {rn}"
-                        )
-                        return True, None
-
-                    found = False
-                    for r in rang:
-                        if r.split(":")[-1] in rn:
-                            found = True
-                            break
-        return found, rn
-
-    #    def _check_range_if_ontoterm(self, triple):
-    #        found = True
-    #        rang = triple[1].range
-    #        if len(rang) > 0:
-    #            if 'owl:Thing' not in rang:
-    #                if triple[1].namespace != triple[2].namespace:
-    #                    #cross ontology term
-    #                    self.log(f'ignoring possible cross ontology connection between {triple[1].namespace} and {triple[2].namespace}')
-    #                    return True, None
-    #
-    #                found = False
-    #                if triple[2].name in rang:
-    #                    found = True
-    #        return found, triple[2].name
-
-    def _check_range_if_literal(self, triple):
-        found = True
-        if triple[2].datatype is None:
-            self.log(
-                f"WARNING: {triple[1].name} has a range with unspecified datatype!"
-            )
-            warnings.warn(f"{triple[1].name} has a range with unspecified datatype!")
-            return True, None
-
-        destination_range = triple[2].datatype.toPython().split("#")[-1]
-
-        # if destination_range == "string":
-        #    destination_range = "str"
-        # elif destination_range == "integer":
-        #    destination_range = "int"
-
-        rang = triple[1].range
-        if len(rang) > 0:
-            found = False
-            if destination_range in rang:
-                found = True
-        return found, destination_range
-
-    def _check_range(self, triple):
-        if self._is_ontoterm(triple[1]):
-            # check if type was provided
-            found = True
-            dm = None
-
-            if type(triple[2]).__name__ == "URIRef":
-                found, dm = self._check_range_if_uriref(triple)
-
-            # elif self._is_ontoterm(triple[2]):
-            #    found, dm = self._check_range_if_ontoterm(triple)
-
-            elif type(triple[2]).__name__ == "Literal":
-                found, dm = self._check_range_if_literal(triple)
-
-            if not found:
-                raise ValueError(f"{dm} not in range of {triple[1].name}")
-
-            self.log(f"checked {triple[1].name} against range {dm}")
-
-    def add(self, triple, validate=True):
+    def add(self, triple):
         """
         Add a triple to the knowledge graph.
 
@@ -469,40 +316,17 @@ class KnowledgeGraph:
         ----------
         triple : tuple
             The triple to be added in the form (subject, predicate, object).
-        validate : bool, optional
-            Whether to validate the triple against the domain and range. Default is True.
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-        This method adds a triple to the knowledge graph. The triple should be provided as a tuple in the form (subject, predicate, object).
-        By default, the triple is validated against the domain and range. If the `validate` parameter is set to False, the validation is skipped.
-
-        Examples
-        --------
-        >>> graph = Graph()
-        >>> graph.add(("Alice", "likes", "Bob"))
-        >>> graph.add(("Bob", "age", 25), validate=False)
         """
-        modified_triple = self._modify_triple(triple)
-
         self.log(f"attempting to add triple: {self._n_triples}")
-        self.log(f"- {modified_triple[0].toPython()}")
-        self.log(f"- {modified_triple[1].toPython()}")
-        self.log(f"- {modified_triple[2].toPython()}")
+        self.log(f"- {triple[0].toPython()}")
+        self.log(f"- {triple[1].toPython()}")
+        self.log(f"- {triple[2].toPython()}")
 
-        if validate:
-            self._check_domain(triple)
-            self._check_range(triple)
-
-        if str(modified_triple[2].toPython()) == "None":
+        if str(triple[2].toPython()) == "None":
             self.log(f"rejecting None valued triple")
             return
 
-        self.graph.add(modified_triple)
+        self.graph.add(triple)
         self._n_triples += 1
 
         self.log("added")
@@ -520,20 +344,8 @@ class KnowledgeGraph:
         -------
         generator
             A generator that yields the matching triples.
-
-        Examples
-        --------
-        >>> graph = KnowledgeGraph()
-        >>> graph.add(("Alice", "likes", "Bob"))
-        >>> graph.add(("Alice", "dislikes", "Charlie"))
-        >>> graph.add(("Bob", "likes", "Alice"))
-        >>> for triple in graph.triples(("Alice", None, None)):
-        ...     print(triple)
-        ('Alice', 'likes', 'Bob')
-        ('Alice', 'dislikes', 'Charlie')
         """
-        modified_triple = self._modify_triple(triple)
-        return self.graph.triples(modified_triple)
+        return self.graph.triples(triple)
 
     def value(self, arg1, arg2):
         """
@@ -564,12 +376,10 @@ class KnowledgeGraph:
         >>> print(value)
         Bob
         """
-        modified_double = self._modify_triple((arg1, arg2))
-        return self.graph.value(modified_double[0], modified_double[1])
+        return self.graph.value(arg1, arg2)
 
     def objects(self, arg1, arg2):
-        modified_double = self._modify_triple((arg1, arg2))
-        return self.graph.objects(modified_double[0], modified_double[1])
+        return self.graph.objects(arg1, arg2)
 
     def query(self, source, destinations=None, return_df=True, num_paths=1, limit=None):
         """
@@ -664,6 +474,11 @@ class KnowledgeGraph:
             return res
         else:
             # Use tools4RDF for ontology-based queries
+            if self.ontology is None:
+                raise ValueError(
+                    "Ontology not loaded (network unavailable). "
+                    "Use a SPARQL string query instead."
+                )
             return self.ontology.query(
                 self.graph,
                 source,
@@ -696,8 +511,7 @@ class KnowledgeGraph:
         >>> graph.add(("Alice", "likes", "Bob"))
         >>> graph.remove(("Alice", "likes", "Bob"))
         """
-        modified_triple = self._modify_triple(triple)
-        return self.graph.remove(modified_triple)
+        return self.graph.remove(triple)
 
     def create_node(self, namestring, classtype, label=None):
         """

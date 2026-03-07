@@ -97,7 +97,7 @@ class GrainBoundary(TemplateMixin, BaseModel):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             plane_defect = triple[2]
             typev = graph.value(plane_defect, RDF.type)
-            if typev is not None and typev.toPython() == PLDO.GrainBoundary.uri:
+            if typev is not None and typev == PLDO.GrainBoundary:
                 return cls._read_gb(graph, sample, plane_defect)
         return None
 
@@ -118,7 +118,7 @@ class TwistGrainBoundary(GrainBoundary):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             plane_defect = triple[2]
             typev = graph.value(plane_defect, RDF.type)
-            if typev is not None and typev.toPython() == PLDO.TwistGrainBoundary.uri:
+            if typev is not None and typev == PLDO.TwistGrainBoundary:
                 return cls._read_gb(graph, sample, plane_defect)
         return None
 
@@ -139,7 +139,7 @@ class TiltGrainBoundary(GrainBoundary):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             plane_defect = triple[2]
             typev = graph.value(plane_defect, RDF.type)
-            if typev is not None and typev.toPython() == PLDO.TiltGrainBoundary.uri:
+            if typev is not None and typev == PLDO.TiltGrainBoundary:
                 return cls._read_gb(graph, sample, plane_defect)
         return None
 
@@ -160,10 +160,7 @@ class SymmetricalTiltGrainBoundary(GrainBoundary):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             plane_defect = triple[2]
             typev = graph.value(plane_defect, RDF.type)
-            if (
-                typev is not None
-                and typev.toPython() == PLDO.SymmetricalTiltGrainBoundary.uri
-            ):
+            if typev is not None and typev == PLDO.SymmetricalTiltGrainBoundary:
                 return cls._read_gb(graph, sample, plane_defect)
         return None
 
@@ -184,6 +181,6 @@ class MixedGrainBoundary(GrainBoundary):
         for triple in graph.triples((material, CDCO.hasCrystallographicDefect, None)):
             plane_defect = triple[2]
             typev = graph.value(plane_defect, RDF.type)
-            if typev is not None and typev.toPython() == PLDO.MixedGrainBoundary.uri:
+            if typev is not None and typev == PLDO.MixedGrainBoundary:
                 return cls._read_gb(graph, sample, plane_defect)
         return None

@@ -29,7 +29,7 @@ class DegreeOfFreedom(BaseModel, TemplateMixin):
 
 
 class AtomicPositionRelaxation(DegreeOfFreedom):
-    pid: str = ASMO.AtomicPositionRelaxation.uri
+    pid: str = str(ASMO.AtomicPositionRelaxation)
     basename: str = "AtomicPositionRelaxation"
 
     def to_graph(self):
@@ -38,7 +38,7 @@ class AtomicPositionRelaxation(DegreeOfFreedom):
 
 
 class CellVolumeRelaxation(DegreeOfFreedom):
-    pid: str = ASMO.CellVolumeRelaxation.uri
+    pid: str = str(ASMO.CellVolumeRelaxation)
     basename: str = "CellVolumeRelaxation"
 
     def to_graph(self):
@@ -47,7 +47,7 @@ class CellVolumeRelaxation(DegreeOfFreedom):
 
 
 class CellShapeRelaxation(DegreeOfFreedom):
-    pid: str = ASMO.CellShapeRelaxation.uri
+    pid: str = str(ASMO.CellShapeRelaxation)
     basename: str = "CellShapeRelaxation"
 
     def to_graph(self):

@@ -13,7 +13,6 @@ from atomrdf.namespace import (
     PROV,
     Literal,
     ASMO,
-    UNSAFECDCO,
 )
 from atomrdf.utils import get_material
 
@@ -42,10 +41,8 @@ class DefectComplex(TemplateMixin, BaseModel):
         """
         name = sample_id
         material = get_material(graph, sample_id)
-        defect_complex = graph.create_node(
-            f"{name}_DefectComplex", UNSAFECDCO.DefectComplex
-        )
-        graph.add((material, UNSAFECDCO.hasDefectComplex, defect_complex))
+        defect_complex = graph.create_node(f"{name}_DefectComplex", CDCO.DefectComplex)
+        graph.add((material, CDCO.hasDefectComplex, defect_complex))
 
         # Link the actual defect URIs
         if defect_uris:
@@ -53,7 +50,7 @@ class DefectComplex(TemplateMixin, BaseModel):
                 graph.add(
                     (
                         URIRef(defect_uri),
-                        UNSAFECDCO.isPartOfDefectComplex,
+                        CDCO.isPartOfDefectComplex,
                         defect_complex,
                     )
                 )
@@ -63,10 +60,9 @@ class DefectComplex(TemplateMixin, BaseModel):
             graph.add(
                 (
                     defect_complex,
-                    UNSAFECDCO.hasRelativeDistance,
+                    CDCO.hasRelativeDistance,
                     Literal(self.relative_distance),
                 ),
-                validate=False,
             )
 
     @classmethod
@@ -82,15 +78,13 @@ class DefectComplex(TemplateMixin, BaseModel):
         material = get_material(graph, sample)
 
         # Find the DefectComplex node
-        defect_complex_node = graph.value(material, UNSAFECDCO.hasDefectComplex)
+        defect_complex_node = graph.value(material, CDCO.hasDefectComplex)
 
         if defect_complex_node is None:
             return None
 
         # Get relative distance if present
-        relative_distance = graph.value(
-            defect_complex_node, UNSAFECDCO.hasRelativeDistance
-        )
+        relative_distance = graph.value(defect_complex_node, CDCO.hasRelativeDistance)
         relative_distance_str = (
             relative_distance.toPython() if relative_distance else None
         )
@@ -98,7 +92,7 @@ class DefectComplex(TemplateMixin, BaseModel):
         # Find all defects that are part of this complex
         defect_types = []
         for defect_uri in graph.subjects(
-            UNSAFECDCO.isPartOfDefectComplex, defect_complex_node
+            CDCO.isPartOfDefectComplex, defect_complex_node
         ):
             # Extract defect type from URI (e.g., "sample:abc_StackingFault" -> "stacking_fault")
             defect_uri_str = str(defect_uri)
