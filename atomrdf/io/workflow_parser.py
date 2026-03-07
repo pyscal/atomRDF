@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Union, Any, Optional
 import re
 
+from atomrdf.datamodels.dataset import Dataset
 from atomrdf.datamodels.structure import AtomicScaleSample
 from atomrdf.datamodels.workflow.workflow import Simulation
 from atomrdf.datamodels.workflow.operations import (
@@ -349,6 +350,7 @@ class WorkflowParser:
                 # Read the number of atom types from the file header.
                 import re
                 from ase.data import atomic_numbers as _anz
+
                 n_types = 1
                 with open(str(resolved)) as _fh:
                     for _line in _fh:
@@ -375,8 +377,7 @@ class WorkflowParser:
         # Fill simulation_cell from file only when absent / empty in the YAML
         simcell = sample_data.get("simulation_cell")
         needs_fill = not isinstance(simcell, dict) or not any(
-            simcell.get(k)
-            for k in ("length", "vector", "number_of_atoms")
+            simcell.get(k) for k in ("length", "vector", "number_of_atoms")
         )
         if needs_fill:
             sample_data["simulation_cell"] = {
@@ -701,11 +702,20 @@ class WorkflowParser:
                 f"Unsupported data type: {type(data)}. Expected str, Path, or dict."
             )
 
-        result = {"sample_map": {}, "workflow_uris": [], "operation_uris": []}
+        result = {
+            "sample_map": {},
+            "workflow_uris": [],
+            "operation_uris": [],
+            "dataset_uri": None,
+        }
 
         # Parse samples first (they may be referenced by workflows/operations)
         if "computational_sample" in data:
             result["sample_map"] = self.parse_samples(data["computational_sample"])
+
+        # Parse dataset metadata (resolve sample references using sample_map)
+        if "dataset" in data:
+            result["dataset_uri"] = self._parse_dataset(data["dataset"])
 
         # Parse workflows
         if "workflow" in data:
@@ -719,6 +729,33 @@ class WorkflowParser:
             result["operation_uris"] = self.parse_operations(data["activity"])
 
         return result
+
+    def _parse_dataset(self, dataset_data: Dict[str, Any]) -> str:
+        """
+        Parse dataset metadata and add to knowledge graph.
+
+        Parameters
+        ----------
+        dataset_data : dict
+            Dataset dictionary from the top-level YAML ``dataset`` key.
+            Must follow the dataset_template schema: identifier, title,
+            creators, publication, samples.
+
+        Returns
+        -------
+        str
+            URI string of the created dcat:Dataset node.
+        """
+        # Resolve sample ID references using the already-built sample_map
+        dataset_data = dict(dataset_data)
+        dataset_data["samples"] = [
+            self.sample_map.get(s, s) for s in dataset_data.get("samples", [])
+        ]
+        dataset = Dataset.from_dict(dataset_data)
+        dataset_uri = dataset.to_graph(self.kg)
+        if self.debug:
+            print(f"Dataset added: {dataset_uri}")
+        return str(dataset_uri)
 
     def from_file(self, filepath: Union[str, Path]) -> Dict[str, Any]:
         """
