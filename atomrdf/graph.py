@@ -244,6 +244,12 @@ class KnowledgeGraph:
         self.store = store
         self._n_triples = 0
 
+        self.persistent_members = {
+            "MolecularStatics": None,
+            "MolecularDynamics": None,
+            "DensityFunctionalTheory": None,
+        }
+
     def purge(self, force=False):
         """
         Remove all information from the KnowledgeGraph.
