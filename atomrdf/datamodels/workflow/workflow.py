@@ -85,9 +85,17 @@ class Simulation(Activity):
     ] = Field(default=None, description="Interatomic potential used in the method")
 
     # class
-    xc_functional: Optional[Union[XCFunctional, GGA, LDA]] = Field(
-        default=None, description="XC functional used in the method"
-    )
+    xc_functional: Optional[
+        Union[
+            HybridGeneralizedGradientApproximation,
+            HybridMetaGeneralizedGradientApproximation,
+            HybridFunctional,
+            MetaGeneralizedGradientApproximation,
+            GGA,
+            LDA,
+            XCFunctional,
+        ]
+    ] = Field(default=None, description="XC functional used in the method")
 
     # class
     workflow_manager: Optional[SoftwareAgent] = Field(
