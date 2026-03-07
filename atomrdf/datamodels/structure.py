@@ -206,8 +206,8 @@ class Material(BaseModel, TemplateMixin):
         graph.add((sample, CMSO.hasMaterial, material))
 
         composition = self.element_ratio
-        valid = True
-        for e, r in composition.items():
+        valid = composition is not None
+        for e, r in (composition or {}).items():
             if e not in element_identifiers.keys():
                 valid = False
                 break
