@@ -252,8 +252,9 @@ class Simulation(Activity):
 
     def _to_graph_dft_details(self, graph, simulation):
         # add XC functional
+        sim_id = str(simulation)
         if self.xc_functional:
-            xc_functional = self.xc_functional.to_graph()
+            xc_functional = self.xc_functional.to_graph(graph, sim_id)
             graph.add((simulation, MDO.hasXCFunctional, xc_functional))
 
     @classmethod
@@ -405,7 +406,7 @@ class Simulation(Activity):
         main_id = f"simulation:{main_id}"
 
         # add method
-        method = self.method.to_graph(graph, main_id)
+        method = self.method.to_graph(graph)
 
         # create simulation node based on method
         if self.method.basename in ["MolecularStatics", "MolecularDynamics"]:
