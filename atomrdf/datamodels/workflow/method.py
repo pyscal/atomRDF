@@ -32,7 +32,7 @@ class Method(BaseModel, TemplateMixin):
 class MolecularStatics(Method):
     basename: str = "MolecularStatics"
     pid: str = str(ASMO.MolecularStatics)
-    base_uriref: ClassVar[URIRef] = URIRef("method_MolecularStatics")
+    base_uriref: ClassVar[URIRef] = URIRef("method:MolecularStatics")
 
     def to_graph(self, graph):
         if graph.persistent_members["MolecularStatics"] is not None:
@@ -50,7 +50,7 @@ class MolecularStatics(Method):
 class MolecularDynamics(Method):
     basename: str = "MolecularDynamics"
     pid: str = str(ASMO.MolecularDynamics)
-    base_uriref: ClassVar[URIRef] = URIRef("method_MolecularDynamics")
+    base_uriref: ClassVar[URIRef] = URIRef("method:MolecularDynamics")
 
     def to_graph(self, graph):
         if graph.persistent_members["MolecularDynamics"] is not None:
@@ -68,9 +68,9 @@ class MolecularDynamics(Method):
 class DensityFunctionalTheory(Method):
     basename: str = "DensityFunctionalTheory"
     pid: str = str(ASMO.DensityFunctionalTheory)
-    base_uriref: ClassVar[URIRef] = URIRef("method_DensityFunctionalTheory")
+    base_uriref: ClassVar[URIRef] = URIRef("method:DensityFunctionalTheory")
 
-    def to_graph(self, graph, main_id):
+    def to_graph(self, graph):
         if graph.persistent_members["DensityFunctionalTheory"] is not None:
             return graph.persistent_members["DensityFunctionalTheory"]
         else:
