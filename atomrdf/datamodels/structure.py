@@ -509,6 +509,7 @@ class SimulationCell(BaseModel, TemplateMixin):
             simulation_cell,
             CMSO.hasLength,
         )
+        length = None
         if simulation_cell_length is not None:
             lx = graph.value(simulation_cell_length, CMSO.hasLength_x)
             ly = graph.value(simulation_cell_length, CMSO.hasLength_y)
@@ -536,7 +537,9 @@ class SimulationCell(BaseModel, TemplateMixin):
             "volume": {
                 "value": volume,
             },
-            "number_of_atoms": int(number_of_atoms),
+            "number_of_atoms": (
+                int(number_of_atoms) if number_of_atoms is not None else None
+            ),
             "repetitions": repetitions,
             "length": length,
             "vector": vector,
