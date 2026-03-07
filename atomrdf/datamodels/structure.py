@@ -634,6 +634,11 @@ class AtomAttribute(BaseModel, TemplateMixin):
             URIRef(f"{sample_id}_Species"), CMSO.hasIdentifier
         ).toPython()
 
+        # Resolve via structure_store so paths stored on a different machine/CWD still work
+        store_dir = getattr(graph, "structure_store", None)
+        if store_dir is not None:
+            filepath = os.path.join(store_dir, os.path.basename(filepath))
+
         # open the file for reading
         with open(filepath, "r") as fin:
             data = json.load(fin)

@@ -128,6 +128,10 @@ class Property(DataProperty):
         elif path is not None and identifier is not None:
             filepath = path.toPython()
             ident = identifier.toPython()
+            # Resolve via structure_store so paths stored on a different machine/CWD still work
+            store_dir = getattr(graph, "structure_store", None)
+            if store_dir is not None:
+                filepath = os.path.join(store_dir, os.path.basename(filepath))
             # open and read JSON
             with open(filepath, "r") as fin:
                 data = json.load(fin)
