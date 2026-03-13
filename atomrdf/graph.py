@@ -1163,3 +1163,31 @@ class KnowledgeGraph:
                 if method_name is not None:
                     label = method_name.toPython().split("/")[-1]
         return label
+
+    def trace(self, sample_or_property):
+        """Trace the provenance of a sample or calculated property.
+
+        Parameters
+        ----------
+        sample_or_property : str or URIRef
+            A sample URI (e.g. ``"sample:abc"``) or a calculated-property
+            URI.  If the URI matches a sample the trace walks backwards
+            from that sample; if it matches a property the owning sample
+            is found first.
+
+        Returns
+        -------
+        Provenance
+            An iterable of pipeline step dicts with reconstructed ASE
+            structures, method metadata, parameters, etc.
+        """
+        from atomrdf.io.provenance import Provenance
+
+        uri = str(sample_or_property)
+        # Decide: is this a sample or a property?
+        from atomrdf.namespace import ASMO as _ASMO
+        is_property = any(self.triples((None, _ASMO.hasCalculatedProperty,
+                                        URIRef(uri))))
+        if is_property:
+            return Provenance.from_property(self, uri)
+        return Provenance.from_sample(self, uri)

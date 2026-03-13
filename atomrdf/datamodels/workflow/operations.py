@@ -32,12 +32,15 @@ class DeleteAtom(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        output_sample = graph.value(activity, PROV.wasGeneratedBy)
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
+        output_sample = next(
+            (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
+            None,
+        )
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
         return cls(
-            id=activity_id,
-            input_sample=input_sample,
-            output_sample=output_sample,
+            id=str(activity_id),
+            input_sample=str(input_sample) if input_sample else None,
+            output_sample=str(output_sample) if output_sample else None,
         )
 
 
@@ -54,12 +57,15 @@ class SubstituteAtom(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        output_sample = graph.value(activity, PROV.wasGeneratedBy)
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
+        output_sample = next(
+            (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
+            None,
+        )
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
         return cls(
-            id=activity_id,
-            input_sample=input_sample,
-            output_sample=output_sample,
+            id=str(activity_id),
+            input_sample=str(input_sample) if input_sample else None,
+            output_sample=str(output_sample) if output_sample else None,
         )
 
 
@@ -76,12 +82,15 @@ class AddAtom(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        output_sample = graph.value(activity, PROV.wasGeneratedBy)
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
+        output_sample = next(
+            (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
+            None,
+        )
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
         return cls(
-            id=activity_id,
-            input_sample=input_sample,
-            output_sample=output_sample,
+            id=str(activity_id),
+            input_sample=str(input_sample) if input_sample else None,
+            output_sample=str(output_sample) if output_sample else None,
         )
 
 
@@ -178,21 +187,23 @@ class Rotate(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
+        output_sample = next(
+            (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
+            None,
+        )
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
 
         rotation_matrix = []
-        rot_matrix = graph.objects(activity, CMSO.hasVector)
-        for rot_vector in rot_matrix:
+        for rot_vector in graph.objects(activity, CMSO.hasVector):
             x = graph.value(rot_vector, CMSO.hasComponent_x)
             y = graph.value(rot_vector, CMSO.hasComponent_y)
             z = graph.value(rot_vector, CMSO.hasComponent_z)
             rotation_matrix.append([x.toPython(), y.toPython(), z.toPython()])
 
         return cls(
-            id=activity_id,
-            input_sample=input_sample,
-            output_sample=output_sample,
+            id=str(activity_id),
+            input_sample=str(input_sample) if input_sample else None,
+            output_sample=str(output_sample) if output_sample else None,
             rotation_matrix=rotation_matrix,
         )
 
@@ -238,22 +249,24 @@ class Translate(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
+        output_sample = next(
+            (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
+            None,
+        )
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
 
-        translation_vector_lst = []
-        translation_vector = graph.objects(activity, CMSO.hasVector)
-        x = graph.value(translation_vector, CMSO.hasComponent_x)
-        y = graph.value(translation_vector, CMSO.hasComponent_y)
-        z = graph.value(translation_vector, CMSO.hasComponent_z)
-        translation_vector_lst.append([x.toPython(), y.toPython(), z.toPython()])
+        translation_vector = None
+        for vec in graph.objects(activity, CMSO.hasVector):
+            x = graph.value(vec, CMSO.hasComponent_x)
+            y = graph.value(vec, CMSO.hasComponent_y)
+            z = graph.value(vec, CMSO.hasComponent_z)
+            translation_vector = [x.toPython(), y.toPython(), z.toPython()]
+            break
         return cls(
-            id=activity_id,
-            input_sample=input_sample,
-            output_sample=output_sample,
-            translation_vector=(
-                translation_vector_lst[0] if translation_vector_lst else None
-            ),
+            id=str(activity_id),
+            input_sample=str(input_sample) if input_sample else None,
+            output_sample=str(output_sample) if output_sample else None,
+            translation_vector=translation_vector,
         )
 
 
@@ -336,39 +349,39 @@ class Shear(Activity):
     @classmethod
     def from_graph(cls, graph, activity_id):
         activity = get_sample_object(activity_id)
-        output_sample = graph.value(activity_id, PROV.wasGeneratedBy)
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom)
+        output_sample = next(
+            (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
+            None,
+        )
+        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
 
-        shear_vector_lst = []
-        shear_vector = graph.objects(activity, CMSO.hasVector)
-        x = graph.value(shear_vector, CMSO.hasComponent_x)
-        y = graph.value(shear_vector, CMSO.hasComponent_y)
-        z = graph.value(shear_vector, CMSO.hasComponent_z)
-        shear_vector_lst.append([x.toPython(), y.toPython(), z.toPython()])
+        shear_vector = None
+        for vec in graph.objects(activity, CMSO.hasVector):
+            x = graph.value(vec, CMSO.hasComponent_x)
+            y = graph.value(vec, CMSO.hasComponent_y)
+            z = graph.value(vec, CMSO.hasComponent_z)
+            shear_vector = [x.toPython(), y.toPython(), z.toPython()]
+            break
 
-        normal_vector_lst = []
-        plane = graph.objects(activity, CMSO.hasPlane)
-        if plane:
-            normal_vector = graph.objects(plane, CMSO.hasNormalVector)
-            x = graph.value(normal_vector, CMSO.hasComponent_x)
-            y = graph.value(normal_vector, CMSO.hasComponent_y)
-            z = graph.value(normal_vector, CMSO.hasComponent_z)
-            normal_vector_lst.append([x.toPython(), y.toPython(), z.toPython()])
-            distance = graph.value(plane, CMSO.hasDistanceFromOrigin)
-            if distance:
-                distance = distance.toPython()
-        if len(normal_vector_lst) == 0:
-            normal_vector_lst = None
+        normal_vector = None
+        distance = None
+        plane = graph.value(activity, CMSO.hasPlane)
+        if plane is not None:
+            nv = graph.value(plane, CMSO.hasNormalVector)
+            if nv is not None:
+                x = graph.value(nv, CMSO.hasComponent_x)
+                y = graph.value(nv, CMSO.hasComponent_y)
+                z = graph.value(nv, CMSO.hasComponent_z)
+                normal_vector = [x.toPython(), y.toPython(), z.toPython()]
+            d = graph.value(plane, CMSO.hasDistanceFromOrigin)
+            if d is not None:
+                distance = d.toPython()
 
         return cls(
-            id=activity_id,
-            input_sample=input_sample,
-            output_sample=output_sample,
-            shear_vector=shear_vector_lst[0] if shear_vector_lst else None,
-            normal_vector=(
-                normal_vector_lst[0]
-                if normal_vector_lst and len(normal_vector_lst) > 0
-                else None
-            ),
+            id=str(activity_id),
+            input_sample=str(input_sample) if input_sample else None,
+            output_sample=str(output_sample) if output_sample else None,
+            shear_vector=shear_vector,
+            normal_vector=normal_vector,
             distance=distance,
         )

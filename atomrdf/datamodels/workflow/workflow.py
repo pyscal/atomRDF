@@ -213,6 +213,30 @@ class Simulation(Activity):
             return SoftwareAgent(**v)
         return v
 
+    @classmethod
+    def _from_graph_method(cls, graph, sim_id):
+        """Load the computational method from the graph."""
+        sim = get_simulation(graph, sim_id)
+        method_uri = graph.value(sim, ASMO.hasComputationalMethod)
+        if method_uri is not None:
+            method_name = str(method_uri).split(":")[-1]
+            if method_name in method_map:
+                cls.method = method_map[method_name]()
+        return cls
+
+    @classmethod
+    def _from_graph_algorithm(cls, graph, sim_id):
+        """Load the simulation algorithm from the graph."""
+        sim = get_simulation(graph, sim_id)
+        algo_uri = graph.value(sim, ASMO.usesSimulationAlgorithm)
+        if algo_uri is not None:
+            algo_type = graph.value(algo_uri, RDF.type)
+            if algo_type is not None:
+                algo_name = str(algo_type).split("/")[-1]
+                if algo_name in algorithm_map:
+                    cls.algorithm = algorithm_map[algo_name]()
+        return cls
+
     def _to_graph_md_details(self, graph, simulation):
         # add ensemble
         if self.thermodynamic_ensemble:
@@ -367,7 +391,8 @@ class Simulation(Activity):
     @classmethod
     def from_graph_calculated_properties(cls, graph, sim_id):
         sim = get_simulation(graph, sim_id)
-        calc_props = [x[2] for x in graph.triples((sim, ASMO.wasCalculatedBy, None))]
+        # Triple is (property, wasCalculatedBy, simulation)
+        calc_props = [s for s, _, _ in graph.triples((None, ASMO.wasCalculatedBy, sim))]
         if calc_props:
             cls.calculated_property = [
                 CalculatedProperty.from_graph(graph, p) for p in calc_props
@@ -498,6 +523,8 @@ class Simulation(Activity):
 
     @classmethod
     def from_graph(cls, graph, sim_id):
+        cls = cls._from_graph_method(graph, sim_id)
+        cls = cls._from_graph_algorithm(graph, sim_id)
         cls = cls._from_graph_md_details(graph, sim_id)
         cls = cls._from_graph_dft_details(graph, sim_id)
         cls = cls._from_graph_dof(graph, sim_id)
