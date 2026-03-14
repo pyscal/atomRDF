@@ -1039,6 +1039,96 @@ class KnowledgeGraph:
                 samples_names.append(sample.toPython())
         return samples_names
 
+    @property
+    def properties(self):
+        """Return a pandas DataFrame of all calculated/output properties in the graph.
+
+        Each row includes: ``uri``, ``type``, ``label``, ``value``, ``unit``.
+
+        Covers any ASMO-typed property (e.g. ``TotalEnergy``,
+        ``FormationEnergy``, ``CalculatedProperty``, ``OutputParameter``) but
+        excludes ``InputParameter`` nodes.
+
+        The result is cached and automatically recomputed when new triples are
+        added to the graph.
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        current_size = len(self.graph)
+        if hasattr(self, "_properties_cache") and self._properties_cache_size == current_size:
+            return self._properties_cache
+
+        _ASMO_NS = "http://purls.helmholtz-metadaten.de/asmo/"
+        _SKIP_TYPES = {"InputParameter"}
+
+        seen = set()
+        rows = []
+        for _, _, type_uri in self.graph.triples((None, RDF.type, None)):
+            type_str = str(type_uri)
+            if not type_str.startswith(_ASMO_NS):
+                continue
+            type_name = type_str[len(_ASMO_NS):]
+            if type_name in _SKIP_TYPES:
+                continue
+            for prop_uri in self.graph.subjects(RDF.type, type_uri):
+                if prop_uri in seen:
+                    continue
+                if not str(prop_uri).startswith("property:"):
+                    continue
+                seen.add(prop_uri)
+                label_node = self.graph.value(prop_uri, RDFS.label)
+                label = str(label_node) if label_node is not None else type_name
+                val_node = self.graph.value(prop_uri, ASMO.hasValue)
+                value = float(val_node) if val_node is not None else None
+                unit_node = self.graph.value(prop_uri, ASMO.hasUnit)
+                unit = str(unit_node).split("/")[-1] if unit_node is not None else None
+                rows.append(
+                    {
+                        "uri": str(prop_uri),
+                        "type": type_name,
+                        "label": label,
+                        "value": value,
+                        "unit": unit,
+                    }
+                )
+
+        df = pd.DataFrame(rows, columns=["uri", "type", "label", "value", "unit"])
+        self._properties_cache = df
+        self._properties_cache_size = current_size
+        return df
+
+    def search_property(self, property_type, label=None):
+        """Return URIs of properties matching the given type and optional label.
+
+        Parameters
+        ----------
+        property_type : str
+            ASMO type name to search for, e.g. ``"TotalEnergy"``,
+            ``"FormationEnergy"``, ``"CalculatedProperty"``.
+        label : str, optional
+            If provided, further filter by ``rdfs:label`` (case-insensitive).
+
+        Returns
+        -------
+        list of str
+            Matching property URIs.
+        """
+        df = self.properties
+        mask = df["type"].str.lower() == property_type.lower()
+        if label is not None:
+            mask &= df["label"].str.lower() == label.lower()
+        return df.loc[mask, "uri"].tolist()
+
+    def invalidate_cache(self):
+        """Invalidate cached derived data (e.g. to force a rebuild)."""
+        for attr in ("_properties_cache", "_properties_cache_size"):
+            try:
+                delattr(self, attr)
+            except AttributeError:
+                pass
+
     def _is_of_type(self, item, target_item):
         """
         Check if an item is of a specific type
