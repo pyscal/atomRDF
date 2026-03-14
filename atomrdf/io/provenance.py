@@ -83,6 +83,31 @@ def _short(uri):
     return s.rsplit("/", 1)[-1]
 
 
+def _short_label(uri):
+    """Display label: type prefix + first 4 chars of UUID part.
+
+    E.g. ``sample:17e70b03-...`` → ``sample:17e7``
+    ``property:totalenergy_48cb2441-...`` → ``totalenergy:48cb``
+    """
+    import re
+    s = str(uri)
+    # Strip URL-style namespace, keep short name
+    if "/" in s:
+        s = s.rsplit("/", 1)[-1]
+    # For "prefix:rest" style, abbreviate UUID in rest
+    if ":" in s:
+        prefix, rest = s.split(":", 1)
+        uuid_match = re.search(r"([0-9a-f]{4,})", rest, re.I)
+        if uuid_match:
+            return f"{prefix}:{rest[:rest.index(uuid_match.group(1)) + 4]}"
+        return f"{prefix}:{rest[:8]}"
+    # For underscore-separated names like "totalenergy_48cb2441_..."
+    uuid_match = re.search(r"[_-]([0-9a-f]{4,})", s, re.I)
+    if uuid_match:
+        return s[: s.index(uuid_match.group(1)) + 4]
+    return s[:20]
+
+
 class Provenance:
     """Trace the provenance of a sample or calculated property.
 
@@ -239,7 +264,7 @@ class Provenance:
             for sid in (step.get("input_sample_id"), step["output_sample_id"]):
                 if sid and sid not in seen_nodes:
                     seen_nodes.add(sid)
-                    slabel = self.kg.get_label(_uri(sid)) or _short(sid)
+                    slabel = self.kg.get_label(_uri(sid)) or _short_label(sid)
                     dot.node(
                         _gvid(sid),
                         label=slabel,
@@ -274,21 +299,21 @@ class Provenance:
             if step.get("output_sample_id"):
                 last_sample_id = step["output_sample_id"]
 
-        for step in self._steps:
-            if "result_property" not in step:
-                continue
+        math_steps = [s for s in self._steps if "result_property" in s]
+
+        for i, step in enumerate(math_steps):
             act_id = step["activity_id"]
             act_gv = _gvid(act_id)
             rp = step["result_property"]
             rp_id = rp["uri"]
             rp_gv = _gvid(rp_id)
-            rp_label = rp["label"] or _short(rp_id)
+            rp_label = rp["label"] or _short_label(rp_id)
             if rp["value"] is not None:
                 rp_label += f"\n= {rp['value']:.4g}"
                 if rp["unit"]:
                     rp_label += f" {rp['unit']}"
 
-            # Activity box
+            # Activity box (yellow for math ops)
             dot.node(
                 act_gv,
                 label=step["activity_type"],
@@ -312,7 +337,7 @@ class Provenance:
                 )
             dot.edge(act_gv, rp_gv, color="#263238", fontname="Helvetica", fontsize="7")
 
-            # Connect operand properties (already rendered) to this activity
+            # Connect operand properties to this activity
             if step["activity"] is not None:
                 op = step["activity"]
                 operand_attrs = []
@@ -333,6 +358,28 @@ class Provenance:
                     operand_attrs.extend(items)
                 for item in operand_attrs:
                     if isinstance(item, str) and item.startswith("property:"):
+                        # Ensure the operand node exists in the graph
+                        if item not in seen_nodes:
+                            seen_nodes.add(item)
+                            op_label = (
+                                self.kg.get_label(_uri(item)) or _short_label(item)
+                            )
+                            # Try to get value/unit for display
+                            val_n = self.kg.graph.value(_uri(item), ASMO.hasValue)
+                            unit_n = self.kg.graph.value(_uri(item), ASMO.hasUnit)
+                            if val_n is not None:
+                                op_label += f"\n= {float(val_n):.4g}"
+                                if unit_n:
+                                    op_label += f" {str(unit_n).rsplit('/', 1)[-1]}"
+                            dot.node(
+                                _gvid(item),
+                                label=op_label,
+                                shape="diamond",
+                                style="filled",
+                                color="#D5E8D4",
+                                fontname="Helvetica",
+                                fontsize="8",
+                            )
                         dot.edge(
                             _gvid(item),
                             act_gv,
@@ -341,14 +388,45 @@ class Provenance:
                             fontsize="7",
                             style="dashed",
                         )
+                    elif isinstance(item, (int, float)):
+                        # Numeric literal — create a small constant node
+                        const_id = f"const_{act_id}_{item}"
+                        const_gv = _gvid(const_id)
+                        if const_id not in seen_nodes:
+                            seen_nodes.add(const_id)
+                            dot.node(
+                                const_gv,
+                                label=f"{item:g}",
+                                shape="plaintext",
+                                fontname="Helvetica",
+                                fontsize="8",
+                            )
+                        dot.edge(
+                            const_gv,
+                            act_gv,
+                            color="#263238",
+                            fontname="Helvetica",
+                            fontsize="7",
+                            style="dashed",
+                        )
 
-        # If tracing from a property, draw the anchor edge from last sample to
-        # the first property in the math chain (if no math steps, draw directly)
+        # Link last sample to first math activity
+        if last_sample_id and math_steps:
+            first_math_act_gv = _gvid(math_steps[0]["activity_id"])
+            dot.edge(
+                _gvid(last_sample_id),
+                first_math_act_gv,
+                color="#888888",
+                fontname="Helvetica",
+                fontsize="7",
+                style="dotted",
+            )
+
+        # If tracing from a property with no math steps, draw old-style diamond
         if self._property_uri:
             pid = str(self._property_uri)
-            if not any("result_property" in s for s in self._steps):
-                # no math steps — draw old-style diamond
-                plabel = self.kg.get_label(_uri(pid)) or _short(pid)
+            if not math_steps:
+                plabel = self.kg.get_label(_uri(pid)) or _short_label(pid)
                 if pid not in seen_nodes:
                     dot.node(
                         _gvid(pid),
