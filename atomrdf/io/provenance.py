@@ -48,6 +48,25 @@ _SIMULATION_TYPES = {
     str(ASMO.Simulation),
 }
 
+_MATH_OP_TYPES = {
+    str(ASMO.Subtraction),
+    str(ASMO.Addition),
+    str(ASMO.Multiplication),
+    str(ASMO.Division),
+    str(ASMO.Exponentiation),
+}
+
+_MATH_OPERAND_PREDICATES = [
+    ASMO.hasMinuend,
+    ASMO.hasSubtrahend,
+    ASMO.hasAddend,
+    ASMO.hasFactor,
+    ASMO.hasDividend,
+    ASMO.hasDivisor,
+    ASMO.hasBase,
+    ASMO.hasExponent,
+]
+
 
 def _uri(s):
     """Ensure *s* is an ``rdflib.URIRef``."""
@@ -137,6 +156,11 @@ class Provenance:
             raise ValueError(f"No sample found with property {property_uri}")
 
         prov._trace(sample)
+
+        # Append math-operation steps that produced this property
+        for act_uri, result_uri in prov._collect_math_ops(kg, prop):
+            prov._steps.append(prov._build_math_step(kg, act_uri, result_uri))
+
         return prov
 
     @property
@@ -219,7 +243,7 @@ class Provenance:
                         fontsize="8",
                     )
 
-            # Edges
+            # Edges for sample steps
             if step.get("input_sample_id"):
                 dot.edge(
                     step["input_sample_id"],
@@ -228,35 +252,113 @@ class Provenance:
                     fontname="Helvetica",
                     fontsize="7",
                 )
-            dot.edge(
-                act_id,
-                step["output_sample_id"],
-                color="#263238",
-                fontname="Helvetica",
-                fontsize="7",
-            )
+            if step.get("output_sample_id"):
+                dot.edge(
+                    act_id,
+                    step["output_sample_id"],
+                    color="#263238",
+                    fontname="Helvetica",
+                    fontsize="7",
+                )
 
-        # Property node (if tracing from a calculated property)
-        if self._property_uri and self._steps:
-            pid = str(self._property_uri)
-            plabel = self.kg.get_label(_uri(pid)) or _short(pid)
+        # Math operation steps — rendered as property → activity → property
+        last_sample_id = None
+        for step in self._steps:
+            if step.get("output_sample_id"):
+                last_sample_id = step["output_sample_id"]
+
+        for step in self._steps:
+            if "result_property" not in step:
+                continue
+            act_id = step["activity_id"]
+            rp = step["result_property"]
+            rp_id = rp["uri"]
+            rp_label = rp["label"] or _short(rp_id)
+            if rp["value"] is not None:
+                rp_label += f"\n= {rp['value']:.4g}"
+                if rp["unit"]:
+                    rp_label += f" {rp['unit']}"
+
+            # Activity box
             dot.node(
-                pid,
-                label=plabel,
-                shape="diamond",
+                act_id,
+                label=step["activity_type"],
+                shape="box",
                 style="filled",
-                color="#D5E8D4",
+                color="#FFE599",
                 fontname="Helvetica",
-                fontsize="8",
+                fontsize="9",
             )
-            dot.edge(
-                self._steps[-1]["output_sample_id"],
-                pid,
-                label="hasCalculatedProperty",
-                color="#263238",
-                fontname="Helvetica",
-                fontsize="7",
-            )
+            # Result property diamond
+            if rp_id not in seen_nodes:
+                seen_nodes.add(rp_id)
+                dot.node(
+                    rp_id,
+                    label=rp_label,
+                    shape="diamond",
+                    style="filled",
+                    color="#D5E8D4",
+                    fontname="Helvetica",
+                    fontsize="8",
+                )
+            dot.edge(act_id, rp_id, color="#263238", fontname="Helvetica", fontsize="7")
+
+            # Connect operand properties (already rendered) to this activity
+            if step["activity"] is not None:
+                op = step["activity"]
+                operand_attrs = []
+                for attr in (
+                    "minuend",
+                    "subtrahend",
+                    "addend",
+                    "factor",
+                    "dividend",
+                    "divisor",
+                    "base",
+                    "exponent",
+                ):
+                    val = getattr(op, attr, None)
+                    if val is None:
+                        continue
+                    items = val if isinstance(val, list) else [val]
+                    operand_attrs.extend(items)
+                for item in operand_attrs:
+                    if isinstance(item, str) and item.startswith("property:"):
+                        dot.edge(
+                            item,
+                            act_id,
+                            color="#263238",
+                            fontname="Helvetica",
+                            fontsize="7",
+                            style="dashed",
+                        )
+
+        # If tracing from a property, draw the anchor edge from last sample to
+        # the first property in the math chain (if no math steps, draw directly)
+        if self._property_uri:
+            pid = str(self._property_uri)
+            if not any("result_property" in s for s in self._steps):
+                # no math steps — draw old-style diamond
+                plabel = self.kg.get_label(_uri(pid)) or _short(pid)
+                if pid not in seen_nodes:
+                    dot.node(
+                        pid,
+                        label=plabel,
+                        shape="diamond",
+                        style="filled",
+                        color="#D5E8D4",
+                        fontname="Helvetica",
+                        fontsize="8",
+                    )
+                if last_sample_id:
+                    dot.edge(
+                        last_sample_id,
+                        pid,
+                        label="hasCalculatedProperty",
+                        color="#263238",
+                        fontname="Helvetica",
+                        fontsize="7",
+                    )
 
         return dot
 
@@ -416,6 +518,80 @@ class Provenance:
         for sw in getattr(sim, "software", None) or []:
             name = getattr(sw, "name", None) or str(sw)
             step["software"].append(name)
+
+    @staticmethod
+    def _collect_math_ops(kg, prop_uri):
+        """Walk backwards from *prop_uri* through math-op chains.
+
+        Returns a list of ``(activity_uri, result_property_uri)`` pairs in
+        **execution order** (leaves first, final op last) via DFS post-order.
+        """
+        from rdflib import Literal as RDFLiteral
+
+        result = []
+        visited = set()
+
+        def dfs(prop):
+            key = str(prop)
+            if key in visited:
+                return
+            visited.add(key)
+            activity = kg.graph.value(_uri(prop), PROV.wasGeneratedBy)
+            if activity is None:
+                return
+            rdf_type = kg.graph.value(activity, RDF.type)
+            if rdf_type is None or str(rdf_type) not in _MATH_OP_TYPES:
+                return
+            # Recurse into operand properties
+            for pred in _MATH_OPERAND_PREDICATES:
+                for operand in kg.graph.objects(activity, pred):
+                    if isinstance(operand, URIRef) and str(operand).startswith(
+                        "property:"
+                    ):
+                        dfs(operand)
+            result.append((activity, prop))
+
+        dfs(_uri(prop_uri))
+        return result  # DFS post-order = execution order
+
+    def _build_math_step(self, kg, act_uri, result_uri):
+        """Build a pipeline step dict for a single math operation."""
+        rdf_type = kg.graph.value(act_uri, RDF.type)
+        act_type = _short(rdf_type) if rdf_type else "MathOperation"
+        op_cls = _OPERATION_MAP.get(str(rdf_type))
+
+        label_node = kg.graph.value(
+            result_uri, URIRef("http://www.w3.org/2000/01/rdf-schema#label")
+        )
+        val_node = kg.graph.value(result_uri, ASMO.hasValue)
+        unit_node = kg.graph.value(result_uri, ASMO.hasUnit)
+
+        result_prop = {
+            "uri": str(result_uri),
+            "label": str(label_node) if label_node else act_type,
+            "value": float(val_node) if val_node is not None else None,
+            "unit": str(unit_node).split("/")[-1] if unit_node else None,
+        }
+
+        step = {
+            "activity_type": act_type,
+            "activity_id": str(act_uri),
+            "activity": op_cls.from_graph(kg, str(act_uri)) if op_cls else None,
+            "input_sample": None,
+            "output_sample": None,
+            "input_sample_id": None,
+            "output_sample_id": None,
+            "result_property": result_prop,
+            "method": None,
+            "algorithm": None,
+            "input_parameters": [],
+            "output_parameters": [],
+            "calculated_properties": [],
+            "interatomic_potential": None,
+            "degrees_of_freedom": [],
+            "software": [],
+        }
+        return step
 
     @staticmethod
     def _fill_from_operation(kg, act_uri, op_cls, step):

@@ -1057,7 +1057,10 @@ class KnowledgeGraph:
         pandas.DataFrame
         """
         current_size = len(self.graph)
-        if hasattr(self, "_properties_cache") and self._properties_cache_size == current_size:
+        if (
+            hasattr(self, "_properties_cache")
+            and self._properties_cache_size == current_size
+        ):
             return self._properties_cache
 
         _ASMO_NS = "http://purls.helmholtz-metadaten.de/asmo/"
@@ -1069,7 +1072,7 @@ class KnowledgeGraph:
             type_str = str(type_uri)
             if not type_str.startswith(_ASMO_NS):
                 continue
-            type_name = type_str[len(_ASMO_NS):]
+            type_name = type_str[len(_ASMO_NS) :]
             if type_name in _SKIP_TYPES:
                 continue
             for prop_uri in self.graph.subjects(RDF.type, type_uri):
