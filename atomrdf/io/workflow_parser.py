@@ -598,9 +598,15 @@ class WorkflowParser:
             # Capture user-provided 'id' fields on properties so they can be
             # registered in property_map after to_graph assigns KG URIs.
             user_prop_ids: Dict[tuple, str] = {}
-            for prop_key in ("calculated_property", "input_parameter", "output_parameter"):
+            for prop_key in (
+                "calculated_property",
+                "input_parameter",
+                "output_parameter",
+            ):
                 for idx, prop_data in enumerate(workflow_data.get(prop_key, []) or []):
-                    orig_id = prop_data.get("id") if isinstance(prop_data, dict) else None
+                    orig_id = (
+                        prop_data.get("id") if isinstance(prop_data, dict) else None
+                    )
                     if orig_id:
                         user_prop_ids[(prop_key, idx)] = orig_id
 
@@ -755,20 +761,24 @@ class WorkflowParser:
                     f"Available types: {list(MATH_OPERATION_MAP.keys())}"
                 )
 
-            mo_data = dict(mo_data)   # don't mutate the original
+            mo_data = dict(mo_data)  # don't mutate the original
             mo_data.pop("type", None)
 
             # Capture the result's user-provided id before building the object
             result_data = mo_data.get("result")
             result_user_id = (
-                result_data.get("id")
-                if isinstance(result_data, dict)
-                else None
+                result_data.get("id") if isinstance(result_data, dict) else None
             )
 
             # Resolve single-value operand string references
-            for operand_key in ("minuend", "subtrahend", "dividend", "divisor",
-                                "base", "exponent"):
+            for operand_key in (
+                "minuend",
+                "subtrahend",
+                "dividend",
+                "divisor",
+                "base",
+                "exponent",
+            ):
                 if operand_key in mo_data and isinstance(mo_data[operand_key], str):
                     mo_data[operand_key] = self.property_map.get(
                         mo_data[operand_key], mo_data[operand_key]

@@ -1,10 +1,5 @@
 """
 Provenance tracing for atomRDF knowledge graphs.
-
-Walks backwards from a calculated property or sample through
-``PROV.wasDerivedFrom`` / ``PROV.wasGeneratedBy`` links, using
-the ``from_graph`` methods of ``AtomicScaleSample``, ``Simulation``,
-and operation classes to recursively reconstruct every object.
 """
 
 from rdflib import URIRef, RDF
@@ -54,11 +49,6 @@ _SIMULATION_TYPES = {
 }
 
 
-# ------------------------------------------------------------------ #
-# Helpers                                                              #
-# ------------------------------------------------------------------ #
-
-
 def _uri(s):
     """Ensure *s* is an ``rdflib.URIRef``."""
     return s if isinstance(s, URIRef) else URIRef(str(s))
@@ -72,11 +62,6 @@ def _short(uri):
     if ":" in s and "/" not in s.split(":")[-1]:
         return s
     return s.rsplit("/", 1)[-1]
-
-
-# ------------------------------------------------------------------ #
-# Provenance class                                                     #
-# ------------------------------------------------------------------ #
 
 
 class Provenance:
@@ -94,31 +79,14 @@ class Provenance:
     Attributes
     ----------
     pipeline : list of dict
-        Ordered list of step dicts (root → leaf).  Each dict has:
-
-        * ``activity_type`` – ``"Simulation"``, ``"DeleteAtom"``, etc.
-        * ``activity`` – the deserialized activity object
-        * ``input_sample`` – ASE ``Atoms`` or ``None``
-        * ``output_sample`` – ASE ``Atoms``
-        * ``input_sample_id`` – sample URI string or ``None``
-        * ``output_sample_id`` – sample URI string
-        * ``method`` – e.g. ``"MolecularStatics"`` or ``None``
-        * ``algorithm`` – e.g. ``"EquationOfStateFit"`` or ``None``
-        * ``input_parameters`` – list of dicts
-        * ``output_parameters`` – list of dicts
-        * ``calculated_properties`` – list of dicts
-        * ``interatomic_potential`` – dict or ``None``
-        * ``degrees_of_freedom`` – list of strings
-        * ``software`` – list of strings
+        Ordered list of step dicts
     """
 
     def __init__(self, kg):
         self.kg = kg
         self._steps = []
-        self._sample_cache = {}     # uri-str → (AtomicScaleSample, Atoms|None)
+        self._sample_cache = {}  # uri-str → (AtomicScaleSample, Atoms|None)
         self._property_uri = None
-
-    # -- constructors ------------------------------------------------- #
 
     @classmethod
     def from_sample(cls, kg, sample_uri):
@@ -171,11 +139,9 @@ class Provenance:
         prov._trace(sample)
         return prov
 
-    # -- public interface --------------------------------------------- #
-
     @property
     def pipeline(self):
-        """Ordered list of step dicts (root → leaf)."""
+        """Ordered list of step dicts"""
         return list(self._steps)
 
     def __len__(self):
@@ -190,8 +156,6 @@ class Provenance:
     def __repr__(self):
         types = " → ".join(s["activity_type"] for s in self._steps)
         return f"Provenance({len(self._steps)} steps: {types})"
-
-    # -- visualisation ------------------------------------------------ #
 
     def visualize(self, rankdir="LR", size=None, layout="dot"):
         """Return a ``graphviz.Digraph`` of the provenance chain.
@@ -406,27 +370,33 @@ class Provenance:
 
         # Input parameters
         for p in getattr(sim, "input_parameter", None) or []:
-            step["input_parameters"].append({
-                "label": getattr(p, "label", None),
-                "value": getattr(p, "value", None),
-                "unit": getattr(p, "unit", None),
-            })
+            step["input_parameters"].append(
+                {
+                    "label": getattr(p, "label", None),
+                    "value": getattr(p, "value", None),
+                    "unit": getattr(p, "unit", None),
+                }
+            )
 
         # Output parameters
         for p in getattr(sim, "output_parameter", None) or []:
-            step["output_parameters"].append({
-                "label": getattr(p, "label", None),
-                "value": getattr(p, "value", None),
-                "unit": getattr(p, "unit", None),
-            })
+            step["output_parameters"].append(
+                {
+                    "label": getattr(p, "label", None),
+                    "value": getattr(p, "value", None),
+                    "unit": getattr(p, "unit", None),
+                }
+            )
 
         # Calculated properties
         for p in getattr(sim, "calculated_property", None) or []:
-            step["calculated_properties"].append({
-                "label": getattr(p, "label", None),
-                "value": getattr(p, "value", None),
-                "unit": getattr(p, "unit", None),
-            })
+            step["calculated_properties"].append(
+                {
+                    "label": getattr(p, "label", None),
+                    "value": getattr(p, "value", None),
+                    "unit": getattr(p, "unit", None),
+                }
+            )
 
         # Interatomic potential
         pot = getattr(sim, "interatomic_potential", None)

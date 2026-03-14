@@ -36,7 +36,9 @@ class DeleteAtom(Activity):
             (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
             None,
         )
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        input_sample = (
+            graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        )
         return cls(
             id=str(activity_id),
             input_sample=str(input_sample) if input_sample else None,
@@ -61,7 +63,9 @@ class SubstituteAtom(Activity):
             (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
             None,
         )
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        input_sample = (
+            graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        )
         return cls(
             id=str(activity_id),
             input_sample=str(input_sample) if input_sample else None,
@@ -86,7 +90,9 @@ class AddAtom(Activity):
             (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
             None,
         )
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        input_sample = (
+            graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        )
         return cls(
             id=str(activity_id),
             input_sample=str(input_sample) if input_sample else None,
@@ -191,7 +197,9 @@ class Rotate(Activity):
             (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
             None,
         )
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        input_sample = (
+            graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        )
 
         rotation_matrix = []
         for rot_vector in graph.objects(activity, CMSO.hasVector):
@@ -253,7 +261,9 @@ class Translate(Activity):
             (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
             None,
         )
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        input_sample = (
+            graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        )
 
         translation_vector = None
         for vec in graph.objects(activity, CMSO.hasVector):
@@ -353,7 +363,9 @@ class Shear(Activity):
             (s for s, _, _ in graph.triples((None, PROV.wasGeneratedBy, activity))),
             None,
         )
-        input_sample = graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        input_sample = (
+            graph.value(output_sample, PROV.wasDerivedFrom) if output_sample else None
+        )
 
         shear_vector = None
         for vec in graph.objects(activity, CMSO.hasVector):

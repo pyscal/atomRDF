@@ -57,6 +57,26 @@ def _operand_from_node(node) -> Optional[Union[str, float]]:
     return str(node)
 
 
+def _lookup_operand_value(graph, operand) -> Optional[float]:
+    """Return the scalar float value for an operand, or None if not resolvable.
+
+    Parameters
+    ----------
+    graph:
+        The knowledge graph.
+    operand:
+        Either a numeric scalar (int/float) or a URI string pointing to a
+        property node that carries an ``ASMO.hasValue`` triple.
+    """
+    if isinstance(operand, (int, float)):
+        return float(operand)
+    if isinstance(operand, str):
+        val = graph.value(URIRef(operand), ASMO.hasValue)
+        if val is not None:
+            return float(val)
+    return None
+
+
 def _add_result_to_graph(
     graph,
     activity: URIRef,
@@ -108,6 +128,11 @@ class Subtraction(Activity):
                 )
             )
         if self.result is not None:
+            if self.result.value is None:
+                m = _lookup_operand_value(graph, self.minuend)
+                s = _lookup_operand_value(graph, self.subtrahend)
+                if m is not None and s is not None:
+                    self.result.value = m - s
             _add_result_to_graph(graph, activity, self.result)
 
         return activity_id
@@ -154,6 +179,10 @@ class Addition(Activity):
         for item in self.addend or []:
             graph.add((activity, ASMO.hasAddend, _resolve_operand(item, property_map)))
         if self.result is not None:
+            if self.result.value is None:
+                vals = [_lookup_operand_value(graph, a) for a in (self.addend or [])]
+                if all(v is not None for v in vals):
+                    self.result.value = sum(vals)
             _add_result_to_graph(graph, activity, self.result)
 
         return activity_id
@@ -200,6 +229,13 @@ class Multiplication(Activity):
         for item in self.factor or []:
             graph.add((activity, ASMO.hasFactor, _resolve_operand(item, property_map)))
         if self.result is not None:
+            if self.result.value is None:
+                vals = [_lookup_operand_value(graph, f) for f in (self.factor or [])]
+                if all(v is not None for v in vals):
+                    result_val = 1.0
+                    for v in vals:
+                        result_val *= v
+                    self.result.value = result_val
             _add_result_to_graph(graph, activity, self.result)
 
         return activity_id
@@ -264,6 +300,11 @@ class Division(Activity):
                 )
             )
         if self.result is not None:
+            if self.result.value is None:
+                d = _lookup_operand_value(graph, self.dividend)
+                v = _lookup_operand_value(graph, self.divisor)
+                if d is not None and v is not None and v != 0:
+                    self.result.value = d / v
             _add_result_to_graph(graph, activity, self.result)
 
         return activity_id
@@ -324,6 +365,11 @@ class Exponentiation(Activity):
                 )
             )
         if self.result is not None:
+            if self.result.value is None:
+                b = _lookup_operand_value(graph, self.base)
+                e = _lookup_operand_value(graph, self.exponent)
+                if b is not None and e is not None:
+                    self.result.value = b**e
             _add_result_to_graph(graph, activity, self.result)
 
         return activity_id

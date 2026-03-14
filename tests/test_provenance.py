@@ -1,4 +1,5 @@
 """Tests for atomrdf.io.provenance – Provenance tracing module."""
+
 import pytest
 from ase import Atoms
 
@@ -10,6 +11,7 @@ from atomrdf.namespace import ASMO, PROV
 # ------------------------------------------------------------------ #
 # Fixtures                                                             #
 # ------------------------------------------------------------------ #
+
 
 def _two_step_workflow_data():
     """Return a dict with 3 samples and 2 workflow steps chained together.
@@ -237,7 +239,13 @@ def test_from_property_basic(two_step_kg):
 
     # Find a calculated property URI on sample_C
     from rdflib import URIRef
-    props = [str(o) for _, _, o in kg.triples((URIRef(sample_c_uri), ASMO.hasCalculatedProperty, None))]
+
+    props = [
+        str(o)
+        for _, _, o in kg.triples(
+            (URIRef(sample_c_uri), ASMO.hasCalculatedProperty, None)
+        )
+    ]
     assert len(props) >= 1, "sample_C should have at least one calculated property"
 
     prov = Provenance.from_property(kg, props[0])
@@ -341,7 +349,13 @@ def test_kg_trace_property(two_step_kg):
     sample_c_uri = result["sample_map"]["sample_C"]
 
     from rdflib import URIRef
-    props = [str(o) for _, _, o in kg.triples((URIRef(sample_c_uri), ASMO.hasCalculatedProperty, None))]
+
+    props = [
+        str(o)
+        for _, _, o in kg.triples(
+            (URIRef(sample_c_uri), ASMO.hasCalculatedProperty, None)
+        )
+    ]
     assert len(props) >= 1
 
     prov = kg.trace(props[0])
