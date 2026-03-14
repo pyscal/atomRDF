@@ -1186,8 +1186,10 @@ class KnowledgeGraph:
         uri = str(sample_or_property)
         # Decide: is this a sample or a property?
         from atomrdf.namespace import ASMO as _ASMO
-        is_property = any(self.triples((None, _ASMO.hasCalculatedProperty,
-                                        URIRef(uri))))
+
+        is_property = any(
+            self.triples((None, _ASMO.hasCalculatedProperty, URIRef(uri)))
+        )
         if is_property:
             return Provenance.from_property(self, uri)
         return Provenance.from_sample(self, uri)
