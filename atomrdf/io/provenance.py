@@ -201,6 +201,12 @@ class Provenance:
         graphviz.Digraph
         """
         import graphviz
+        import re as _re
+
+        # Graphviz interprets "name:port" on colons in node IDs, so sanitize
+        # all IDs used as graph node names.
+        def _gvid(uri):
+            return _re.sub(r"[^A-Za-z0-9_]", "_", str(uri))
 
         dot = graphviz.Digraph()
         dot.attr(rankdir=rankdir, layout=layout, overlap="false")
@@ -212,6 +218,7 @@ class Provenance:
         for step in self._steps:
             # Activity node
             act_id = step["activity_id"]
+            act_gv = _gvid(act_id)
             label = step["activity_type"]
             if step.get("method"):
                 label = step["method"]
@@ -219,7 +226,7 @@ class Provenance:
                     label += f"\n({step['algorithm']})"
 
             dot.node(
-                act_id,
+                act_gv,
                 label=label,
                 shape="box",
                 style="filled",
@@ -234,7 +241,7 @@ class Provenance:
                     seen_nodes.add(sid)
                     slabel = self.kg.get_label(_uri(sid)) or _short(sid)
                     dot.node(
-                        sid,
+                        _gvid(sid),
                         label=slabel,
                         shape="ellipse",
                         style="filled",
@@ -246,16 +253,16 @@ class Provenance:
             # Edges for sample steps
             if step.get("input_sample_id"):
                 dot.edge(
-                    step["input_sample_id"],
-                    act_id,
+                    _gvid(step["input_sample_id"]),
+                    act_gv,
                     color="#263238",
                     fontname="Helvetica",
                     fontsize="7",
                 )
             if step.get("output_sample_id"):
                 dot.edge(
-                    act_id,
-                    step["output_sample_id"],
+                    act_gv,
+                    _gvid(step["output_sample_id"]),
                     color="#263238",
                     fontname="Helvetica",
                     fontsize="7",
@@ -271,8 +278,10 @@ class Provenance:
             if "result_property" not in step:
                 continue
             act_id = step["activity_id"]
+            act_gv = _gvid(act_id)
             rp = step["result_property"]
             rp_id = rp["uri"]
+            rp_gv = _gvid(rp_id)
             rp_label = rp["label"] or _short(rp_id)
             if rp["value"] is not None:
                 rp_label += f"\n= {rp['value']:.4g}"
@@ -281,7 +290,7 @@ class Provenance:
 
             # Activity box
             dot.node(
-                act_id,
+                act_gv,
                 label=step["activity_type"],
                 shape="box",
                 style="filled",
@@ -293,7 +302,7 @@ class Provenance:
             if rp_id not in seen_nodes:
                 seen_nodes.add(rp_id)
                 dot.node(
-                    rp_id,
+                    rp_gv,
                     label=rp_label,
                     shape="diamond",
                     style="filled",
@@ -301,7 +310,7 @@ class Provenance:
                     fontname="Helvetica",
                     fontsize="8",
                 )
-            dot.edge(act_id, rp_id, color="#263238", fontname="Helvetica", fontsize="7")
+            dot.edge(act_gv, rp_gv, color="#263238", fontname="Helvetica", fontsize="7")
 
             # Connect operand properties (already rendered) to this activity
             if step["activity"] is not None:
@@ -325,8 +334,8 @@ class Provenance:
                 for item in operand_attrs:
                     if isinstance(item, str) and item.startswith("property:"):
                         dot.edge(
-                            item,
-                            act_id,
+                            _gvid(item),
+                            act_gv,
                             color="#263238",
                             fontname="Helvetica",
                             fontsize="7",
@@ -342,7 +351,7 @@ class Provenance:
                 plabel = self.kg.get_label(_uri(pid)) or _short(pid)
                 if pid not in seen_nodes:
                     dot.node(
-                        pid,
+                        _gvid(pid),
                         label=plabel,
                         shape="diamond",
                         style="filled",
@@ -352,8 +361,8 @@ class Provenance:
                     )
                 if last_sample_id:
                     dot.edge(
-                        last_sample_id,
-                        pid,
+                        _gvid(last_sample_id),
+                        _gvid(pid),
                         label="hasCalculatedProperty",
                         color="#263238",
                         fontname="Helvetica",
