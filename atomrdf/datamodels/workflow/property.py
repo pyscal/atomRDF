@@ -105,8 +105,7 @@ class Property(DataProperty):
     def from_graph(cls, graph, id):
         # get type
         typename = graph.value(id, RDF.type)
-        if typename is not None:
-            basename = typename.split("/")[-1]
+        basename = typename.split("/")[-1] if typename is not None else None
 
         # get label
         label = graph.value(id, RDFS.label)
@@ -119,12 +118,8 @@ class Property(DataProperty):
         path = graph.value(id, CMSO.hasPath)
         identifier = graph.value(id, CMSO.hasIdentifier)
 
-        cls.id = str(id)
-        cls.basename = str(basename)
-        cls.label = str(label) if label else None
-
         if value is not None:
-            cls.value = float(value)
+            resolved_value = float(value)
         elif path is not None and identifier is not None:
             filepath = path.toPython()
             ident = identifier.toPython()
@@ -132,19 +127,22 @@ class Property(DataProperty):
             store_dir = getattr(graph, "structure_store", None)
             if store_dir is not None:
                 filepath = os.path.join(store_dir, os.path.basename(filepath))
-            # open and read JSON
             with open(filepath, "r") as fin:
                 data = json.load(fin)
-                # defensive: ensure identifier exists
                 if ident in data:
-                    cls.value = data[ident]["value"]
+                    resolved_value = data[ident]["value"]
                 else:
                     raise KeyError(f"Identifier {ident} not found in {filepath}")
         else:
-            cls.value = None
+            resolved_value = None
 
-        cls.unit = str(unit).split("/")[-1] if unit else None
-        return cls
+        return cls(
+            id=str(id),
+            basename=str(basename) if basename else None,
+            label=str(label) if label else None,
+            value=resolved_value,
+            unit=str(unit).split("/")[-1] if unit else None,
+        )
 
 
 class InputParameter(Property):

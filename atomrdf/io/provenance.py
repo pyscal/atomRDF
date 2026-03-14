@@ -21,6 +21,13 @@ from atomrdf.datamodels.workflow.operations import (
     Translate,
     Shear,
 )
+from atomrdf.datamodels.workflow.math_operations import (
+    Subtraction,
+    Addition,
+    Multiplication,
+    Division,
+    Exponentiation,
+)
 
 # ------------------------------------------------------------------ #
 # Activity type → from_graph class mapping                             #
@@ -33,6 +40,12 @@ _OPERATION_MAP = {
     str(ASMO.Rotation): Rotate,
     str(ASMO.Translation): Translate,
     str(ASMO.Shear): Shear,
+    # Math operations
+    str(ASMO.Subtraction): Subtraction,
+    str(ASMO.Addition): Addition,
+    str(ASMO.Multiplication): Multiplication,
+    str(ASMO.Division): Division,
+    str(ASMO.Exponentiation): Exponentiation,
 }
 
 _SIMULATION_TYPES = {
