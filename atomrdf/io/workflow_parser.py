@@ -744,7 +744,12 @@ class WorkflowParser:
             resolved.
         """
         import re as _re
-        from rdflib import URIRef as _URIRef, Literal as _Literal, XSD as _XSD, RDFS as _RDFS
+        from rdflib import (
+            URIRef as _URIRef,
+            Literal as _Literal,
+            XSD as _XSD,
+            RDFS as _RDFS,
+        )
 
         # Return cached result if already resolved
         if operand_str in self._dotpath_cache:
@@ -785,21 +790,36 @@ class WorkflowParser:
 
         # Build a human-readable label from the last path segment
         last_seg = _re.match(r"^(\w+)(\[\d+\])?$", parts[-1])
-        label = last_seg.group(1).replace("_", " ").title().replace(" ", "") if last_seg else parts[-1]
+        label = (
+            last_seg.group(1).replace("_", " ").title().replace(" ", "")
+            if last_seg
+            else parts[-1]
+        )
         # e.g. "number_of_atoms" -> "NumberOfAtoms"
 
         # Create a property node in the KG
         prop_id = f"property:{label.lower()}_{__import__('uuid').uuid4()}"
         from atomrdf.namespace import ASMO as _ASMO, PROV as _PROV
+
         prop_uri = self.kg.create_node(prop_id, _ASMO.CalculatedProperty, label=label)
-        self.kg.add((_URIRef(prop_id), _ASMO.hasValue, _Literal(value, datatype=_XSD.float)))
+        self.kg.add(
+            (_URIRef(prop_id), _ASMO.hasValue, _Literal(value, datatype=_XSD.float))
+        )
         # Store the dotpath as a comment so code-generation can recover it
-        self.kg.add((_URIRef(prop_id), _RDFS.comment, _Literal(operand_str, datatype=_XSD.string)))
+        self.kg.add(
+            (
+                _URIRef(prop_id),
+                _RDFS.comment,
+                _Literal(operand_str, datatype=_XSD.string),
+            )
+        )
 
         # Link to its owning sample
         sample_uri = self.sample_map.get(sample_id)
         if sample_uri:
-            self.kg.add((_URIRef(sample_uri), _ASMO.hasCalculatedProperty, _URIRef(prop_id)))
+            self.kg.add(
+                (_URIRef(sample_uri), _ASMO.hasCalculatedProperty, _URIRef(prop_id))
+            )
 
         # Register in property_map and cache
         self.property_map[operand_str] = prop_id

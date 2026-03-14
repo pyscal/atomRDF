@@ -207,7 +207,7 @@ class Provenance:
         types = " → ".join(s["activity_type"] for s in self._steps)
         return f"Provenance({len(self._steps)} steps: {types})"
 
-    def visualize(self, rankdir="LR", size=None, layout="dot"):
+    def visualize(self, rankdir="LR", size=None, layout="dot", filename=None, dpi=150):
         """Return a ``graphviz.Digraph`` of the provenance chain.
 
         Samples are shown as ellipses, activities / operations as
@@ -221,6 +221,14 @@ class Provenance:
             ``(width, height)`` in inches.
         layout : str
             Graphviz layout engine.
+        filename : str, optional
+            If given, render and save the diagram to this path.  The file
+            format is inferred from the extension (e.g. ``"prov.pdf"``,
+            ``"prov.png"``, ``"prov.svg"``).  Defaults to PNG when no
+            extension is recognised.
+        dpi : int
+            Resolution in dots-per-inch used when saving raster formats
+            (PNG, …).  Ignored for vector formats (PDF, SVG).  Default 150.
 
         Returns
         -------
@@ -281,9 +289,21 @@ class Provenance:
                             fontsize="8",
                         )
                 if s.get("input_sample_id"):
-                    _add_edge(_gvid(s["input_sample_id"]), act_gv_s, color="#263238", fontname="Helvetica", fontsize="7")
+                    _add_edge(
+                        _gvid(s["input_sample_id"]),
+                        act_gv_s,
+                        color="#263238",
+                        fontname="Helvetica",
+                        fontsize="7",
+                    )
                 if s.get("output_sample_id"):
-                    _add_edge(act_gv_s, _gvid(s["output_sample_id"]), color="#263238", fontname="Helvetica", fontsize="7")
+                    _add_edge(
+                        act_gv_s,
+                        _gvid(s["output_sample_id"]),
+                        color="#263238",
+                        fontname="Helvetica",
+                        fontsize="7",
+                    )
 
         _render_chain_steps([s for s in self._steps if "result_property" not in s])
 
@@ -326,7 +346,9 @@ class Provenance:
                     fontname="Helvetica",
                     fontsize="8",
                 )
-            _add_edge(act_gv, rp_gv, color="#263238", fontname="Helvetica", fontsize="7")
+            _add_edge(
+                act_gv, rp_gv, color="#263238", fontname="Helvetica", fontsize="7"
+            )
 
             # Connect operand properties to this activity
             if step["activity"] is not None:
@@ -354,6 +376,7 @@ class Provenance:
                             seen_nodes.add(item)
                             # Use rdfs:comment (dotpath) as label if present
                             from rdflib import RDFS as _RDFS
+
                             comment_n = self.kg.graph.value(
                                 _uri(item),
                                 _RDFS.comment,
@@ -363,9 +386,13 @@ class Provenance:
                                 # show only the last segment(s) for brevity
                                 dotpath = str(comment_n)
                                 parts = dotpath.split(".")
-                                op_label = ".".join(parts[1:]) if len(parts) > 1 else dotpath
+                                op_label = (
+                                    ".".join(parts[1:]) if len(parts) > 1 else dotpath
+                                )
                             else:
-                                op_label = self.kg.get_label(_uri(item)) or _short_label(item)
+                                op_label = self.kg.get_label(
+                                    _uri(item)
+                                ) or _short_label(item)
                             # Try to get value/unit for display
                             val_n = self.kg.graph.value(_uri(item), ASMO.hasValue)
                             unit_n = self.kg.graph.value(_uri(item), ASMO.hasUnit)
@@ -385,7 +412,10 @@ class Provenance:
                             # If this property is owned by a sample, trace that
                             # sample's full provenance and render it
                             from rdflib import URIRef as _URIRef2
-                            owner = self.kg.graph.value(None, ASMO.hasCalculatedProperty, _uri(item))
+
+                            owner = self.kg.graph.value(
+                                None, ASMO.hasCalculatedProperty, _uri(item)
+                            )
                             if owner is not None:
                                 owner_str = str(owner)
                                 try:
@@ -394,7 +424,9 @@ class Provenance:
                                 except Exception:
                                     if owner_str not in seen_nodes:
                                         seen_nodes.add(owner_str)
-                                        s_label = self.kg.get_label(owner) or _short_label(owner_str)
+                                        s_label = self.kg.get_label(
+                                            owner
+                                        ) or _short_label(owner_str)
                                         dot.node(
                                             _gvid(owner_str),
                                             label=s_label,
@@ -466,6 +498,17 @@ class Provenance:
                         fontname="Helvetica",
                         fontsize="7",
                     )
+
+        if filename is not None:
+            import os
+            root, ext = os.path.splitext(filename)
+            fmt = ext.lstrip(".").lower() if ext else "png"
+            if fmt not in ("pdf", "svg", "png", "jpg", "jpeg", "eps"):
+                fmt = "png"
+            # DPI is passed as a graph attribute for raster formats
+            if fmt not in ("pdf", "svg", "eps"):
+                dot.attr(dpi=str(dpi))
+            dot.render(filename=root, format=fmt, cleanup=True)
 
         return dot
 
