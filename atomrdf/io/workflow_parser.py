@@ -116,6 +116,9 @@ class WorkflowParser:
         self.sample_map: Dict[str, str] = {}
         self.property_map: Dict[str, str] = {}
         self._base_dir: Optional[Path] = None
+        # Raw YAML dicts keyed by sample id, used for dotpath resolution
+        self._raw_sample_data: Dict[str, dict] = {}
+        self._dotpath_cache: Dict[str, str] = {}
 
     def _miller_bravais_to_cartesian(self, uvtw: List[float]) -> List[float]:
         """
@@ -437,6 +440,8 @@ class WorkflowParser:
             # Resolve file_path references in atom_attribute before any processing
             sample_data = self._resolve_atom_attribute_from_file(sample_data)
             original_id = sample_data.get("id", "unknown")
+            # Store a copy of the raw YAML dict for later dotpath resolution
+            self._raw_sample_data[original_id] = sample_data
 
             # Normalise simulation_cell.vector if present
             simcell = sample_data.get("simulation_cell")
@@ -718,6 +723,93 @@ class WorkflowParser:
 
         return operation_uris
 
+    def _resolve_dotpath(self, operand_str: str) -> Optional[str]:
+        """Resolve a dotpath operand like ``Fe_ref_relaxed.simulation_cell.number_of_atoms``.
+
+        If the first segment is a known sample id, walks the raw YAML data along
+        the remaining segments (supports ``field[index]`` for list access) and
+        creates a ``property:`` node in the KG linked to that sample via
+        ``ASMO.hasCalculatedProperty``.  The URI is cached so repeated
+        references return the same node.
+
+        Parameters
+        ----------
+        operand_str:
+            A dotted path string whose first segment is a sample id.
+
+        Returns
+        -------
+        str or None
+            The ``property:`` URI string, or ``None`` if the path cannot be
+            resolved.
+        """
+        import re as _re
+        from rdflib import URIRef as _URIRef, Literal as _Literal, XSD as _XSD, RDFS as _RDFS
+
+        # Return cached result if already resolved
+        if operand_str in self._dotpath_cache:
+            return self._dotpath_cache[operand_str]
+
+        parts = operand_str.split(".")
+        if len(parts) < 2:
+            return None
+
+        sample_id = parts[0]
+        raw = self._raw_sample_data.get(sample_id)
+        if raw is None:
+            return None
+
+        # Walk the remaining path segments
+        current = raw
+        for segment in parts[1:]:
+            # Support field[index] syntax
+            m = _re.match(r"^(\w+)\[(\d+)\]$", segment)
+            if m:
+                key, idx = m.group(1), int(m.group(2))
+                if not isinstance(current, dict) or key not in current:
+                    return None
+                seq = current[key]
+                if not isinstance(seq, (list, tuple)) or idx >= len(seq):
+                    return None
+                current = seq[idx]
+            else:
+                if not isinstance(current, dict) or segment not in current:
+                    return None
+                current = current[segment]
+
+        # current should now be a scalar
+        if not isinstance(current, (int, float)):
+            return None
+
+        value = float(current)
+
+        # Build a human-readable label from the last path segment
+        last_seg = _re.match(r"^(\w+)(\[\d+\])?$", parts[-1])
+        label = last_seg.group(1).replace("_", " ").title().replace(" ", "") if last_seg else parts[-1]
+        # e.g. "number_of_atoms" -> "NumberOfAtoms"
+
+        # Create a property node in the KG
+        prop_id = f"property:{label.lower()}_{__import__('uuid').uuid4()}"
+        from atomrdf.namespace import ASMO as _ASMO, PROV as _PROV
+        prop_uri = self.kg.create_node(prop_id, _ASMO.CalculatedProperty, label=label)
+        self.kg.add((_URIRef(prop_id), _ASMO.hasValue, _Literal(value, datatype=_XSD.float)))
+        # Store the dotpath as a comment so code-generation can recover it
+        self.kg.add((_URIRef(prop_id), _RDFS.comment, _Literal(operand_str, datatype=_XSD.string)))
+
+        # Link to its owning sample
+        sample_uri = self.sample_map.get(sample_id)
+        if sample_uri:
+            self.kg.add((_URIRef(sample_uri), _ASMO.hasCalculatedProperty, _URIRef(prop_id)))
+
+        # Register in property_map and cache
+        self.property_map[operand_str] = prop_id
+        self._dotpath_cache[operand_str] = prop_id
+
+        if self.debug:
+            print(f"Dotpath resolved: {operand_str} -> {prop_id} (value={value})")
+
+        return prop_id
+
     def parse_math_operations(
         self, math_op_data_list: List[Dict[str, Any]]
     ) -> List[str]:
@@ -780,9 +872,14 @@ class WorkflowParser:
                 "exponent",
             ):
                 if operand_key in mo_data and isinstance(mo_data[operand_key], str):
-                    mo_data[operand_key] = self.property_map.get(
-                        mo_data[operand_key], mo_data[operand_key]
-                    )
+                    val = mo_data[operand_key]
+                    # Try property_map first, then dotpath resolution
+                    if val in self.property_map:
+                        mo_data[operand_key] = self.property_map[val]
+                    elif "." in val:
+                        resolved = self._resolve_dotpath(val)
+                        if resolved is not None:
+                            mo_data[operand_key] = resolved
 
             # Resolve list operands
             for operand_key in ("addend", "factor"):
@@ -790,7 +887,13 @@ class WorkflowParser:
                     resolved = []
                     for v in mo_data[operand_key]:
                         if isinstance(v, str):
-                            resolved.append(self.property_map.get(v, v))
+                            if v in self.property_map:
+                                resolved.append(self.property_map[v])
+                            elif "." in v:
+                                dp = self._resolve_dotpath(v)
+                                resolved.append(dp if dp is not None else v)
+                            else:
+                                resolved.append(v)
                         else:
                             resolved.append(v)
                     mo_data[operand_key] = resolved

@@ -90,6 +90,7 @@ def _short_label(uri):
     ``property:totalenergy_48cb2441-...`` → ``totalenergy:48cb``
     """
     import re
+
     s = str(uri)
     # Strip URL-style namespace, keep short name
     if "/" in s:
@@ -239,66 +240,54 @@ class Provenance:
             dot.attr(size=f"{size[0]},{size[1]}")
 
         seen_nodes = set()
+        seen_edges = set()
 
-        for step in self._steps:
-            # Activity node
-            act_id = step["activity_id"]
-            act_gv = _gvid(act_id)
-            label = step["activity_type"]
-            if step.get("method"):
-                label = step["method"]
-                if step.get("algorithm"):
-                    label += f"\n({step['algorithm']})"
+        def _add_edge(src, dst, **attrs):
+            key = (src, dst)
+            if key not in seen_edges:
+                seen_edges.add(key)
+                dot.edge(src, dst, **attrs)
 
-            dot.node(
-                act_gv,
-                label=label,
-                shape="box",
-                style="filled",
-                color="#E6B8AF",
-                fontname="Helvetica",
-                fontsize="9",
-            )
-
-            # Sample nodes
-            for sid in (step.get("input_sample_id"), step["output_sample_id"]):
-                if sid and sid not in seen_nodes:
-                    seen_nodes.add(sid)
-                    slabel = self.kg.get_label(_uri(sid)) or _short_label(sid)
+        def _render_chain_steps(steps_list):
+            """Render a list of step dicts into dot, skipping already-seen nodes/edges."""
+            for s in steps_list:
+                act_id_s = s["activity_id"]
+                act_gv_s = _gvid(act_id_s)
+                if act_id_s not in seen_nodes:
+                    seen_nodes.add(act_id_s)
+                    s_label = s.get("method") or s["activity_type"]
+                    if s.get("algorithm"):
+                        s_label += f"\n({s['algorithm']})"
                     dot.node(
-                        _gvid(sid),
-                        label=slabel,
-                        shape="ellipse",
+                        act_gv_s,
+                        label=s_label,
+                        shape="box",
                         style="filled",
-                        color="#C9DAF8",
+                        color="#E6B8AF",
                         fontname="Helvetica",
-                        fontsize="8",
+                        fontsize="9",
                     )
+                for sid in (s.get("input_sample_id"), s.get("output_sample_id")):
+                    if sid and sid not in seen_nodes:
+                        seen_nodes.add(sid)
+                        slabel = self.kg.get_label(_uri(sid)) or _short_label(sid)
+                        dot.node(
+                            _gvid(sid),
+                            label=slabel,
+                            shape="ellipse",
+                            style="filled",
+                            color="#C9DAF8",
+                            fontname="Helvetica",
+                            fontsize="8",
+                        )
+                if s.get("input_sample_id"):
+                    _add_edge(_gvid(s["input_sample_id"]), act_gv_s, color="#263238", fontname="Helvetica", fontsize="7")
+                if s.get("output_sample_id"):
+                    _add_edge(act_gv_s, _gvid(s["output_sample_id"]), color="#263238", fontname="Helvetica", fontsize="7")
 
-            # Edges for sample steps
-            if step.get("input_sample_id"):
-                dot.edge(
-                    _gvid(step["input_sample_id"]),
-                    act_gv,
-                    color="#263238",
-                    fontname="Helvetica",
-                    fontsize="7",
-                )
-            if step.get("output_sample_id"):
-                dot.edge(
-                    act_gv,
-                    _gvid(step["output_sample_id"]),
-                    color="#263238",
-                    fontname="Helvetica",
-                    fontsize="7",
-                )
+        _render_chain_steps([s for s in self._steps if "result_property" not in s])
 
         # Math operation steps — rendered as property → activity → property
-        last_sample_id = None
-        for step in self._steps:
-            if step.get("output_sample_id"):
-                last_sample_id = step["output_sample_id"]
-
         math_steps = [s for s in self._steps if "result_property" in s]
 
         for i, step in enumerate(math_steps):
@@ -314,15 +303,17 @@ class Provenance:
                     rp_label += f" {rp['unit']}"
 
             # Activity box (yellow for math ops)
-            dot.node(
-                act_gv,
-                label=step["activity_type"],
-                shape="box",
-                style="filled",
-                color="#FFE599",
-                fontname="Helvetica",
-                fontsize="9",
-            )
+            if act_id not in seen_nodes:
+                seen_nodes.add(act_id)
+                dot.node(
+                    act_gv,
+                    label=step["activity_type"],
+                    shape="box",
+                    style="filled",
+                    color="#FFE599",
+                    fontname="Helvetica",
+                    fontsize="9",
+                )
             # Result property diamond
             if rp_id not in seen_nodes:
                 seen_nodes.add(rp_id)
@@ -335,7 +326,7 @@ class Provenance:
                     fontname="Helvetica",
                     fontsize="8",
                 )
-            dot.edge(act_gv, rp_gv, color="#263238", fontname="Helvetica", fontsize="7")
+            _add_edge(act_gv, rp_gv, color="#263238", fontname="Helvetica", fontsize="7")
 
             # Connect operand properties to this activity
             if step["activity"] is not None:
@@ -361,9 +352,20 @@ class Provenance:
                         # Ensure the operand node exists in the graph
                         if item not in seen_nodes:
                             seen_nodes.add(item)
-                            op_label = (
-                                self.kg.get_label(_uri(item)) or _short_label(item)
+                            # Use rdfs:comment (dotpath) as label if present
+                            from rdflib import RDFS as _RDFS
+                            comment_n = self.kg.graph.value(
+                                _uri(item),
+                                _RDFS.comment,
                             )
+                            if comment_n is not None:
+                                # e.g. "Fe_ref_relaxed.simulation_cell.number_of_atoms"
+                                # show only the last segment(s) for brevity
+                                dotpath = str(comment_n)
+                                parts = dotpath.split(".")
+                                op_label = ".".join(parts[1:]) if len(parts) > 1 else dotpath
+                            else:
+                                op_label = self.kg.get_label(_uri(item)) or _short_label(item)
                             # Try to get value/unit for display
                             val_n = self.kg.graph.value(_uri(item), ASMO.hasValue)
                             unit_n = self.kg.graph.value(_uri(item), ASMO.hasUnit)
@@ -380,7 +382,37 @@ class Provenance:
                                 fontname="Helvetica",
                                 fontsize="8",
                             )
-                        dot.edge(
+                            # If this property is owned by a sample, trace that
+                            # sample's full provenance and render it
+                            from rdflib import URIRef as _URIRef2
+                            owner = self.kg.graph.value(None, ASMO.hasCalculatedProperty, _uri(item))
+                            if owner is not None:
+                                owner_str = str(owner)
+                                try:
+                                    owner_prov = Provenance.from_sample(self.kg, owner)
+                                    _render_chain_steps(owner_prov._steps)
+                                except Exception:
+                                    if owner_str not in seen_nodes:
+                                        seen_nodes.add(owner_str)
+                                        s_label = self.kg.get_label(owner) or _short_label(owner_str)
+                                        dot.node(
+                                            _gvid(owner_str),
+                                            label=s_label,
+                                            shape="ellipse",
+                                            style="filled",
+                                            color="#C9DAF8",
+                                            fontname="Helvetica",
+                                            fontsize="8",
+                                        )
+                                _add_edge(
+                                    _gvid(owner_str),
+                                    _gvid(item),
+                                    color="#888888",
+                                    fontname="Helvetica",
+                                    fontsize="7",
+                                    style="dotted",
+                                )
+                        _add_edge(
                             _gvid(item),
                             act_gv,
                             color="#263238",
@@ -401,7 +433,7 @@ class Provenance:
                                 fontname="Helvetica",
                                 fontsize="8",
                             )
-                        dot.edge(
+                        _add_edge(
                             const_gv,
                             act_gv,
                             color="#263238",
@@ -409,18 +441,6 @@ class Provenance:
                             fontsize="7",
                             style="dashed",
                         )
-
-        # Link last sample to first math activity
-        if last_sample_id and math_steps:
-            first_math_act_gv = _gvid(math_steps[0]["activity_id"])
-            dot.edge(
-                _gvid(last_sample_id),
-                first_math_act_gv,
-                color="#888888",
-                fontname="Helvetica",
-                fontsize="7",
-                style="dotted",
-            )
 
         # If tracing from a property with no math steps, draw old-style diamond
         if self._property_uri:
