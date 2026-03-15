@@ -237,10 +237,53 @@ class Provenance:
         import graphviz
         import re as _re
 
+        from atomrdf.namespace import CMSO as _CMSO
+
         # Graphviz interprets "name:port" on colons in node IDs, so sanitize
         # all IDs used as graph node names.
         def _gvid(uri):
             return _re.sub(r"[^A-Za-z0-9_]", "_", str(uri))
+
+        def _composition_label(sample_uri):
+            """Build a label like 'Fe\n(bcc)' or 'Fe Al₀.₀₁\n(Im-3m)' from the KG."""
+            species_node = self.kg.graph.value(_uri(sample_uri), _CMSO.hasSpecies)
+            composition = {}
+            if species_node is not None:
+                for el in self.kg.graph.objects(species_node, _CMSO.hasElement):
+                    sym = self.kg.graph.value(el, _CMSO.hasChemicalSymbol)
+                    ratio = self.kg.graph.value(el, _CMSO.hasElementRatio)
+                    if sym is not None:
+                        composition[str(sym)] = float(ratio) if ratio is not None else 1.0
+
+            if not composition:
+                return self.kg.get_label(_uri(sample_uri)) or _short_label(str(sample_uri))
+
+            # Sort by descending ratio so the host element comes first
+            sorted_els = sorted(composition.items(), key=lambda x: -x[1])
+            if len(sorted_els) == 1:
+                comp_str = sorted_els[0][0]
+            else:
+                parts = []
+                for el, r in sorted_els:
+                    if r > 0.999:
+                        parts.append(el)
+                    else:
+                        parts.append(f"{el}{r:.3f}")
+                comp_str = " ".join(parts)
+
+            # Add spacegroup symbol as structure hint
+            material = self.kg.graph.value(_uri(sample_uri), _CMSO.hasMaterial)
+            sg_symbol = None
+            if material is not None:
+                cs = self.kg.graph.value(material, _CMSO.hasStructure)
+                if cs is not None:
+                    sg = self.kg.graph.value(cs, _CMSO.hasSpaceGroupSymbol)
+                    if sg is not None:
+                        sg_symbol = str(sg)
+
+            if sg_symbol:
+                return f"{comp_str}\n({sg_symbol})"
+            return comp_str
 
         dot = graphviz.Digraph()
         dot.attr(rankdir=rankdir, layout=layout, overlap="false")
@@ -256,54 +299,46 @@ class Provenance:
                 seen_edges.add(key)
                 dot.edge(src, dst, **attrs)
 
+        def _ensure_sample_node(sid):
+            if sid and sid not in seen_nodes:
+                seen_nodes.add(sid)
+                slabel = _composition_label(sid)
+                dot.node(
+                    _gvid(sid),
+                    label=slabel,
+                    shape="ellipse",
+                    style="filled",
+                    color="#C9DAF8",
+                    fontname="Helvetica",
+                    fontsize="9",
+                )
+
         def _render_chain_steps(steps_list):
-            """Render a list of step dicts into dot, skipping already-seen nodes/edges."""
+            """Render steps as sample nodes with activity labels on edges."""
             for s in steps_list:
-                act_id_s = s["activity_id"]
-                act_gv_s = _gvid(act_id_s)
-                if act_id_s not in seen_nodes:
-                    seen_nodes.add(act_id_s)
-                    s_label = s.get("method") or s["activity_type"]
-                    if s.get("algorithm"):
-                        s_label += f"\n({s['algorithm']})"
-                    dot.node(
-                        act_gv_s,
-                        label=s_label,
-                        shape="box",
-                        style="filled",
-                        color="#E6B8AF",
-                        fontname="Helvetica",
-                        fontsize="9",
-                    )
-                for sid in (s.get("input_sample_id"), s.get("output_sample_id")):
-                    if sid and sid not in seen_nodes:
-                        seen_nodes.add(sid)
-                        slabel = self.kg.get_label(_uri(sid)) or _short_label(sid)
-                        dot.node(
-                            _gvid(sid),
-                            label=slabel,
-                            shape="ellipse",
-                            style="filled",
-                            color="#C9DAF8",
-                            fontname="Helvetica",
-                            fontsize="8",
-                        )
-                if s.get("input_sample_id"):
+                in_id = s.get("input_sample_id")
+                out_id = s.get("output_sample_id")
+                _ensure_sample_node(in_id)
+                _ensure_sample_node(out_id)
+
+                # Build edge label from method / activity type
+                edge_label = s.get("method") or s["activity_type"]
+                if s.get("algorithm"):
+                    edge_label += f"\n({s['algorithm']})"
+
+                if in_id and out_id:
                     _add_edge(
-                        _gvid(s["input_sample_id"]),
-                        act_gv_s,
+                        _gvid(in_id),
+                        _gvid(out_id),
+                        label=edge_label,
                         color="#263238",
                         fontname="Helvetica",
-                        fontsize="7",
+                        fontsize="8",
+                        fontcolor="#B22222",
                     )
-                if s.get("output_sample_id"):
-                    _add_edge(
-                        act_gv_s,
-                        _gvid(s["output_sample_id"]),
-                        color="#263238",
-                        fontname="Helvetica",
-                        fontsize="7",
-                    )
+                elif out_id:
+                    # Root step with no input — just ensure the node exists
+                    pass
 
         _render_chain_steps([s for s in self._steps if "result_property" not in s])
 
@@ -322,7 +357,7 @@ class Provenance:
                 if rp["unit"]:
                     rp_label += f" {rp['unit']}"
 
-            # Activity box (yellow for math ops)
+            # Activity node (yellow box) — kept for math ops only
             if act_id not in seen_nodes:
                 seen_nodes.add(act_id)
                 dot.node(
@@ -422,20 +457,7 @@ class Provenance:
                                     owner_prov = Provenance.from_sample(self.kg, owner)
                                     _render_chain_steps(owner_prov._steps)
                                 except Exception:
-                                    if owner_str not in seen_nodes:
-                                        seen_nodes.add(owner_str)
-                                        s_label = self.kg.get_label(
-                                            owner
-                                        ) or _short_label(owner_str)
-                                        dot.node(
-                                            _gvid(owner_str),
-                                            label=s_label,
-                                            shape="ellipse",
-                                            style="filled",
-                                            color="#C9DAF8",
-                                            fontname="Helvetica",
-                                            fontsize="8",
-                                        )
+                                    _ensure_sample_node(owner_str)
                                 _add_edge(
                                     _gvid(owner_str),
                                     _gvid(item),
@@ -489,8 +511,16 @@ class Provenance:
                         fontname="Helvetica",
                         fontsize="8",
                     )
+                last_sample_id = next(
+                    (
+                        s["output_sample_id"]
+                        for s in reversed(self._steps)
+                        if s.get("output_sample_id")
+                    ),
+                    None,
+                )
                 if last_sample_id:
-                    dot.edge(
+                    _add_edge(
                         _gvid(last_sample_id),
                         _gvid(pid),
                         label="hasCalculatedProperty",
@@ -501,6 +531,7 @@ class Provenance:
 
         if filename is not None:
             import os
+
             root, ext = os.path.splitext(filename)
             fmt = ext.lstrip(".").lower() if ext else "png"
             if fmt not in ("pdf", "svg", "png", "jpg", "jpeg", "eps"):
@@ -511,6 +542,28 @@ class Provenance:
             dot.render(filename=root, format=fmt, cleanup=True)
 
         return dot
+
+    def to_code(self, output_dir=None):
+        """Generate a Python workflow script from this provenance chain.
+
+        Walks the traced steps and emits executable Python that uses
+        real workflow functions (e.g. ``atomrdf.workflow.lammps``) to
+        reproduce the computation.  Atom operations are not re-executed;
+        their output structures are written as files instead.
+
+        Parameters
+        ----------
+        output_dir : str, optional
+            If given, write ``workflow.py`` and ``structures/`` here.
+
+        Returns
+        -------
+        str
+            The generated Python script.
+        """
+        from atomrdf.io.codegen import generate_code
+
+        return generate_code(self, output_dir)
 
     # -- internals ---------------------------------------------------- #
 
