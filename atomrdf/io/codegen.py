@@ -128,16 +128,13 @@ class WorkflowNode:
 # More-specific entries (with DOF / algorithm constraints) must come first.
 _DISPATCH_TABLE = [
     # ---------------------------------------------------------------- #
-    # LAMMPS  — algorithm-specific entries MUST come before generic    #
-    # ones, because _match_handler() returns the first match.          #
-    # ---------------------------------------------------------------- #
     # --- EquationOfStateFit -----------------------------------------
     WorkflowNode(
         note="LAMMPS equation-of-state fit (Birch-Murnaghan)",
         software="LAMMPS",
         method="MolecularStatics",
         algorithm="EquationOfStateFit",
-        import_line="from workflows.evcurves import calculate_ev_curves",
+        import_line="from atomrdf.workflow.evcurves import calculate_ev_curves",
         func="calculate_ev_curves",
         returns_structure=True,
         user_inputs={
@@ -174,12 +171,35 @@ _DISPATCH_TABLE = [
         algorithm="CompressionTest",
         # TODO: func="calculate_compression", import_line="from atomrdf.workflow.lammps import calculate_compression"
     ),
-    # --- MolecularDynamics (generic, catch-all ensemble) ------------
+    # --- MolecularDynamics: NVT (canonical, constant volume) --------
     WorkflowNode(
-        note="LAMMPS MolecularDynamics (NVT/NVE/NPT/NPH — pick ensemble from activity)",
+        note="LAMMPS NVT molecular dynamics (canonical ensemble)",
         software="LAMMPS",
         method="MolecularDynamics",
-        # TODO: func="calculate_md", import_line="from atomrdf.workflow.lammps import calculate_md"
+        algorithm="CanonicalEnsemble",
+        import_line="from atomrdf.workflow.lammps import run_md_nvt",
+        func="run_md_nvt",
+        returns_structure=True,
+        user_inputs={
+            "pair_style": "LAMMPS pair style",
+            "pair_coeff": "LAMMPS pair coefficients",
+        },
+        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+    ),
+    # --- MolecularDynamics: NPT (isothermal-isobaric) ---------------
+    WorkflowNode(
+        note="LAMMPS NPT molecular dynamics (isothermal-isobaric ensemble)",
+        software="LAMMPS",
+        method="MolecularDynamics",
+        algorithm="IsothermalIsobaricEnsemble",
+        import_line="from atomrdf.workflow.lammps import run_md_npt",
+        func="run_md_npt",
+        returns_structure=True,
+        user_inputs={
+            "pair_style": "LAMMPS pair style",
+            "pair_coeff": "LAMMPS pair coefficients",
+        },
+        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
     ),
     # --- MolecularStatics with cell relaxation ----------------------
     WorkflowNode(
