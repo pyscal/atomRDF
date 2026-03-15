@@ -3,15 +3,254 @@
 Translates a :class:`~atomrdf.io.provenance.Provenance` object into an
 executable Python script that reconstructs the workflow using real
 workflow functions (e.g. ``atomrdf.workflow.lammps``).
+
+Simulation dispatch mapping
+---------------------------
+Code selection in ``_handle_simulation()`` is driven by three ASMO-mapped
+attributes read from the RDF graph.  The table below shows every recognised
+combination and the generated output.  Rows marked ``# TODO`` have no
+implementing function yet.
+
+Software (step["software"])
+    Detected by: ``any("<NAME>" in s for s in software)``
+    ASMO class  : ``PROV.SoftwareAgent``  (label stored as RDFS.label)
+
+Method (step["method"])
+    ASMO classes: ``ASMO.MolecularStatics``
+                  ``ASMO.MolecularDynamics``
+                  ``ASMO.DensityFunctionalTheory``
+
+Degrees of freedom (step["degrees_of_freedom"])
+    ASMO named individuals:
+        ``ASMO.AtomicPositionRelaxation``   basename="AtomicPositionRelaxation"
+        ``ASMO.CellVolumeRelaxation``       basename="CellVolumeRelaxation"
+        ``ASMO.CellShapeRelaxation``        basename="CellShapeRelaxation"
+
+Algorithm (step["algorithm"])
+    ASMO classes: ``ASMO.EquationOfStateFit``
+                  ``ASMO.QuasiHarmonicApproximation``
+                  ``ASMO.ThermodynamicIntegration``
+                  ``ASMO.ANNNImodel``
+                  ``ASMO.TensileTest``
+                  ``ASMO.CompressionTest``
+
+Thermodynamic ensemble (step["activity"].thermodynamic_ensemble)
+    ASMO named individuals:
+        ``ASMO.CanonicalEnsemble``              (NVT)
+        ``ASMO.MicrocanonicalEnsemble``         (NVE)
+        ``ASMO.IsothermalIsobaricEnsemble``     (NPT)
+        ``ASMO.IsoenthalpicIsobaricEnsemble``   (NPH)
+        ``ASMO.GrandCanonicalEnsemble``         (muVT)
+
+Interatomic potential (step["interatomic_potential"]["type"])
+    ASMO classes: ``ASMO.InteratomicPotential``      (generic)
+                  ``ASMO.EmbeddedAtomModel``          (EAM)
+                  ``ASMO.ModifiedEmbeddedAtomModel``  (MEAM)
+                  ``ASMO.LennardJonesPotential``      (LJ)
+                  ``ASMO.MachineLearningPotential``   (MLP / GRACE / ACE etc.)
+
+XC functional  (step["activity"].xc_functional) — DFT only
+    MDO classes:  ``MDO.ExchangeCorrelationEnergyFunctional``  (generic)
+                  ``MDO.GeneralizedGradientApproximation``     (GGA)
+                  ``MDO.LocalDensityApproximation``            (LDA)
+                  ``MDO.HybridFunctional``
+                  ``MDO.HybridGeneralizedGradientApproximation``
+                  ``MDO.HybridMetaGeneralizedGradientApproximation``
+                  ``MDO.MetaGeneralizedGradientApproximation``
+
+Dispatch table
+--------------
+Software   Method               DOFs                    Algorithm              Generated call
+---------- -------------------- ----------------------- ---------------------- -------------------------------------------------------
+LAMMPS     MolecularStatics     AtomicPosition          —                      calculate_energy_rigid(atoms, ...)             ✓
+LAMMPS     MolecularStatics     AtomicPosition+CellVol  —                      calculate_energy_relax(atoms, ...)             ✓
+LAMMPS     MolecularDynamics    AtomicPosition          NVT/NVE/NPT/NPH        # TODO: calculate_md(atoms, ensemble, ...)
+LAMMPS     MolecularStatics     —                       EquationOfStateFit     # TODO: calculate_eos(atoms, ...)
+LAMMPS     MolecularDynamics    AtomicPosition          ThermodynamicInteg.    # TODO: calculate_ti(atoms, ...)
+LAMMPS     MolecularDynamics    AtomicPosition          QuasiHarmonicApprox.   # TODO: calculate_qha(atoms, ...)
+LAMMPS     MolecularStatics     —                       TensileTest            # TODO: calculate_tensile(atoms, ...)
+LAMMPS     MolecularStatics     —                       CompressionTest        # TODO: calculate_compression(atoms, ...)
+VASP       DFT                  AtomicPosition          —                      # TODO: run_vasp(atoms, xc, ...)
+VASP       DFT                  AtomicPosition+CellVol  —                      # TODO: run_vasp(atoms, xc, relax=True, ...)
+QuantumESP DFT                  AtomicPosition          —                      # TODO: run_qe(atoms, xc, ...)
+(other)    (any)                (any)                   (any)                  # TODO placeholder emitted
 """
 
 import os
 import re
 from collections import OrderedDict
+from dataclasses import dataclass, field
+from typing import Optional
 
 from rdflib import URIRef, RDFS
 
 from atomrdf.namespace import ASMO
+
+
+# ------------------------------------------------------------------ #
+# Simulation dispatch table                                            #
+# ------------------------------------------------------------------ #
+
+
+@dataclass
+class WorkflowNode:
+    """Describes how to generate code for one class of simulation step.
+
+    Matching rules (all non-None fields must match for the handler to fire):
+      software   – substring found in any element of step["software"]
+      method     – exact basename of step["method"]
+      algorithm  – exact basename of step["algorithm"]
+      dof        – frozenset of DOF basenames that must ALL be present
+                   in step["degrees_of_freedom"]
+
+    Generation fields:
+      import_line       – import statement to add (None → emit # TODO)
+      func              – callable name (None → emit # TODO)
+      returns_structure – True  → ``out, ecoh, vol = func(in, ...)``
+                          False → ``ecoh, vol = func(in, ...)``
+      user_inputs       – {param_name: description} added to script header
+      call_kwargs       – extra keyword-args string passed after the atoms arg
+    """
+
+    note: str
+    software: Optional[str] = None  # substring to match in software labels
+    method: Optional[str] = None  # method basename
+    algorithm: Optional[str] = None  # algorithm basename
+    dof: Optional[frozenset] = None  # DOF basenames required (all must match)
+    import_line: Optional[str] = None  # None → TODO placeholder
+    func: Optional[str] = None  # None → TODO placeholder
+    returns_structure: bool = True
+    user_inputs: dict = field(default_factory=dict)
+    call_kwargs: str = ""
+
+
+# Entries are checked in order; the first match wins.
+# More-specific entries (with DOF / algorithm constraints) must come first.
+_DISPATCH_TABLE = [
+    # ---------------------------------------------------------------- #
+    # LAMMPS                                                            #
+    # ---------------------------------------------------------------- #
+    WorkflowNode(
+        note="LAMMPS MolecularStatics with cell relaxation",
+        software="LAMMPS",
+        method="MolecularStatics",
+        dof=frozenset({"CellVolumeRelaxation"}),
+        import_line="from atomrdf.workflow.lammps import calculate_energy_relax",
+        func="calculate_energy_relax",
+        returns_structure=True,
+        user_inputs={
+            "pair_style": "LAMMPS pair style",
+            "pair_coeff": "LAMMPS pair coefficients",
+        },
+        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+    ),
+    WorkflowNode(
+        note="LAMMPS MolecularStatics rigid (atoms-only relaxation)",
+        software="LAMMPS",
+        method="MolecularStatics",
+        import_line="from atomrdf.workflow.lammps import calculate_energy_rigid",
+        func="calculate_energy_rigid",
+        returns_structure=False,
+        user_inputs={
+            "pair_style": "LAMMPS pair style",
+            "pair_coeff": "LAMMPS pair coefficients",
+        },
+        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+    ),
+    WorkflowNode(
+        note="LAMMPS MolecularStatics equation-of-state fit",
+        software="LAMMPS",
+        method="MolecularStatics",
+        algorithm="EquationOfStateFit",
+        # TODO: func="calculate_eos", import_line="from atomrdf.workflow.lammps import calculate_eos"
+    ),
+    WorkflowNode(
+        note="LAMMPS MolecularDynamics (NVT/NVE/NPT/NPH — pick ensemble from activity)",
+        software="LAMMPS",
+        method="MolecularDynamics",
+        # TODO: func="calculate_md", import_line="from atomrdf.workflow.lammps import calculate_md"
+    ),
+    WorkflowNode(
+        note="LAMMPS quasi-harmonic approximation",
+        software="LAMMPS",
+        algorithm="QuasiHarmonicApproximation",
+        # TODO: func="calculate_qha", import_line="from atomrdf.workflow.lammps import calculate_qha"
+    ),
+    WorkflowNode(
+        note="LAMMPS thermodynamic integration",
+        software="LAMMPS",
+        algorithm="ThermodynamicIntegration",
+        # TODO: func="calculate_ti", import_line="from atomrdf.workflow.lammps import calculate_ti"
+    ),
+    WorkflowNode(
+        note="LAMMPS tensile test",
+        software="LAMMPS",
+        algorithm="TensileTest",
+        # TODO: func="calculate_tensile", import_line="from atomrdf.workflow.lammps import calculate_tensile"
+    ),
+    WorkflowNode(
+        note="LAMMPS compression test",
+        software="LAMMPS",
+        algorithm="CompressionTest",
+        # TODO: func="calculate_compression", import_line="from atomrdf.workflow.lammps import calculate_compression"
+    ),
+    # ---------------------------------------------------------------- #
+    # VASP                                                              #
+    # ---------------------------------------------------------------- #
+    WorkflowNode(
+        note="VASP DFT with cell relaxation",
+        software="VASP",
+        method="DensityFunctionalTheory",
+        dof=frozenset({"CellVolumeRelaxation"}),
+        # TODO: func="run_vasp", import_line="from atomrdf.workflow.vasp import run_vasp"
+    ),
+    WorkflowNode(
+        note="VASP DFT single-point / ionic relaxation",
+        software="VASP",
+        method="DensityFunctionalTheory",
+        # TODO: func="run_vasp", import_line="from atomrdf.workflow.vasp import run_vasp"
+    ),
+    # ---------------------------------------------------------------- #
+    # Quantum ESPRESSO                                                  #
+    # ---------------------------------------------------------------- #
+    WorkflowNode(
+        note="Quantum ESPRESSO DFT with cell relaxation",
+        software="QuantumESPRESSO",
+        method="DensityFunctionalTheory",
+        dof=frozenset({"CellVolumeRelaxation"}),
+        # TODO: func="run_qe", import_line="from atomrdf.workflow.qe import run_qe"
+    ),
+    WorkflowNode(
+        note="Quantum ESPRESSO DFT single-point / ionic relaxation",
+        software="QuantumESPRESSO",
+        method="DensityFunctionalTheory",
+        # TODO: func="run_qe", import_line="from atomrdf.workflow.qe import run_qe"
+    ),
+]
+
+
+def _match_handler(step) -> Optional["WorkflowNode"]:
+    """Return the first entry in _DISPATCH_TABLE that matches *step*."""
+    software = step.get("software", [])
+    method = step.get("method")
+    algorithm = step.get("algorithm")
+    dof = set(step.get("degrees_of_freedom", []))
+
+    for handler in _DISPATCH_TABLE:
+        if handler.software is not None:
+            if not any(handler.software in str(s) for s in software):
+                continue
+        if handler.method is not None:
+            if method != handler.method:
+                continue
+        if handler.algorithm is not None:
+            if algorithm != handler.algorithm:
+                continue
+        if handler.dof is not None:
+            if not handler.dof.issubset(dof):
+                continue
+        return handler
+    return None
 
 
 # ------------------------------------------------------------------ #
@@ -229,7 +468,7 @@ def _ensure_structure(ctx, sample_id, atoms):
 
 
 def _handle_simulation(provenance, ctx, step):
-    """Generate code for a Simulation step."""
+    """Generate code for a Simulation step using _DISPATCH_TABLE."""
     in_id = step.get("input_sample_id")
     out_id = step["output_sample_id"]
     in_var = ctx.uri_to_var.get(in_id) if in_id else None
@@ -240,58 +479,47 @@ def _handle_simulation(provenance, ctx, step):
         _register_calc_properties(provenance, ctx, step, var_map=None)
         return
 
-    software = step.get("software", [])
     method = step.get("method") or "Simulation"
-    dof = step.get("degrees_of_freedom", [])
     out_label = _sample_label(ctx.kg, out_id)
+    handler = _match_handler(step)
 
-    is_lammps = any("LAMMPS" in str(s) for s in software)
-    has_cell_relax = any("CellVolume" in str(d) for d in dof)
-
-    if is_lammps:
-        ctx.add_user_input("pair_style", "LAMMPS pair style")
-        ctx.add_user_input("pair_coeff", "LAMMPS pair coefficients")
-
-        if has_cell_relax:
-            func = "calculate_energy_relax"
-            ctx.add_import("from atomrdf.workflow.lammps import calculate_energy_relax")
-            out_var = ctx.make_var(f"atoms_{out_label}", uri=out_id)
-            ecoh_var = ctx.make_var("ecoh")
-            vol_var = ctx.make_var("vol")
-
-            ctx.comment(f"{method} \u2192 {out_label} (relax)")
-            ctx.code(f"{out_var}, {ecoh_var}, {vol_var} = {func}(")
-            ctx.code(f"    {in_var}, pair_style=pair_style, pair_coeff=pair_coeff")
-            ctx.code(")")
-
-        else:
-            func = "calculate_energy_rigid"
-            ctx.add_import("from atomrdf.workflow.lammps import calculate_energy_rigid")
-            ecoh_var = ctx.make_var("ecoh")
-            vol_var = ctx.make_var("vol")
-
-            ctx.comment(f"{method} \u2192 {out_label} (rigid)")
-            ctx.code(f"{ecoh_var}, {vol_var} = {func}(")
-            ctx.code(f"    {in_var}, pair_style=pair_style, pair_coeff=pair_coeff")
-            ctx.code(")")
-
-            # Rigid doesn't return a new structure; reuse input variable
-            ctx.uri_to_var[out_id] = in_var
-
-        _register_calc_properties(
-            provenance,
-            ctx,
-            step,
-            var_map={"energy": ecoh_var, "volume": vol_var},
-        )
-
-    else:
-        # Unknown simulation software — emit placeholder
-        sw_names = ", ".join(software) if software else "unknown"
-        ctx.comment(f"{method} ({sw_names})")
-        ctx.code(f"# TODO: implement simulation for {sw_names}")
+    if handler is None or handler.func is None:
+        # No matching handler or handler has no implementation yet
+        note = handler.note if handler else f"{method} (unrecognised software/method)"
+        ctx.comment(note)
+        ctx.code(f"# TODO: implement {note}")
         _ensure_structure(ctx, out_id, step.get("output_sample"))
         _register_calc_properties(provenance, ctx, step, var_map=None)
+        return
+
+    # Register any user-fillable parameters
+    for param, desc in handler.user_inputs.items():
+        ctx.add_user_input(param, desc)
+
+    ctx.add_import(handler.import_line)
+    ecoh_var = ctx.make_var("ecoh")
+    vol_var = ctx.make_var("vol")
+
+    if handler.returns_structure:
+        out_var = ctx.make_var(f"atoms_{out_label}", uri=out_id)
+        ctx.comment(f"{method} \u2192 {out_label} ({handler.note})")
+        ctx.code(f"{out_var}, {ecoh_var}, {vol_var} = {handler.func}(")
+        ctx.code(f"    {in_var}, {handler.call_kwargs}")
+        ctx.code(")")
+    else:
+        ctx.comment(f"{method} \u2192 {out_label} ({handler.note})")
+        ctx.code(f"{ecoh_var}, {vol_var} = {handler.func}(")
+        ctx.code(f"    {in_var}, {handler.call_kwargs}")
+        ctx.code(")")
+        # Rigid: output sample is the same atoms object as input
+        ctx.uri_to_var[out_id] = in_var
+
+    _register_calc_properties(
+        provenance,
+        ctx,
+        step,
+        var_map={"energy": ecoh_var, "volume": vol_var},
+    )
 
 
 def _register_calc_properties(provenance, ctx, step, var_map):
