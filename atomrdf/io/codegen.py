@@ -128,8 +128,60 @@ class WorkflowNode:
 # More-specific entries (with DOF / algorithm constraints) must come first.
 _DISPATCH_TABLE = [
     # ---------------------------------------------------------------- #
-    # LAMMPS                                                            #
+    # LAMMPS  — algorithm-specific entries MUST come before generic    #
+    # ones, because _match_handler() returns the first match.          #
     # ---------------------------------------------------------------- #
+    # --- EquationOfStateFit -----------------------------------------
+    WorkflowNode(
+        note="LAMMPS equation-of-state fit (Birch-Murnaghan)",
+        software="LAMMPS",
+        method="MolecularStatics",
+        algorithm="EquationOfStateFit",
+        import_line="from workflows.evcurves import calculate_ev_curves",
+        func="calculate_ev_curves",
+        returns_structure=True,
+        user_inputs={
+            "pair_style": "LAMMPS pair style",
+            "pair_coeff": "LAMMPS pair coefficients",
+        },
+        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+    ),
+    # --- QuasiHarmonicApproximation ---------------------------------
+    WorkflowNode(
+        note="LAMMPS quasi-harmonic approximation",
+        software="LAMMPS",
+        algorithm="QuasiHarmonicApproximation",
+        # TODO: func="calculate_qha", import_line="from atomrdf.workflow.lammps import calculate_qha"
+    ),
+    # --- ThermodynamicIntegration ------------------------------------
+    WorkflowNode(
+        note="LAMMPS thermodynamic integration",
+        software="LAMMPS",
+        algorithm="ThermodynamicIntegration",
+        # TODO: func="calculate_ti", import_line="from atomrdf.workflow.lammps import calculate_ti"
+    ),
+    # --- TensileTest --------------------------------------------------
+    WorkflowNode(
+        note="LAMMPS tensile test",
+        software="LAMMPS",
+        algorithm="TensileTest",
+        # TODO: func="calculate_tensile", import_line="from atomrdf.workflow.lammps import calculate_tensile"
+    ),
+    # --- CompressionTest ---------------------------------------------
+    WorkflowNode(
+        note="LAMMPS compression test",
+        software="LAMMPS",
+        algorithm="CompressionTest",
+        # TODO: func="calculate_compression", import_line="from atomrdf.workflow.lammps import calculate_compression"
+    ),
+    # --- MolecularDynamics (generic, catch-all ensemble) ------------
+    WorkflowNode(
+        note="LAMMPS MolecularDynamics (NVT/NVE/NPT/NPH — pick ensemble from activity)",
+        software="LAMMPS",
+        method="MolecularDynamics",
+        # TODO: func="calculate_md", import_line="from atomrdf.workflow.lammps import calculate_md"
+    ),
+    # --- MolecularStatics with cell relaxation ----------------------
     WorkflowNode(
         note="LAMMPS MolecularStatics with cell relaxation",
         software="LAMMPS",
@@ -144,6 +196,7 @@ _DISPATCH_TABLE = [
         },
         call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
     ),
+    # --- MolecularStatics rigid (catch-all, no DOF/algorithm) --------
     WorkflowNode(
         note="LAMMPS MolecularStatics rigid (atoms-only relaxation)",
         software="LAMMPS",
@@ -156,43 +209,6 @@ _DISPATCH_TABLE = [
             "pair_coeff": "LAMMPS pair coefficients",
         },
         call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
-    ),
-    WorkflowNode(
-        note="LAMMPS MolecularStatics equation-of-state fit",
-        software="LAMMPS",
-        method="MolecularStatics",
-        algorithm="EquationOfStateFit",
-        # TODO: func="calculate_eos", import_line="from atomrdf.workflow.lammps import calculate_eos"
-    ),
-    WorkflowNode(
-        note="LAMMPS MolecularDynamics (NVT/NVE/NPT/NPH — pick ensemble from activity)",
-        software="LAMMPS",
-        method="MolecularDynamics",
-        # TODO: func="calculate_md", import_line="from atomrdf.workflow.lammps import calculate_md"
-    ),
-    WorkflowNode(
-        note="LAMMPS quasi-harmonic approximation",
-        software="LAMMPS",
-        algorithm="QuasiHarmonicApproximation",
-        # TODO: func="calculate_qha", import_line="from atomrdf.workflow.lammps import calculate_qha"
-    ),
-    WorkflowNode(
-        note="LAMMPS thermodynamic integration",
-        software="LAMMPS",
-        algorithm="ThermodynamicIntegration",
-        # TODO: func="calculate_ti", import_line="from atomrdf.workflow.lammps import calculate_ti"
-    ),
-    WorkflowNode(
-        note="LAMMPS tensile test",
-        software="LAMMPS",
-        algorithm="TensileTest",
-        # TODO: func="calculate_tensile", import_line="from atomrdf.workflow.lammps import calculate_tensile"
-    ),
-    WorkflowNode(
-        note="LAMMPS compression test",
-        software="LAMMPS",
-        algorithm="CompressionTest",
-        # TODO: func="calculate_compression", import_line="from atomrdf.workflow.lammps import calculate_compression"
     ),
     # ---------------------------------------------------------------- #
     # VASP                                                              #
@@ -467,6 +483,30 @@ def _ensure_structure(ctx, sample_id, atoms):
         )
 
 
+def _emit_input_params(ctx, step):
+    """Emit stored input-parameter values as named variables and return
+    a list of ``"name=var"`` strings ready to splice into a call.
+
+    Each ASMO InputParameter stored in the graph becomes a Python variable
+    initialised to its stored value so the user can easily override it::
+
+        pressure = 0.0       # Pressure (PA)
+        temperature = 300.0  # Temperature (K)
+    """
+    extra_kwargs = []
+    for p in step.get("input_parameters") or []:
+        raw_label = p.get("label") or "param"
+        value = p.get("value")
+        unit = p.get("unit") or ""
+        var = _sanitize(raw_label)
+        # Emit once (make_var deduplicates via _var_counts)
+        var = ctx.make_var(var)
+        comment = f"  # {raw_label} ({unit})" if unit else f"  # {raw_label}"
+        ctx.code(f"{var} = {repr(value)}{comment}")
+        extra_kwargs.append(f"{var}={var}")
+    return extra_kwargs
+
+
 def _handle_simulation(provenance, ctx, step):
     """Generate code for a Simulation step using _DISPATCH_TABLE."""
     in_id = step.get("input_sample_id")
@@ -492,11 +532,24 @@ def _handle_simulation(provenance, ctx, step):
         _register_calc_properties(provenance, ctx, step, var_map=None)
         return
 
-    # Register any user-fillable parameters
+    # Register user-fillable parameters (pair_style, pair_coeff, etc.)
     for param, desc in handler.user_inputs.items():
         ctx.add_user_input(param, desc)
 
     ctx.add_import(handler.import_line)
+
+    # Emit stored input parameters as overridable variables
+    extra_kwargs = _emit_input_params(ctx, step)
+
+    # Build full kwargs string: handler defaults + graph-sourced params
+    all_kwargs = handler.call_kwargs
+    if extra_kwargs:
+        all_kwargs = (
+            all_kwargs + ", " + ", ".join(extra_kwargs)
+            if all_kwargs
+            else ", ".join(extra_kwargs)
+        )
+
     ecoh_var = ctx.make_var("ecoh")
     vol_var = ctx.make_var("vol")
 
@@ -504,12 +557,12 @@ def _handle_simulation(provenance, ctx, step):
         out_var = ctx.make_var(f"atoms_{out_label}", uri=out_id)
         ctx.comment(f"{method} \u2192 {out_label} ({handler.note})")
         ctx.code(f"{out_var}, {ecoh_var}, {vol_var} = {handler.func}(")
-        ctx.code(f"    {in_var}, {handler.call_kwargs}")
+        ctx.code(f"    {in_var}, {all_kwargs}")
         ctx.code(")")
     else:
         ctx.comment(f"{method} \u2192 {out_label} ({handler.note})")
         ctx.code(f"{ecoh_var}, {vol_var} = {handler.func}(")
-        ctx.code(f"    {in_var}, {handler.call_kwargs}")
+        ctx.code(f"    {in_var}, {all_kwargs}")
         ctx.code(")")
         # Rigid: output sample is the same atoms object as input
         ctx.uri_to_var[out_id] = in_var
