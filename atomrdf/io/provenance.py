@@ -253,10 +253,14 @@ class Provenance:
                     sym = self.kg.graph.value(el, _CMSO.hasChemicalSymbol)
                     ratio = self.kg.graph.value(el, _CMSO.hasElementRatio)
                     if sym is not None:
-                        composition[str(sym)] = float(ratio) if ratio is not None else 1.0
+                        composition[str(sym)] = (
+                            float(ratio) if ratio is not None else 1.0
+                        )
 
             if not composition:
-                return self.kg.get_label(_uri(sample_uri)) or _short_label(str(sample_uri))
+                return self.kg.get_label(_uri(sample_uri)) or _short_label(
+                    str(sample_uri)
+                )
 
             # Sort by descending ratio so the host element comes first
             sorted_els = sorted(composition.items(), key=lambda x: -x[1])
@@ -719,7 +723,7 @@ class Provenance:
 
         # Software
         for sw in getattr(sim, "software", None) or []:
-            name = getattr(sw, "name", None) or str(sw)
+            name = getattr(sw, "label", None) or getattr(sw, "uri", None) or str(sw)
             step["software"].append(name)
 
     @staticmethod
