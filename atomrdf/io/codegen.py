@@ -458,6 +458,9 @@ def generate_code(provenance, output_dir=None):
     for step in math_steps:
         _handle_math_step(provenance, ctx, step)
 
+    # 4. Save the target property (the one the provenance was traced from)
+    _emit_result_save(provenance, ctx, math_steps)
+
     script = ctx.render()
     if output_dir is not None:
         ctx.write(output_dir, script)
@@ -733,6 +736,45 @@ def _handle_math_step(provenance, ctx, step):
     if result.get("value") is not None:
         unit = result.get("unit", "") or ""
         ctx.code(f"# Expected: {result['value']:.6g} {unit}".rstrip())
+
+
+def _emit_result_save(provenance, ctx, math_steps):
+    """Emit a ``json.dump`` call that saves the final calculated result.
+
+    Uses the last math step's result_property (which is the property the
+    provenance was originally traced from) for the variable name, label
+    and unit.
+    """
+    # Prefer the explicitly tracked target property URI
+    target_uri = str(provenance._property_uri) if provenance._property_uri else None
+
+    result_var = None
+    label = None
+    unit = None
+
+    if math_steps:
+        # The last math step always produces the top-level target property
+        last_rp = math_steps[-1].get("result_property", {})
+        rp_uri = last_rp.get("uri")
+        if rp_uri and (target_uri is None or rp_uri == target_uri):
+            result_var = ctx.uri_to_var.get(rp_uri)
+            label = last_rp.get("label") or "result"
+            unit = last_rp.get("unit") or ""
+
+    if result_var is None and target_uri is not None:
+        result_var = ctx.uri_to_var.get(target_uri)
+
+    if result_var is None:
+        return  # nothing to save
+
+    ctx.add_import("import json")
+    ctx.lines.append("")
+    ctx.lines.append("# === Save result ===")
+    ctx.lines.append(f'with open("results.json", "w") as _f:')
+    unit_str = f', "unit": "{unit}"' if unit else ""
+    ctx.lines.append(
+        f'    json.dump({{"label": "{label}", "value": {result_var}{unit_str}}}, _f, indent=2)'
+    )
 
 
 # ------------------------------------------------------------------ #
