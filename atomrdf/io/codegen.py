@@ -316,6 +316,19 @@ def _sample_label(kg, sample_id):
     return s.rsplit("/", 1)[-1][:8]
 
 
+def _composition_str(atoms):
+    """Return a compact Hill-order composition string, e.g. ``'Al1Fe127'``."""
+    if atoms is None:
+        return None
+    try:
+        from collections import Counter
+
+        counts = Counter(atoms.get_chemical_symbols())
+        return "".join(f"{el}{n}" for el, n in sorted(counts.items()))
+    except Exception:
+        return None
+
+
 # ------------------------------------------------------------------ #
 # CodeContext                                                          #
 # ------------------------------------------------------------------ #
@@ -552,10 +565,6 @@ def _handle_simulation(provenance, ctx, step):
         _register_calc_properties(provenance, ctx, step, var_map=None)
         return
 
-    # Register user-fillable parameters (pair_style, pair_coeff, etc.)
-    for param, desc in handler.user_inputs.items():
-        ctx.add_user_input(param, desc)
-
     ctx.add_import(handler.import_line)
 
     # Emit stored input parameters as overridable variables
@@ -576,11 +585,25 @@ def _handle_simulation(provenance, ctx, step):
     if handler.returns_structure:
         out_var = ctx.make_var(f"atoms_{out_label}", uri=out_id)
         ctx.comment(f"{method} \u2192 {out_label} ({handler.note})")
+        # Emit composition of input structure so user knows which potential to use
+        comp = _composition_str(step.get("input_sample"))
+        if comp:
+            ctx.code(f"# Input structure: {comp}")
+        # Emit potential parameters inline so each step can use different values
+        for param, desc in handler.user_inputs.items():
+            ctx.code(f'{param} = "..."  # {desc}')
         ctx.code(f"{out_var}, {ecoh_var}, {vol_var} = {handler.func}(")
         ctx.code(f"    {in_var}, {all_kwargs}")
         ctx.code(")")
     else:
         ctx.comment(f"{method} \u2192 {out_label} ({handler.note})")
+        # Emit composition of input structure so user knows which potential to use
+        comp = _composition_str(step.get("input_sample"))
+        if comp:
+            ctx.code(f"# Input structure: {comp}")
+        # Emit potential parameters inline so each step can use different values
+        for param, desc in handler.user_inputs.items():
+            ctx.code(f'{param} = "..."  # {desc}')
         ctx.code(f"{ecoh_var}, {vol_var} = {handler.func}(")
         ctx.code(f"    {in_var}, {all_kwargs}")
         ctx.code(")")
