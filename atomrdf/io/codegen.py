@@ -675,6 +675,55 @@ def _handle_operation(ctx, step):
 # Math operations                                                      #
 # ------------------------------------------------------------------ #
 
+# Maps dotpath tail segments (last one or two segments) to
+# (atomrdf.properties function name, import needed)
+_DOTPATH_PROPERTY_MAP = {
+    "number_of_atoms": "get_number_of_atoms",
+    "cell_volume": "get_cell_volume",
+    "volume": "get_cell_volume",
+    "chemical_composition": "get_chemical_composition",
+    "simulation_cell_length": "get_simulation_cell_length",
+    "simulation_cell_vector": "get_simulation_cell_vector",
+    "simulation_cell_angle": "get_simulation_cell_angle",
+}
+
+
+def _dotpath_to_call(ctx, provenance, dotpath: str, prop_uri: str = None):
+    """Convert a dotpath string into a ``atomrdf.properties`` call expression.
+
+    Given e.g. ``"Fe_ref_relaxed.simulation_cell.number_of_atoms"`` and the
+    property's KG URI, looks up the owning sample via the KG's
+    ``ASMO.hasCalculatedProperty`` reverse link and emits e.g.
+    ``get_number_of_atoms(atoms_746a1e96)``.
+
+    Returns ``None`` if the dotpath cannot be mapped.
+    """
+    parts = dotpath.split(".")
+    if len(parts) < 2:
+        return None
+
+    tail = parts[-1]
+    func_name = _DOTPATH_PROPERTY_MAP.get(tail)
+    if func_name is None:
+        return None
+
+    atoms_var = None
+
+    # Use the KG ownership link: find which sample owns this property.
+    # _resolve_dotpath() stored: sample_uri ASMO.hasCalculatedProperty prop_uri
+    if prop_uri:
+        owner = provenance.kg.graph.value(
+            None, ASMO.hasCalculatedProperty, URIRef(prop_uri)
+        )
+        if owner is not None:
+            atoms_var = ctx.uri_to_var.get(str(owner))
+
+    if atoms_var is None:
+        return None
+
+    ctx.add_import(f"from atomrdf.properties import {func_name}")
+    return f"{func_name}({atoms_var})"
+
 
 def _handle_math_step(provenance, ctx, step):
     """Generate arithmetic code for a math operation."""
@@ -696,6 +745,16 @@ def _handle_math_step(provenance, ctx, step):
         key = str(operand)
         if key in ctx.uri_to_var:
             return ctx.uri_to_var[key]
+        # Check for a dotpath comment stored by the workflow parser.
+        # e.g. rdfs:comment = "Fe_ref_relaxed.simulation_cell.number_of_atoms"
+        from rdflib import RDFS as _RDFS
+
+        comment_node = provenance.kg.graph.value(URIRef(key), _RDFS.comment)
+        if comment_node is not None:
+            dotpath = str(comment_node)
+            call = _dotpath_to_call(ctx, provenance, dotpath, prop_uri=key)
+            if call is not None:
+                return call
         # Fallback: use stored value from graph
         val_node = provenance.kg.graph.value(URIRef(key), ASMO.hasValue)
         if val_node is not None:
