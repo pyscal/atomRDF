@@ -16,6 +16,14 @@ from atomrdf.datamodels.workflow.operations import (
     Translate,
     Shear,
 )
+from atomrdf.datamodels.workflow.math_operations import (
+    Subtraction,
+    Addition,
+    Multiplication,
+    Division,
+    Exponentiation,
+    MATH_OPERATION_MAP,
+)
 from atomrdf import KnowledgeGraph
 from rdflib import URIRef, Literal, Namespace, XSD
 
@@ -28,6 +36,11 @@ AddAtom.model_rebuild()
 Rotate.model_rebuild()
 Translate.model_rebuild()
 Shear.model_rebuild()
+Subtraction.model_rebuild()
+Addition.model_rebuild()
+Multiplication.model_rebuild()
+Division.model_rebuild()
+Exponentiation.model_rebuild()
 
 # Mapping of operation method names to their classes
 OPERATION_MAP = {
@@ -51,6 +64,8 @@ class WorkflowParser:
     - Workflows/Simulations
     - Operations (transformations between samples: DeleteAtom, SubstituteAtom,
       AddAtom, Rotate, Translate, Shear)
+    - Math operations (ASMO arithmetic: Subtraction, Addition, Multiplication,
+      Division, Exponentiation)
 
     Attributes
     ----------
@@ -60,6 +75,12 @@ class WorkflowParser:
         Decimal precision for hash computation
     sample_map : dict
         Maps original sample IDs to resolved URIs
+    property_map : dict
+        Maps user-defined property IDs (from YAML 'id' fields on
+        calculated_property / input_parameter / output_parameter entries) to
+        their generated KG URI strings.  Built incrementally as workflows and
+        math operations are parsed, so later math_operation entries can
+        reference earlier properties by their local ID.
     debug : bool
         If True, print debug messages during parsing
     hash_threshold : int or None
@@ -93,7 +114,11 @@ class WorkflowParser:
         self.debug = debug
         self.hash_threshold = hash_threshold
         self.sample_map: Dict[str, str] = {}
+        self.property_map: Dict[str, str] = {}
         self._base_dir: Optional[Path] = None
+        # Raw YAML dicts keyed by sample id, used for dotpath resolution
+        self._raw_sample_data: Dict[str, dict] = {}
+        self._dotpath_cache: Dict[str, str] = {}
 
     def _miller_bravais_to_cartesian(self, uvtw: List[float]) -> List[float]:
         """
@@ -415,6 +440,8 @@ class WorkflowParser:
             # Resolve file_path references in atom_attribute before any processing
             sample_data = self._resolve_atom_attribute_from_file(sample_data)
             original_id = sample_data.get("id", "unknown")
+            # Store a copy of the raw YAML dict for later dotpath resolution
+            self._raw_sample_data[original_id] = sample_data
 
             # Normalise simulation_cell.vector if present
             simcell = sample_data.get("simulation_cell")
@@ -562,12 +589,51 @@ class WorkflowParser:
                             "associate_to_sample"
                         ] = sample_list
 
+            if "output_parameter" in workflow_data:
+                for count, prop in enumerate(workflow_data["output_parameter"]):
+                    if "associate_to_sample" in prop:
+                        sample_list = [
+                            self.sample_map.get(s, s)
+                            for s in prop["associate_to_sample"]
+                        ]
+                        workflow_data["output_parameter"][count][
+                            "associate_to_sample"
+                        ] = sample_list
+
+            # Capture user-provided 'id' fields on properties so they can be
+            # registered in property_map after to_graph assigns KG URIs.
+            user_prop_ids: Dict[tuple, str] = {}
+            for prop_key in (
+                "calculated_property",
+                "input_parameter",
+                "output_parameter",
+            ):
+                for idx, prop_data in enumerate(workflow_data.get(prop_key, []) or []):
+                    orig_id = (
+                        prop_data.get("id") if isinstance(prop_data, dict) else None
+                    )
+                    if orig_id:
+                        user_prop_ids[(prop_key, idx)] = orig_id
+
             # Create the Simulation object
             sim = Simulation(**workflow_data)
 
             # Add to knowledge graph
             sim_uri = sim.to_graph(self.kg)
             workflow_uris.append(sim_uri)
+
+            # Register property IDs in property_map now that to_graph has
+            # assigned KG URIs (Property.to_graph sets self.id in-place).
+            for prop_key, prop_attr in [
+                ("calculated_property", "calculated_property"),
+                ("input_parameter", "input_parameter"),
+                ("output_parameter", "output_parameter"),
+            ]:
+                prop_list = getattr(sim, prop_attr, None) or []
+                for idx, prop in enumerate(prop_list):
+                    key = (prop_key, idx)
+                    if key in user_prop_ids and prop.id:
+                        self.property_map[user_prop_ids[key]] = prop.id
 
             if self.debug:
                 print(f"Workflow added: {sim_uri}")
@@ -657,6 +723,222 @@ class WorkflowParser:
 
         return operation_uris
 
+    def _resolve_dotpath(self, operand_str: str) -> Optional[str]:
+        """Resolve a dotpath operand like ``Fe_ref_relaxed.simulation_cell.number_of_atoms``.
+
+        If the first segment is a known sample id, walks the raw YAML data along
+        the remaining segments (supports ``field[index]`` for list access) and
+        creates a ``property:`` node in the KG linked to that sample via
+        ``ASMO.hasCalculatedProperty``.  The URI is cached so repeated
+        references return the same node.
+
+        Parameters
+        ----------
+        operand_str:
+            A dotted path string whose first segment is a sample id.
+
+        Returns
+        -------
+        str or None
+            The ``property:`` URI string, or ``None`` if the path cannot be
+            resolved.
+        """
+        import re as _re
+        from rdflib import (
+            URIRef as _URIRef,
+            Literal as _Literal,
+            XSD as _XSD,
+            RDFS as _RDFS,
+        )
+
+        # Return cached result if already resolved
+        if operand_str in self._dotpath_cache:
+            return self._dotpath_cache[operand_str]
+
+        parts = operand_str.split(".")
+        if len(parts) < 2:
+            return None
+
+        sample_id = parts[0]
+        raw = self._raw_sample_data.get(sample_id)
+        if raw is None:
+            return None
+
+        # Walk the remaining path segments
+        current = raw
+        for segment in parts[1:]:
+            # Support field[index] syntax
+            m = _re.match(r"^(\w+)\[(\d+)\]$", segment)
+            if m:
+                key, idx = m.group(1), int(m.group(2))
+                if not isinstance(current, dict) or key not in current:
+                    return None
+                seq = current[key]
+                if not isinstance(seq, (list, tuple)) or idx >= len(seq):
+                    return None
+                current = seq[idx]
+            else:
+                if not isinstance(current, dict) or segment not in current:
+                    return None
+                current = current[segment]
+
+        # current should now be a scalar
+        if not isinstance(current, (int, float)):
+            return None
+
+        value = float(current)
+
+        # Build a human-readable label from the last path segment
+        last_seg = _re.match(r"^(\w+)(\[\d+\])?$", parts[-1])
+        label = (
+            last_seg.group(1).replace("_", " ").title().replace(" ", "")
+            if last_seg
+            else parts[-1]
+        )
+        # e.g. "number_of_atoms" -> "NumberOfAtoms"
+
+        # Create a property node in the KG
+        prop_id = f"property:{label.lower()}_{__import__('uuid').uuid4()}"
+        from atomrdf.namespace import ASMO as _ASMO, PROV as _PROV
+
+        prop_uri = self.kg.create_node(prop_id, _ASMO.CalculatedProperty, label=label)
+        self.kg.add(
+            (_URIRef(prop_id), _ASMO.hasValue, _Literal(value, datatype=_XSD.float))
+        )
+        # Store the dotpath as a comment so code-generation can recover it
+        self.kg.add(
+            (
+                _URIRef(prop_id),
+                _RDFS.comment,
+                _Literal(operand_str, datatype=_XSD.string),
+            )
+        )
+
+        # Link to its owning sample
+        sample_uri = self.sample_map.get(sample_id)
+        if sample_uri:
+            self.kg.add(
+                (_URIRef(sample_uri), _ASMO.hasCalculatedProperty, _URIRef(prop_id))
+            )
+
+        # Register in property_map and cache
+        self.property_map[operand_str] = prop_id
+        self._dotpath_cache[operand_str] = prop_id
+
+        if self.debug:
+            print(f"Dotpath resolved: {operand_str} -> {prop_id} (value={value})")
+
+        return prop_id
+
+    def parse_math_operations(
+        self, math_op_data_list: List[Dict[str, Any]]
+    ) -> List[str]:
+        """
+        Parse math-operation entries (ASMO arithmetic activities).
+
+        Each entry must have a ``type`` key (one of ``Subtraction``,
+        ``Addition``, ``Multiplication``, ``Division``, ``Exponentiation``).
+        Operands may be local property-ID strings (resolved via
+        ``self.property_map``) or numeric scalars.  If the result carries an
+        ``id`` field it is registered in ``property_map`` so subsequent
+        math_operation entries can use it as an operand.
+
+        Parameters
+        ----------
+        math_op_data_list : list of dict
+
+        Returns
+        -------
+        list of str
+            List of math-operation activity-ID strings created.
+
+        Raises
+        ------
+        ValueError
+            If the ``type`` field is missing or unrecognised.
+        """
+        math_op_uris = []
+
+        for i, mo_data in enumerate(math_op_data_list):
+            op_type = mo_data.get("type")
+            if not op_type:
+                if self.debug:
+                    print(f"Skipping math_operation {i + 1}: no type specified")
+                continue
+
+            op_class = MATH_OPERATION_MAP.get(op_type)
+            if not op_class:
+                raise ValueError(
+                    f"Unknown math operation type: {op_type}. "
+                    f"Available types: {list(MATH_OPERATION_MAP.keys())}"
+                )
+
+            mo_data = dict(mo_data)  # don't mutate the original
+            mo_data.pop("type", None)
+
+            # Capture the result's user-provided id before building the object
+            result_data = mo_data.get("result")
+            result_user_id = (
+                result_data.get("id") if isinstance(result_data, dict) else None
+            )
+
+            # Resolve single-value operand string references
+            for operand_key in (
+                "minuend",
+                "subtrahend",
+                "dividend",
+                "divisor",
+                "base",
+                "exponent",
+            ):
+                if operand_key in mo_data and isinstance(mo_data[operand_key], str):
+                    val = mo_data[operand_key]
+                    # Try property_map first, then dotpath resolution
+                    if val in self.property_map:
+                        mo_data[operand_key] = self.property_map[val]
+                    elif "." in val:
+                        resolved = self._resolve_dotpath(val)
+                        if resolved is not None:
+                            mo_data[operand_key] = resolved
+
+            # Resolve list operands
+            for operand_key in ("addend", "factor"):
+                if operand_key in mo_data:
+                    resolved = []
+                    for v in mo_data[operand_key]:
+                        if isinstance(v, str):
+                            if v in self.property_map:
+                                resolved.append(self.property_map[v])
+                            elif "." in v:
+                                dp = self._resolve_dotpath(v)
+                                resolved.append(dp if dp is not None else v)
+                            else:
+                                resolved.append(v)
+                        else:
+                            resolved.append(v)
+                    mo_data[operand_key] = resolved
+
+            # Resolve associate_to_sample on the result
+            if isinstance(result_data, dict) and "associate_to_sample" in result_data:
+                mo_data["result"] = dict(result_data)
+                mo_data["result"]["associate_to_sample"] = [
+                    self.sample_map.get(s, s)
+                    for s in result_data["associate_to_sample"]
+                ]
+
+            math_op = op_class(**mo_data)
+            op_uri = math_op.to_graph(self.kg)
+            math_op_uris.append(op_uri)
+
+            # Register result in property_map using the user's id
+            if result_user_id and math_op.result and math_op.result.id:
+                self.property_map[result_user_id] = math_op.result.id
+
+            if self.debug:
+                print(f"Math operation added ({op_type}): {op_uri}")
+
+        return math_op_uris
+
     def parse(self, data: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
         """
         Parse complete workflow data structure.
@@ -706,6 +988,7 @@ class WorkflowParser:
             "sample_map": {},
             "workflow_uris": [],
             "operation_uris": [],
+            "math_operation_uris": [],
             "dataset_uri": None,
         }
 
@@ -727,6 +1010,13 @@ class WorkflowParser:
         # Backwards compatibility: also check for 'activity' key
         elif "activity" in data:
             result["operation_uris"] = self.parse_operations(data["activity"])
+
+        # Parse math operations (processed after workflows so property_map is
+        # already populated with properties produced by simulations)
+        if "math_operation" in data:
+            result["math_operation_uris"] = self.parse_math_operations(
+                data["math_operation"]
+            )
 
         return result
 

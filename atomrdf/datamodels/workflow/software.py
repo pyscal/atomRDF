@@ -45,8 +45,5 @@ class SoftwareAgent(BaseModel, TemplateMixin):
 
     @classmethod
     def from_graph(cls, graph, id):
-        uri = graph.value(id, RDFS.type)
         label = graph.value(id, RDFS.label)
-        cls.uri = str(uri) if uri else None
-        cls.label = str(label) if label else None
-        return cls
+        return cls(uri=str(id), label=str(label) if label else None)
