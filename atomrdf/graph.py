@@ -276,8 +276,10 @@ class KnowledgeGraph:
             # Clean up structure store files referenced by this graph
             # Query for all files referenced via CMSO.hasPath
             file_paths = set()
-            for triple in self.triples((None, CMSO.hasPath, None)):
-                filepath = triple[2].toPython()
+            for row in self.graph.query(
+                "SELECT ?path WHERE { ?s <http://purls.helmholtz-metadaten.de/cmso/hasPath> ?path }"
+            ):
+                filepath = str(row.path)
                 if filepath:
                     full_path = os.path.join(
                         self.structure_store, os.path.basename(filepath)
@@ -1013,31 +1015,41 @@ class KnowledgeGraph:
         """
         Number of samples in the Graph
         """
-
-        return len([x for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))])
+        res = list(
+            self.graph.query(
+                "SELECT (COUNT(?s) AS ?n) WHERE { ?s a <http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample> }"
+            )
+        )
+        return int(res[0][0]) if res else 0
 
     @property
     def sample_ids(self):
         """
         Returns a list of all Samples in the graph
         """
-
-        return [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
+        return [
+            row[0]
+            for row in self.graph.query(
+                "SELECT ?s WHERE { ?s a <http://purls.helmholtz-metadaten.de/cmso/AtomicScaleSample> }"
+            )
+        ]
 
     @property
     def sample_names(self):
         """
         Returns a list of all Sample names in the graph.
         """
-        samples = [x[0] for x in self.triples((None, RDF.type, CMSO.AtomicScaleSample))]
-        samples_names = []
-        for sample in samples:
-            sample_name = self.value(sample, RDFS.label)
-            if sample_name is not None:
-                samples_names.append(sample_name.toPython())
-            else:
-                samples_names.append(sample.toPython())
-        return samples_names
+        sparql = """
+PREFIX cmso: <http://purls.helmholtz-metadaten.de/cmso/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?s ?label WHERE {
+  ?s a cmso:AtomicScaleSample .
+  OPTIONAL { ?s rdfs:label ?label }
+}"""
+        return [
+            str(row.label) if row.label is not None else str(row.s)
+            for row in self.graph.query(sparql)
+        ]
 
     @property
     def properties(self):
@@ -1063,39 +1075,40 @@ class KnowledgeGraph:
         ):
             return self._properties_cache
 
-        _ASMO_NS = "http://purls.helmholtz-metadaten.de/asmo/"
-        _SKIP_TYPES = {"InputParameter"}
+        # Use a single SPARQL query — much faster than Python-level triple
+        # iteration on large Oxigraph stores (avoids per-triple Python overhead).
+        # Property nodes use a bare "property:" URI scheme (not a full IRI).
+        sparql = """
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX asmo: <http://purls.helmholtz-metadaten.de/asmo/>
 
-        seen = set()
+SELECT ?prop ?typeURI ?label ?value ?unitURI WHERE {
+  ?prop rdf:type ?typeURI .
+  FILTER(STRSTARTS(STR(?typeURI), "http://purls.helmholtz-metadaten.de/asmo/"))
+  FILTER(STRSTARTS(STR(?prop), "property:"))
+  FILTER(STRAFTER(STR(?typeURI), "http://purls.helmholtz-metadaten.de/asmo/") != "InputParameter")
+  OPTIONAL { ?prop rdfs:label ?label }
+  OPTIONAL { ?prop asmo:hasValue ?value }
+  OPTIONAL { ?prop asmo:hasUnit ?unitURI }
+}
+"""
+        _ASMO_NS = "http://purls.helmholtz-metadaten.de/asmo/"
         rows = []
-        for _, _, type_uri in self.graph.triples((None, RDF.type, None)):
-            type_str = str(type_uri)
-            if not type_str.startswith(_ASMO_NS):
-                continue
-            type_name = type_str[len(_ASMO_NS) :]
-            if type_name in _SKIP_TYPES:
-                continue
-            for prop_uri in self.graph.subjects(RDF.type, type_uri):
-                if prop_uri in seen:
-                    continue
-                if not str(prop_uri).startswith("property:"):
-                    continue
-                seen.add(prop_uri)
-                label_node = self.graph.value(prop_uri, RDFS.label)
-                label = str(label_node) if label_node is not None else type_name
-                val_node = self.graph.value(prop_uri, ASMO.hasValue)
-                value = float(val_node) if val_node is not None else None
-                unit_node = self.graph.value(prop_uri, ASMO.hasUnit)
-                unit = str(unit_node).split("/")[-1] if unit_node is not None else None
-                rows.append(
-                    {
-                        "uri": str(prop_uri),
-                        "type": type_name,
-                        "label": label,
-                        "value": value,
-                        "unit": unit,
-                    }
-                )
+        for row in self.graph.query(sparql):
+            type_name = str(row.typeURI)[len(_ASMO_NS) :]
+            label = str(row.label) if row.label is not None else type_name
+            value = float(row.value) if row.value is not None else None
+            unit = str(row.unitURI).split("/")[-1] if row.unitURI is not None else None
+            rows.append(
+                {
+                    "uri": str(row.prop),
+                    "type": type_name,
+                    "label": label,
+                    "value": value,
+                    "unit": unit,
+                }
+            )
 
         df = pd.DataFrame(rows, columns=["uri", "type", "label", "value", "unit"])
         self._properties_cache = df
@@ -1118,11 +1131,31 @@ class KnowledgeGraph:
         list of str
             Matching property URIs.
         """
-        df = self.properties
-        mask = df["type"].str.lower() == property_type.lower()
-        if label is not None:
-            mask &= df["label"].str.lower() == label.lower()
-        return df.loc[mask, "uri"].tolist()
+        # Run a targeted SPARQL query instead of building the full properties
+        # DataFrame — much faster when you only need one type/label combination.
+        _ASMO_NS = "http://purls.helmholtz-metadaten.de/asmo/"
+        type_uri = f"{_ASMO_NS}{property_type}"
+
+        if label is None:
+            sparql = f"""
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?prop WHERE {{
+  ?prop rdf:type <{type_uri}> .
+  FILTER(STRSTARTS(STR(?prop), "property:"))
+}}
+"""
+        else:
+            sparql = f"""
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?prop WHERE {{
+  ?prop rdf:type <{type_uri}> .
+  FILTER(STRSTARTS(STR(?prop), "property:"))
+  ?prop rdfs:label ?lbl .
+  FILTER(LCASE(STR(?lbl)) = "{label.lower()}")
+}}
+"""
+        return [str(row.prop) for row in self.graph.query(sparql)]
 
     def invalidate_cache(self):
         """Invalidate cached derived data (e.g. to force a rebuild)."""
@@ -1280,8 +1313,10 @@ class KnowledgeGraph:
         # Decide: is this a sample or a property?
         from atomrdf.namespace import ASMO as _ASMO
 
-        is_property = any(
-            self.triples((None, _ASMO.hasCalculatedProperty, URIRef(uri)))
+        is_property = bool(
+            self.graph.query(
+                f"ASK {{ ?s <{str(_ASMO.hasCalculatedProperty)}> <{uri}> }}"
+            )
         )
         if is_property:
             return Provenance.from_property(self, uri)

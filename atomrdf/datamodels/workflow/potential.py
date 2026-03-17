@@ -121,8 +121,12 @@ potential_map = {
     "LJ": LennardJonesPotential,
     "HDNNP": MachineLearningPotential,
     "eam": EmbeddedAtomModel,
+    "eam/alloy": EmbeddedAtomModel,
+    "eam/fs": EmbeddedAtomModel,
     "meam": ModifiedEmbeddedAtomModel,
     "pace": MachineLearningPotential,
     "lj": LennardJonesPotential,
     "hdnnp": MachineLearningPotential,
+    "grace": MachineLearningPotential,
+    "GRACE": MachineLearningPotential,
 }
