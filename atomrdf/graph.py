@@ -1116,7 +1116,7 @@ SELECT ?prop ?typeURI ?label ?value ?unitURI WHERE {
         return df
 
     def search_property(self, property_type, label=None):
-        """Return URIs of properties matching the given type and optional label.
+        """Return properties matching the given type and optional label.
 
         Parameters
         ----------
@@ -1128,34 +1128,53 @@ SELECT ?prop ?typeURI ?label ?value ?unitURI WHERE {
 
         Returns
         -------
-        list of str
-            Matching property URIs.
+        list of tuple
+            Each tuple is ``(iri, label, chemical_composition)`` where
+            ``chemical_composition`` is a dict mapping element symbol → ratio
+            (e.g. ``{"Fe": 1.0}``), or an empty dict if no composition is found.
         """
-        # Run a targeted SPARQL query instead of building the full properties
-        # DataFrame — much faster when you only need one type/label combination.
         _ASMO_NS = "http://purls.helmholtz-metadaten.de/asmo/"
+        _CMSO_NS = "http://purls.helmholtz-metadaten.de/cmso/"
         type_uri = f"{_ASMO_NS}{property_type}"
+        label_filter = (
+            f'  ?prop rdfs:label ?lbl .\n  FILTER(LCASE(STR(?lbl)) = "{label.lower()}")'
+            if label is not None
+            else ""
+        )
 
-        if label is None:
-            sparql = f"""
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT ?prop WHERE {{
-  ?prop rdf:type <{type_uri}> .
-  FILTER(STRSTARTS(STR(?prop), "property:"))
-}}
-"""
-        else:
-            sparql = f"""
+        sparql = f"""
 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?prop WHERE {{
+PREFIX asmo: <{_ASMO_NS}>
+PREFIX cmso: <{_CMSO_NS}>
+SELECT ?prop ?label ?symbol ?ratio WHERE {{
   ?prop rdf:type <{type_uri}> .
   FILTER(STRSTARTS(STR(?prop), "property:"))
-  ?prop rdfs:label ?lbl .
-  FILTER(LCASE(STR(?lbl)) = "{label.lower()}")
+  OPTIONAL {{ ?prop rdfs:label ?label }}
+{label_filter}
+  OPTIONAL {{
+    ?sample asmo:hasCalculatedProperty ?prop .
+    ?sample cmso:hasSpecies ?species .
+    ?species cmso:hasElement ?element .
+    ?element cmso:hasChemicalSymbol ?symbol .
+    ?element cmso:hasElementRatio ?ratio .
+  }}
 }}
 """
-        return [str(row.prop) for row in self.graph.query(sparql)]
+        # Collect rows and group by property URI
+        from collections import defaultdict
+        groups = defaultdict(lambda: {"label": None, "composition": {}})
+        for row in self.graph.query(sparql):
+            uri = str(row.prop)
+            if row.label is not None:
+                groups[uri]["label"] = str(row.label)
+            if row.symbol is not None and row.ratio is not None:
+                groups[uri]["composition"][str(row.symbol)] = float(row.ratio)
+
+        return [
+            (uri, data["label"] if data["label"] is not None else property_type, data["composition"])
+            for uri, data in groups.items()
+        ]
 
     def invalidate_cache(self):
         """Invalidate cached derived data (e.g. to force a rebuild)."""
