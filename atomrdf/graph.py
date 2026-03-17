@@ -1163,6 +1163,7 @@ SELECT ?prop ?label ?symbol ?ratio WHERE {{
 """
         # Collect rows and group by property URI
         from collections import defaultdict
+
         groups = defaultdict(lambda: {"label": None, "composition": {}})
         for row in self.graph.query(sparql):
             uri = str(row.prop)
@@ -1172,7 +1173,11 @@ SELECT ?prop ?label ?symbol ?ratio WHERE {{
                 groups[uri]["composition"][str(row.symbol)] = float(row.ratio)
 
         return [
-            (uri, data["label"] if data["label"] is not None else property_type, data["composition"])
+            (
+                uri,
+                data["label"] if data["label"] is not None else property_type,
+                data["composition"],
+            )
             for uri, data in groups.items()
         ]
 

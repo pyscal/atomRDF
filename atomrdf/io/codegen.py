@@ -519,7 +519,7 @@ def _ensure_structure(ctx, sample_id, atoms):
         )
 
 
-def _emit_input_params(ctx, step):
+def _emit_input_params(ctx, step, as_doc_only=False):
     """Emit stored input-parameter values as named variables and return
     a list of ``"name=var"`` strings ready to splice into a call.
 
@@ -528,9 +528,23 @@ def _emit_input_params(ctx, step):
 
         pressure = 0.0       # Pressure (PA)
         temperature = 300.0  # Temperature (K)
+
+    Parameters
+    ----------
+    as_doc_only : bool
+        When True, emit the variables for documentation purposes only and
+        return an empty list (i.e. do not inject them into the function call).
+        This is used when the handler already knows its interface (e.g. LAMMPS
+        pair_style/pair_coeff) so that unrelated parameters from the graph
+        (e.g. VASP NSW/EDIFF on a LAMMPS step) are shown but not passed in.
     """
     extra_kwargs = []
-    for p in step.get("input_parameters") or []:
+    params = step.get("input_parameters") or []
+    if not params:
+        return extra_kwargs
+    if as_doc_only:
+        ctx.code("# Recorded input parameters (for reference):")
+    for p in params:
         raw_label = p.get("label") or "param"
         value = p.get("value")
         unit = p.get("unit") or ""
@@ -539,7 +553,8 @@ def _emit_input_params(ctx, step):
         var = ctx.make_var(var)
         comment = f"  # {raw_label} ({unit})" if unit else f"  # {raw_label}"
         ctx.code(f"{var} = {repr(value)}{comment}")
-        extra_kwargs.append(f"{var}={var}")
+        if not as_doc_only:
+            extra_kwargs.append(f"{var}={var}")
     return extra_kwargs
 
 
@@ -570,8 +585,13 @@ def _handle_simulation(provenance, ctx, step):
 
     ctx.add_import(handler.import_line)
 
-    # Emit stored input parameters as overridable variables
-    extra_kwargs = _emit_input_params(ctx, step)
+    # Emit stored input parameters as overridable variables.
+    # If the handler already declares its interface via user_inputs (e.g. LAMMPS
+    # pair_style/pair_coeff), emit KG params for documentation only — do NOT
+    # inject them into the function call. This prevents unrelated parameters
+    # (e.g. VASP NSW/EDIFF) from being passed to a LAMMPS function.
+    as_doc_only = bool(handler.user_inputs)
+    extra_kwargs = _emit_input_params(ctx, step, as_doc_only=as_doc_only)
 
     # Build full kwargs string: handler defaults + graph-sourced params
     all_kwargs = handler.call_kwargs
