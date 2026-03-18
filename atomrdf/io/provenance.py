@@ -682,7 +682,9 @@ class Provenance:
             ensemble = getattr(sim, "thermodynamic_ensemble", None)
             if ensemble is not None:
                 step["algorithm"] = (
-                    ensemble.basename if hasattr(ensemble, "basename") else str(ensemble).split("/")[-1]
+                    ensemble.basename
+                    if hasattr(ensemble, "basename")
+                    else str(ensemble).split("/")[-1]
                 )
 
         # Input parameters
