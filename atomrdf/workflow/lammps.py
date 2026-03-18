@@ -310,18 +310,15 @@ def run_md_nvt(
     # Equilibration
     lmp.command(f"run {int(n_equilibration_steps)}")
 
-    # Production: accumulate averages
+    # Production: accumulate averages and write to file
+    avg_file = "tmp_nvt_avg.txt"
     lmp.command("variable pe_atom equal pe/atoms")
     lmp.command("variable vol_atom equal vol/atoms")
     lmp.command(
         f"fix avg_pe all ave/time 1 {int(n_production_steps)} {int(n_production_steps)}"
-        f" v_pe_atom v_vol_atom"
+        f" v_pe_atom v_vol_atom file {avg_file}"
     )
     lmp.command(f"run {int(n_production_steps)}")
-
-    mean_energy_per_atom = lmp.extract_fix("avg_pe", 0, 1)[0]
-    mean_volume_per_atom = lmp.extract_fix("avg_pe", 0, 1)[1]
-
     lmp.command("unfix avg_pe")
     lmp.command("unfix ensemble")
 
@@ -332,6 +329,13 @@ def run_md_nvt(
     lmp.command("run 0")
     lmp.command("undump final")
     lmp.close()
+
+    # Read averages from file — last data line has the final accumulated values
+    with open(avg_file) as fh:
+        lines = [ln for ln in fh if not ln.startswith("#")]
+    vals = lines[-1].split()
+    mean_energy_per_atom = float(vals[1])
+    mean_volume_per_atom = float(vals[2])
 
     final_structure = read(dump_file, format="lammps-dump-text")
     return final_structure, mean_energy_per_atom, mean_volume_per_atom
@@ -420,18 +424,15 @@ def run_md_npt(
     # Equilibration
     lmp.command(f"run {int(n_equilibration_steps)}")
 
-    # Production: accumulate averages
+    # Production: accumulate averages and write to file
+    avg_file = "tmp_npt_avg.txt"
     lmp.command("variable pe_atom equal pe/atoms")
     lmp.command("variable vol_atom equal vol/atoms")
     lmp.command(
         f"fix avg_npt all ave/time 1 {int(n_production_steps)} {int(n_production_steps)}"
-        f" v_pe_atom v_vol_atom"
+        f" v_pe_atom v_vol_atom file {avg_file}"
     )
     lmp.command(f"run {int(n_production_steps)}")
-
-    mean_energy_per_atom = lmp.extract_fix("avg_npt", 0, 1)[0]
-    mean_volume_per_atom = lmp.extract_fix("avg_npt", 0, 1)[1]
-
     lmp.command("unfix avg_npt")
     lmp.command("unfix ensemble")
 
@@ -442,6 +443,13 @@ def run_md_npt(
     lmp.command("run 0")
     lmp.command("undump final")
     lmp.close()
+
+    # Read averages from file — last data line has the final accumulated values
+    with open(avg_file) as fh:
+        lines = [ln for ln in fh if not ln.startswith("#")]
+    vals = lines[-1].split()
+    mean_energy_per_atom = float(vals[1])
+    mean_volume_per_atom = float(vals[2])
 
     final_structure = read(dump_file, format="lammps-dump-text")
     return final_structure, mean_energy_per_atom, mean_volume_per_atom
