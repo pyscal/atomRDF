@@ -79,8 +79,11 @@ QuantumESP DFT                  AtomicPosition          —                     
 import os
 import re
 from collections import OrderedDict
+import importlib
+import inspect
 from dataclasses import dataclass, field
-from typing import Optional
+from functools import lru_cache
+from typing import Optional, FrozenSet
 
 from rdflib import URIRef, RDFS
 
@@ -110,12 +113,12 @@ class WorkflowNode:
                           False → ``ecoh, vol = func(in, ...)``
       user_inputs       – {param_name: description} added to script header
       call_kwargs       – extra keyword-args string passed after the atoms arg
-      forward_kg_params – frozenset of sanitized parameter names (matching
-                          _sanitize(label)) that should be forwarded from the
-                          KG into the function call. Other KG params are still
-                          emitted as variables for user reference but are NOT
-                          injected into the call. An empty set means no KG
-                          params are forwarded (safe default).
+
+    KG input parameters are forwarded into the generated call automatically
+    based on the real function signature (via ``_accepted_kg_params``).  No
+    manual whitelist is needed: if the target function accepts a parameter
+    whose sanitized name matches a KG-stored InputParameter label, it is
+    forwarded; otherwise it is emitted as a reference variable only.
     """
 
     note: str
@@ -128,7 +131,6 @@ class WorkflowNode:
     returns_structure: bool = True
     user_inputs: dict = field(default_factory=dict)
     call_kwargs: str = ""
-    forward_kg_params: frozenset = field(default_factory=frozenset)  # sanitized param names to forward
 
 
 # Entries are checked in order; the first match wins.
@@ -192,7 +194,6 @@ _DISPATCH_TABLE = [
             "pair_coeff": "LAMMPS pair coefficients",
         },
         call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
-        forward_kg_params=frozenset({"temperature"}),
     ),
     # --- MolecularDynamics: NPT (isothermal-isobaric) ---------------
     WorkflowNode(
@@ -208,7 +209,6 @@ _DISPATCH_TABLE = [
             "pair_coeff": "LAMMPS pair coefficients",
         },
         call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
-        forward_kg_params=frozenset({"temperature", "pressure"}),
     ),
     # --- MolecularStatics with cell relaxation ----------------------
     WorkflowNode(
@@ -528,43 +528,73 @@ def _ensure_structure(ctx, sample_id, atoms):
         )
 
 
-def _emit_input_params(ctx, step, forward_kg_params=frozenset()):
+@lru_cache(maxsize=None)
+def _accepted_kg_params(import_line: str, func_name: str):
+    """Return the set of parameter names the target function accepts.
+
+    Dynamically imports *import_line* and inspects ``func_name``'s signature.
+    Returns:
+      - ``None``   if the function accepts ``**kwargs`` (forward everything)
+      - frozenset  of accepted parameter names (forward only those in the set)
+      - frozenset()  (empty) if the import fails (forward nothing, be safe)
+
+    Results are cached so each (import_line, func_name) pair is only resolved
+    once per process.
+    """
+    try:
+        # Parse "from some.module import func_name"
+        m = re.match(r"from\s+(\S+)\s+import\s+(\S+)", import_line)
+        if m is None:
+            return frozenset()
+        mod = importlib.import_module(m.group(1))
+        fn = getattr(mod, func_name)
+        sig = inspect.signature(fn)
+        # If the function accepts **kwargs, it can absorb anything
+        for p in sig.parameters.values():
+            if p.kind == inspect.Parameter.VAR_KEYWORD:
+                return None  # sentinel: forward all
+        return frozenset(sig.parameters)
+    except Exception:
+        return frozenset()  # safe default: forward nothing on import failure
+
+
+def _emit_input_params(ctx, step, handler):
     """Emit stored input-parameter values as named variables and return
     a list of ``"name=var"`` strings ready to splice into a call.
 
     All ASMO InputParameters for the simulation node are emitted as Python
-    variables so the user can inspect and override them.  Only those whose
-    sanitized name is in *forward_kg_params* are also injected as keyword
-    arguments into the generated function call — preventing unknown params
-    from causing a TypeError at runtime::
+    variables so the user can inspect and override them.  Whether each one
+    is also forwarded as a kwarg into the function call is determined by
+    introspecting the handler's real function signature — no manual whitelist
+    needed::
 
         # Input parameters from KG (override as needed):
         temperature = 560.0  # Temperature (K)
         pressure = 0.0       # Pressure (PA)
-        # → forwarded: run_md_npt(atoms, ..., temperature=temperature, pressure=pressure)
-
-    Parameters
-    ----------
-    forward_kg_params : frozenset
-        Sanitized parameter names (output of ``_sanitize(label)``) that should
-        be forwarded into the function call.  Any KG param whose name is NOT
-        in this set is emitted as a reference variable only.
+        # → run_md_npt(atoms, ..., temperature=temperature, pressure=pressure)
     """
     extra_kwargs = []
     params = step.get("input_parameters") or []
     if not params:
         return extra_kwargs
+
+    # Introspect the target function once to know which names it accepts.
+    # accepted is None  → **kwargs present, forward everything
+    # accepted is frozenset → forward only names in the set
+    accepted = None
+    if handler.import_line and handler.func:
+        accepted = _accepted_kg_params(handler.import_line, handler.func)
+
     ctx.code("# Input parameters from KG (override as needed):")
     for p in params:
         raw_label = p.get("label") or "param"
         value = p.get("value")
         unit = p.get("unit") or ""
         var = _sanitize(raw_label)
-        # Emit once (make_var deduplicates via _var_counts)
         var = ctx.make_var(var)
         comment = f"  # {raw_label} ({unit})" if unit else f"  # {raw_label}"
         ctx.code(f"{var} = {repr(value)}{comment}")
-        if var in forward_kg_params:
+        if accepted is None or var in accepted:
             extra_kwargs.append(f"{var}={var}")
     return extra_kwargs
 
@@ -597,10 +627,9 @@ def _handle_simulation(provenance, ctx, step):
     ctx.add_import(handler.import_line)
 
     # Emit all KG input parameters for this simulation node as overridable
-    # Python variables; only those whitelisted in handler.forward_kg_params
-    # are also injected as kwargs into the call (prevents TypeError from
-    # unknown parameters being passed to a function with a fixed signature).
-    extra_kwargs = _emit_input_params(ctx, step, handler.forward_kg_params)
+    # Python variables; only those accepted by the real function signature are
+    # also injected as kwargs (determined by inspecting the function at runtime).
+    extra_kwargs = _emit_input_params(ctx, step, handler)
 
     # Build full kwargs string: handler defaults + graph-sourced params
     all_kwargs = handler.call_kwargs
