@@ -184,7 +184,7 @@ _DISPATCH_TABLE = [
             "pair_style": "LAMMPS pair style",
             "pair_coeff": "LAMMPS pair coefficients",
         },
-        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff, temperature=temperature",
     ),
     # --- MolecularDynamics: NPT (isothermal-isobaric) ---------------
     WorkflowNode(
@@ -199,7 +199,7 @@ _DISPATCH_TABLE = [
             "pair_style": "LAMMPS pair style",
             "pair_coeff": "LAMMPS pair coefficients",
         },
-        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+        call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff, temperature=temperature, pressure=pressure",
     ),
     # --- MolecularStatics with cell relaxation ----------------------
     WorkflowNode(
