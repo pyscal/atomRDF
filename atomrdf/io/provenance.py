@@ -505,6 +505,15 @@ class Provenance:
             pid = str(self._property_uri)
             if not math_steps:
                 plabel = self.kg.get_label(_uri(pid)) or _short_label(pid)
+                val_n = self.kg.graph.value(_uri(pid), ASMO.hasValue)
+                unit_n = self.kg.graph.value(_uri(pid), ASMO.hasUnit)
+                if val_n is not None:
+                    try:
+                        plabel += f"\n= {float(val_n):.4g}"
+                    except (ValueError, TypeError):
+                        plabel += f"\n= {val_n}"
+                    if unit_n:
+                        plabel += f" {str(unit_n).rsplit('/', 1)[-1]}"
                 if pid not in seen_nodes:
                     dot.node(
                         _gvid(pid),
