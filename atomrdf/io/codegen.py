@@ -110,6 +110,12 @@ class WorkflowNode:
                           False → ``ecoh, vol = func(in, ...)``
       user_inputs       – {param_name: description} added to script header
       call_kwargs       – extra keyword-args string passed after the atoms arg
+      forward_kg_params – frozenset of sanitized parameter names (matching
+                          _sanitize(label)) that should be forwarded from the
+                          KG into the function call. Other KG params are still
+                          emitted as variables for user reference but are NOT
+                          injected into the call. An empty set means no KG
+                          params are forwarded (safe default).
     """
 
     note: str
@@ -122,6 +128,7 @@ class WorkflowNode:
     returns_structure: bool = True
     user_inputs: dict = field(default_factory=dict)
     call_kwargs: str = ""
+    forward_kg_params: frozenset = field(default_factory=frozenset)  # sanitized param names to forward
 
 
 # Entries are checked in order; the first match wins.
@@ -185,6 +192,7 @@ _DISPATCH_TABLE = [
             "pair_coeff": "LAMMPS pair coefficients",
         },
         call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+        forward_kg_params=frozenset({"temperature"}),
     ),
     # --- MolecularDynamics: NPT (isothermal-isobaric) ---------------
     WorkflowNode(
@@ -200,6 +208,7 @@ _DISPATCH_TABLE = [
             "pair_coeff": "LAMMPS pair coefficients",
         },
         call_kwargs="pair_style=pair_style, pair_coeff=pair_coeff",
+        forward_kg_params=frozenset({"temperature", "pressure"}),
     ),
     # --- MolecularStatics with cell relaxation ----------------------
     WorkflowNode(
@@ -519,17 +528,27 @@ def _ensure_structure(ctx, sample_id, atoms):
         )
 
 
-def _emit_input_params(ctx, step):
+def _emit_input_params(ctx, step, forward_kg_params=frozenset()):
     """Emit stored input-parameter values as named variables and return
     a list of ``"name=var"`` strings ready to splice into a call.
 
-    Every ASMO InputParameter stored in the graph for this specific simulation
-    node becomes a Python variable (overridable by the user) and is also
-    forwarded as a keyword argument into the generated function call::
+    All ASMO InputParameters for the simulation node are emitted as Python
+    variables so the user can inspect and override them.  Only those whose
+    sanitized name is in *forward_kg_params* are also injected as keyword
+    arguments into the generated function call — preventing unknown params
+    from causing a TypeError at runtime::
 
+        # Input parameters from KG (override as needed):
+        temperature = 560.0  # Temperature (K)
         pressure = 0.0       # Pressure (PA)
-        temperature = 300.0  # Temperature (K)
-        # → run_md_npt(atoms, ..., temperature=temperature, pressure=pressure)
+        # → forwarded: run_md_npt(atoms, ..., temperature=temperature, pressure=pressure)
+
+    Parameters
+    ----------
+    forward_kg_params : frozenset
+        Sanitized parameter names (output of ``_sanitize(label)``) that should
+        be forwarded into the function call.  Any KG param whose name is NOT
+        in this set is emitted as a reference variable only.
     """
     extra_kwargs = []
     params = step.get("input_parameters") or []
@@ -545,7 +564,8 @@ def _emit_input_params(ctx, step):
         var = ctx.make_var(var)
         comment = f"  # {raw_label} ({unit})" if unit else f"  # {raw_label}"
         ctx.code(f"{var} = {repr(value)}{comment}")
-        extra_kwargs.append(f"{var}={var}")
+        if var in forward_kg_params:
+            extra_kwargs.append(f"{var}={var}")
     return extra_kwargs
 
 
@@ -576,9 +596,11 @@ def _handle_simulation(provenance, ctx, step):
 
     ctx.add_import(handler.import_line)
 
-    # Emit all input parameters stored in the KG for this simulation node as
-    # overridable Python variables, and forward them into the function call.
-    extra_kwargs = _emit_input_params(ctx, step)
+    # Emit all KG input parameters for this simulation node as overridable
+    # Python variables; only those whitelisted in handler.forward_kg_params
+    # are also injected as kwargs into the call (prevents TypeError from
+    # unknown parameters being passed to a function with a fixed signature).
+    extra_kwargs = _emit_input_params(ctx, step, handler.forward_kg_params)
 
     # Build full kwargs string: handler defaults + graph-sourced params
     all_kwargs = handler.call_kwargs
