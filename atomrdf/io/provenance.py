@@ -670,12 +670,20 @@ class Provenance:
                 method.basename if hasattr(method, "basename") else str(method)
             )
 
-        # Algorithm
+        # Algorithm — prefer explicit algorithm, fall back to thermodynamic ensemble
+        # (e.g. MolecularDynamics stores IsothermalIsobaricEnsemble under
+        #  hasStatisticalEnsemble, which the codegen dispatch table matches as algorithm)
         algo = getattr(sim, "algorithm", None)
         if algo is not None:
             step["algorithm"] = (
                 algo.basename if hasattr(algo, "basename") else str(algo)
             )
+        else:
+            ensemble = getattr(sim, "thermodynamic_ensemble", None)
+            if ensemble is not None:
+                step["algorithm"] = (
+                    ensemble.basename if hasattr(ensemble, "basename") else str(ensemble).split("/")[-1]
+                )
 
         # Input parameters
         for p in getattr(sim, "input_parameter", None) or []:
