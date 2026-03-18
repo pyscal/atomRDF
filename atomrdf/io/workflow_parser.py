@@ -478,6 +478,10 @@ class WorkflowParser:
             defect_fields = [
                 "stacking_fault",
                 "grain_boundary",
+                "tilt_grain_boundary",
+                "twist_grain_boundary",
+                "symmetric_tilt_grain_boundary",
+                "mixed_grain_boundary",
                 "vacancy",
                 "interstitial",
                 "substitutional",

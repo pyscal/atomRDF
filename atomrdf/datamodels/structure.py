@@ -786,7 +786,11 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
                         obj.to_graph(graph, sample)
 
                         # If this defect belongs to defect_complex, construct and collect its URI
-                        if self.defect_complex and defect in self.defect_complex.ids:
+                        if (
+                            self.defect_complex
+                            and self.defect_complex.ids
+                            and defect in self.defect_complex.ids
+                        ):
                             # Construct the defect URI (matches the pattern used in defect.to_graph())
                             defect_uri = f"{sample}_{defect_class_names[defect]}"
                             self._defect_complex_ids.append(defect_uri)
