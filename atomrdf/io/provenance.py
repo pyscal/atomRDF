@@ -275,18 +275,6 @@ class Provenance:
                         parts.append(f"{el}{r:.3f}")
                 comp_str = " ".join(parts)
 
-            # Add spacegroup symbol as structure hint
-            material = self.kg.graph.value(_uri(sample_uri), _CMSO.hasMaterial)
-            sg_symbol = None
-            if material is not None:
-                cs = self.kg.graph.value(material, _CMSO.hasStructure)
-                if cs is not None:
-                    sg = self.kg.graph.value(cs, _CMSO.hasSpaceGroupSymbol)
-                    if sg is not None:
-                        sg_symbol = str(sg)
-
-            if sg_symbol:
-                return f"{comp_str}\n({sg_symbol})"
             return comp_str
 
         dot = graphviz.Digraph()
@@ -448,19 +436,30 @@ class Provenance:
                                 fontname="Helvetica",
                                 fontsize="8",
                             )
-                            # If this property is owned by a sample, trace that
-                            # sample's full provenance and render it
-                            from rdflib import URIRef as _URIRef2
-
+                            # If this property is owned by a sample, draw a
+                            # dotted edge from that sample to the property
+                            # diamond.  If the owner is not yet in the graph
+                            # (out-of-chain reference sample), trace its
+                            # provenance and render those steps so the
+                            # simulation that produced it is also visible.
                             owner = self.kg.graph.value(
                                 None, ASMO.hasCalculatedProperty, _uri(item)
                             )
                             if owner is not None:
                                 owner_str = str(owner)
-                                try:
-                                    owner_prov = Provenance.from_sample(self.kg, owner)
-                                    _render_chain_steps(owner_prov._steps)
-                                except Exception:
+                                if owner_str not in seen_nodes:
+                                    # Render provenance of this reference sample
+                                    _owner_prov = Provenance.from_sample(
+                                        self.kg, owner
+                                    )
+                                    _render_chain_steps(
+                                        [
+                                            s
+                                            for s in _owner_prov._steps
+                                            if "result_property" not in s
+                                        ]
+                                    )
+                                    # Fallback if trace was empty
                                     _ensure_sample_node(owner_str)
                                 _add_edge(
                                     _gvid(owner_str),
