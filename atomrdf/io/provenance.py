@@ -442,6 +442,10 @@ class Provenance:
                             # (out-of-chain reference sample), trace its
                             # provenance and render those steps so the
                             # simulation that produced it is also visible.
+                            # If the sub-prov is empty (bare root sample with
+                            # no simulation history), skip creating a new
+                            # disconnected node — a bare orphan would cause a
+                            # spurious second top-level node in the diagram.
                             owner = self.kg.graph.value(
                                 None, ASMO.hasCalculatedProperty, _uri(item)
                             )
@@ -459,16 +463,24 @@ class Provenance:
                                             if "result_property" not in s
                                         ]
                                     )
-                                    # Fallback if trace was empty
-                                    _ensure_sample_node(owner_str)
-                                _add_edge(
-                                    _gvid(owner_str),
-                                    _gvid(item),
-                                    color="#888888",
-                                    fontname="Helvetica",
-                                    fontsize="7",
-                                    style="dotted",
-                                )
+                                    # Only create a bare node as fallback when
+                                    # the sub-prov produced at least one step
+                                    # (i.e. the owner has some simulation
+                                    # history).  If _steps is empty the owner
+                                    # is a pristine imported structure with no
+                                    # provenance — adding it as a bare orphan
+                                    # would create a spurious top-level node.
+                                    if _owner_prov._steps:
+                                        _ensure_sample_node(owner_str)
+                                if owner_str in seen_nodes:
+                                    _add_edge(
+                                        _gvid(owner_str),
+                                        _gvid(item),
+                                        color="#888888",
+                                        fontname="Helvetica",
+                                        fontsize="7",
+                                        style="dotted",
+                                    )
                         _add_edge(
                             _gvid(item),
                             act_gv,
