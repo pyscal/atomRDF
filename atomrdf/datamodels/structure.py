@@ -221,8 +221,9 @@ class Material(BaseModel, TemplateMixin):
             for e, r in composition.items():
                 if e in element_identifiers.keys():
                     element = graph.create_node(
-                        element_identifiers[e], CMSO.ChemicalElement
+                        f"{sample_id}_{e}", CMSO.ChemicalElement
                     )
+                    graph.add((element, RDFS.seeAlso, URIRef(element_identifiers[e])))
                     graph.add((chemical_species, CMSO.hasElement, element))
                     graph.add(
                         (
