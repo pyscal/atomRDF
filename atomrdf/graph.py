@@ -37,7 +37,7 @@ import pickle
 
 from pyscal3.atoms import Atoms
 
-from atomrdf.visualize import visualize_graph, visualize_provenance
+from atomrdf.visualize import visualize_graph, visualize_provenance, to_gexf as _to_gexf
 from atomrdf.ontology import read_ontology
 
 import atomrdf.properties as prp
@@ -642,6 +642,45 @@ class KnowledgeGraph:
             size=size,
             layout=layout,
         )
+
+    def to_gexf(self, output_file, include_literals=False, positions=None, sizes=None, top_n_labels=None, label_overrides=None):
+        """
+        Export the knowledge graph to GEXF format for visualisation in Gephi.
+
+        Nodes are coloured by semantic category:
+
+        - **Sample**      (orange)  — ``cmso:AtomicScaleSample`` instances
+        - **Material**    (purple)  — material description nodes
+        - **Structure**   (blue)    — crystal-structure / unit-cell nodes
+        - **Element**     (green)   — chemical element / species nodes
+        - **Calculation** (red)     — simulation / activity nodes
+        - **Potential**   (gold)    — interatomic potential nodes
+        - **Property**    (teal)    — calculated-property nodes
+        - **Literal**     (l.grey)  — RDF literal values (if included)
+        - **Other**       (grey)    — ontology terms & everything else
+
+        Gephi reads the ``viz:color`` attribute natively.  The ``category``
+        node attribute can additionally be used in Gephi's *Partition* panel.
+
+        Parameters
+        ----------
+        output_file : str
+            Destination path for the ``.gexf`` file.
+        include_literals : bool, optional
+            Whether to add a node for every RDF literal value.  Default is
+            ``False``, which drops literal nodes and their edges, producing a
+            cleaner resource-only graph that is easier to explore in Gephi.
+
+        Returns
+        -------
+        output_file : str
+            The path of the file that was written.
+        """
+        return _to_gexf(self.graph, output_file,
+                        include_literals=include_literals,
+                        positions=positions, sizes=sizes,
+                        top_n_labels=top_n_labels,
+                        label_overrides=label_overrides)
 
     def write(self, filename, format="json-ld"):
         """

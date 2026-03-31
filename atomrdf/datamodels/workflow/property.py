@@ -69,9 +69,22 @@ class Property(DataProperty):
                     (property, CMSO.hasPath, Literal(relpath, datatype=XSD.string)),
                 )
             else:
-                graph.add(
-                    (property, ASMO.hasValue, Literal(self.value, datatype=XSD.float)),
-                )
+                if isinstance(self.value, str):
+                    graph.add(
+                        (
+                            property,
+                            RDFS.label,
+                            Literal(self.value, datatype=XSD.string),
+                        ),
+                    )
+                else:
+                    graph.add(
+                        (
+                            property,
+                            ASMO.hasValue,
+                            Literal(self.value, datatype=XSD.float),
+                        ),
+                    )
         if self.unit is not None:
             graph.add(
                 (

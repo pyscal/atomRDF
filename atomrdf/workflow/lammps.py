@@ -323,9 +323,7 @@ def run_md_nvt(
     lmp.command("unfix ensemble")
 
     dump_file = "tmp_nvt.dump"
-    lmp.command(
-        f"dump final all custom 1 {dump_file} id type mass x y z vx vy vz"
-    )
+    lmp.command(f"dump final all custom 1 {dump_file} id type mass x y z vx vy vz")
     lmp.command("run 0")
     lmp.command("undump final")
     lmp.close()
@@ -437,9 +435,7 @@ def run_md_npt(
     lmp.command("unfix ensemble")
 
     dump_file = "tmp_npt.dump"
-    lmp.command(
-        f"dump final all custom 1 {dump_file} id type mass x y z vx vy vz"
-    )
+    lmp.command(f"dump final all custom 1 {dump_file} id type mass x y z vx vy vz")
     lmp.command("run 0")
     lmp.command("undump final")
     lmp.close()

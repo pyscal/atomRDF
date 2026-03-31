@@ -453,9 +453,7 @@ class Provenance:
                                 owner_str = str(owner)
                                 if owner_str not in seen_nodes:
                                     # Render provenance of this reference sample
-                                    _owner_prov = Provenance.from_sample(
-                                        self.kg, owner
-                                    )
+                                    _owner_prov = Provenance.from_sample(self.kg, owner)
                                     _render_chain_steps(
                                         [
                                             s

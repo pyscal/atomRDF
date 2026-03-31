@@ -619,6 +619,34 @@ class WorkflowParser:
                     if orig_id:
                         user_prop_ids[(prop_key, idx)] = orig_id
 
+            # Normalise input_parameter entries from nested-key format
+            # {ParamName: {value, unit, label, ...}} to flat basename format
+            # {basename: ParamName, value: ..., unit: ..., label: ...}
+            if "input_parameter" in workflow_data:
+                normalised = []
+                for entry in workflow_data["input_parameter"] or []:
+                    if (
+                        isinstance(entry, dict)
+                        and "basename" not in entry
+                        and len(entry) == 1
+                    ):
+                        key, val = next(iter(entry.items()))
+                        flat = {"basename": key}
+                        if isinstance(val, dict):
+                            if key == "KpointMesh" and "type" in val:
+                                flat["basename"] = val["type"]
+                            for field in ("value", "unit", "label"):
+                                if field in val:
+                                    flat[field] = val[field]
+                            if "width" in val and "value" not in val:
+                                flat["value"] = val["width"]
+                        elif val is not None:
+                            flat["label"] = str(val)
+                        normalised.append(flat)
+                    else:
+                        normalised.append(entry)
+                workflow_data["input_parameter"] = normalised
+
             # Create the Simulation object
             sim = Simulation(**workflow_data)
 
