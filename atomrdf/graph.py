@@ -34,6 +34,7 @@ import logging
 import warnings
 import re
 import pickle
+from concurrent.futures import ThreadPoolExecutor
 
 from pyscal3.atoms import Atoms
 
@@ -643,7 +644,15 @@ class KnowledgeGraph:
             layout=layout,
         )
 
-    def to_gexf(self, output_file, include_literals=False, positions=None, sizes=None, top_n_labels=None, label_overrides=None):
+    def to_gexf(
+        self,
+        output_file,
+        include_literals=False,
+        positions=None,
+        sizes=None,
+        top_n_labels=None,
+        label_overrides=None,
+    ):
         """
         Export the knowledge graph to GEXF format for visualisation in Gephi.
 
@@ -676,11 +685,15 @@ class KnowledgeGraph:
         output_file : str
             The path of the file that was written.
         """
-        return _to_gexf(self.graph, output_file,
-                        include_literals=include_literals,
-                        positions=positions, sizes=sizes,
-                        top_n_labels=top_n_labels,
-                        label_overrides=label_overrides)
+        return _to_gexf(
+            self.graph,
+            output_file,
+            include_literals=include_literals,
+            positions=positions,
+            sizes=sizes,
+            top_n_labels=top_n_labels,
+            label_overrides=label_overrides,
+        )
 
     def write(self, filename, format="json-ld"):
         """
@@ -786,39 +799,32 @@ class KnowledgeGraph:
         structure_store = f"{package_name}/rdf_structure_store"
         os.mkdir(structure_store)
 
-        # now go through each sample, and copy the file, at the same time fix the paths
+        # --- Collect files to copy and triple rewrites -----------------------
+        files_to_copy = []  # list of (src, dst_dir)
+        triple_rewrites = []  # list of (subj, old_obj, new_literal)
         copied_basenames = set()
 
-        # First, attempt to copy the canonical sample files as before (best-effort)
+        # Canonical sample files (Position / Species)
         for sample in self.sample_ids:
             filepath = self.value(URIRef(f"{sample}_Position"), CMSO.hasPath)
             if filepath is None:
                 continue
             filepath = filepath.toPython()
-            # filepath has to be fixed with the correct prefix as needed
-            srcpath = os.path.join(self.structure_store, os.path.basename(filepath))
-            if os.path.exists(srcpath):
-                if os.path.basename(filepath) not in copied_basenames:
-                    shutil.copy(srcpath, structure_store)
-                    copied_basenames.add(os.path.basename(filepath))
+            basename = os.path.basename(filepath)
+            srcpath = os.path.join(self.structure_store, basename)
+            if os.path.exists(srcpath) and basename not in copied_basenames:
+                files_to_copy.append((srcpath, structure_store))
+                copied_basenames.add(basename)
 
-            # now we have to remove the old path, and fix new for Position/Species nodes
+            new_relpath = "/".join(["rdf_structure_store", basename])
+            new_lit = Literal(new_relpath, datatype=XSD.string)
             for val in ["Position", "Species"]:
-                self.remove((URIRef(f"{sample}_{val}"), CMSO.hasPath, None))
+                node = URIRef(f"{sample}_{val}")
+                old = self.value(node, CMSO.hasPath)
+                if old is not None:
+                    triple_rewrites.append((node, old, new_lit))
 
-                # assign corrected path
-                new_relpath = "/".join(
-                    ["rdf_structure_store", os.path.basename(filepath)]
-                )
-                self.add(
-                    (
-                        URIRef(f"{sample}_{val}"),
-                        CMSO.hasPath,
-                        Literal(new_relpath, datatype=XSD.string),
-                    )
-                )
-
-        # Additionally, copy any other files referenced by CMSO.hasPath (e.g. calculated-property files)
+        # Any other files referenced by CMSO.hasPath (e.g. calculated-property files)
         for subj, pred, obj in list(self.triples((None, CMSO.hasPath, None))):
             try:
                 path = obj.toPython()
@@ -827,25 +833,27 @@ class KnowledgeGraph:
             basename = os.path.basename(path)
             src = os.path.join(self.structure_store, basename)
             if not os.path.exists(src):
-                # nothing to copy for this path
                 continue
-            if basename in copied_basenames:
-                # already copied
-                # still ensure triple points to rdf_structure_store
-                self.remove((subj, CMSO.hasPath, None))
-                new_relpath = "/".join(["rdf_structure_store", basename])
-                self.add(
-                    (subj, CMSO.hasPath, Literal(new_relpath, datatype=XSD.string))
-                )
-                continue
-
-            shutil.copy(src, structure_store)
-            copied_basenames.add(basename)
-
-            # replace path triple with corrected relative path inside package
-            self.remove((subj, CMSO.hasPath, None))
             new_relpath = "/".join(["rdf_structure_store", basename])
-            self.add((subj, CMSO.hasPath, Literal(new_relpath, datatype=XSD.string)))
+            new_lit = Literal(new_relpath, datatype=XSD.string)
+            if basename not in copied_basenames:
+                files_to_copy.append((src, structure_store))
+                copied_basenames.add(basename)
+            triple_rewrites.append((subj, obj, new_lit))
+
+        # --- Parallel file copy (I/O-bound) ---------------------------------
+        def _copy(pair):
+            shutil.copy(pair[0], pair[1])
+
+        n_workers = min(os.cpu_count() or 4, len(files_to_copy) or 1)
+        with ThreadPoolExecutor(max_workers=n_workers) as pool:
+            pool.map(_copy, files_to_copy)
+
+        # --- Batch triple rewrites -------------------------------------------
+        for subj, old_obj, new_lit in triple_rewrites:
+            self.remove((subj, CMSO.hasPath, old_obj))
+            self.add((subj, CMSO.hasPath, new_lit))
+
         # copy simulation files if needed
         if add_simulations:
             sim_store = f"{package_name}/simulation_store"
@@ -867,7 +875,7 @@ class KnowledgeGraph:
         self.write(triple_file, format=format)
 
         if compress:
-            with tarfile.open(f"{package_name}.tar.gz", "w:gz") as tar:
+            with tarfile.open(f"{package_name}.tar.gz", "w:gz", compresslevel=1) as tar:
                 tar.add(package_name, arcname=os.path.basename(package_name))
             shutil.rmtree(package_name)
 
@@ -981,12 +989,41 @@ class KnowledgeGraph:
         # --- 1. Extract if compressed ----------------------------------------
         if compress:
             with tarfile.open(package_name) as fin:
-                # The archive's top-level directory name is used as package_base.
-                # extractall(".") puts it relative to cwd, so we must derive
-                # package_base from the archive member names rather than the
-                # (possibly absolute) package_name path.
                 top_dirs = {m.name.split("/")[0] for m in fin.getmembers()}
-                fin.extractall(".")
+
+                # Stream structure-store JSONs directly to self.structure_store
+                # (avoids extract-all then copy then delete)
+                extracted_ss_basenames = set()
+                other_members = []
+                for member in fin.getmembers():
+                    parts = member.name.split("/")
+                    # Match <top>/rdf_structure_store/<file>
+                    if (
+                        len(parts) >= 3
+                        and parts[1] == "rdf_structure_store"
+                        and not member.isdir()
+                    ):
+                        basename = os.path.basename(member.name)
+                        dst = os.path.join(self.structure_store, basename)
+                        if os.path.exists(dst):
+                            warnings.warn(
+                                f"merge_archive: '{basename}' already exists in "
+                                f"structure store — skipping (existing copy kept)",
+                                UserWarning,
+                                stacklevel=2,
+                            )
+                            continue
+                        fileobj = fin.extractfile(member)
+                        if fileobj is not None:
+                            with open(dst, "wb") as out:
+                                shutil.copyfileobj(fileobj, out)
+                            extracted_ss_basenames.add(basename)
+                    else:
+                        other_members.append(member)
+
+                # Extract only the non-structure-store members (triples file, etc.)
+                fin.extractall(".", members=other_members)
+
             if len(top_dirs) == 1:
                 package_base = top_dirs.pop()
             else:
@@ -999,30 +1036,37 @@ class KnowledgeGraph:
         else:
             package_base = package_name
 
+            # For uncompressed: parallel copy from extracted rdf_structure_store
+            archive_ss = os.path.join(package_base, "rdf_structure_store")
+            if os.path.isdir(archive_ss):
+                copy_pairs = []
+                for fname in os.listdir(archive_ss):
+                    dst = os.path.join(self.structure_store, fname)
+                    if os.path.exists(dst):
+                        warnings.warn(
+                            f"merge_archive: '{fname}' already exists in "
+                            f"structure store — skipping (existing copy kept)",
+                            UserWarning,
+                            stacklevel=2,
+                        )
+                        continue
+                    copy_pairs.append((os.path.join(archive_ss, fname), dst))
+
+                def _cp(pair):
+                    shutil.copy(pair[0], pair[1])
+
+                n_workers = min(os.cpu_count() or 4, len(copy_pairs) or 1)
+                with ThreadPoolExecutor(max_workers=n_workers) as pool:
+                    pool.map(_cp, copy_pairs)
+
         triple_file = os.path.join(package_base, "triples")
-        archive_ss = os.path.join(package_base, "rdf_structure_store")
 
-        # --- 2. Copy structure-store files -----------------------------------
-        if os.path.isdir(archive_ss):
-            for fname in os.listdir(archive_ss):
-                src = os.path.join(archive_ss, fname)
-                dst = os.path.join(self.structure_store, fname)
-                if os.path.exists(dst):
-                    warnings.warn(
-                        f"merge_archive: '{fname}' already exists in "
-                        f"structure store — skipping (existing copy kept)",
-                        UserWarning,
-                        stacklevel=2,
-                    )
-                    continue
-                shutil.copy(src, dst)
-
-        # --- 3. Parse triples ------------------------------------------------
+        # --- 2. Parse triples ------------------------------------------------
         if os.path.exists(triple_file):
             self.graph.parse(triple_file, format=format)
 
-        # --- 4. Rewrite CMSO.hasPath to point at self.structure_store --------
-        archive_prefix = "rdf_structure_store/"
+        # --- 3. Batch rewrite CMSO.hasPath to point at self.structure_store --
+        rewrites = []
         for subj, pred, obj in list(self.triples((None, CMSO.hasPath, None))):
             try:
                 path = obj.toPython()
@@ -1031,21 +1075,23 @@ class KnowledgeGraph:
             if not isinstance(path, str):
                 continue
             basename = os.path.basename(path)
-            # Rewrite any path whose basename exists in self.structure_store
             resolved = os.path.join(self.structure_store, basename)
             if os.path.exists(resolved):
                 new_relpath = os.path.relpath(resolved, os.getcwd())
                 if path != new_relpath:
-                    self.remove((subj, CMSO.hasPath, obj))
-                    self.add(
-                        (
-                            subj,
-                            CMSO.hasPath,
-                            Literal(new_relpath, datatype=XSD.string),
-                        )
-                    )
+                    rewrites.append((subj, obj, new_relpath))
 
-        # --- 5. Clean up extracted folder ------------------------------------
+        for subj, old_obj, new_relpath in rewrites:
+            self.remove((subj, CMSO.hasPath, old_obj))
+            self.add(
+                (
+                    subj,
+                    CMSO.hasPath,
+                    Literal(new_relpath, datatype=XSD.string),
+                )
+            )
+
+        # --- 4. Clean up extracted folder ------------------------------------
         if compress and os.path.isdir(package_base):
             shutil.rmtree(package_base)
 
