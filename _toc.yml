@@ -9,6 +9,9 @@ chapters:
     sections:
     - file: examples/01_getting_started
     - file: examples/02_grain_boundaries
+    - file: examples/03_working_with_data
+  - file: docs/migration.md
+  - file: CHANGELOG.md
   - file: docs/extending.md
   - file: docs/license.md
   - file: docs/acknowledgements.md

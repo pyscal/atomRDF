@@ -22,7 +22,82 @@ ontologies maintained by [OCDO](https://github.com/OCDO):
 This makes every object created by `atomRDF` round-trippable between Python, JSON/YAML and RDF, with
 ontology-conformant semantics out of the box.
 
-More details coming soon...
+## Installation
+
+```bash
+pip install atomrdf
+# or via conda-forge
+conda install -c conda-forge atomrdf
+```
+
+Optional features ship as extras &mdash; install only what you need:
+
+```bash
+pip install "atomrdf[oxigraph]"           # Oxigraph triple-store backend
+pip install "atomrdf[sqlalchemy]"         # SQLAlchemy-backed store
+pip install "atomrdf[materials_project]"  # Materials Project lookups (mp-api)
+pip install "atomrdf[grainboundary]"      # aimsgb + pymatgen for grain boundaries
+pip install "atomrdf[dislocation]"        # atomman for dislocation builders
+```
+
+## Quickstart
+
+```python
+from atomrdf import KnowledgeGraph
+import atomrdf.build as build
+
+# 1. open a knowledge graph (in-memory by default)
+kg = KnowledgeGraph()
+
+# 2. build a sample; it is automatically annotated and added to the graph
+fe = build.bulk("Fe", cubic=True, graph=kg)
+
+# 3. ask SPARQL questions
+results = kg.query("""
+    PREFIX cmso: <http://purls.helmholtz-metadaten.de/cmso/>
+    SELECT ?sample ?n
+    WHERE { ?sample cmso:hasNumberOfAtoms ?n }
+""")
+print(results)
+
+# 4. persist
+kg.write("fe.ttl", format="turtle")
+```
+
+See [`examples/`](examples/) for end-to-end notebooks (getting started, grain
+boundaries, working with data, defects, SPARQL queries, …) and the full
+documentation at <https://atomrdf.pyscal.org>.
+
+## Upgrading from 0.12.x
+
+`1.0` introduces a few breaking changes (most notably `Activity.initial_sample`
+&rarr; `input_sample`, and a couple of corrected ontology IRIs). See the
+[migration guide](docs/migration.md) and [CHANGELOG](CHANGELOG.md).
+
+## Citing atomRDF
+
+If you use atomRDF in academic work, please cite:
+
+> Guzmán, A. A., Menon, S., Hickel, T., & Sandfeld, S. (2026).
+> *Ontology-based knowledge graph infrastructure for interoperable atomistic
+> simulation data.* arXiv:2604.06230. <https://arxiv.org/abs/2604.06230>
+
+BibTeX:
+
+```bibtex
+@misc{guzman2026ontologybasedknowledgegraphinfrastructure,
+  title         = {Ontology-based knowledge graph infrastructure for interoperable atomistic simulation data},
+  author        = {Abril Azocar Guzman and Sarath Menon and Tilmann Hickel and Stefan Sandfeld},
+  year          = {2026},
+  eprint        = {2604.06230},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.DB},
+  url           = {https://arxiv.org/abs/2604.06230},
+}
+```
+
+A software citation (Zenodo DOI) is also available via the badge above and
+[CITATION.cff](CITATION.cff).
 
 
 ## Acknowledgements
