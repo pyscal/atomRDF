@@ -91,11 +91,12 @@ class ANNNIModel(Algorithm):
 
 class TensileTest(Algorithm):
     basename: str = "TensileTest"
-    pid: str = str(ASMO.TensileTest)
+    # The class is published in ASMO as ``asmo:Tensile_Test`` (with underscore).
+    pid: str = str(ASMO.Tensile_Test)
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_method"
-        method = graph.create_node(main_id, ASMO.TensileTest)
+        method = graph.create_node(main_id, ASMO.Tensile_Test)
         return method
 
     @classmethod

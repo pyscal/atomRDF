@@ -33,7 +33,6 @@ import tarfile
 import logging
 import warnings
 import re
-import pickle
 from concurrent.futures import ThreadPoolExecutor
 
 from pyscal3.atoms import Atoms
@@ -115,7 +114,7 @@ def _dummy_log(str):
 def _name(term):
     try:
         return str(term.toPython())
-    except:
+    except AttributeError:
         return str(term)
 
 
@@ -1388,7 +1387,7 @@ SELECT ?prop ?label ?symbol ?ratio WHERE {{
         if label is None:
             try:
                 label = str(item.toPython())
-            except:
+            except AttributeError:
                 label = str(item)
 
         if "simulation" in label:

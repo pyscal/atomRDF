@@ -1,10 +1,14 @@
+# Core runtime dependencies for atomrdf.
+# Mirrors install_requires in setup.py — no strong pinning.
+# For optional features see setup.py extras_require.
 numpy
+pandas
 ase
-rdflib
-pyyaml
-graphviz
-networkx
 pyscal3
 spglib
-pandas
+mendeleev
+rdflib
 tools4rdf
+pydantic
+pyyaml
+graphviz

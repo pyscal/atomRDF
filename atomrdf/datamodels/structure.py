@@ -5,6 +5,7 @@ It also includes the definition of atom attributes and various types of defects.
 
 from typing import List, Optional, Union
 import os
+import logging
 import numpy as np
 import yaml
 import uuid
@@ -34,6 +35,8 @@ import atomrdf.datamodels.structure_io as structure_io
 from atomrdf.utils import get_material, get_sample_id, get_sample_object, toPython
 from atomrdf.datamodels.workflow.property import *
 import atomrdf.properties as ap
+
+logger = logging.getLogger(__name__)
 
 
 # read element data file
@@ -202,7 +205,8 @@ class Material(BaseModel, TemplateMixin):
 
     def to_graph(self, graph, sample):
         sample_id = get_sample_id(sample)
-        material = graph.create_node(f"{sample_id}_Material", CMSO.CrystallineMaterial)
+        # CrystallineMaterial is defined in CDCO, not CMSO. See ontology_term_audit.md.
+        material = graph.create_node(f"{sample_id}_Material", CDCO.CrystallineMaterial)
         graph.add((sample, CMSO.hasMaterial, material))
 
         composition = self.element_ratio
@@ -965,9 +969,9 @@ class AtomicScaleSample(BaseModel, TemplateMixin):
                     sdict["spacegroup_symbol"] = spacegroup_symbol
                 if spacegroup_number:
                     sdict["spacegroup_number"] = spacegroup_number
-            except:
+            except Exception as e:
                 # If we can't determine spacegroup, that's okay
-                pass
+                logger.debug("Spacegroup detection failed: %s", e)
 
         # Generate sample data using the helper function from bulk.py
         data = _generate_atomic_sample_data(atoms, sdict if sdict else None, repeat)

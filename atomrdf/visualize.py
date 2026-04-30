@@ -1,4 +1,5 @@
 import graphviz
+import logging
 import os
 import re
 import xml.etree.ElementTree as ET
@@ -6,6 +7,8 @@ from rdflib import BNode, URIRef, Namespace, Literal, RDF
 from rdflib import Literal as RDFLiteral
 import uuid
 import json
+
+logger = logging.getLogger(__name__)
 
 
 # ─── GEXF export helpers ──────────────────────────────────────────────────────
@@ -439,16 +442,16 @@ def to_gexf(g, output_file, include_literals=False, positions=None, sizes=None,
     for _, cat, _ in node_rows:
         cat_counts[cat] = cat_counts.get(cat, 0) + 1
 
-    print(f"Exported to '{output_file}'")
-    print(f"  Nodes : {len(node_rows):,}")
-    print(f"  Edges : {len(edge_rows):,}")
-    print("  Node categories:")
+    logger.info("Exported to '%s'", output_file)
+    logger.info("  Nodes : %s", f"{len(node_rows):,}")
+    logger.info("  Edges : %s", f"{len(edge_rows):,}")
+    logger.info("  Node categories:")
     for cat in ("Sample", "Material", "Structure", "Element",
                 "Calculation", "Potential", "Property", "Literal", "Other"):
         count = cat_counts.get(cat, 0)
         if count:
             rv, gv, bv = GEXF_CATEGORY_COLORS[cat]
-            print(f"    {cat:<12s} {count:>6,}  #{rv:02X}{gv:02X}{bv:02X}")
+            logger.info("    %-12s %6s  #%02X%02X%02X", cat, f"{count:,}", rv, gv, bv)
 
     return output_file
 
