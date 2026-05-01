@@ -5,6 +5,8 @@ import numpy as np
 import atomrdf.build as build
 from atomrdf.transform import rotate
 
+atomman = pytest.importorskip("atomman", reason="atomman not installed")
+
 
 def test_rotate():
     """Test rotation of atomic structures."""

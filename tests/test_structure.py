@@ -8,6 +8,12 @@ import shutil
 import atomrdf.build as build
 import atomrdf.transform as atr
 
+try:
+    import atomman  # noqa: F401
+    _atomman_available = True
+except ImportError:
+    _atomman_available = False
+
 
 # ============= BASIC STRUCTURE TESTS =============
 def test_bulk_creation():
@@ -153,6 +159,7 @@ def test_vacancy():
     assert sample.vacancy.concentration == 5 / 22
 
 
+@pytest.mark.skipif(not _atomman_available, reason="atomman not installed")
 def test_stacking_fault():
     """Test stacking fault defect creation."""
     kg = KnowledgeGraph()
