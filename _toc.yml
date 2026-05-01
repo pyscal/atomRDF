@@ -9,6 +9,12 @@ chapters:
     sections:
     - file: examples/01_getting_started
     - file: examples/02_grain_boundaries
+    - file: examples/03_working_with_data
+    - file: examples/04_point_defects
+    - file: examples/05_sparql_queries
+    - file: examples/06_persistence_and_visualisation
+  - file: docs/migration.md
+  - file: CHANGELOG.md
   - file: docs/extending.md
   - file: docs/license.md
   - file: docs/acknowledgements.md

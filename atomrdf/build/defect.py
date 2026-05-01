@@ -1,3 +1,4 @@
+import logging
 from platform import system
 from atomrdf.build.bulk import bulk, _generate_atomic_sample_data
 from atomrdf.datamodels.basemodels import DataProperty
@@ -15,6 +16,7 @@ from pyscal3.grain_boundary import GrainBoundary
 from ase import Atoms
 import atomrdf.datamodels.workflow.operations as ops
 
+logger = logging.getLogger(__name__)
 
 def stacking_fault(
     element,
@@ -672,8 +674,8 @@ def interstitial(
                     is not None
                 ):
                     a = sample.material.crystal_structure.unit_cell.lattice_parameter[0]
-            except:
-                pass
+            except (AttributeError, TypeError, IndexError) as e:
+                logger.debug("Could not infer lattice constant from sample: %s", e)
 
         if a is None:
             raise ValueError("Please provide lattice constant a for octahedral voids")

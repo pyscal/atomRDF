@@ -2,26 +2,33 @@ name: rdf
 channels:
   - conda-forge
 dependencies:
-  - python >3.8, <3.12
+  # Python
+  - python >=3.9, <3.13
+  # Core runtime (matches setup.py install_requires)
+  - numpy
+  - pandas
+  - ase
   - pyscal3 >=3.1.12
+  - spglib
+  - mendeleev
   - rdflib
-  #- tools4rdf >=0.2.0
+  - tools4rdf
+  - pydantic
   - pyyaml
-  - jupyterlab
   - graphviz
   - python-graphviz
-  - ase =3.23.0
-  - networkx
-  - pandas
-  - plotly
-  - ipywidgets
-  #- atomman
+  # Optional / extras (covers materials_project, grainboundary, dislocation, oxigraph, sqlalchemy)
   - mp-api
-  - sqlalchemy
   - aimsgb
   - pymatgen
-  - mendeleev
-  - tools4rdf
+  # - atomman          # not on conda-forge; install via pip if needed
+  - sqlalchemy
+  # Triple-store backends
+  - pip
+  # Notebook / dev tooling (not required at runtime)
+  - jupyterlab
+  - ipywidgets
+  - plotly
   - pip:
     - oxrdflib
- 
+    # - atomman

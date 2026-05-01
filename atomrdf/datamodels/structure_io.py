@@ -64,9 +64,9 @@ def _write_espresso(atoms, inputfile, copy_from=None, pseudo_files=None):
             try:
                 with open(copy_from, "r") as fin:
                     data, tab = read_fortran_namelist(fin)
-            except:
+            except Exception as e:
                 warnings.warn(
-                    f"Error reading {copy_from}, a clean file will be written"
+                    f"Error reading {copy_from} ({e}), a clean file will be written"
                 )
                 copy = True
 

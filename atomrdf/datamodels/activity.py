@@ -1,4 +1,5 @@
 from typing import List, Optional, Union, TYPE_CHECKING
+import logging
 from pydantic import BaseModel, Field, field_validator
 import uuid
 from atomrdf.datamodels.basemodels import TemplateMixin, DataProperty
@@ -19,6 +20,8 @@ from atomrdf.namespace import (
     Literal,
     ASMO,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class Activity(BaseModel, TemplateMixin):
@@ -73,8 +76,9 @@ class Activity(BaseModel, TemplateMixin):
             if graph_obj is not None:
                 try:
                     return AtomicScaleSample.from_graph(graph_obj, sample)
-                except:
+                except Exception as e:
                     # If loading fails, keep as string
+                    logger.debug("Could not load sample %r from graph: %s", sample, e)
                     return sample
             return sample
         return sample

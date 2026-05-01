@@ -84,14 +84,16 @@ class EmbeddedAtomModel(InteratomicPotential):
 
 
 class LennardJonesPotential(InteratomicPotential):
-    pid: str = str(ASMO.LennardJonesPotential)
+    # The class is published in ASMO as ``asmo:Lennard-JonesPotential`` (with hyphen).
+    # Python attribute access can't contain ``-`` so we resolve via ``Namespace[...]``.
+    pid: str = str(ASMO["Lennard-JonesPotential"])
     potential_type: str = Field(
         default="LennardJonesPotential", description="Type of the potential"
     )
 
     def to_graph(self, graph, main_id):
         main_id = f"{main_id}_potential"
-        potential = graph.create_node(main_id, ASMO.LennardJonesPotential)
+        potential = graph.create_node(main_id, ASMO["Lennard-JonesPotential"])
         self._add_potential(potential, graph)
         return potential
 

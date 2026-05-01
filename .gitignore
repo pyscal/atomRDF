@@ -8,6 +8,13 @@ wf*
 *.ipynb
 *.dump
 *POSCAR*
+# local debug / scratch files
+debug_*.py
+temp.*
+aa
+atomrdf.log
+testr.db
+.DS_Store
 *.tar.gz
 *.in
 *.dot

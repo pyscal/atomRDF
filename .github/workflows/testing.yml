@@ -9,13 +9,14 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest,]
-        python-version: ['3.11',]
+        python-version: ['3.10', '3.11', '3.12']
 
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: conda-incubator/setup-miniconda@v3
       with:
         mamba-version: "*"
@@ -29,10 +30,10 @@ jobs:
         pip install -e .
         pip install pytest
         pip install pytest-cov
-        #pytest tests/
         pytest --cov-report=xml --cov=atomrdf tests/    
 
     - name: Upload coverage reports to Codecov
+      if: matrix.python-version == '3.11'
       uses: codecov/codecov-action@v4.0.1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

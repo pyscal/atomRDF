@@ -1,6 +1,10 @@
+import logging
+
 import numpy as np
 import spglib
 from collections import Counter
+
+logger = logging.getLogger(__name__)
 
 # DATADICT properties
 # ------------------------------------------
@@ -295,19 +299,6 @@ def get_basis_positions(system):
     return None
 
 
-# def get_basis_occupancy(system):
-#    if system._structure_dict is None:
-#        return None
-
-#    if "species" in system._structure_dict.keys():
-#        occ_numbers = system._structure_dict['species']
-#        tdict = system.atoms._type_dict
-#        vals = [val for key, val in tdict.items()]
-
-#        if vals[0] is not None:
-#            occ_numbers = [tdict[x] for x in occ_numbers]
-#        return occ_numbers
-#    return None
 
 
 def get_lattice_vector(system):
@@ -346,7 +337,8 @@ def get_spacegroup_symbol(system):
     try:
         results = _get_symmetry_dict(system)
         return results[0]
-    except:
+    except Exception as e:
+        logger.debug("Spacegroup symbol lookup failed: %s", e)
         return None
 
 
@@ -367,7 +359,8 @@ def get_spacegroup_number(system):
     try:
         results = _get_symmetry_dict(system)
         return results[1]
-    except:
+    except Exception as e:
+        logger.debug("Spacegroup number lookup failed: %s", e)
         return None
 
 
