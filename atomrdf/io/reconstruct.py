@@ -933,6 +933,51 @@ def _find_repetitions(ratio):
     return None
 
 
+def _write_software_requirements(steps, output_dir):
+    """Write software_requirements.txt listing all software used across steps."""
+    seen = []
+    for info, _ in steps:
+        for sw in info.get("software", []):
+            if sw not in seen:
+                seen.append(sw)
+    lines = ["# Software requirements for this workflow", ""]
+    lines.extend(seen)
+    with open(os.path.join(output_dir, "software_requirements.txt"), "w") as f:
+        f.write("\n".join(lines))
+
+
+def _write_incar(info, output_dir):
+    """Write a VASP INCAR file from the input_parameters of *info*."""
+    params = info.get("input_parameters", {})
+    lines = ["# INCAR generated from atomRDF Knowledge Graph", ""]
+    for key, value in params.items():
+        lines.append(f"{key} = {value}")
+    with open(os.path.join(output_dir, "INCAR"), "w") as f:
+        f.write("\n".join(lines))
+
+
+def _write_lammps_input(output_dir, struct_file="structure.lmp"):
+    """Write a minimal LAMMPS in.lammps input file."""
+    lines = [
+        "# LAMMPS input generated from atomRDF Knowledge Graph",
+        "units metal",
+        "atom_style atomic",
+        "boundary p p p",
+        "",
+        f"read_data {struct_file}",
+        "",
+        "pair_style eam/alloy",
+        "pair_coeff * * potential.eam.alloy Fe  # TODO: update potential file",
+        "",
+        "thermo 10",
+        "thermo_style custom step pe vol press",
+        "",
+        "minimize 0.0 1.0e-10 10000 100000",
+    ]
+    with open(os.path.join(output_dir, "in.lammps"), "w") as f:
+        f.write("\n".join(lines))
+
+
 # ── Public API ─────────────────────────────────────────────────────────
 
 
@@ -1004,8 +1049,12 @@ def reconstruct_workflow(
     # 3. Create output directory and write structure files
     os.makedirs(output_dir, exist_ok=True)
 
-    # Write input structure if available
-    fmt = structure_format or "lammps-data"
+    # Detect software-specific format so VASP gets POSCAR, LAMMPS gets .lmp
+    all_software = []
+    for info, _ in steps:
+        all_software.extend(info.get("software", []))
+    fmt = structure_format or _detect_structure_format(all_software)
+
     oldest_info = steps[0][0] if steps else None
     if oldest_info and oldest_info["input_samples"]:
         root_sample = oldest_info["input_samples"][0]
@@ -1017,14 +1066,30 @@ def reconstruct_workflow(
             fmt,
         )
 
-    # 4. Generate the executable script
-    script = _generate_script(kg, steps, operations_by_step, mode, output_dir)
+    # 4. Software-specific code-gen files
+    has_dft = any(
+        info.get("method") == "DensityFunctionalTheory" for info, _ in steps
+    )
+    has_lammps = any("LAMMPS" in info.get("software", []) for info, _ in steps)
 
-    script_path = os.path.join(output_dir, "run_workflow.py")
-    with open(script_path, "w") as f:
-        f.write(script)
+    if has_dft:
+        # Write INCAR from the first DFT step's parameters
+        for info, _ in steps:
+            if info.get("method") == "DensityFunctionalTheory":
+                _write_incar(info, output_dir)
+                break
+    else:
+        # Generate the executable Python script (only for non-DFT methods)
+        script = _generate_script(kg, steps, operations_by_step, mode, output_dir)
+        with open(os.path.join(output_dir, "run_workflow.py"), "w") as f:
+            f.write(script)
 
-    # 5. Write a summary README
+    if has_lammps:
+        struct_file = _format_extension(fmt)
+        _write_lammps_input(output_dir, struct_file)
+
+    # 5. Always write software_requirements.txt and README
+    _write_software_requirements(steps, output_dir)
     _write_readme(steps, operations_by_step, mode, output_dir)
 
     return output_dir

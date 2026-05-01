@@ -1429,3 +1429,48 @@ SELECT ?prop ?label ?symbol ?ratio WHERE {{
         if is_property:
             return Provenance.from_property(self, uri)
         return Provenance.from_sample(self, uri)
+
+    def reconstruct_workflow(self, workflow_id, output_dir, mode="recreate", structure_format=None):
+        """Reconstruct a workflow as an executable Python script.
+
+        Delegates to :func:`atomrdf.io.reconstruct.reconstruct_workflow`.
+
+        Parameters
+        ----------
+        workflow_id : str or URIRef
+            URI of the workflow / simulation node.
+        output_dir : str
+            Directory to write the generated script (created if needed).
+        mode : str
+            ``"recreate"`` — fully runnable script.
+            ``"create_template"`` — skeleton with TODO placeholders.
+        structure_format : str, optional
+            Override structure file format (default ``"lammps-data"``).
+
+        Returns
+        -------
+        str
+            The *output_dir* path.
+        """
+        from atomrdf.io.reconstruct import reconstruct_workflow as _rw
+        return _rw(self, workflow_id, output_dir, mode=mode, structure_format=structure_format)
+
+    def reconstruct_workflow_by_sample(self, sample_id, output_dir, mode="recreate", structure_format=None):
+        """Find the workflow that produced *sample_id* and reconstruct it.
+
+        Delegates to :func:`atomrdf.io.reconstruct.reconstruct_workflow_by_sample`.
+
+        Parameters
+        ----------
+        sample_id : str or URIRef
+        output_dir : str
+        mode : str
+        structure_format : str, optional
+
+        Returns
+        -------
+        str
+            The *output_dir* path.
+        """
+        from atomrdf.io.reconstruct import reconstruct_workflow_by_sample as _rws
+        return _rws(self, sample_id, output_dir, mode=mode, structure_format=structure_format)
