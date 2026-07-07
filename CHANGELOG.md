@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 First stable release. The public API documented in [docs/api.rst](docs/api.rst) is
 now considered stable; breaking changes will require a major version bump.
 
-If you are upgrading from `0.12.x` (or older `pyscal-rdf`), please read the
-[Migration guide](docs/migration.md) — there are several **breaking changes**.
+If you are upgrading from `0.12.x` (or older `pyscal-rdf`), note that there are
+several **breaking changes** — see the notes below.
 
 ### Added
 - `atomrdf.__version__` exposed at the top level (single source of truth in
@@ -34,7 +34,7 @@ If you are upgrading from `0.12.x` (or older `pyscal-rdf`), please read the
 - **Breaking — Ontology IRI fix.** The class emitted for crystalline materials
   is now `cdco:CrystallineMaterial` (it is defined in CDCO, not CMSO). Old
   graphs that use `cmso:CrystallineMaterial` will not be queryable with the new
-  type. See [Migration guide](docs/migration.md).
+  type.
 - **Breaking — Ontology IRI fix.** `LennardJonesPotential` and `TensileTest`
   now emit the IRIs that actually exist in ASMO
   (`asmo:Lennard-JonesPotential`, `asmo:Tensile_Test`). The Python class names

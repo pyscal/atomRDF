@@ -43,7 +43,6 @@ from atomrdf.ontology import read_ontology
 import atomrdf.properties as prp
 from atomrdf.stores import create_store, purge
 import atomrdf.json_io as json_io
-import atomrdf.mp as amp
 
 
 from atomrdf.namespace import (
@@ -484,8 +483,11 @@ class KnowledgeGraph:
             # Use tools4RDF for ontology-based queries
             if self.ontology is None:
                 raise ValueError(
-                    "Ontology not loaded (network unavailable). "
-                    "Use a SPARQL string query instead."
+                    "Ontology-based queries require the ontology network, which "
+                    "is not available. Either the optional 'autoquery' extra is "
+                    "not installed (pip install atomrdf[autoquery]) or the "
+                    "ontology could not be loaded (e.g. network unavailable). "
+                    "Pass a raw SPARQL query string instead."
                 )
             return self.ontology.query(
                 self.graph,

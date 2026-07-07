@@ -1,8 +1,24 @@
-from tools4rdf.network.parser import OntoParser, parse_ontology
-from tools4rdf.network.network import OntologyNetworkBase
+"""Ontology loading for atomRDF's ontology-based ("auto") query feature.
+
+Builds the combined OCDO ontology network consumed by
+:meth:`atomrdf.KnowledgeGraph.query` for ontology-term queries. This depends on
+``tools4rdf``, distributed as the optional ``autoquery`` extra
+(``pip install atomrdf[autoquery]``). It is imported lazily so the rest of
+atomRDF works without ``tools4rdf`` installed.
+"""
 
 
 def read_ontology():
+    try:
+        from tools4rdf.network.parser import parse_ontology
+        from tools4rdf.network.network import OntologyNetworkBase
+    except ImportError as exc:
+        raise ImportError(
+            "Ontology-based querying needs the 'tools4rdf' package, which ships "
+            "as the optional 'autoquery' extra. Install it with:\n"
+            "    pip install atomrdf[autoquery]"
+        ) from exc
+
     cmso = parse_ontology("https://purls.helmholtz-metadaten.de/cmso/")
     pldo = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/pldo/")
     podo = parse_ontology("https://purls.helmholtz-metadaten.de/cdos/podo/")

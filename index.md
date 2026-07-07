@@ -28,7 +28,6 @@ and RDF, with ontology-conformant semantics out of the box.
 - [](docs/gettingstarted.md) — install and run your first example.
 - [](docs/examples.md) — worked notebooks (bulk structures, grain boundaries,
   defects, SPARQL queries, working with data, …).
-- [](docs/migration.md) — upgrading from `0.12.x`.
 - [](docs/api.rst) — full API reference.
 - [](docs/extending.md) — contribute / extend.
 

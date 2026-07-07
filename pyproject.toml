@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atomrdf"
+dynamic = ["version"]
+description = "Ontology-based creation, manipulation and querying of atomic-scale structures and simulation workflows, with Pydantic data models generated from the OCDO Conceptual Dictionary (CMSO, CDCO, PODO, PLDO, LDO, ASMO)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Abril Azocar Guzman" },
+    { name = "Sarath Menon", email = "sarath.menon@pyscal.org" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    # Core scientific stack
+    "numpy",
+    "pandas",
+    # Atomic structures
+    "ase",
+    "pyscal3",
+    "spglib",
+    "mendeleev",
+    # RDF / ontology tooling
+    "rdflib",
+    # Data models / IO
+    "pydantic",
+    "pyyaml",
+    # Visualisation
+    "graphviz",
+]
+
+[project.optional-dependencies]
+# Ontology-based ("auto") querying via tools4rdf
+autoquery = ["tools4rdf"]
+# Triple stores
+oxigraph = ["oxrdflib"]
+sqlalchemy = ["rdflib-sqlalchemy"]
+# Optional builders / data sources (lazy-imported)
+materials_project = ["mp-api"]
+grainboundary = ["aimsgb", "pymatgen"]
+dislocation = ["atomman"]
+# Everything above, in one install
+all = [
+    "atomrdf[autoquery,oxigraph,sqlalchemy,materials_project,grainboundary,dislocation]",
+]
+
+[project.urls]
+Homepage = "https://pyscal.org"
+Repository = "https://github.com/pyscal/atomrdf"
+Download = "https://github.com/pyscal/atomrdf"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "atomrdf._version.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["atomrdf", "atomrdf.*"]
+
+[tool.setuptools.package-data]
+atomrdf = ["data/*.yml", "data/*.rdf"]

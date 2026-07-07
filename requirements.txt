@@ -1,6 +1,7 @@
 # Core runtime dependencies for atomrdf.
-# Mirrors install_requires in setup.py — no strong pinning.
-# For optional features see setup.py extras_require.
+# Mirrors [project.dependencies] in pyproject.toml — no strong pinning.
+# For optional features (autoquery, oxigraph, …) see
+# [project.optional-dependencies], e.g. pip install "atomrdf[all]".
 numpy
 pandas
 ase
@@ -8,7 +9,6 @@ pyscal3
 spglib
 mendeleev
 rdflib
-tools4rdf
 pydantic
 pyyaml
 graphviz

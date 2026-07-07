@@ -13,7 +13,6 @@ chapters:
     - file: examples/04_point_defects
     - file: examples/05_sparql_queries
     - file: examples/06_persistence_and_visualisation
-  - file: docs/migration.md
   - file: CHANGELOG.md
   - file: docs/extending.md
   - file: docs/license.md
