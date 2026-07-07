@@ -33,11 +33,13 @@ conda install -c conda-forge atomrdf
 Optional features ship as extras &mdash; install only what you need:
 
 ```bash
+pip install "atomrdf[autoquery]"          # ontology-term ("auto") queries (tools4rdf)
 pip install "atomrdf[oxigraph]"           # Oxigraph triple-store backend
 pip install "atomrdf[sqlalchemy]"         # SQLAlchemy-backed store
 pip install "atomrdf[materials_project]"  # Materials Project lookups (mp-api)
 pip install "atomrdf[grainboundary]"      # aimsgb + pymatgen for grain boundaries
 pip install "atomrdf[dislocation]"        # atomman for dislocation builders
+pip install "atomrdf[all]"                # everything above
 ```
 
 ## Quickstart

@@ -32,7 +32,6 @@ dependencies = [
     "mendeleev",
     # RDF / ontology tooling
     "rdflib",
-    "tools4rdf",
     # Data models / IO
     "pydantic",
     "pyyaml",
@@ -41,6 +40,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Ontology-based ("auto") querying via tools4rdf
+autoquery = ["tools4rdf"]
 # Triple stores
 oxigraph = ["oxrdflib"]
 sqlalchemy = ["rdflib-sqlalchemy"]
@@ -48,6 +49,10 @@ sqlalchemy = ["rdflib-sqlalchemy"]
 materials_project = ["mp-api"]
 grainboundary = ["aimsgb", "pymatgen"]
 dislocation = ["atomman"]
+# Everything above, in one install
+all = [
+    "atomrdf[autoquery,oxigraph,sqlalchemy,materials_project,grainboundary,dislocation]",
+]
 
 [project.urls]
 Homepage = "https://pyscal.org"
