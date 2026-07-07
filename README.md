@@ -68,12 +68,6 @@ See [`examples/`](examples/) for end-to-end notebooks (getting started, grain
 boundaries, working with data, defects, SPARQL queries, …) and the full
 documentation at <https://atomrdf.pyscal.org>.
 
-## Upgrading from 0.12.x
-
-`1.0` introduces a few breaking changes (most notably `Activity.initial_sample`
-&rarr; `input_sample`, and a couple of corrected ontology IRIs). See the
-[migration guide](docs/migration.md) and [CHANGELOG](CHANGELOG.md).
-
 ## Citing atomRDF
 
 If you use atomRDF in academic work, please cite:
